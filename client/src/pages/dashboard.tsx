@@ -182,12 +182,14 @@ const PerformanceCard = ({
 
 const PeakHoursCard = ({
   peakHours,
+  titleOverride,
 }: {
   peakHours: {
     hourlyData: PeakHoursData[];
     peakHour: number;
     peakSales: number;
   };
+  titleOverride?: string;
 }) => {
   const { t } = useLanguage();
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
@@ -233,7 +235,7 @@ const PeakHoursCard = ({
                 <Clock className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <CardTitle>{t.peakHoursAnalysis}</CardTitle>
+                <CardTitle>{titleOverride || t.peakHoursAnalysis}</CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
                   {t.hourlySalesDistribution}
                 </p>
@@ -394,6 +396,49 @@ export default function Dashboard() {
   const { lastNotification, isConnected } = useNotifications();
   const { restaurant } = useAuth();
   const businessType = restaurant?.businessType || 'restaurant';
+  const isRestaurant = businessType === 'restaurant';
+  const isFactory = businessType === 'factory';
+  const isRealEstate = businessType === 'real_estate';
+  const isServiceBusiness =
+    businessType === 'design_services' ||
+    businessType === 'installation_services' ||
+    businessType === 'it_services';
+
+  // Widget visibility map per business type
+  const showActiveOrders = isRestaurant || isFactory;
+  const showLowStock = isRestaurant || isFactory;
+  const showActiveProjects = isServiceBusiness;
+  const showPendingQuotations = isServiceBusiness;
+  const showPeakHours = isRestaurant || isFactory;
+  const showRecentOrdersCard = isRestaurant || isFactory || isServiceBusiness;
+
+  const todaysSalesLabel = isRealEstate
+    ? ((t as any).todaysCommissions || "Today's Commissions")
+    : isServiceBusiness
+      ? ((t as any).todaysRevenue || "Today's Revenue")
+      : t.todaysSales;
+
+  const weeklyChartLabel = isRealEstate
+    ? ((t as any).commissionsThisWeek || "Commissions This Week")
+    : isServiceBusiness
+      ? ((t as any).revenueThisWeek || "Revenue This Week")
+      : t.salesThisWeek;
+
+  const peakHoursTitleOverride = isFactory
+    ? ((t as any).productionPeakHours || "Production Peak Hours")
+    : undefined;
+
+  const recentOrdersLabel = isServiceBusiness
+    ? ((t as any).recentProjects || "Recent Projects")
+    : t.recentOrders;
+
+  const overviewSubtitle = isRealEstate
+    ? ((t as any).brokerageOverview || "Overview of your brokerage performance")
+    : isFactory
+      ? ((t as any).factoryOverview || "Overview of your factory performance")
+      : isServiceBusiness
+        ? ((t as any).serviceOverview || "Overview of your service business performance")
+        : (t.dashboardOverview || "Overview of your restaurant performance");
 
   // Real-time updates: Refresh dashboard data when sales/order/inventory/bills updates come in
   useEffect(() => {
@@ -659,25 +704,39 @@ export default function Dashboard() {
           )}
         </h1>
         <p className="text-muted-foreground text-sm">
-          {businessType === 'real_estate' ? (t as any).brokerageOverview : (t.dashboardOverview || "Overview of your restaurant performance")}
+          {overviewSubtitle}
         </p>
       </div>
       <div
         className={`grid ${layout.gap} ${layout.gridCols({ desktop: 3, mobile: 2 })}`}
       >
         <MetricCard
-          title={t.todaysSales}
+          title={todaysSalesLabel}
           value={`${dashboardData?.todaysSales || "0.00"} SAR`}
           icon={DollarSign}
         />
-        {businessType !== 'real_estate' && (
+        {showActiveOrders && (
           <MetricCard
             title={t.activeOrders}
             value={dashboardData?.activeOrders || 0}
             icon={ShoppingCart}
           />
         )}
-        {businessType !== 'real_estate' && (
+        {showActiveProjects && (
+          <MetricCard
+            title={t.activeProjects}
+            value={dashboardData?.activeOrders || 0}
+            icon={ShoppingCart}
+          />
+        )}
+        {showPendingQuotations && (
+          <MetricCard
+            title={t.pendingQuotations}
+            value={dashboardData?.lowStockItems || 0}
+            icon={FileText}
+          />
+        )}
+        {showLowStock && (
           <MetricCard
             title={t.lowStockItems}
             value={dashboardData?.lowStockItems || 0}
@@ -726,8 +785,8 @@ export default function Dashboard() {
       )}
 
       {/* Peak Hours Analysis Section */}
-      {dashboardData?.peakHours && (
-        <PeakHoursCard peakHours={dashboardData.peakHours} />
+      {showPeakHours && dashboardData?.peakHours && (
+        <PeakHoursCard peakHours={dashboardData.peakHours} titleOverride={peakHoursTitleOverride} />
       )}
 
       {/* Expense Trends Section */}
@@ -950,7 +1009,7 @@ export default function Dashboard() {
         <Card>
           <CardHeader className={layout.cardHeaderPadding}>
             <CardTitle className={layout.isMobile ? "text-base" : ""}>
-              {t.salesThisWeek}
+              {weeklyChartLabel}
             </CardTitle>
           </CardHeader>
           <CardContent className={layout.cardPadding}>
@@ -981,11 +1040,11 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {businessType !== 'real_estate' && (
+        {showRecentOrdersCard && (
           <Card>
             <CardHeader className={layout.cardHeaderPadding}>
               <CardTitle className={layout.isMobile ? "text-base" : ""}>
-                {t.recentOrders}
+                {recentOrdersLabel}
               </CardTitle>
             </CardHeader>
             <CardContent className={layout.cardPadding}>
