@@ -4,7 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { getTutorialsByLanguage } from "@/i18n/tutorialSteps";
+import { useBusinessType } from "@/hooks/useBusinessType";
+import { getTutorialsByLanguage, type TutorialBusinessType } from "@/i18n/tutorialSteps";
 import { 
   BookOpen, 
   ShoppingCart, 
@@ -45,6 +46,7 @@ export interface Tutorial {
 
 export default function Tutorial() {
   const { t, language } = useLanguage();
+  const { businessType } = useBusinessType();
   const [selectedTutorial, setSelectedTutorial] = useState<Tutorial | null>(null);
 
   // Map language names to codes for tutorial content
@@ -63,7 +65,11 @@ export default function Tutorial() {
 
   // Get tutorials in the user's selected language
   const languageCode = languageCodeMap[language] || 'en';
-  const tutorials: Tutorial[] = getTutorialsByLanguage(languageCode, t);
+  const tutorials: Tutorial[] = getTutorialsByLanguage(
+    languageCode,
+    t,
+    businessType as TutorialBusinessType,
+  );
   
   return (
     <div className="h-full overflow-auto p-6">

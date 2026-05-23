@@ -52,6 +52,47 @@ const deliveryAppsScreenshot = "https://images.unsplash.com/photo-1526367790999-
 
 type Language = 'en' | 'ar' | 'zh' | 'de' | 'hi' | 'ur' | 'bn' | 'it' | 'es' | 'tl';
 
+export type TutorialBusinessType =
+  | 'restaurant'
+  | 'factory'
+  | 'real_estate'
+  | 'design_services'
+  | 'installation_services'
+  | 'it_services';
+
+const ALL_BUSINESS_TYPES: TutorialBusinessType[] = [
+  'restaurant', 'factory', 'real_estate',
+  'design_services', 'installation_services', 'it_services',
+];
+const SERVICE_BUSINESS_TYPES: TutorialBusinessType[] = [
+  'design_services', 'installation_services', 'it_services',
+];
+
+// Which tutorial indices apply to which business types. Index aligns with the
+// `tutorialContent[language]` array (0..18). Topics that don't fit a business
+// type are hidden in the tutorial gallery for that account.
+const tutorialBusinessTypes: TutorialBusinessType[][] = [
+  ['restaurant'],                                  // 0  Point of Sale (POS)
+  ['restaurant', 'factory'],                       // 1  Inventory Management
+  ['restaurant', 'factory'],                       // 2  Menu / Products Management
+  ['restaurant', 'factory'],                       // 3  Recipe / Production Recipe Management
+  ALL_BUSINESS_TYPES,                              // 4  Customer Management
+  ['restaurant', 'factory'],                       // 5  Order Processing
+  ALL_BUSINESS_TYPES,                              // 6  Analytics Dashboard
+  ALL_BUSINESS_TYPES,                              // 7  Sales Analytics
+  ['restaurant', 'factory'],                       // 8  Profitability (menu/product profitability)
+  ['restaurant', 'factory'],                       // 9  Demand Forecasting
+  ALL_BUSINESS_TYPES,                              // 10 Invoice Management (ZATCA)
+  ALL_BUSINESS_TYPES,                              // 11 Financial Reports
+  ['restaurant'],                                  // 12 Delivery Apps Management
+  ALL_BUSINESS_TYPES,                              // 13 Employee Management
+  ALL_BUSINESS_TYPES,                              // 14 Bills & Expenses
+  ALL_BUSINESS_TYPES,                              // 15 Support Tickets
+  ALL_BUSINESS_TYPES,                              // 16 Team Chat
+  ALL_BUSINESS_TYPES,                              // 17 Violations Management
+  ['restaurant', 'factory'],                       // 18 Printer Configuration
+];
+
 const tutorialMetadata = {
   icons: [ShoppingCart, Package, UtensilsCrossed, ChefHat, UserCircle, ClipboardList, BarChart3, DollarSign, Calculator, TrendingUp, FileCheck, Receipt, Truck, Users, Wallet, Headphones, MessageSquare, FileWarning, Printer],
   images: [posImage, inventoryImage, menuImage, recipesImage, customersImage, ordersImage, dashboardImage, salesImage, profitabilityImage, forecastingImage, invoicesImage, financialImage, deliveryAppsImage, deliveryAppsImage, deliveryAppsImage, deliveryAppsImage, deliveryAppsImage, deliveryAppsImage, deliveryAppsImage],
@@ -79,16 +120,27 @@ const tutorialMetadata = {
   ]
 };
 
-export const getTutorialsByLanguage = (language: Language, t: any): Tutorial[] => {
+export const getTutorialsByLanguage = (
+  language: Language,
+  t: any,
+  businessType?: TutorialBusinessType,
+): Tutorial[] => {
   const content = tutorialContent[language] || tutorialContent.en;
-  
-  return content.map((tutorial, index) => ({
-    ...tutorial,
-    icon: tutorialMetadata.icons[index],
-    image: tutorialMetadata.images[index],
-    screenshot: tutorialMetadata.screenshots[index],
-    gradient: tutorialMetadata.gradients[index]
-  }));
+
+  return content
+    .map((tutorial, index) => ({
+      ...tutorial,
+      icon: tutorialMetadata.icons[index],
+      image: tutorialMetadata.images[index],
+      screenshot: tutorialMetadata.screenshots[index],
+      gradient: tutorialMetadata.gradients[index],
+      _businessTypes: tutorialBusinessTypes[index] || ALL_BUSINESS_TYPES,
+    }))
+    .filter((tutorial) => {
+      if (!businessType) return true;
+      return tutorial._businessTypes.includes(businessType);
+    })
+    .map(({ _businessTypes, ...rest }) => rest);
 };
 
 const tutorialContent: Record<Language, Omit<Tutorial, 'icon' | 'image' | 'screenshot' | 'gradient'>[]> = {
