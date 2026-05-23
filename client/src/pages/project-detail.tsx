@@ -24,7 +24,7 @@ import {
   ArrowLeft, Plus, Edit, Trash2, DollarSign, Calendar, Phone, Mail,
   User, MapPin, Clock, FileText, CheckCircle, Layers, Receipt,
   ShoppingCart, CreditCard, ListTodo, Zap, AlertTriangle, Download,
-  FileSignature, MessageCircle,
+  FileSignature, MessageCircle, ShieldCheck, ShieldX, PlayCircle, CheckSquare,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -43,6 +43,12 @@ interface ServiceProject {
   description: string | null; location: string | null; status: string; priority: string;
   startDate: string | null; endDate: string | null; estimatedBudget: string | null;
   actualCost: string | null; contractorId: string | null; notes: string | null; createdAt: string;
+  approvalStatus?: string | null;
+  lifecycleStatus?: string | null;
+  approvedAt?: string | null;
+  approvedBy?: string | null;
+  declineReason?: string | null;
+  customerId?: string | null;
 }
 interface ProjectServiceItem {
   id: string; projectId: string; serviceCatalogId: string | null; name: string;
@@ -174,6 +180,8 @@ export default function ProjectDetail() {
   const [editPay, setEditPay] = useState<PaymentScheduleItem | null>(null);
   const [editTask, setEditTask] = useState<ProjectTaskItem | null>(null);
   const [delItem, setDelItem] = useState<{ type: string; id: string; name: string } | null>(null);
+  const [declineOpen, setDeclineOpen] = useState(false);
+  const [declineReason, setDeclineReason] = useState("");
 
   const { data: project, isLoading } = useQuery<ServiceProject>({
     queryKey: ["/api/service-projects", projectId],
@@ -390,6 +398,40 @@ export default function ProjectDetail() {
     },
   });
 
+  const approveMutation = useMutation({
+    mutationFn: async () => apiRequest("POST", `/api/service-projects/${projectId}/approve`, { lang: pdfLang }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/service-projects", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/service-projects"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      toast({ title: t.projectApproved || "Project approved", description: t.projectApprovedDesc || "Customer linked and dossier attached." });
+    },
+    onError: (e: any) => toast({ title: t.error, description: e.message, variant: "destructive" }),
+  });
+
+  const declineMutation = useMutation({
+    mutationFn: async (reason: string) => apiRequest("POST", `/api/service-projects/${projectId}/decline`, { reason }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/service-projects", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/service-projects"] });
+      setDeclineOpen(false);
+      setDeclineReason("");
+      toast({ title: t.projectDeclined || "Project declined" });
+    },
+    onError: (e: any) => toast({ title: t.error, description: e.message, variant: "destructive" }),
+  });
+
+  const lifecycleMutation = useMutation({
+    mutationFn: async (to: "in_progress" | "finished") =>
+      apiRequest("POST", `/api/service-projects/${projectId}/lifecycle`, { to }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/service-projects", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/service-projects"] });
+      toast({ title: t.lifecycleUpdated || "Lifecycle updated" });
+    },
+    onError: (e: any) => toast({ title: t.error, description: e.message, variant: "destructive" }),
+  });
+
   function onCatalogSelect(catId: string) {
     const item = catalog.find(c => c.id === catId);
     if (item) {
@@ -602,6 +644,108 @@ export default function ProjectDetail() {
           </Button>
         </div>
       </div>
+
+      {project && (
+        <Card data-testid="card-decision-center">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <ShieldCheck className="h-5 w-5" />
+              {t.decisionCenter || "Decision Center"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm text-muted-foreground">{t.approval || "Approval"}:</span>
+              {(() => {
+                const ap = project.approvalStatus || 'pending';
+                const variant = ap === 'approved' ? 'default' : ap === 'declined' ? 'destructive' : 'secondary';
+                const cls = ap === 'approved' ? 'bg-green-600 text-white' : '';
+                return <Badge variant={variant as any} className={cls} data-testid="badge-approval-status">{ap}</Badge>;
+              })()}
+              <span className="text-sm text-muted-foreground ml-3">{t.lifecycle || "Lifecycle"}:</span>
+              {(() => {
+                const lc = project.lifecycleStatus || 'not_started';
+                const variant = lc === 'finished' ? 'default' : lc === 'in_progress' ? 'default' : 'outline';
+                const cls = lc === 'finished' ? 'bg-green-600 text-white' : lc === 'in_progress' ? 'bg-blue-600 text-white' : '';
+                return <Badge variant={variant as any} className={cls} data-testid="badge-lifecycle-status">{lc.replace('_', ' ')}</Badge>;
+              })()}
+              {project.declineReason && (
+                <span className="text-xs text-destructive" data-testid="text-decline-reason">
+                  {t.reason || "Reason"}: {project.declineReason}
+                </span>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              {(project.approvalStatus || 'pending') === 'pending' && (
+                <>
+                  <Button
+                    onClick={() => approveMutation.mutate()}
+                    disabled={approveMutation.isPending}
+                    data-testid="button-approve-project"
+                    className="bg-green-600 hover:bg-green-700 text-white border-green-700"
+                  >
+                    <ShieldCheck className="h-4 w-4 mr-2" />
+                    {approveMutation.isPending ? (t.approving || "Approving…") : (t.approve || "Approve")}
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={() => setDeclineOpen(true)}
+                    data-testid="button-decline-project"
+                  >
+                    <ShieldX className="h-4 w-4 mr-2" />
+                    {t.decline || "Decline"}
+                  </Button>
+                </>
+              )}
+              {project.approvalStatus === 'declined' && (
+                <Button
+                  variant="outline"
+                  onClick={() => approveMutation.mutate()}
+                  disabled={approveMutation.isPending}
+                  data-testid="button-approve-after-decline"
+                >
+                  <ShieldCheck className="h-4 w-4 mr-2" />
+                  {t.approveAnyway || "Approve Anyway"}
+                </Button>
+              )}
+              {project.approvalStatus === 'approved' && (project.lifecycleStatus || 'not_started') === 'not_started' && (
+                <Button
+                  onClick={() => lifecycleMutation.mutate('in_progress')}
+                  disabled={lifecycleMutation.isPending}
+                  data-testid="button-start-project"
+                >
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  {t.startProject || "Start Project"}
+                </Button>
+              )}
+              {project.approvalStatus === 'approved' && project.lifecycleStatus === 'in_progress' && (
+                <Button
+                  onClick={() => lifecycleMutation.mutate('finished')}
+                  disabled={lifecycleMutation.isPending}
+                  data-testid="button-finish-project"
+                  className="bg-green-600 hover:bg-green-700 text-white border-green-700"
+                >
+                  <CheckSquare className="h-4 w-4 mr-2" />
+                  {t.finishProject || "Finish Project"}
+                </Button>
+              )}
+              {project.approvalStatus === 'approved' && project.lifecycleStatus === 'finished' && (
+                <span className="text-sm text-muted-foreground" data-testid="text-project-finished">
+                  {t.projectFinishedMsg || "Project finished."}
+                </span>
+              )}
+              {project.customerId && (
+                <Link href="/customers">
+                  <Button variant="outline" size="sm" data-testid="button-view-linked-customer">
+                    <User className="h-4 w-4 mr-2" />
+                    {t.viewLinkedCustomer || "View Linked Customer"}
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className={`${layout.isMobile ? "grid grid-cols-3 w-full" : "grid grid-cols-6 w-full"}`}>
@@ -1182,6 +1326,34 @@ export default function ProjectDetail() {
       </Dialog>
 
       {/* Delete Confirmation */}
+      <Dialog open={declineOpen} onOpenChange={(o) => { if (!o) { setDeclineOpen(false); setDeclineReason(""); } else setDeclineOpen(true); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t.declineProject || "Decline Project"}</DialogTitle>
+            <DialogDescription>{t.declineProjectDesc || "Provide a reason. The project will be marked as declined."}</DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={declineReason}
+            onChange={(e) => setDeclineReason(e.target.value)}
+            placeholder={t.reason || "Reason"}
+            data-testid="input-decline-reason"
+          />
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => { setDeclineOpen(false); setDeclineReason(""); }} data-testid="button-cancel-decline">
+              {t.cancel || "Cancel"}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => declineMutation.mutate(declineReason.trim())}
+              disabled={!declineReason.trim() || declineMutation.isPending}
+              data-testid="button-confirm-decline"
+            >
+              {declineMutation.isPending ? (t.declining || "Declining…") : (t.decline || "Decline")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <AlertDialog open={!!delItem} onOpenChange={(o) => !o && setDelItem(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

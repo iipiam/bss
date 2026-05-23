@@ -92,6 +92,8 @@ interface ServiceProject {
   contractorId: string | null;
   notes: string | null;
   createdAt: string;
+  approvalStatus?: string | null;
+  lifecycleStatus?: string | null;
 }
 
 const projectFormSchema = z.object({
@@ -1009,6 +1011,25 @@ export default function ServiceProjects() {
                   >
                     {getPriorityLabel(project.priority)}
                   </Badge>
+                  {(() => {
+                    const ap = project.approvalStatus || 'pending';
+                    const v = ap === 'approved' ? 'default' : ap === 'declined' ? 'destructive' : 'secondary';
+                    const cls = ap === 'approved' ? 'bg-green-600 text-white' : '';
+                    return (
+                      <Badge variant={v as any} className={cls} data-testid={`badge-approval-${project.id}`}>
+                        {ap}
+                      </Badge>
+                    );
+                  })()}
+                  {project.approvalStatus === 'approved' && (() => {
+                    const lc = project.lifecycleStatus || 'not_started';
+                    const cls = lc === 'finished' ? 'bg-green-600 text-white' : lc === 'in_progress' ? 'bg-blue-600 text-white' : '';
+                    return (
+                      <Badge variant="outline" className={cls} data-testid={`badge-lifecycle-${project.id}`}>
+                        {lc.replace('_', ' ')}
+                      </Badge>
+                    );
+                  })()}
                 </div>
 
                 <div className="space-y-1.5">

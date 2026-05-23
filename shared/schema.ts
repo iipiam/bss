@@ -464,6 +464,24 @@ export const insertCustomerSchema = createInsertSchema(customers).omit({ id: tru
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type Customer = typeof customers.$inferSelect;
 
+// Customer Documents — files attached to a customer (e.g. an approved project's
+// generated quotation/agreement PDF). MULTI-TENANT via restaurantId.
+export const customerDocuments = pgTable("customer_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  customerId: varchar("customer_id").notNull(),
+  projectId: varchar("project_id"),
+  kind: text("kind").notNull().default("other"), // "quotation" | "agreement" | "dossier" | "other"
+  fileName: text("file_name").notNull(),
+  mimeType: text("mime_type").notNull().default("application/pdf"),
+  contentBase64: text("content_base64").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCustomerDocumentSchema = createInsertSchema(customerDocuments).omit({ id: true, createdAt: true });
+export type InsertCustomerDocument = z.infer<typeof insertCustomerDocumentSchema>;
+export type CustomerDocument = typeof customerDocuments.$inferSelect;
+
 // Users
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1719,7 +1737,13 @@ export const serviceProjects = pgTable("service_projects", {
   clientLegalRepresentative: text("client_legal_representative"),
   description: text("description"),
   location: text("location"),
-  status: text("status").notNull().default("draft"), // "draft", "in_progress", "on_hold", "completed", "cancelled"
+  status: text("status").notNull().default("draft"), // legacy — derived from approvalStatus + lifecycleStatus
+  approvalStatus: text("approval_status").notNull().default("pending"), // "pending" | "approved" | "declined"
+  lifecycleStatus: text("lifecycle_status").notNull().default("not_started"), // "not_started" | "in_progress" | "finished"
+  approvedAt: timestamp("approved_at"),
+  approvedBy: varchar("approved_by"),
+  declineReason: text("decline_reason"),
+  customerId: varchar("customer_id"),
   priority: text("priority").notNull().default("medium"), // "low", "medium", "high", "urgent"
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),

@@ -48,6 +48,8 @@ import {
   Calendar,
   DollarSign,
   Download,
+  Briefcase,
+  FileText,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -81,6 +83,152 @@ type CustomerFormValues = {
   name: string;
   phone: string;
 };
+
+interface CustomerProjectRow {
+  id: string;
+  projectNumber: string;
+  name: string;
+  status: string;
+  approvalStatus?: string | null;
+  lifecycleStatus?: string | null;
+  totalRevenue?: string | null;
+}
+interface CustomerDocumentRow {
+  id: string;
+  fileName: string;
+  kind: string;
+  mimeType: string;
+  createdAt: string;
+}
+
+function CustomerExtras({ customerId }: { customerId: string }) {
+  const [projOpen, setProjOpen] = useState(false);
+  const [docOpen, setDocOpen] = useState(false);
+  const { toast } = useToast();
+  const { data: projects = [] } = useQuery<CustomerProjectRow[]>({
+    queryKey: ["/api/customers", customerId, "projects"],
+    enabled: projOpen,
+  });
+  const { data: documents = [] } = useQuery<CustomerDocumentRow[]>({
+    queryKey: ["/api/customers", customerId, "documents"],
+    enabled: docOpen,
+  });
+
+  async function downloadDoc(docId: string, fileName: string) {
+    try {
+      const res = await fetch(`/api/customer-documents/${docId}/download`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to download");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = (fileName || `document-${docId}.pdf`).replace(/\s+/g, "-");
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    }
+  }
+
+  return (
+    <>
+      <Collapsible open={projOpen} onOpenChange={setProjOpen}>
+        <CollapsibleTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-between"
+            data-testid={`button-view-projects-${customerId}`}
+          >
+            <div className="flex items-center gap-2">
+              <Briefcase className="h-3 w-3" />
+              <span>Projects</span>
+            </div>
+            <ChevronDown className="h-3 w-3" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2 space-y-2">
+          {projects.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">No projects</p>
+          ) : (
+            projects.map((p) => (
+              <div
+                key={p.id}
+                className="p-2 rounded-md bg-muted/50 text-sm"
+                data-testid={`project-row-${p.id}`}
+              >
+                <div className="flex items-center justify-between mb-1 gap-2">
+                  <span className="font-mono font-semibold truncate">#{p.projectNumber}</span>
+                  <div className="flex items-center gap-1 flex-wrap">
+                    {p.approvalStatus && (
+                      <Badge
+                        variant={(p.approvalStatus === 'approved' ? 'default' : p.approvalStatus === 'declined' ? 'destructive' : 'secondary') as any}
+                        className={p.approvalStatus === 'approved' ? 'bg-green-600 text-white' : ''}
+                      >
+                        {p.approvalStatus}
+                      </Badge>
+                    )}
+                    {p.lifecycleStatus && (
+                      <Badge variant="outline">{p.lifecycleStatus.replace('_', ' ')}</Badge>
+                    )}
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground truncate">{p.name}</div>
+              </div>
+            ))
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+
+      <Collapsible open={docOpen} onOpenChange={setDocOpen}>
+        <CollapsibleTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-between"
+            data-testid={`button-view-documents-${customerId}`}
+          >
+            <div className="flex items-center gap-2">
+              <FileText className="h-3 w-3" />
+              <span>Documents</span>
+            </div>
+            <ChevronDown className="h-3 w-3" />
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2 space-y-2">
+          {documents.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic">No documents</p>
+          ) : (
+            documents.map((d) => (
+              <div
+                key={d.id}
+                className="p-2 rounded-md bg-muted/50 text-sm flex items-center justify-between gap-2"
+                data-testid={`document-row-${d.id}`}
+              >
+                <div className="min-w-0">
+                  <div className="font-medium truncate">{d.fileName}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {d.kind} · {new Date(d.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => downloadDoc(d.id, d.fileName)}
+                  data-testid={`button-download-doc-${d.id}`}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
+            ))
+          )}
+        </CollapsibleContent>
+      </Collapsible>
+    </>
+  );
+}
 
 export default function Customers() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -577,6 +725,8 @@ export default function Customers() {
                       No orders yet
                     </p>
                   )}
+
+                  <CustomerExtras customerId={customer.id} />
                 </CardContent>
               </Card>
             );

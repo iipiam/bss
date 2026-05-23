@@ -25,6 +25,9 @@ import {
   type InsertInvoice,
   type Customer,
   type InsertCustomer,
+  customerDocuments,
+  type CustomerDocument,
+  type InsertCustomerDocument,
   type Salary,
   type InsertSalary,
   type ShopBill,
@@ -201,7 +204,7 @@ import {
   projectItems,
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, gte, lte, lt, sql, or, isNull, isNotNull, desc, inArray } from "drizzle-orm";
+import { eq, ne, and, gte, lte, lt, sql, or, isNull, isNotNull, desc, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
@@ -607,6 +610,13 @@ export interface IStorage {
   createServiceProject(project: InsertServiceProject): Promise<ServiceProject>;
   updateServiceProject(id: string, restaurantId: string, project: Partial<InsertServiceProject>): Promise<ServiceProject | undefined>;
   deleteServiceProject(id: string, restaurantId: string): Promise<boolean>;
+  approveServiceProject(id: string, restaurantId: string, approvedBy: string): Promise<{ project: ServiceProject; customer: Customer } | undefined>;
+  declineServiceProject(id: string, restaurantId: string, reason: string): Promise<ServiceProject | undefined>;
+  setServiceProjectLifecycle(id: string, restaurantId: string, to: "in_progress" | "finished"): Promise<ServiceProject | undefined>;
+  getServiceProjectsForCustomer(restaurantId: string, customerId: string): Promise<ServiceProject[]>;
+  getCustomerDocuments(restaurantId: string, customerId: string): Promise<CustomerDocument[]>;
+  getCustomerDocument(id: string, restaurantId: string): Promise<CustomerDocument | undefined>;
+  createCustomerDocument(doc: InsertCustomerDocument): Promise<CustomerDocument>;
 
   // Quotations (MULTI-TENANT: requires restaurantId for all operations)
   getQuotations(restaurantId: string): Promise<Quotation[]>;
@@ -5479,6 +5489,137 @@ export class DatabaseStorage implements IStorage {
     return updated;
   }
 
+  // Decision center for service projects -----------------------------------
+
+  async approveServiceProject(
+    id: string,
+    restaurantId: string,
+    approvedBy: string,
+  ): Promise<{ project: ServiceProject; customer: Customer } | undefined> {
+    return await db.transaction(async (tx) => {
+      const [project] = await tx.select().from(serviceProjects)
+        .where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)));
+      if (!project) return undefined;
+
+      // Find or create a customer by phone (preferred) or name within tenant.
+      let customer: Customer | undefined;
+      const phone = (project.clientPhone || "").trim();
+      if (phone) {
+        const [existing] = await tx.select().from(customers)
+          .where(and(eq(customers.restaurantId, restaurantId), eq(customers.phone, phone)));
+        if (existing) customer = existing;
+      }
+      if (!customer) {
+        const [existingByName] = await tx.select().from(customers)
+          .where(and(eq(customers.restaurantId, restaurantId), eq(customers.name, project.clientName)));
+        if (existingByName) customer = existingByName;
+      }
+      if (!customer) {
+        const [created] = await tx.insert(customers).values({
+          restaurantId,
+          name: project.clientName,
+          phone: phone || "-",
+        }).returning();
+        customer = created;
+      }
+
+      // Atomic transition: only flip to "approved" if currently not approved.
+      // This makes concurrent approve calls idempotent — the second one is a no-op.
+      const [updated] = await tx.update(serviceProjects)
+        .set({
+          approvalStatus: "approved",
+          approvedAt: new Date(),
+          approvedBy,
+          declineReason: null,
+          customerId: customer.id,
+        })
+        .where(and(
+          eq(serviceProjects.id, id),
+          eq(serviceProjects.restaurantId, restaurantId),
+          ne(serviceProjects.approvalStatus, "approved"),
+        ))
+        .returning();
+
+      if (!updated) {
+        // Already approved by a concurrent request — return current state.
+        const [current] = await tx.select().from(serviceProjects)
+          .where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)));
+        return { project: current, customer };
+      }
+
+      return { project: updated, customer };
+    });
+  }
+
+  async declineServiceProject(
+    id: string,
+    restaurantId: string,
+    reason: string,
+  ): Promise<ServiceProject | undefined> {
+    const [updated] = await db.update(serviceProjects)
+      .set({
+        approvalStatus: "declined",
+        declineReason: reason,
+        lifecycleStatus: "not_started",
+      })
+      .where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)))
+      .returning();
+    return updated;
+  }
+
+  async setServiceProjectLifecycle(
+    id: string,
+    restaurantId: string,
+    to: "in_progress" | "finished",
+  ): Promise<ServiceProject | undefined> {
+    const [project] = await db.select().from(serviceProjects)
+      .where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)));
+    if (!project) return undefined;
+    if (project.approvalStatus !== "approved") {
+      throw new Error("Project must be approved before changing lifecycle status");
+    }
+    // Enforce ordering: not_started -> in_progress -> finished. No skipping or reversing.
+    const current = project.lifecycleStatus || "not_started";
+    const allowed =
+      (current === "not_started" && to === "in_progress") ||
+      (current === "in_progress" && to === "finished");
+    if (!allowed) {
+      throw new Error(`Invalid lifecycle transition: ${current} → ${to}`);
+    }
+    const [updated] = await db.update(serviceProjects)
+      .set({
+        lifecycleStatus: to,
+        // Keep legacy status field roughly in sync for any old consumers.
+        status: to === "finished" ? "completed" : "in_progress",
+      })
+      .where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)))
+      .returning();
+    return updated;
+  }
+
+  async getCustomerDocuments(restaurantId: string, customerId: string): Promise<CustomerDocument[]> {
+    return await db.select().from(customerDocuments)
+      .where(and(eq(customerDocuments.restaurantId, restaurantId), eq(customerDocuments.customerId, customerId)))
+      .orderBy(desc(customerDocuments.createdAt));
+  }
+
+  async getCustomerDocument(id: string, restaurantId: string): Promise<CustomerDocument | undefined> {
+    const [doc] = await db.select().from(customerDocuments)
+      .where(and(eq(customerDocuments.id, id), eq(customerDocuments.restaurantId, restaurantId)));
+    return doc;
+  }
+
+  async createCustomerDocument(doc: InsertCustomerDocument): Promise<CustomerDocument> {
+    const [created] = await db.insert(customerDocuments).values(doc).returning();
+    return created;
+  }
+
+  async getServiceProjectsForCustomer(restaurantId: string, customerId: string): Promise<ServiceProject[]> {
+    return await db.select().from(serviceProjects)
+      .where(and(eq(serviceProjects.restaurantId, restaurantId), eq(serviceProjects.customerId, customerId)))
+      .orderBy(desc(serviceProjects.createdAt));
+  }
+
   async deleteServiceProject(id: string, restaurantId: string): Promise<boolean> {
     return await db.transaction(async (tx) => {
       // Clean up child rows first to avoid FK violations. All scoped by
@@ -6593,7 +6734,35 @@ export const storage = new DatabaseStorage();
       }
     }
 
-    console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings');
+    // Decision center + customer link columns for service_projects (Task #26)
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS approval_status TEXT NOT NULL DEFAULT 'pending'`);
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS lifecycle_status TEXT NOT NULL DEFAULT 'not_started'`);
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP`);
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS approved_by VARCHAR(255)`);
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS decline_reason TEXT`);
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS customer_id VARCHAR(255)`);
+    console.log('[Migration] service_projects decision-center columns verified/added: approval_status, lifecycle_status, approved_at, approved_by, decline_reason, customer_id');
+
+    // customer_documents: stores PDFs (and other files) attached to a customer
+    // record. Used by the project Decision Center when approving a project.
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS customer_documents (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        customer_id VARCHAR(255) NOT NULL,
+        project_id VARCHAR(255),
+        kind TEXT NOT NULL DEFAULT 'other',
+        file_name TEXT NOT NULL,
+        mime_type TEXT NOT NULL DEFAULT 'application/pdf',
+        content_base64 TEXT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_customer_documents_customer ON customer_documents (restaurant_id, customer_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_customer_documents_project ON customer_documents (restaurant_id, project_id)`);
+    console.log('[Migration] Table verified/created: customer_documents');
+
+    console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings, customer_documents');
 
     // product_items: add selling_price column for per-item selling price
     await pool.query(`

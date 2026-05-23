@@ -15798,11 +15798,17 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/service-projects", requireAuth, async (req, res) => {
+  app.post("/api/service-projects", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
       const data = { ...req.body, restaurantId };
+      // Decision Center fields are managed exclusively by the dedicated endpoints.
+      delete (data as any).approvalStatus;
+      delete (data as any).lifecycleStatus;
+      delete (data as any).approvedAt;
+      delete (data as any).approvedBy;
+      delete (data as any).declineReason;
+      delete (data as any).customerId;
       if (data.startDate) data.startDate = new Date(data.startDate);
       if (data.endDate) data.endDate = new Date(data.endDate);
       const project = await storage.createServiceProject(data);
@@ -15812,11 +15818,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/service-projects/:id", requireAuth, async (req, res) => {
+  app.patch("/api/service-projects/:id", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
       const data = { ...req.body };
+      // Decision Center fields cannot be mutated via the generic PATCH — use
+      // /approve, /decline, /lifecycle instead.
+      delete (data as any).approvalStatus;
+      delete (data as any).lifecycleStatus;
+      delete (data as any).approvedAt;
+      delete (data as any).approvedBy;
+      delete (data as any).declineReason;
+      delete (data as any).customerId;
       if (data.startDate) data.startDate = new Date(data.startDate);
       if (data.endDate) data.endDate = new Date(data.endDate);
       const project = await storage.updateServiceProject(req.params.id, restaurantId, data);
@@ -15827,15 +15840,127 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/service-projects/:id", requireAuth, async (req, res) => {
+  app.delete("/api/service-projects/:id", requireAuth, requireRestaurant, requireAction('orders', 'delete'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
       const deleted = await storage.deleteServiceProject(req.params.id, restaurantId);
       if (!deleted) return res.status(404).json({ message: "Project not found" });
       res.json({ success: true });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== PROJECT DECISION CENTER ====================
+  // Approve: marks project approved, links/creates Customer, generates dossier
+  // PDF and attaches it to that customer.
+  app.post("/api/service-projects/:id/approve", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const userId = req.session.user!.id;
+      const lang = req.body?.lang === 'ar' ? 'ar' : 'en';
+
+      const existing = await storage.getServiceProject(req.params.id, restaurantId);
+      if (!existing) return res.status(404).json({ message: "Project not found" });
+      if (existing.approvalStatus === 'approved') {
+        return res.status(400).json({ message: "Project already approved" });
+      }
+
+      const approved = await storage.approveServiceProject(req.params.id, restaurantId, userId);
+      if (!approved) return res.status(404).json({ message: "Project not found" });
+
+      // Best-effort: generate dossier PDF and attach to the customer. We do not
+      // fail the approval if PDF generation fails (puppeteer/chromium issues).
+      let document = null;
+      try {
+        const pdf = await buildProjectDossierPdf(req.params.id, restaurantId, lang);
+        if (pdf) {
+          document = await storage.createCustomerDocument({
+            restaurantId,
+            customerId: approved.customer.id,
+            projectId: req.params.id,
+            kind: 'dossier',
+            fileName: `project-dossier-${approved.project.projectNumber}.pdf`,
+            mimeType: 'application/pdf',
+            contentBase64: pdf.buffer.toString('base64'),
+          });
+        }
+      } catch (pdfErr: any) {
+        console.error("[Approve] PDF generation failed:", pdfErr?.message);
+      }
+
+      res.json({ project: approved.project, customer: approved.customer, document });
+    } catch (error: any) {
+      console.error("Approve project error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/service-projects/:id/decline", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const reason = String(req.body?.reason || '').trim();
+      if (!reason) return res.status(400).json({ message: "Reason is required" });
+      const project = await storage.declineServiceProject(req.params.id, restaurantId, reason);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      res.json(project);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/service-projects/:id/lifecycle", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const to = req.body?.to;
+      if (to !== 'in_progress' && to !== 'finished') {
+        return res.status(400).json({ message: "Invalid lifecycle target" });
+      }
+      const project = await storage.setServiceProjectLifecycle(req.params.id, restaurantId, to);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      res.json(project);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
+  });
+
+  // Customer-side reads for Decision Center linkage
+  app.get("/api/customers/:id/projects", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const customer = await storage.getCustomer(req.params.id, restaurantId);
+      if (!customer) return res.status(404).json({ error: "Customer not found" });
+      const projects = await storage.getServiceProjectsForCustomer(restaurantId, req.params.id);
+      res.json(projects);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/customers/:id/documents", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const customer = await storage.getCustomer(req.params.id, restaurantId);
+      if (!customer) return res.status(404).json({ error: "Customer not found" });
+      const docs = await storage.getCustomerDocuments(restaurantId, req.params.id);
+      // Don't ship the full base64 content in the list response.
+      res.json(docs.map(d => ({ id: d.id, customerId: d.customerId, projectId: d.projectId, kind: d.kind, fileName: d.fileName, mimeType: d.mimeType, createdAt: d.createdAt })));
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
+  app.get("/api/customer-documents/:id/download", requireAuth, requireRestaurant, requirePermission('customers'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const doc = await storage.getCustomerDocument(req.params.id, restaurantId);
+      if (!doc) return res.status(404).json({ error: "Document not found" });
+      const buf = Buffer.from(doc.contentBase64, 'base64');
+      res.setHeader('Content-Type', doc.mimeType);
+      res.setHeader('Content-Disposition', `attachment; filename="${doc.fileName.replace(/"/g, '')}"`);
+      res.send(buf);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
     }
   });
 
@@ -16580,33 +16705,34 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/service-projects/:id/dossier-pdf", requireAuth, requireRestaurant, async (req, res) => {
-    try {
-      const restaurantId = req.session.user!.restaurantId!;
-      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+  // Shared helper: builds the project Dossier PDF as a Buffer so both the
+  // download route and the Decision Center approve flow can reuse it.
+  async function buildProjectDossierPdf(
+    projectId: string,
+    restaurantId: string,
+    lang: 'en' | 'ar',
+  ): Promise<{ project: any; buffer: Buffer } | null> {
+    const isAr = lang === 'ar';
+    const dir = isAr ? 'rtl' : 'ltr';
+    const align = isAr ? 'right' : 'left';
 
-      const lang = req.query.lang === 'ar' ? 'ar' : 'en';
-      const isAr = lang === 'ar';
-      const dir = isAr ? 'rtl' : 'ltr';
-      const align = isAr ? 'right' : 'left';
+    const project = await storage.getServiceProject(projectId, restaurantId);
+    if (!project) return null;
 
-      const project = await storage.getServiceProject(req.params.id, restaurantId);
-      if (!project) return res.status(404).json({ message: "Project not found" });
-      
-      const companyInfo = await storage.getCompanySettings(restaurantId);
-      const services = await storage.getProjectServices(restaurantId, project.id);
-      const bills = await storage.getProjectBills(restaurantId, project.id);
-      const procurements = await storage.getProjectProcurements(restaurantId, project.id);
-      const tasks = await storage.getProjectTasks(restaurantId, project.id);
-      const schedules = await storage.getPaymentSchedules(restaurantId, project.id);
-      
-      const totalServices = services.reduce((s, svc) => s + parseFloat(svc.totalPrice || '0'), 0);
-      const totalBills = bills.reduce((s, b) => s + parseFloat(b.amount || '0'), 0);
-      const totalProcurements = procurements.reduce((s, p) => s + parseFloat(p.totalPrice || '0'), 0);
-      const totalPaid = schedules.filter(s => s.status === 'paid').reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
-      const totalScheduled = schedules.reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
+    const companyInfo = await storage.getCompanySettings(restaurantId);
+    const services = await storage.getProjectServices(restaurantId, project.id);
+    const bills = await storage.getProjectBills(restaurantId, project.id);
+    const procurements = await storage.getProjectProcurements(restaurantId, project.id);
+    const tasks = await storage.getProjectTasks(restaurantId, project.id);
+    const schedules = await storage.getPaymentSchedules(restaurantId, project.id);
 
-      const serviceRows = services.map((svc, idx) => `
+    const totalServices = services.reduce((s, svc) => s + parseFloat(svc.totalPrice || '0'), 0);
+    const totalBills = bills.reduce((s, b) => s + parseFloat(b.amount || '0'), 0);
+    const totalProcurements = procurements.reduce((s, p) => s + parseFloat(p.totalPrice || '0'), 0);
+    const totalPaid = schedules.filter(s => s.status === 'paid').reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
+    const totalScheduled = schedules.reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
+
+    const serviceRows = services.map((svc, idx) => `
         <tr>
           <td>${idx + 1}</td>
           <td>${escapeHtml(svc.name)}</td>
@@ -16614,20 +16740,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           <td style="text-align:right">${parseFloat(svc.unitPrice || '0').toFixed(2)}</td>
           <td style="text-align:center">${svc.quantity}</td>
           <td style="text-align:right">${parseFloat(svc.totalPrice || '0').toFixed(2)} SAR</td>
-        </tr>
-      `).join('');
-
-      const billRows = bills.map((b, idx) => `
+        </tr>`).join('');
+    const billRows = bills.map((b, idx) => `
         <tr>
           <td>${idx + 1}</td>
           <td>${escapeHtml(b.description)}</td>
           <td>${escapeHtml(b.vendor || '-')}</td>
           <td style="text-align:right">${parseFloat(b.amount || '0').toFixed(2)} SAR</td>
           <td>${escapeHtml(b.status)}</td>
-        </tr>
-      `).join('');
-
-      const procurementRows = procurements.map((p, idx) => `
+        </tr>`).join('');
+    const procurementRows = procurements.map((p, idx) => `
         <tr>
           <td>${idx + 1}</td>
           <td>${escapeHtml(p.itemName)}</td>
@@ -16635,30 +16757,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           <td style="text-align:center">${p.quantity}</td>
           <td style="text-align:right">${parseFloat(p.totalPrice || '0').toFixed(2)} SAR</td>
           <td>${escapeHtml(p.status)}</td>
-        </tr>
-      `).join('');
-
-      const taskRows = tasks.map((t, idx) => `
+        </tr>`).join('');
+    const taskRows = tasks.map((t, idx) => `
         <tr style="${t.isCritical ? 'background:#fef2f2;' : ''}">
           <td>${idx + 1}</td>
           <td>${escapeHtml(t.name)}${t.isCritical ? ' ⚠' : ''}</td>
           <td style="text-align:center">${t.duration} days</td>
           <td>${escapeHtml(t.status)}</td>
           <td style="text-align:center">${t.slack ?? '-'}</td>
-        </tr>
-      `).join('');
-
-      const scheduleRows = schedules.map((s, idx) => `
+        </tr>`).join('');
+    const scheduleRows = schedules.map((s, idx) => `
         <tr>
           <td>${idx + 1}</td>
           <td>${escapeHtml(s.milestoneName)}</td>
           <td style="text-align:right">${parseFloat(s.amount || '0').toFixed(2)} SAR</td>
           <td>${s.dueDate ? new Date(s.dueDate).toLocaleDateString('en-GB') : '-'}</td>
           <td>${escapeHtml(s.status)}</td>
-        </tr>
-      `).join('');
+        </tr>`).join('');
 
-      const htmlContent = `
+    const htmlContent = `
         <!DOCTYPE html>
         <html lang="${lang}" dir="${dir}">
         <head>
@@ -16798,33 +16915,38 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             <p>Generated on ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</p>
           </div>
         </body>
-        </html>
-      `;
+        </html>`;
 
-      const puppeteer = await import("puppeteer");
-      const { execSync } = await import("child_process");
-      const { existsSync } = await import("fs");
-      
-      let chromiumPath: string | undefined = undefined;
-      try {
-        chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
-        if (!chromiumPath || !existsSync(chromiumPath)) chromiumPath = undefined;
-      } catch (e) {}
-      
-      const browser = await puppeteer.default.launch({
-        headless: true,
-        executablePath: chromiumPath,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'],
-      });
-      const page = await browser.newPage();
-      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-      const pdfData = await page.pdf({ format: 'A4', margin: { top: '15mm', right: '10mm', bottom: '15mm', left: '10mm' }, printBackground: true });
-      await browser.close();
-      const pdfBuffer = Buffer.from(pdfData);
+    const puppeteer = await import("puppeteer");
+    const { execSync } = await import("child_process");
+    const { existsSync } = await import("fs");
+    let chromiumPath: string | undefined = undefined;
+    try {
+      chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+      if (!chromiumPath || !existsSync(chromiumPath)) chromiumPath = undefined;
+    } catch (e) {}
+    const browser = await puppeteer.default.launch({
+      headless: true,
+      executablePath: chromiumPath,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'],
+    });
+    const page = await browser.newPage();
+    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+    const pdfData = await page.pdf({ format: 'A4', margin: { top: '15mm', right: '10mm', bottom: '15mm', left: '10mm' }, printBackground: true });
+    await browser.close();
+    return { project, buffer: Buffer.from(pdfData) };
+  }
 
+  app.get("/api/service-projects/:id/dossier-pdf", requireAuth, requireRestaurant, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const lang = req.query.lang === 'ar' ? 'ar' : 'en';
+      const result = await buildProjectDossierPdf(req.params.id, restaurantId, lang);
+      if (!result) return res.status(404).json({ message: "Project not found" });
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="project-dossier-${project.projectNumber}.pdf"`);
-      res.send(pdfBuffer);
+      res.setHeader('Content-Disposition', `attachment; filename="project-dossier-${result.project.projectNumber}.pdf"`);
+      res.send(result.buffer);
     } catch (error: any) {
       console.error("Project dossier PDF error:", error);
       res.status(500).json({ message: error.message });
