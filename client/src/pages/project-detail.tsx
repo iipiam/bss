@@ -184,7 +184,7 @@ export default function ProjectDetail() {
   const [declineOpen, setDeclineOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
   const { canEdit } = usePermissions();
-  const canDecide = canEdit('orders');
+  const canDecide = canEdit('projects');
 
   const { data: project, isLoading } = useQuery<ServiceProject>({
     queryKey: ["/api/service-projects", projectId],

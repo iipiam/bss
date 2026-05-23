@@ -134,8 +134,8 @@ export function AppSidebar() {
     { title: t.propertyListings, url: "/menu", icon: Home, testId: "property-listings", gradient: "from-emerald-500 to-teal-500", permission: 'menu', businessTypes: ['real_estate'] },
     { title: t.clientInquiries, url: "/orders", icon: ClipboardList, testId: "client-inquiries", gradient: "from-blue-500 to-cyan-500", permission: 'orders', businessTypes: ['real_estate'] },
     { title: t.contracts, url: "/contracts", icon: Handshake, testId: "contracts", gradient: "from-orange-500 to-red-500", permission: 'orders', businessTypes: ['real_estate'] },
-    { title: t.projects || "Projects", url: "/service-projects", icon: Briefcase, testId: "service-projects", gradient: "from-blue-500 to-indigo-500", permission: 'orders', businessTypes: ['design_services', 'installation_services', 'it_services'] },
-    { title: t.quotations || "Quotations", url: "/quotations", icon: FileSpreadsheet, testId: "quotations", gradient: "from-emerald-500 to-teal-500", permission: 'orders', businessTypes: ['design_services', 'installation_services', 'it_services'] },
+    { title: t.projects || "Projects", url: "/service-projects", icon: Briefcase, testId: "service-projects", gradient: "from-blue-500 to-indigo-500", permission: 'projects', businessTypes: ['design_services', 'installation_services', 'it_services'] },
+    { title: t.quotations || "Quotations", url: "/quotations", icon: FileSpreadsheet, testId: "quotations", gradient: "from-emerald-500 to-teal-500", permission: 'quotations', businessTypes: ['design_services', 'installation_services', 'it_services'] },
   ];
 
   const allManagement: MenuItem[] = [

@@ -61,9 +61,7 @@ function getPermissionLabels(t: any, businessType: BusinessType): Record<Permiss
 
   const ordersLabel = isRealEstate
     ? (t.clientInquiries || "Client Inquiries")
-    : isServiceBusiness
-      ? `${t.projects || "Projects"} / ${t.quotations || "Quotations"}`
-      : (t.orders || "Orders");
+    : (t.orders || "Orders");
 
   const menuLabel = isRealEstate
     ? (t.propertyListings || "Property Listings")
@@ -123,6 +121,8 @@ function getPermissionLabels(t: any, businessType: BusinessType): Record<Permiss
     marketing: t.marketing || "Marketing",
     mealSubscriptions: t.mealSubscriptions || "Meal Subscriptions",
     catering: (t as any).cateringContracts || "Catering Contracts",
+    projects: t.projects || "Projects",
+    quotations: t.quotations || "Quotations",
   };
 }
 
@@ -366,7 +366,20 @@ export default function Employees() {
       email: user.email || "",
       phone: user.phone || "",
       role: user.role,
-      permissions: { ...DEFAULT_EMPLOYEE_PERMISSIONS, ...user.permissions },
+      permissions: (() => {
+        // Backwards-compat: for legacy records saved before the
+        // projects/quotations split, seed the new keys from the legacy
+        // 'orders' grant so existing employees keep their access until the
+        // owner edits them. Once the owner saves, explicit values are
+        // persisted and the fallback no longer applies.
+        const userPerms: any = user.permissions || {};
+        const seeded: any = { ...userPerms };
+        if (seeded.orders !== undefined) {
+          if (seeded.projects === undefined) seeded.projects = seeded.orders;
+          if (seeded.quotations === undefined) seeded.quotations = seeded.orders;
+        }
+        return { ...DEFAULT_EMPLOYEE_PERMISSIONS, ...seeded };
+      })(),
       branchId: user.branchId || null,
       active: user.active,
       employeeNumber: user.employeeNumber || "",

@@ -7,6 +7,8 @@ export type Permission =
   | 'procurement'
   | 'pos'
   | 'orders'
+  | 'projects'
+  | 'quotations'
   | 'kitchen'
   | 'sales'
   | 'reports'
@@ -32,6 +34,8 @@ export const ALL_PERMISSIONS: Permission[] = [
   'procurement',
   'pos',
   'orders',
+  'projects',
+  'quotations',
   'kitchen',
   'sales',
   'reports',
@@ -118,6 +122,8 @@ export const ADMIN_PERMISSIONS: PermissionSet = {
   procurement: true,
   pos: true,
   orders: true,
+  projects: true,
+  quotations: true,
   kitchen: true,
   sales: true,
   reports: true,
@@ -144,6 +150,8 @@ export const DEFAULT_EMPLOYEE_PERMISSIONS: PermissionSet = {
   procurement: false,
   pos: true,
   orders: true,
+  projects: false,
+  quotations: false,
   kitchen: true,
   sales: false,
   reports: false,
@@ -199,19 +207,19 @@ export const BUSINESS_TYPE_PERMISSIONS: Record<BusinessType, Permission[]> = {
     'settings', 'workingHours',
   ],
   design_services: [
-    'dashboard', 'orders', 'menu', 'customers', 'reports', 'sales', 'bills',
-    'licenses', 'branches', 'marketing', 'activityLog', 'users', 'settings',
-    'workingHours',
+    'dashboard', 'projects', 'quotations', 'menu', 'customers', 'reports',
+    'sales', 'bills', 'licenses', 'branches', 'marketing', 'activityLog',
+    'users', 'settings', 'workingHours',
   ],
   installation_services: [
-    'dashboard', 'orders', 'menu', 'customers', 'reports', 'sales', 'bills',
-    'licenses', 'branches', 'marketing', 'activityLog', 'users', 'settings',
-    'workingHours',
+    'dashboard', 'projects', 'quotations', 'menu', 'customers', 'reports',
+    'sales', 'bills', 'licenses', 'branches', 'marketing', 'activityLog',
+    'users', 'settings', 'workingHours',
   ],
   it_services: [
-    'dashboard', 'orders', 'menu', 'customers', 'reports', 'sales', 'bills',
-    'licenses', 'branches', 'marketing', 'activityLog', 'users', 'settings',
-    'workingHours',
+    'dashboard', 'projects', 'quotations', 'menu', 'customers', 'reports',
+    'sales', 'bills', 'licenses', 'branches', 'marketing', 'activityLog',
+    'users', 'settings', 'workingHours',
   ],
 };
 
@@ -247,11 +255,28 @@ export const ROUTE_PERMISSIONS: Record<string, PermissionRequirement> = {
   '/api/chat': { mode: 'any', permissions: ['dashboard'] },
 };
 
+// Backwards-compat: the 'orders' permission used to control BOTH service
+// projects and quotations. For legacy records saved before the split (where
+// the new keys do not exist at all), fall back to the legacy 'orders'
+// grant. An explicit deny on 'projects'/'quotations' is ALWAYS respected —
+// owners must be able to revoke one half without the other.
+function resolvePermissionValue(
+  userPermissions: PermissionSet | undefined,
+  permission: Permission,
+): PermissionValue | undefined {
+  if (!userPermissions) return undefined;
+  const direct = userPermissions[permission];
+  if ((permission === 'projects' || permission === 'quotations') && direct === undefined) {
+    return userPermissions['orders'];
+  }
+  return direct;
+}
+
 // Check if user has permission to view a feature (backwards compatible)
 export function hasPermission(userPermissions: PermissionSet | undefined, userRole: string, permission: Permission): boolean {
   if (userRole === 'admin') return true;
   if (!userPermissions) return false;
-  const value = userPermissions[permission];
+  const value = resolvePermissionValue(userPermissions, permission);
   // Legacy boolean check
   if (value === true) return true;
   if (value === false || value === undefined) return false;
@@ -268,7 +293,7 @@ export function canPerformAction(
 ): boolean {
   if (userRole === 'admin') return true;
   if (!userPermissions) return false;
-  const value = userPermissions[permission];
+  const value = resolvePermissionValue(userPermissions, permission);
   return hasPermissionAction(value, action);
 }
 

@@ -15689,7 +15689,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/service-projects/:id/apply-product", requireAuth, requireRestaurant, async (req, res) => {
+  app.post("/api/service-projects/:id/apply-product", requireAuth, requireRestaurant, requireAction('projects', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const { productId } = req.body || {};
@@ -15701,7 +15701,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/service-projects/:id/items", requireAuth, requireRestaurant, async (req, res) => {
+  app.get("/api/service-projects/:id/items", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const [items, services] = await Promise.all([
@@ -15775,7 +15775,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // ==================== SERVICE PROJECTS ====================
-  app.get("/api/service-projects", requireAuth, async (req, res) => {
+  app.get("/api/service-projects", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -15786,7 +15786,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/service-projects/:id", requireAuth, async (req, res) => {
+  app.get("/api/service-projects/:id", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -15798,7 +15798,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/service-projects", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+  app.post("/api/service-projects", requireAuth, requireRestaurant, requireAction('projects', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = { ...req.body, restaurantId };
@@ -15818,7 +15818,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/service-projects/:id", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+  app.patch("/api/service-projects/:id", requireAuth, requireRestaurant, requireAction('projects', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const data = { ...req.body };
@@ -15840,7 +15840,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/service-projects/:id", requireAuth, requireRestaurant, requireAction('orders', 'delete'), async (req, res) => {
+  app.delete("/api/service-projects/:id", requireAuth, requireRestaurant, requireAction('projects', 'delete'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const deleted = await storage.deleteServiceProject(req.params.id, restaurantId);
@@ -15854,7 +15854,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // ==================== PROJECT DECISION CENTER ====================
   // Approve: marks project approved, links/creates Customer, generates dossier
   // PDF and attaches it to that customer.
-  app.post("/api/service-projects/:id/approve", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+  app.post("/api/service-projects/:id/approve", requireAuth, requireRestaurant, requireAction('projects', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const userId = req.session.user!.id;
@@ -15903,7 +15903,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/service-projects/:id/decline", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+  app.post("/api/service-projects/:id/decline", requireAuth, requireRestaurant, requireAction('projects', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const reason = String(req.body?.reason || '').trim();
@@ -15916,7 +15916,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/service-projects/:id/lifecycle", requireAuth, requireRestaurant, requireAction('orders', 'edit'), async (req, res) => {
+  app.post("/api/service-projects/:id/lifecycle", requireAuth, requireRestaurant, requireAction('projects', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       const to = req.body?.to;
@@ -15972,7 +15972,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // ==================== QUOTATIONS ====================
-  app.get("/api/quotations", requireAuth, async (req, res) => {
+  app.get("/api/quotations", requireAuth, requireRestaurant, requirePermission('quotations'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -15983,7 +15983,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/quotations/:id", requireAuth, async (req, res) => {
+  app.get("/api/quotations/:id", requireAuth, requireRestaurant, requirePermission('quotations'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -15995,7 +15995,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/quotations", requireAuth, async (req, res) => {
+  app.post("/api/quotations", requireAuth, requireRestaurant, requireAction('quotations', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16008,7 +16008,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/quotations/:id", requireAuth, async (req, res) => {
+  app.patch("/api/quotations/:id", requireAuth, requireRestaurant, requireAction('quotations', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16022,7 +16022,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/quotations/:id", requireAuth, async (req, res) => {
+  app.delete("/api/quotations/:id", requireAuth, requireRestaurant, requireAction('quotations', 'delete'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
