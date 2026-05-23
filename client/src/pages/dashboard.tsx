@@ -33,6 +33,8 @@ import {
   MapPin,
   UtensilsCrossed,
   FileText,
+  Home,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/queryClient";
@@ -404,13 +406,20 @@ export default function Dashboard() {
     businessType === 'installation_services' ||
     businessType === 'it_services';
 
-  // Widget visibility map per business type
+  // Widget visibility map per business type. Three buckets of widgets:
+  //   1) Order-driven (restaurant/factory)  – activeOrders, lowStock, peakHours, recentOrders
+  //   2) Real-estate                         – activeListings, pendingInquiries, recentInquiries
+  //   3) Service businesses                  – activeProjects, pendingQuotations, recentProjects
   const showActiveOrders = isRestaurant || isFactory;
   const showLowStock = isRestaurant || isFactory;
+  const showActiveListings = isRealEstate;
+  const showPendingInquiries = isRealEstate;
   const showActiveProjects = isServiceBusiness;
   const showPendingQuotations = isServiceBusiness;
   const showPeakHours = isRestaurant || isFactory;
-  const showRecentOrdersCard = isRestaurant || isFactory || isServiceBusiness;
+  const showRecentOrdersFeed = isRestaurant || isFactory;
+  const showRecentInquiriesFeed = isRealEstate;
+  const showRecentProjectsFeed = isServiceBusiness;
 
   const todaysSalesLabel = isRealEstate
     ? ((t as any).todaysCommissions || "Today's Commissions")
@@ -428,16 +437,18 @@ export default function Dashboard() {
     ? ((t as any).productionPeakHours || "Production Peak Hours")
     : undefined;
 
-  const recentOrdersLabel = isServiceBusiness
-    ? ((t as any).recentProjects || "Recent Projects")
-    : t.recentOrders;
+  const serviceKindLabel =
+    businessType === 'design_services' ? 'design'
+    : businessType === 'installation_services' ? 'installation'
+    : businessType === 'it_services' ? 'IT services'
+    : 'service';
 
   const overviewSubtitle = isRealEstate
     ? ((t as any).brokerageOverview || "Overview of your brokerage performance")
     : isFactory
       ? ((t as any).factoryOverview || "Overview of your factory performance")
       : isServiceBusiness
-        ? ((t as any).serviceOverview || "Overview of your service business performance")
+        ? ((t as any).serviceOverview || `Overview of your ${serviceKindLabel} business performance`)
         : (t.dashboardOverview || "Overview of your restaurant performance");
 
   // Real-time updates: Refresh dashboard data when sales/order/inventory/bills updates come in
@@ -483,6 +494,40 @@ export default function Dashboard() {
     queryKey: ["/api/analytics/sales"],
     staleTime: 0, // Ensure instant updates
   });
+
+  // Business-type-specific data sources for non-restaurant dashboards
+  const { data: serviceProjectsList = [] } = useQuery<any[]>({
+    queryKey: ["/api/service-projects"],
+    enabled: isServiceBusiness,
+    staleTime: 0,
+  });
+
+  const { data: quotationsList = [] } = useQuery<any[]>({
+    queryKey: ["/api/quotations"],
+    enabled: isServiceBusiness,
+    staleTime: 0,
+  });
+
+  const { data: propertyListings = [] } = useQuery<any[]>({
+    queryKey: ["/api/menu"],
+    enabled: isRealEstate,
+    staleTime: 0,
+  });
+
+  // Derived counts (only meaningful when their query is enabled)
+  const activeProjectsCount = serviceProjectsList.filter((p: any) =>
+    p?.approvalStatus === 'approved' && p?.lifecycleStatus !== 'finished'
+  ).length;
+  const pendingQuotationsCount = quotationsList.filter((q: any) =>
+    q?.status === 'draft' || q?.status === 'sent'
+  ).length;
+  const activeListingsCount = propertyListings.filter((m: any) => m?.available !== false).length;
+  const pendingInquiriesCount = dashboardData?.activeOrders || 0;
+
+  // Recent feeds: each branch uses its own source
+  const recentProjects = [...serviceProjectsList]
+    .sort((a: any, b: any) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime())
+    .slice(0, 5);
 
   const { toast } = useToast();
 
@@ -722,25 +767,39 @@ export default function Dashboard() {
             icon={ShoppingCart}
           />
         )}
-        {showActiveProjects && (
-          <MetricCard
-            title={t.activeProjects}
-            value={dashboardData?.activeOrders || 0}
-            icon={ShoppingCart}
-          />
-        )}
-        {showPendingQuotations && (
-          <MetricCard
-            title={t.pendingQuotations}
-            value={dashboardData?.lowStockItems || 0}
-            icon={FileText}
-          />
-        )}
         {showLowStock && (
           <MetricCard
             title={t.lowStockItems}
             value={dashboardData?.lowStockItems || 0}
             icon={Package}
+          />
+        )}
+        {showActiveListings && (
+          <MetricCard
+            title={(t as any).activeListings || "Active Listings"}
+            value={activeListingsCount}
+            icon={Home}
+          />
+        )}
+        {showPendingInquiries && (
+          <MetricCard
+            title={(t as any).pendingInquiries || "Pending Inquiries"}
+            value={pendingInquiriesCount}
+            icon={ShoppingCart}
+          />
+        )}
+        {showActiveProjects && (
+          <MetricCard
+            title={t.activeProjects}
+            value={activeProjectsCount}
+            icon={Briefcase}
+          />
+        )}
+        {showPendingQuotations && (
+          <MetricCard
+            title={t.pendingQuotations}
+            value={pendingQuotationsCount}
+            icon={FileText}
           />
         )}
       </div>
@@ -1040,11 +1099,11 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        {showRecentOrdersCard && (
+        {showRecentOrdersFeed && (
           <Card>
             <CardHeader className={layout.cardHeaderPadding}>
               <CardTitle className={layout.isMobile ? "text-base" : ""}>
-                {recentOrdersLabel}
+                {t.recentOrders}
               </CardTitle>
             </CardHeader>
             <CardContent className={layout.cardPadding}>
@@ -1088,6 +1147,103 @@ export default function Dashboard() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {showRecentInquiriesFeed && (
+          <Card>
+            <CardHeader className={layout.cardHeaderPadding}>
+              <CardTitle className={layout.isMobile ? "text-base" : ""}>
+                {(t as any).recentInquiries || "Recent Inquiries"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className={layout.cardPadding}>
+              <div className={layout.isMobile ? "space-y-2" : "space-y-4"}>
+                {dashboardData?.recentOrders?.map((order) => (
+                  <div
+                    key={order.id}
+                    className={`flex items-center justify-between hover-elevate ${layout.isMobile ? "p-2" : "p-3"} rounded-md`}
+                    data-testid={`inquiry-${order.id}`}
+                  >
+                    <div className="flex-1">
+                      <p className={`font-mono font-semibold ${layout.isMobile ? "text-sm" : ""}`}>
+                        #{order.orderNumber}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(order.createdAt).toLocaleTimeString()}
+                      </p>
+                    </div>
+                    <div className={`text-right ${layout.isMobile ? "mr-2" : "mr-4"}`}>
+                      <p className={`text-xs ${
+                        order.status === "Completed" || order.status === "Delivered"
+                          ? "text-green-600"
+                          : order.status === "Ready"
+                            ? "text-blue-600"
+                            : "text-orange-600"
+                      }`}>
+                        {order.status}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {(!dashboardData?.recentOrders || dashboardData.recentOrders.length === 0) && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    {(t as any).noRecentInquiries || "No recent inquiries"}
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {showRecentProjectsFeed && (
+          <Card>
+            <CardHeader className={layout.cardHeaderPadding}>
+              <CardTitle className={layout.isMobile ? "text-base" : ""}>
+                {(t as any).recentProjects || "Recent Projects"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className={layout.cardPadding}>
+              <div className={layout.isMobile ? "space-y-2" : "space-y-4"}>
+                {recentProjects.map((project: any) => (
+                  <div
+                    key={project.id}
+                    className={`flex items-center justify-between hover-elevate ${layout.isMobile ? "p-2" : "p-3"} rounded-md`}
+                    data-testid={`project-${project.id}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className={`font-mono font-semibold truncate ${layout.isMobile ? "text-sm" : ""}`}>
+                        #{project.projectNumber}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {project.name} • {project.clientName}
+                      </p>
+                    </div>
+                    <div className={`text-right ${layout.isMobile ? "mr-2" : "mr-4"}`}>
+                      {project.estimatedBudget && (
+                        <p className={`font-mono font-semibold ${layout.isMobile ? "text-sm" : ""}`}>
+                          {parseFloat(project.estimatedBudget).toFixed(2)} SAR
+                        </p>
+                      )}
+                      <p className={`text-xs ${
+                        project.lifecycleStatus === "finished"
+                          ? "text-green-600"
+                          : project.lifecycleStatus === "in_progress"
+                            ? "text-blue-600"
+                            : "text-orange-600"
+                      }`}>
+                        {project.lifecycleStatus}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                {recentProjects.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    {(t as any).noRecentProjects || "No recent projects"}
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
