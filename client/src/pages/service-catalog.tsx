@@ -54,6 +54,7 @@ import {
   Package,
   X,
   ListChecks,
+  TrendingUp,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -154,6 +155,8 @@ export default function ServiceCatalog() {
   const [productDialogOpen, setProductDialogOpen] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<ServiceProduct | null>(null);
+  const [reportProductId, setReportProductId] = useState<string | null>(null);
+  const [reportSellingPrice, setReportSellingPrice] = useState<string>("");
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [productCategory, setProductCategory] = useState("");
@@ -301,6 +304,41 @@ export default function ServiceCatalog() {
 
   const productTotalCost = productItems.reduce((sum, i) => sum + parseFloat(i.cost || "0"), 0);
   const productTotalPercentage = productItems.reduce((sum, i) => sum + parseFloat(i.percentage || "0"), 0);
+  const productServicesCost = productServices.reduce((sum, s) => {
+    const qty = parseFloat(s.quantity || "1") || 1;
+    const unit = parseFloat(s.unitPrice || "0") || 0;
+    return sum + qty * unit;
+  }, 0);
+  const productGrandTotalCost = productTotalCost + productServicesCost;
+
+  const { data: reportProduct } = useQuery<ServiceProductDetail>({
+    queryKey: ["/api/service-products", reportProductId],
+    enabled: !!reportProductId,
+  });
+
+  const reportTotals = (() => {
+    if (!reportProduct) return { itemsCost: 0, servicesCost: 0, total: 0 };
+    const itemsCost = (reportProduct.items || []).reduce(
+      (s, it) => s + (parseFloat(it.cost || "0") || 0),
+      0,
+    );
+    const servicesCost = (reportProduct.services || []).reduce((s, sv) => {
+      const qty = parseFloat(sv.quantity || "1") || 1;
+      const unit = parseFloat(sv.unitPrice || "0") || 0;
+      return s + qty * unit;
+    }, 0);
+    return { itemsCost, servicesCost, total: itemsCost + servicesCost };
+  })();
+
+  const reportSellingPriceNum = parseFloat(reportSellingPrice || "0") || 0;
+  const reportProfit = reportSellingPriceNum - reportTotals.total;
+  const reportMargin = reportSellingPriceNum > 0 ? (reportProfit / reportSellingPriceNum) * 100 : 0;
+  const reportMarkup = reportTotals.total > 0 ? (reportProfit / reportTotals.total) * 100 : 0;
+
+  const openReport = (id: string) => {
+    setReportProductId(id);
+    setReportSellingPrice("");
+  };
 
   const createServiceMutation = useMutation({
     mutationFn: async (data: ServiceFormValues) => {
@@ -925,6 +963,14 @@ export default function ServiceCatalog() {
                     <div className="flex gap-1 shrink-0">
                       <Tooltip>
                         <TooltipTrigger asChild>
+                          <Button variant="ghost" size="icon" onClick={() => openReport(p.id)} data-testid={`button-report-product-${p.id}`}>
+                            <TrendingUp className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t.costProfitReport || "Cost & Profit Report"}</TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
                           <Button variant="ghost" size="icon" onClick={() => handleEditProduct(p)} data-testid={`button-edit-product-${p.id}`}>
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -951,6 +997,17 @@ export default function ServiceCatalog() {
                     {p.description && (
                       <p className="text-sm text-muted-foreground line-clamp-2">{p.description}</p>
                     )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={() => openReport(p.id)}
+                      data-testid={`button-open-report-${p.id}`}
+                    >
+                      <TrendingUp className="h-4 w-4 me-2" />
+                      {t.costProfitReport || "Cost & Profit Report"}
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
@@ -1014,6 +1071,22 @@ export default function ServiceCatalog() {
                 <div className="flex items-center justify-end gap-4 text-sm pt-2 border-t">
                   <span className="text-muted-foreground">{t.totalItemsCost || "Total Cost"}: <span className="font-semibold text-foreground" data-testid="text-total-items-cost">{productTotalCost.toFixed(2)} SAR</span></span>
                   <span className="text-muted-foreground">{t.totalPercentage || "Total %"}: <span className={`font-semibold ${productTotalPercentage !== 100 ? "text-destructive" : "text-foreground"}`} data-testid="text-total-percentage">{productTotalPercentage.toFixed(2)}%</span></span>
+                </div>
+              )}
+              {(productItems.length > 0 || productServices.length > 0) && (
+                <div className="rounded-md bg-muted/50 p-3 mt-2 space-y-1 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{t.itemsCost || "Items cost"}</span>
+                    <span className="font-medium" data-testid="text-product-items-cost">{productTotalCost.toFixed(2)} SAR</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{t.servicesCost || "Services cost"}</span>
+                    <span className="font-medium" data-testid="text-product-services-cost">{productServicesCost.toFixed(2)} SAR</span>
+                  </div>
+                  <div className="flex items-center justify-between border-t pt-1">
+                    <span className="font-semibold">{t.totalProductCost || "Total product cost"}</span>
+                    <span className="font-bold text-base" data-testid="text-product-grand-total">{productGrandTotalCost.toFixed(2)} SAR</span>
+                  </div>
                 </div>
               )}
             </div>
@@ -1168,6 +1241,122 @@ export default function ServiceCatalog() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={!!reportProductId} onOpenChange={(o) => { if (!o) { setReportProductId(null); setReportSellingPrice(""); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              {t.costProfitReport || "Cost & Profit Report"}
+              {reportProduct && <span className="text-muted-foreground font-normal">— {reportProduct.name}</span>}
+            </DialogTitle>
+            <DialogDescription>{t.costProfitReportDesc || "Breakdown of product costs and profit projection."}</DialogDescription>
+          </DialogHeader>
+
+          {!reportProduct ? (
+            <div className="text-sm text-muted-foreground p-4">{t.loading || "Loading..."}</div>
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="text-base font-semibold flex items-center gap-2"><Layers className="h-4 w-4" /> {t.productItems || "Items"}</Label>
+                {reportProduct.items.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">{t.noItems || "No items"}</div>
+                ) : (
+                  <div className="space-y-1">
+                    {reportProduct.items.map((it) => (
+                      <div key={it.id} className="flex items-center justify-between text-sm" data-testid={`report-item-${it.id}`}>
+                        <span>{it.name}</span>
+                        <span className="font-medium">{(parseFloat(it.cost || "0") || 0).toFixed(2)} SAR</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2 border-t pt-3">
+                <Label className="text-base font-semibold flex items-center gap-2"><Wrench className="h-4 w-4" /> {t.productServices || "Services"}</Label>
+                {reportProduct.services.length === 0 ? (
+                  <div className="text-sm text-muted-foreground">{t.noServices || "No services"}</div>
+                ) : (
+                  <div className="space-y-1">
+                    {reportProduct.services.map((sv) => {
+                      const qty = parseFloat(sv.quantity || "1") || 1;
+                      const unit = parseFloat(sv.unitPrice || "0") || 0;
+                      return (
+                        <div key={sv.id} className="flex items-center justify-between text-sm" data-testid={`report-service-${sv.id}`}>
+                          <span>{sv.name || "—"} <span className="text-muted-foreground">× {qty}</span></span>
+                          <span className="font-medium">{(qty * unit).toFixed(2)} SAR</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-md bg-muted/50 p-3 space-y-1 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t.itemsCost || "Items cost"}</span>
+                  <span className="font-medium" data-testid="report-items-cost">{reportTotals.itemsCost.toFixed(2)} SAR</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t.servicesCost || "Services cost"}</span>
+                  <span className="font-medium" data-testid="report-services-cost">{reportTotals.servicesCost.toFixed(2)} SAR</span>
+                </div>
+                <div className="flex items-center justify-between border-t pt-1">
+                  <span className="font-semibold">{t.totalProductCost || "Total product cost"}</span>
+                  <span className="font-bold text-base" data-testid="report-total-cost">{reportTotals.total.toFixed(2)} SAR</span>
+                </div>
+              </div>
+
+              <div className="space-y-2 border-t pt-3">
+                <Label className="text-base font-semibold">{t.profitCalculator || "Profit Calculator"}</Label>
+                <div className="grid grid-cols-2 gap-2 items-end">
+                  <div className="space-y-1">
+                    <Label className="text-xs">{t.sellingPrice || "Selling Price (SAR)"}</Label>
+                    <Input
+                      type="number"
+                      value={reportSellingPrice}
+                      onChange={(e) => setReportSellingPrice(e.target.value)}
+                      placeholder="0.00"
+                      data-testid="input-report-selling-price"
+                    />
+                  </div>
+                  <div className="flex gap-1 flex-wrap">
+                    {[1.3, 1.5, 2].map((mult) => (
+                      <Button
+                        key={mult}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReportSellingPrice((reportTotals.total * mult).toFixed(2))}
+                        data-testid={`button-suggest-${mult}`}
+                      >
+                        ×{mult}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <div className="rounded-md border p-3 space-y-1 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{t.profit || "Profit"}</span>
+                    <span className={`font-semibold ${reportProfit >= 0 ? "text-green-600 dark:text-green-400" : "text-destructive"}`} data-testid="report-profit">
+                      {reportProfit.toFixed(2)} SAR
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{t.profitMargin || "Profit margin"}</span>
+                    <span className="font-semibold" data-testid="report-margin">{reportMargin.toFixed(2)}%</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">{t.markup || "Markup over cost"}</span>
+                    <span className="font-semibold" data-testid="report-markup">{reportMarkup.toFixed(2)}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
