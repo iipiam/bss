@@ -1,0 +1,106 @@
+
+⚡ Done in 224ms
+[PM2] Starting /usr/bin/bash in fork_mode (1 instance)
+[PM2] Done.
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ bss                │ fork     │ 37   │ online    │ 0%       │ 57.7mb   │
+│ 1  │ bss                │ fork     │ 0    │ online    │ 0%       │ 3.9mb    │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[PM2] Saving current process list...
+[PM2] Successfully saved in /home/Kinzhal/.pm2/dump.pm2
+Kinzhal@BSS-Server:/home/BSS/bss$ cd..
+cd..: command not found
+Kinzhal@BSS-Server:/home/BSS/bss$ pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/home/Kinzhal/.pm2/pm2.log last 15 lines:
+PM2        | 2026-05-23T15:51:35: PM2 log: App [bss:0] exited with code [1] via signal [SIGINT]
+PM2        | 2026-05-23T15:51:35: PM2 log: App [bss:0] starting in -fork mode-
+PM2        | 2026-05-23T15:51:35: PM2 log: App [bss:0] online
+PM2        | 2026-05-23T15:51:37: PM2 log: App [bss:0] exited with code [1] via signal [SIGINT]
+PM2        | 2026-05-23T15:51:37: PM2 log: App [bss:0] starting in -fork mode-
+PM2        | 2026-05-23T15:51:37: PM2 log: App [bss:0] online
+PM2        | 2026-05-23T15:51:37: PM2 log: App [bss:1] exited with code [1] via signal [SIGINT]
+PM2        | 2026-05-23T15:51:37: PM2 log: App [bss:1] starting in -fork mode-
+PM2        | 2026-05-23T15:51:37: PM2 log: App [bss:1] online
+PM2        | 2026-05-23T15:51:39: PM2 log: App [bss:1] exited with code [1] via signal [SIGINT]
+PM2        | 2026-05-23T15:51:39: PM2 log: App [bss:1] starting in -fork mode-
+PM2        | 2026-05-23T15:51:39: PM2 log: App [bss:1] online
+PM2        | 2026-05-23T15:51:39: PM2 log: App [bss:0] exited with code [1] via signal [SIGINT]
+PM2        | 2026-05-23T15:51:39: PM2 log: App [bss:0] starting in -fork mode-
+PM2        | 2026-05-23T15:51:39: PM2 log: App [bss:0] online
+
+/home/Kinzhal/.pm2/logs/bss-error.log last 15 lines:
+0|bss      |   and restart with: pm2 restart BSS --update-env
+0|bss      |
+0|bss      | file:///home/BSS/bss/dist/index.js:2127
+0|bss      |       throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
+0|bss      |             ^
+0|bss      |
+0|bss      | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|bss      |     at server/db.ts (file:///home/BSS/bss/dist/index.js:2127:13)
+0|bss      |     at __init (file:///home/BSS/bss/dist/index.js:10:56)
+0|bss      |     at file:///home/BSS/bss/dist/index.js:9056:1
+0|bss      |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|bss      |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|bss      |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|bss      |
+0|bss      | Node.js v20.20.0
+
+/home/Kinzhal/.pm2/logs/bss-out.log last 15 lines:
+0|bss      | > rest-express@1.0.0 start
+0|bss      | > NODE_ENV=production node dist/index.js
+0|bss      |
+0|bss      |
+0|bss      | > rest-express@1.0.0 start
+0|bss      | > NODE_ENV=production node dist/index.js
+0|bss      |
+0|bss      |
+0|bss      | > rest-express@1.0.0 start
+0|bss      | > NODE_ENV=production node dist/index.js
+0|bss      |
+0|bss      |
+0|bss      | > rest-express@1.0.0 start
+0|bss      | > NODE_ENV=production node dist/index.js
+0|bss      |
+
+1|bss  | [FATAL] DATABASE_URL is not set.
+1|bss  |   Set it in the canonical .env file on the server (see DEPLOYMENT.md)
+1|bss  |   and restart with: pm2 restart BSS --update-env
+1|bss  | file:///home/BSS/bss/dist/index.js:2127
+1|bss  |       throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
+1|bss  |             ^
+1|bss  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+1|bss  |     at server/db.ts (file:///home/BSS/bss/dist/index.js:2127:13)
+1|bss  |     at __init (file:///home/BSS/bss/dist/index.js:10:56)
+1|bss  |     at file:///home/BSS/bss/dist/index.js:9056:1
+1|bss  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+1|bss  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+1|bss  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+1|bss  | Node.js v20.20.0
+0|bss  | [FATAL] DATABASE_URL is not set.
+0|bss  |   Set it in the canonical .env file on the server (see DEPLOYMENT.md)
+0|bss  |   and restart with: pm2 restart BSS --update-env
+0|bss  | file:///home/BSS/bss/dist/index.js:2127
+0|bss  |       throw new Error("DATABASE_URL must be set. Did you forget to provision a database?");
+0|bss  |             ^
+0|bss  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+0|bss  |     at server/db.ts (file:///home/BSS/bss/dist/index.js:2127:13)
+0|bss  |     at __init (file:///home/BSS/bss/dist/index.js:10:56)
+0|bss  |     at file:///home/BSS/bss/dist/index.js:9056:1
+0|bss  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+0|bss  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+0|bss  |     at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+0|bss  | Node.js v20.20.0
+PM2      | App [bss:1] exited with code [1] via signal [SIGINT]
+PM2      | App [bss:1] starting in -fork mode-
+PM2      | App [bss:1] online
+PM2      | App [bss:0] exited with code [1] via signal [SIGINT]
+PM2      | App [bss:0] starting in -fork mode-
+PM2      | App [bss:0] online
+0|bss    | > rest-express@1.0.0 start
+0|bss    | > NODE_ENV=production node dist/index.js
+1|bss    | > rest-express@1.0.0 start
+1|bss    | > NODE_ENV=production node dist/index.js
+1|bss    | [FATAL] DATABASE_URL is
