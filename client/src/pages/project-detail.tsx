@@ -25,6 +25,7 @@ import {
   User, MapPin, Clock, FileText, CheckCircle, Layers, Receipt,
   ShoppingCart, CreditCard, ListTodo, Zap, AlertTriangle, Download,
   FileSignature, MessageCircle, ShieldCheck, ShieldX, PlayCircle, CheckSquare,
+  Lightbulb, Target, GitBranch, Activity,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -183,6 +184,7 @@ export default function ProjectDetail() {
   const [delItem, setDelItem] = useState<{ type: string; id: string; name: string } | null>(null);
   const [declineOpen, setDeclineOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
+  const [decisionToolsOpen, setDecisionToolsOpen] = useState(false);
   const { canEdit, canView } = usePermissions();
   const canDecide = canEdit('projects');
   const canDownloadProjectPdf = canView('projects');
@@ -977,6 +979,9 @@ export default function ProjectDetail() {
               <Button variant="outline" onClick={() => cpmMut.mutate()} disabled={cpmMut.isPending} data-testid="button-calculate-cpm">
                 <AlertTriangle className="h-4 w-4 mr-2" />{t.calculateCriticalPath || "Calculate CPM"}
               </Button>
+              <Button variant="outline" onClick={() => setDecisionToolsOpen(true)} disabled={tasks.length === 0} data-testid="button-decision-tools">
+                <Lightbulb className="h-4 w-4 mr-2" />{t.decisionTools || "Decision Tools"}
+              </Button>
               <Button onClick={() => { setEditTask(null); taskForm.reset(); setTaskOpen(true); }} data-testid="button-add-task"><Plus className="h-4 w-4 mr-2" />{t.addTask || "Add Task"}</Button>
             </div>
           </div>
@@ -1035,6 +1040,239 @@ export default function ProjectDetail() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Decision Tools Dialog */}
+      <Dialog open={decisionToolsOpen} onOpenChange={setDecisionToolsOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-primary" />
+              {t.decisionTools || "Decision Tools"}
+            </DialogTitle>
+            <DialogDescription>
+              {t.decisionToolsDesc || "Insights to help you decide what to do next on this project."}
+            </DialogDescription>
+          </DialogHeader>
+          {(() => {
+            const allTasks = tasks;
+            const byId = new Map(allTasks.map(tk => [tk.id, tk]));
+            const isDone = (s: string) => s === "completed" || s === "done";
+            const isActive = (s: string) => s === "in_progress" || s === "active";
+            const cpmReady = allTasks.some(tk => tk.earlyStart !== null);
+
+            const projectDuration = allTasks.reduce(
+              (m, tk) => Math.max(m, tk.lateFinish ?? tk.earlyFinish ?? 0),
+              0,
+            );
+            const doneCount = allTasks.filter(tk => isDone(tk.status)).length;
+            const pctComplete = allTasks.length ? Math.round((doneCount / allTasks.length) * 100) : 0;
+
+            const critical = allTasks.filter(tk => tk.isCritical);
+            const criticalRemaining = critical.filter(tk => !isDone(tk.status));
+
+            const ready = allTasks
+              .filter(tk => !isDone(tk.status) && !isActive(tk.status))
+              .filter(tk => (tk.dependencies ?? []).every(d => {
+                const dep = byId.get(d);
+                return !dep || isDone(dep.status);
+              }))
+              .sort((a, b) => (a.slack ?? 999) - (b.slack ?? 999));
+
+            const blocked = allTasks
+              .filter(tk => !isDone(tk.status))
+              .filter(tk => (tk.dependencies ?? []).some(d => {
+                const dep = byId.get(d);
+                return dep && !isDone(dep.status);
+              }));
+
+            const atRisk = allTasks
+              .filter(tk => !isDone(tk.status) && !tk.isCritical)
+              .filter(tk => (tk.slack ?? 999) <= 2 && (tk.slack ?? 0) > 0)
+              .sort((a, b) => (a.slack ?? 0) - (b.slack ?? 0));
+
+            const dependentsCount = new Map<string, number>();
+            for (const tk of allTasks) {
+              for (const d of tk.dependencies ?? []) {
+                dependentsCount.set(d, (dependentsCount.get(d) ?? 0) + 1);
+              }
+            }
+            const bottlenecks = [...allTasks]
+              .map(tk => ({ tk, count: dependentsCount.get(tk.id) ?? 0 }))
+              .filter(x => x.count >= 2 && !isDone(x.tk.status))
+              .sort((a, b) => b.count - a.count)
+              .slice(0, 3);
+
+            const recs: string[] = [];
+            if (!cpmReady) {
+              recs.push(t.recRunCpm || "Run Calculate CPM first so we can see slack, the critical path and what's at risk.");
+            } else {
+              if (criticalRemaining.length > 0) {
+                recs.push(
+                  (t.recFocusCritical || "Focus on the critical path — any delay here pushes the whole project finish date.")
+                  + " (" + criticalRemaining.map(c => c.name).join(", ") + ")",
+                );
+              }
+              if (ready.length === 0 && blocked.length > 0) {
+                recs.push(t.recAllBlocked || "Every remaining task is blocked by an unfinished dependency — unblock at least one to make progress.");
+              }
+              if (atRisk.length > 0) {
+                recs.push(t.recWatchAtRisk || "Watch the at-risk tasks — they have very little slack and could easily become critical.");
+              }
+              if (bottlenecks.length > 0) {
+                recs.push(
+                  (t.recBottleneck || "Finishing these tasks unblocks multiple downstream tasks:")
+                  + " " + bottlenecks.map(b => `${b.tk.name} (${b.count})`).join(", "),
+                );
+              }
+              if (recs.length === 0) {
+                recs.push(t.recOnTrack || "Schedule looks healthy. Keep executing ready tasks in order.");
+              }
+            }
+
+            return (
+              <div className="space-y-4">
+                {/* Health summary */}
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <Card data-testid="card-decision-duration">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                        <Activity className="h-3.5 w-3.5" />
+                        {t.projectDuration || "Project Duration"}
+                      </div>
+                      <p className="text-2xl font-semibold mt-1">{projectDuration} <span className="text-sm font-normal text-muted-foreground">{t.days || "days"}</span></p>
+                    </CardContent>
+                  </Card>
+                  <Card data-testid="card-decision-progress">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                        <CheckCircle className="h-3.5 w-3.5" />
+                        {t.completion || "Completion"}
+                      </div>
+                      <p className="text-2xl font-semibold mt-1">{pctComplete}%</p>
+                      <Progress value={pctComplete} className="mt-2 h-1.5" />
+                      <p className="text-xs text-muted-foreground mt-1">{doneCount} / {allTasks.length} {t.tasks?.toLowerCase() || "tasks"}</p>
+                    </CardContent>
+                  </Card>
+                  <Card data-testid="card-decision-critical">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                        <AlertTriangle className="h-3.5 w-3.5" />
+                        {t.criticalRemaining || "Critical Remaining"}
+                      </div>
+                      <p className="text-2xl font-semibold mt-1">{criticalRemaining.length}</p>
+                      <p className="text-xs text-muted-foreground mt-1">{t.outOf || "out of"} {critical.length} {t.critical?.toLowerCase() || "critical"}</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Recommendations */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Lightbulb className="h-4 w-4 text-primary" />
+                      {t.recommendations || "Recommendations"}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="space-y-2">
+                      {recs.map((r, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm" data-testid={`text-recommendation-${i}`}>
+                          <span className="text-primary mt-0.5">•</span>
+                          <span>{r}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+
+                {/* Do next */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Target className="h-4 w-4 text-emerald-500" />
+                      {t.doNext || "Do Next"}
+                      <Badge variant="secondary" className="ml-auto">{ready.length}</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {ready.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">{t.noReadyTasks || "Nothing is ready to start — every remaining task has an unfinished dependency."}</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {ready.slice(0, 5).map(tk => (
+                          <li key={tk.id} className="flex items-center justify-between gap-2 text-sm" data-testid={`row-ready-${tk.id}`}>
+                            <div className="flex items-center gap-2 min-w-0">
+                              {tk.isCritical && <Badge variant="destructive" className="shrink-0">{t.critical || "Critical"}</Badge>}
+                              <span className="truncate">{tk.name}</span>
+                            </div>
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              {tk.duration}{t.daysShort || "d"} · {t.slack || "Slack"}: {tk.slack ?? "—"}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* At risk */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-amber-500" />
+                      {t.atRisk || "At Risk"}
+                      <Badge variant="secondary" className="ml-auto">{atRisk.length}</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {atRisk.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">{t.noAtRisk || "No non-critical tasks are close to becoming critical."}</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {atRisk.slice(0, 5).map(tk => (
+                          <li key={tk.id} className="flex items-center justify-between gap-2 text-sm" data-testid={`row-atrisk-${tk.id}`}>
+                            <span className="truncate">{tk.name}</span>
+                            <span className="text-xs text-amber-600 dark:text-amber-400 shrink-0">
+                              {t.slack || "Slack"}: {tk.slack}{t.daysShort || "d"}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Bottlenecks */}
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <GitBranch className="h-4 w-4 text-indigo-500" />
+                      {t.bottlenecks || "Bottlenecks"}
+                      <Badge variant="secondary" className="ml-auto">{bottlenecks.length}</Badge>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {bottlenecks.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">{t.noBottlenecks || "No single task is blocking many others."}</p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {bottlenecks.map(b => (
+                          <li key={b.tk.id} className="flex items-center justify-between gap-2 text-sm" data-testid={`row-bottleneck-${b.tk.id}`}>
+                            <span className="truncate">{b.tk.name}</span>
+                            <span className="text-xs text-muted-foreground shrink-0">
+                              {t.blocks || "blocks"} {b.count} {t.tasks?.toLowerCase() || "tasks"}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
 
       {/* Service Dialog */}
       <Dialog open={svcOpen} onOpenChange={(o) => { if (!o) { setSvcOpen(false); setEditSvc(null); } else setSvcOpen(true); }}>
