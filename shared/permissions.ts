@@ -161,6 +161,65 @@ export const DEFAULT_EMPLOYEE_PERMISSIONS: PermissionSet = {
   catering: false,
 };
 
+// Business types supported by the platform. Keep this in sync with the
+// `businessTypes` filter in client/src/components/app-sidebar.tsx.
+export type BusinessType =
+  | 'restaurant'
+  | 'factory'
+  | 'real_estate'
+  | 'design_services'
+  | 'installation_services'
+  | 'it_services';
+
+// Permissions that are relevant to each business type. Derived from the
+// sidebar grouping — a row is included if at least one sidebar entry for
+// that business type uses that permission. Permissions used by every
+// business (branches, sales, users, settings, workingHours, activityLog,
+// bills, licenses, marketing, dashboard, customers) appear in every list.
+//
+// Used by the Employees → Permissions UI so owners only see rows that map
+// to pages they actually have. Stored permission data is NOT filtered by
+// this map — non-visible flags are preserved on save so switching business
+// type later does not silently drop them.
+export const BUSINESS_TYPE_PERMISSIONS: Record<BusinessType, Permission[]> = {
+  restaurant: [
+    'dashboard', 'pos', 'orders', 'kitchen', 'deliveryApps', 'mealSubscriptions',
+    'catering', 'inventory', 'menu', 'recipes', 'branches', 'procurement',
+    'sales', 'reports', 'customers', 'bills', 'licenses', 'investors',
+    'marketing', 'activityLog', 'users', 'settings', 'workingHours',
+  ],
+  factory: [
+    'dashboard', 'pos', 'orders', 'kitchen', 'inventory', 'menu', 'branches',
+    'procurement', 'sales', 'reports', 'customers', 'bills', 'licenses',
+    'investors', 'marketing', 'activityLog', 'users', 'settings', 'workingHours',
+  ],
+  real_estate: [
+    'dashboard', 'pos', 'orders', 'menu', 'branches', 'reports', 'sales',
+    'customers', 'bills', 'licenses', 'marketing', 'activityLog', 'users',
+    'settings', 'workingHours',
+  ],
+  design_services: [
+    'dashboard', 'orders', 'menu', 'customers', 'reports', 'sales', 'bills',
+    'licenses', 'branches', 'marketing', 'activityLog', 'users', 'settings',
+    'workingHours',
+  ],
+  installation_services: [
+    'dashboard', 'orders', 'menu', 'customers', 'reports', 'sales', 'bills',
+    'licenses', 'branches', 'marketing', 'activityLog', 'users', 'settings',
+    'workingHours',
+  ],
+  it_services: [
+    'dashboard', 'orders', 'menu', 'customers', 'reports', 'sales', 'bills',
+    'licenses', 'branches', 'marketing', 'activityLog', 'users', 'settings',
+    'workingHours',
+  ],
+};
+
+export function getPermissionsForBusinessType(bt: BusinessType | string | undefined | null): Permission[] {
+  const key = (bt as BusinessType) || 'restaurant';
+  return BUSINESS_TYPE_PERMISSIONS[key] || BUSINESS_TYPE_PERMISSIONS.restaurant;
+}
+
 export type PermissionMode = 'any' | 'all';
 
 export interface PermissionRequirement {

@@ -17,16 +17,18 @@ import { Plus, Edit, UserCheck, UserX, Calendar, FileText, Plane, Award, Shield,
 import type { User } from "@shared/schema";
 import { 
   DEFAULT_EMPLOYEE_PERMISSIONS, 
-  ALL_PERMISSIONS, 
   ALL_PERMISSION_ACTIONS,
+  getPermissionsForBusinessType,
   type Permission,
   type PermissionAction,
   type GranularPermission,
   type PermissionValue,
+  type BusinessType,
   normalizePermission,
   NO_PERMISSION
 } from "@shared/permissions";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/lib/auth";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -41,24 +43,78 @@ const DEFAULT_WEEKLY_SCHEDULE = {
   saturday: true,
 };
 
-// Helper function to get permission labels using translations
-function getPermissionLabels(t: any): Record<Permission, string> {
+// Helper function to get permission labels using translations.
+// Some labels change wording per business type to match the sidebar.
+function getPermissionLabels(t: any, businessType: BusinessType): Record<Permission, string> {
+  const isServiceBusiness =
+    businessType === 'design_services' ||
+    businessType === 'installation_services' ||
+    businessType === 'it_services';
+  const isRealEstate = businessType === 'real_estate';
+  const isFactory = businessType === 'factory';
+
+  const posLabel = isRealEstate
+    ? (t.dealProcessing || "Deal Processing")
+    : isServiceBusiness
+      ? (t.serviceDesk || "Service Desk")
+      : (t.pos || "POS");
+
+  const ordersLabel = isRealEstate
+    ? (t.clientInquiries || "Client Inquiries")
+    : isServiceBusiness
+      ? `${t.projects || "Projects"} / ${t.quotations || "Quotations"}`
+      : (t.orders || "Orders");
+
+  const menuLabel = isRealEstate
+    ? (t.propertyListings || "Property Listings")
+    : isServiceBusiness
+      ? (t.serviceCatalog || "Service Catalog")
+      : isFactory
+        ? (t.products || "Products")
+        : `${t.menu || "Menu"} / ${t.products || "Products"}`;
+
+  const customersLabel = isServiceBusiness
+    ? `${t.customers || "Customers"} / ${t.contractors || "Contractors"}`
+    : (t.customers || "Customers");
+
+  const branchesLabel = isRealEstate
+    ? (t.offices || "Offices")
+    : (t.branches || "Branches");
+
+  const reportsLabel = isRealEstate
+    ? (t.valuations || "Valuations")
+    : isServiceBusiness
+      ? (t.profitability || "Service Profitability")
+      : `${t.reports || "Reports"} & ${t.analytics || "Analytics"}`;
+
+  const salesLabel = isRealEstate
+    ? (t.commissions || "Commissions")
+    : (t.sales || "Sales");
+
+  const workingHoursLabel = isFactory
+    ? `${t.factory || "Factory"} / ${t.workingHours || "Working Hours"}`
+    : isRealEstate
+      ? `${t.office || "Office"} / ${t.workingHours || "Working Hours"}`
+      : isServiceBusiness
+        ? `${t.company || "Company"} / ${t.workingHours || "Working Hours"}`
+        : `${t.shop || "Shop"} / ${t.workingHours || "Working Hours"}`;
+
   return {
     dashboard: t.dashboard || "Dashboard",
     inventory: t.inventory || "Inventory",
-    menu: `${t.menu || "Menu"} / ${t.products || "Products"}`,
+    menu: menuLabel,
     recipes: t.recipes || "Recipes",
-    branches: t.branches || "Branches",
+    branches: branchesLabel,
     procurement: t.procurement || "Procurement",
-    pos: t.pos || "POS",
-    orders: t.orders || "Orders",
-    kitchen: `${t.kitchen || "Kitchen"} / ${t.workshop || "Workshop"}`,
-    sales: t.sales || "Sales",
-    reports: `${t.reports || "Reports"} & ${t.analytics || "Analytics"}`,
-    customers: t.customers || "Customers",
+    pos: posLabel,
+    orders: ordersLabel,
+    kitchen: isFactory ? (t.workshop || "Workshop") : `${t.kitchen || "Kitchen"} / ${t.workshop || "Workshop"}`,
+    sales: salesLabel,
+    reports: reportsLabel,
+    customers: customersLabel,
     settings: t.settings || "Settings",
     users: t.employees || "Employees",
-    workingHours: `${t.shop || "Shop"} / ${t.workingHours || "Working Hours"}`,
+    workingHours: workingHoursLabel,
     bills: t.bills || "Bills",
     deliveryApps: t.deliveryApps || "Delivery Apps",
     licenses: t.licenses || "Licenses",
@@ -96,9 +152,15 @@ function getDayLabels(t: any) {
 export default function Employees() {
   const { t } = useLanguage();
   const layout = useDeviceLayout();
-  
+  const { restaurant } = useAuth();
+
+  // Determine the active account's business type — used to scope the
+  // Permissions grid so it mirrors the sidebar for that business.
+  const businessType: BusinessType = ((restaurant as any)?.businessType as BusinessType) || 'restaurant';
+  const VISIBLE_PERMISSIONS = getPermissionsForBusinessType(businessType);
+
   // Get translated labels
-  const PERMISSION_LABELS = getPermissionLabels(t);
+  const PERMISSION_LABELS = getPermissionLabels(t, businessType);
   const ACTION_LABELS = getActionLabels(t);
   const DAY_LABELS = getDayLabels(t);
   
@@ -565,7 +627,7 @@ export default function Employees() {
                   
                   {/* Permission rows */}
                   <div className="space-y-2">
-                    {ALL_PERMISSIONS.map((perm) => {
+                    {VISIBLE_PERMISSIONS.map((perm) => {
                       const permValue = normalizePermission(formData.permissions[perm]);
                       return (
                         <div key={perm} className="grid grid-cols-[1fr,repeat(4,60px),40px] gap-2 items-center py-1">
@@ -1211,7 +1273,7 @@ export default function Employees() {
                 
                 {/* Permission rows */}
                 <div className="space-y-2">
-                  {ALL_PERMISSIONS.map((perm) => {
+                  {VISIBLE_PERMISSIONS.map((perm) => {
                     const permValue = normalizePermission(formData.permissions[perm]);
                     return (
                       <div key={perm} className="grid grid-cols-[1fr,repeat(4,60px),40px] gap-2 items-center py-1">
