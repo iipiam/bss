@@ -99,19 +99,19 @@ export default function ServiceProfitability() {
     queryFn: async () => {
       const results = await Promise.all(
         projects.map(async (p) => {
-          try {
-            const res = await fetch(`/api/service-projects/${p.id}/items`, { credentials: "include" });
-            if (!res.ok) return { items: [], services: [] };
-            const json = await res.json();
-            return { items: json.items || [], services: json.services || [] };
-          } catch {
-            return { items: [], services: [] };
+          const res = await fetch(`/api/service-projects/${p.id}/items`, { credentials: "include" });
+          if (!res.ok) {
+            throw new Error(`Failed to load project ${p.id} aggregates: ${res.status}`);
           }
+          const json = await res.json();
+          const items = Array.isArray(json) ? json : (json.items || []);
+          const services = Array.isArray(json) ? [] : (json.services || []);
+          return { items, services };
         }),
       );
       return {
-        items: results.flatMap((r) => r.items.map((it: any) => ({ ...it, projectId: it.projectId }))),
-        services: results.flatMap((r) => r.services.map((sv: any) => ({ ...sv, projectId: sv.projectId }))),
+        items: results.flatMap((r) => r.items),
+        services: results.flatMap((r) => r.services),
       };
     },
   });

@@ -157,6 +157,7 @@ export function AppSidebar() {
     { title: businessType === 'real_estate' ? t.commissions : t.sales, url: "/sales", icon: DollarSign, testId: "sales", gradient: "from-green-500 to-teal-500", permission: 'sales' },
     { title: t.financial, url: "/financial", icon: Receipt, testId: "financial", gradient: "from-blue-500 to-purple-500", permission: 'reports' },
     { title: t.profitability, url: "/profitability", icon: Calculator, testId: "profitability", gradient: "from-amber-500 to-orange-500", permission: 'reports', businessTypes: ['restaurant', 'factory'] },
+    { title: t.profitability, url: "/service-profitability", icon: Calculator, testId: "service-profitability", gradient: "from-amber-500 to-orange-500", permission: 'reports', businessTypes: ['design_services', 'installation_services', 'it_services'] },
     { title: t.menuProfitability, url: "/menu-profitability", icon: TrendingUp, testId: "menu-profitability", gradient: "from-red-500 to-rose-500", permission: 'reports', businessTypes: ['restaurant', 'factory'] },
     { title: t.deliveryProfitability, url: "/delivery-app-profitability", icon: Truck, testId: "delivery-profitability", gradient: "from-green-500 to-emerald-500", permission: 'reports', businessTypes: ['restaurant'] },
     { title: t.salesComparison, url: "/sales-comparison", icon: BarChart3, testId: "sales-comparison", gradient: "from-purple-500 to-pink-500", permission: 'reports', businessTypes: ['restaurant', 'factory'] },

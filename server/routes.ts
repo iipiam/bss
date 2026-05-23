@@ -15702,8 +15702,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.get("/api/service-projects/:id/items", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      const rows = await storage.getProjectItems(restaurantId, req.params.id);
-      res.json(rows);
+      const [items, services] = await Promise.all([
+        storage.getProjectItems(restaurantId, req.params.id),
+        storage.getProjectServices(restaurantId, req.params.id),
+      ]);
+      res.json({ items, services });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
