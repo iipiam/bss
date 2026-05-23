@@ -337,6 +337,17 @@ export default function ServiceCatalog() {
     return { itemsCost, itemsSellingPrice, servicesCost, total: itemsCost + servicesCost };
   })();
 
+  // Auto-fill the profit calculator with the product's total items selling
+  // price whenever the report data (or its underlying entries) change, unless
+  // the user has manually edited the field.
+  const [reportSellingPriceTouched, setReportSellingPriceTouched] = useState(false);
+  useEffect(() => {
+    if (!reportProduct || reportSellingPriceTouched) return;
+    setReportSellingPrice(
+      reportTotals.itemsSellingPrice > 0 ? reportTotals.itemsSellingPrice.toFixed(2) : "",
+    );
+  }, [reportProduct, reportTotals.itemsSellingPrice, reportSellingPriceTouched]);
+
   const reportSellingPriceNum = parseFloat(reportSellingPrice || "0") || 0;
   const reportProfit = reportSellingPriceNum - reportTotals.total;
   const reportMargin = reportSellingPriceNum > 0 ? (reportProfit / reportSellingPriceNum) * 100 : 0;
@@ -345,6 +356,7 @@ export default function ServiceCatalog() {
   const openReport = (id: string) => {
     setReportProductId(id);
     setReportSellingPrice("");
+    setReportSellingPriceTouched(false);
   };
 
   const createServiceMutation = useMutation({
@@ -1255,7 +1267,7 @@ export default function ServiceCatalog() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <Dialog open={!!reportProductId} onOpenChange={(o) => { if (!o) { setReportProductId(null); setReportSellingPrice(""); } }}>
+      <Dialog open={!!reportProductId} onOpenChange={(o) => { if (!o) { setReportProductId(null); setReportSellingPrice(""); setReportSellingPriceTouched(false); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -1342,7 +1354,7 @@ export default function ServiceCatalog() {
                     <Input
                       type="number"
                       value={reportSellingPrice}
-                      onChange={(e) => setReportSellingPrice(e.target.value)}
+                      onChange={(e) => { setReportSellingPrice(e.target.value); setReportSellingPriceTouched(true); }}
                       placeholder="0.00"
                       data-testid="input-report-selling-price"
                     />
@@ -1353,7 +1365,7 @@ export default function ServiceCatalog() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setReportSellingPrice(reportTotals.itemsSellingPrice.toFixed(2))}
+                        onClick={() => { setReportSellingPrice(reportTotals.itemsSellingPrice.toFixed(2)); setReportSellingPriceTouched(true); }}
                         data-testid="button-suggest-items-selling"
                       >
                         {(t as any).useItemsSellPrice || "Use items sell price"}
@@ -1365,7 +1377,7 @@ export default function ServiceCatalog() {
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => setReportSellingPrice((reportTotals.total * mult).toFixed(2))}
+                        onClick={() => { setReportSellingPrice((reportTotals.total * mult).toFixed(2)); setReportSellingPriceTouched(true); }}
                         data-testid={`button-suggest-${mult}`}
                       >
                         ×{mult}
