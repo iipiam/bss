@@ -1,0 +1,401 @@
+Here is the complete solution written out in full.
+
+---
+
+# ZATCA Phase 2 — Full Diagnostic & Fix Guide
+
+---
+
+## Bug #1 — Wrong Elliptic Curve (crypto.ts : line 209)
+
+**Severity: CRITICAL**
+
+ZATCA mandates the `secp256r1` curve (also called `prime256v1` / NIST P-256) for all EGS private keys. Your code currently uses `secp256k1`, which is Bitcoin's curve. ZATCA's CA will reject every CSR generated with this key.
+
+**Current code (line 209):**
+```ts
+execSync(`openssl ecparam -name secp256k1 -genkey -noout -out "${keyPath}"`, { stdio: "pipe" });
+```
+
+**Fixed code:**
+```ts
+execSync(`openssl ecparam -name prime256v1 -genkey -noout -out "${keyPath}"`, { stdio: "pipe" });
+```
+
+That is the entire change — one word. However, the consequence is significant: every private key and CSR generated before this fix is permanently invalid. You must delete all stored `privateKey`, `csr`, `complianceCsid`, and `productionCsid` values for every registered account, and re-run the full onboarding flow from scratch for each one.
+
+After regenerating, verify the curve with:
+```bash
+openssl req -in csr.pem -text -noout | grep "Public Key Algorithm"
+# Expected: Public Key Algorithm: id-ecPublicKey
+#           ASN1 OID: prime256v1
+```
+
+---
+
+## Bug #2 — Incorrect Invoice Type Codes (xml-generator.ts : lines 148–153)
+
+**Severity: CRITICAL**
+
+ZATCA's three invoice type codes are: `388` = Tax Invoice, `381` = Credit Note, `383` = Debit Note. The function `generateInvoiceTypeCode()` has a broken fallthrough condition on line 151 that maps `invoiceSubType === '02'` to `383` for standard invoices, which silently mislabels some invoices and causes `KSA-2 / BT-3` validation failures during compliance checks.
+
+**Current code (broken):**
+```ts
+export function generateInvoiceTypeCode(
+  invoiceType: "standard" | "simplified",
+  invoiceSubType: "01" | "02",
+  documentType?: "invoice" | "credit_note" | "debit_note"
+): string {
+  if (documentType === "credit_note") return "381";
+  if (documentType === "debit_note")  return "383";
+  if (invoiceSubType === "02")
+    return invoiceType === "standard" ? "383" : "381";  // ← BUG
+  return "388";
+}
+```
+
+The third condition is wrong. `invoiceSubType` is a document-level flag that does not change the type code. The type code is determined solely by `documentType`.
+
+**Fixed code:**
+```ts
+export function generateInvoiceTypeCode(
+  invoiceType: "standard" | "simplified",
+  invoiceSubType: "01" | "02",
+  documentType?: "invoice" | "credit_note" | "debit_note"
+): string {
+  if (documentType === "credit_note") return "381";
+  if (documentType === "debit_note")  return "383";
+  return "388"; // Standard tax invoice — both standard and simplified
+}
+```
+
+---
+
+## Bug #3 — Hash Recomputed After SDK Signing on Retry (service.ts : line 425)
+
+**Severity: CRITICAL**
+
+When the ZATCA Java SDK signs an invoice, it computes the canonical hash using its own C14N engine. In the main `processInvoiceForZatca()` path, the code correctly avoids recomputing the hash after SDK signing (the `usedSdk` guard at lines 256–261). However, the `retryPendingInvoices()` function at line 425 always recomputes the hash from the stored XML using your local canonicalizer, regardless of whether the SDK was originally used. If the local canonicalizer produces slightly different canonical bytes than the SDK did, the submitted hash will not match the invoice content and ZATCA will reject it.
+
+**Current code (broken):**
+```ts
+for (const invoice of pendingInvoices) {
+  if (!invoice.signedXml) continue;
+  processed++;
+
+  // Always recomputes — wrong when SDK was used originally
+  const recomputedHash = generateInvoiceHash(invoice.signedXml);
+
+  const result = await submitInvoiceToZatca(
+    config,
+    invoice.signedXml,
+    recomputedHash,
+    invoice.uuid,
+    invoice.invoiceType as "standard" | "simplified"
+  );
+}
+```
+
+**Fixed code:**
+```ts
+for (const invoice of pendingInvoices) {
+  if (!invoice.signedXml) continue;
+  processed++;
+
+  // Use the hash that was stored at original signing time.
+  // Fall back to recomputing only for legacy rows that predate this fix.
+  const hashToSubmit = invoice.invoiceHash
+    || generateInvoiceHash(invoice.signedXml);
+
+  const result = await submitInvoiceToZatca(
+    config,
+    invoice.signedXml,
+    hashToSubmit,
+    invoice.uuid,
+    invoice.invoiceType as "standard" | "simplified"
+  );
+}
+```
+
+For this fix to work, `invoiceHash` must be stored in the database at submission time. Check your `storage.createInvoiceZatcaStatus()` call — the field is already being passed in the main path at line 344. Confirm your database schema and query in `getInvoiceZatcaStatuses()` both include and return the `invoiceHash` column.
+
+---
+
+## Issue #4 — Duplicate `<cac:TaxTotal>` Element (xml-generator.ts : ~line 439)
+
+**Severity: HIGH**
+
+The generated invoice XML contains two consecutive `<cac:TaxTotal>` elements at the invoice level. ZATCA's UBL 2.1 schema allows exactly one. The first block has only a `TaxAmount` child; the second has a `TaxAmount` plus the required `TaxSubtotal`. The first one must be removed.
+
+**Current output (wrong):**
+```xml
+<!-- Remove this entire block -->
+<cac:TaxTotal>
+  <cbc:TaxAmount currencyID="SAR">15.00</cbc:TaxAmount>
+</cac:TaxTotal>
+
+<!-- Keep only this one -->
+<cac:TaxTotal>
+  <cbc:TaxAmount currencyID="SAR">15.00</cbc:TaxAmount>
+  <cac:TaxSubtotal>
+    <cbc:TaxableAmount currencyID="SAR">100.00</cbc:TaxableAmount>
+    <cbc:TaxAmount currencyID="SAR">15.00</cbc:TaxAmount>
+    <cac:TaxCategory>
+      <cbc:ID schemeAgencyID="6" schemeID="UN/ECE 5305">S</cbc:ID>
+      <cbc:Percent>15</cbc:Percent>
+      <cac:TaxScheme>
+        <cbc:ID schemeAgencyID="6" schemeID="UN/ECE 5153">VAT</cbc:ID>
+      </cac:TaxScheme>
+    </cac:TaxCategory>
+  </cac:TaxSubtotal>
+</cac:TaxTotal>
+```
+
+In `buildInvoiceBodyParts()`, find the `supplierAndAfter` template string. Delete the first `<cac:TaxTotal>` block (the three-line one without `TaxSubtotal`). The final invoice must have only one `<cac:TaxTotal>` element, which is the one containing `<cac:TaxSubtotal>`.
+
+---
+
+## Issue #5 — `generateInvoiceTypeCodeName()` Ignores `documentType` (xml-generator.ts : lines 155–157)
+
+**Severity: HIGH**
+
+The `name` attribute on `<cbc:InvoiceTypeCode>` is a 7-character bitmask. Position 1 encodes the document sub-type: `0` = tax invoice, `2` = credit note, `3` = debit note. The current function only looks at `invoiceType` (standard/simplified) and ignores `documentType`, so credit notes from standard invoice flows produce `name="0100000"` instead of the required `"0200000"`.
+
+**Current code (wrong):**
+```ts
+export function generateInvoiceTypeCodeName(
+  invoiceType: "standard" | "simplified"
+): string {
+  return invoiceType === "standard" ? "0100000" : "0200000";
+}
+```
+
+**Fixed code:**
+```ts
+export function generateInvoiceTypeCodeName(
+  invoiceType: "standard" | "simplified",
+  documentType?: "invoice" | "credit_note" | "debit_note"
+): string {
+  if (documentType === "credit_note") return "0200000";
+  if (documentType === "debit_note")  return "0300000";
+  return invoiceType === "standard" ? "0100000" : "0200000";
+}
+```
+
+Also update the call site inside `buildInvoiceBodyParts()`:
+
+**Before:**
+```ts
+const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceType);
+```
+
+**After:**
+```ts
+const invoiceTypeCodeName = generateInvoiceTypeCodeName(invoiceType, documentType);
+```
+
+---
+
+## Issue #6 — Invoice Hash Encoding: 88-char vs 44-char (xml-generator.ts : lines 216–218)
+
+**Severity: HIGH**
+
+There are two conventions used in the field for the `DigestValue` in ZATCA invoices:
+
+- **Convention A (44 chars):** `base64( raw_32_SHA256_bytes )` — used by ZATCA's own Java SDK.
+- **Convention B (88 chars):** `base64( lowercase_hex_string_of_SHA256 )` — used by some third-party implementations.
+
+Your implementation uses Convention B. If ZATCA's validator rejects your invoices with a "hash does not match" error, switch to Convention A.
+
+**Current code — Convention B (88 chars):**
+```ts
+export function generateInvoiceHash(xmlContent: string): string {
+  const hex = crypto
+    .createHash("sha256")
+    .update(canonicalizeInvoiceXml(xmlContent), "utf8")
+    .digest("hex");                              // 64-char hex string
+  return Buffer.from(hex, "utf8").toString("base64"); // base64 of that hex → 88 chars
+}
+```
+
+**Alternative — Convention A (44 chars), try this if ZATCA rejects:**
+```ts
+export function generateInvoiceHash(xmlContent: string): string {
+  return crypto
+    .createHash("sha256")
+    .update(canonicalizeInvoiceXml(xmlContent), "utf8")
+    .digest("base64"); // base64 of raw 32-byte digest → 44 chars
+}
+```
+
+Test both in ZATCA's simulation environment. Submit one invoice with each. The one that returns `CLEARED` or `REPORTED` without a hash mismatch error is the correct form for your environment. If you switch to Convention A, ensure `generateInvoiceHashHex()` is still consistent and that QR Tag 6 still passes raw bytes (not the hex string bytes) into the TLV buffer.
+
+---
+
+## Issue #7 — Legacy Regex Canonicalizer Still Reachable (crypto.ts : lines 582–601)
+
+**Severity: MEDIUM**
+
+`crypto.ts` contains a `canonicalizeXML()` function that uses regular expressions to normalize XML. This is not a compliant C14N implementation — it does not handle namespace inheritance, attribute ordering, or character encoding edge cases required by the XML Canonicalization 1.0 specification. `xml-generator.ts` correctly uses `@xmldom/xmldom` plus `xml-crypto`'s `C14nCanonicalization` class, which is compliant. The problem is that `signCanonicalXML()` in `crypto.ts` (line 279) still calls the regex version and may be reachable from legacy code paths.
+
+**Step 1 — audit all callers:**
+```bash
+grep -rn "canonicalizeXML\|signCanonicalXML" --include="*.ts"
+```
+
+**Step 2 — replace any invoice-related caller with the compliant version:**
+```ts
+// Old — non-compliant (crypto.ts)
+import { canonicalizeXML } from "./crypto";
+const canonical = canonicalizeXML(xmlContent);
+
+// New — C14N compliant (xml-generator.ts)
+import { canonicalizeInvoiceXml } from "./xml-generator";
+const canonical = canonicalizeInvoiceXml(xmlContent);
+```
+
+**Step 3 — mark `canonicalizeXML()` deprecated:**
+```ts
+/**
+ * @deprecated Not a compliant C14N implementation.
+ * Use canonicalizeInvoiceXml() from xml-generator.ts for all invoice hashing.
+ */
+export function canonicalizeXML(xmlString: string): string {
+  // ...existing code...
+}
+```
+
+---
+
+## Issue #8 — `generateInvoiceCounter()` Uses `Date.now()` (crypto.ts : line 627)
+
+**Severity: MEDIUM**
+
+The ICV (Invoice Counter Value) must be a sequential integer starting at 1 and incrementing by exactly 1 per invoice per EGS device. `Date.now()` returns a Unix millisecond timestamp (e.g. `1716480000000`), which is not sequential in ZATCA's sense and will trigger `KSA-16` validation errors.
+
+**Current code (wrong for ICV):**
+```ts
+export function generateInvoiceCounter(): number {
+  return Date.now();
+}
+```
+
+The correct counter is already available in `service.ts` at line 147 from `storage.incrementInvoiceCounter()`. Confirm that `baseInvoiceData.invoiceCounter` is always set to that value and that no code path calls `generateInvoiceCounter()` for real invoice submissions.
+
+**Mark the function deprecated:**
+```ts
+/**
+ * @deprecated Do NOT use for ICV (Invoice Counter Value).
+ * ICV must be a sequential integer: 1, 2, 3, ...
+ * Use the counter returned by storage.incrementInvoiceCounter() instead.
+ */
+export function generateInvoiceCounter(): number {
+  return Date.now();
+}
+```
+
+In `service.ts`, the counter is already correct — verify it is always used:
+```ts
+// service.ts line 147 — this is the correct ICV source
+const { counter, previousHash } = await storage.incrementInvoiceCounter(
+  params.restaurantId,
+  previousHashHex || ""
+);
+
+const baseInvoiceData = {
+  invoiceCounter: counter, // ← always use this, never Date.now()
+  // ...
+};
+```
+
+---
+
+## Issue #9 — No Proactive CSID Age Check (service.ts)
+
+**Severity: LOW**
+
+Compliance CSIDs expire after 1 hour. The current code detects expiry only by catching 401 responses after the fact. A better approach warns the user before submissions when the CSID is near expiry.
+
+**Add this at the start of the compliance check function, before the invoice loop:**
+```ts
+// Store this when saving a new Compliance CSID:
+// await storage.updateZatcaSettings(restaurantId, { csidIssuedAt: new Date() });
+
+const csidIssuedAt: Date | null = settings.csidIssuedAt || null;
+const csidAgeMinutes = csidIssuedAt
+  ? (Date.now() - csidIssuedAt.getTime()) / 60000
+  : null;
+
+if (csidAgeMinutes !== null && csidAgeMinutes > 55) {
+  return {
+    success: false,
+    results: [{
+      invoiceType: "all",
+      passed: false,
+      errors: [{
+        code: "CSID_NEAR_EXPIRY",
+        message:
+          `Compliance CSID is ${Math.round(csidAgeMinutes)} minutes old and likely expired. ` +
+          "Please generate a new OTP and request a new Compliance CSID before retrying."
+      }]
+    }]
+  };
+}
+```
+
+---
+
+## Issue #10 — No Line-Level `AllowanceCharge` for Discounts (xml-generator.ts)
+
+**Severity: LOW**
+
+ZATCA Phase 2 requires `<cac:AllowanceCharge>` elements inside each `<cac:InvoiceLine>` for per-item discounts. The current code adds a total discount only at the `LegalMonetaryTotal` level. If your invoices ever carry per-item discounts, add the following inside the invoice line loop in `buildInvoiceBodyParts()`:
+
+```ts
+const itemDiscount = (item as any).discount ?? 0;
+const discountXml = itemDiscount > 0
+  ? `
+  <cac:AllowanceCharge>
+    <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+    <cbc:AllowanceChargeReason>Discount</cbc:AllowanceChargeReason>
+    <cbc:Amount currencyID="SAR">${formatDecimal(itemDiscount)}</cbc:Amount>
+  </cac:AllowanceCharge>`
+  : "";
+
+// Then insert discountXml inside the <cac:InvoiceLine> template string.
+```
+
+---
+
+## Summary — What to Change in Each File
+
+**crypto.ts:**
+- Line 209: `secp256k1` → `prime256v1` (Critical)
+- Lines 279–291: Audit `signCanonicalXML()` callers, replace with compliant version
+- Lines 582–601: Mark `canonicalizeXML()` as `@deprecated`
+- Line 627: Mark `generateInvoiceCounter()` as `@deprecated`
+
+**xml-generator.ts:**
+- Lines 148–153: Remove the `invoiceSubType === "02"` branch from `generateInvoiceTypeCode()`
+- Lines 155–157: Add `documentType` parameter to `generateInvoiceTypeCodeName()`
+- Lines 216–218: Test 88-char vs 44-char hash encoding in simulation; switch if rejected
+- ~Line 439: Remove the first `<cac:TaxTotal>` block (the one without `TaxSubtotal`)
+
+**service.ts:**
+- Line 425: In `retryPendingInvoices()`, use `invoice.invoiceHash` from the database instead of calling `generateInvoiceHash()`
+- Add proactive CSID age check before compliance submissions
+
+**api-client.ts:** No changes needed. All endpoints and headers are correct.
+
+**sdk-wrapper.ts:** No changes needed. The SDK integration is correctly structured.
+
+---
+
+## Post-Fix Testing Order
+
+1. Regenerate all CSRs using the corrected `prime256v1` curve. Delete all old keys and CSIDs.
+2. Submit new CSRs to the ZATCA sandbox with a fresh OTP. Confirm you receive a `binarySecurityToken`.
+3. Immediately (within 1 hour) run compliance checks for all 6 invoice types: standard invoice, standard credit note, standard debit note, simplified invoice, simplified credit note, simplified debit note. All 6 must pass.
+4. After all compliance checks pass, request the Production CSID.
+5. In the simulation environment, submit real invoices and confirm `CLEARED` status for standard invoices and `REPORTED` status for simplified invoices.
+6. Trigger `retryPendingInvoices()` on a pending invoice and confirm the stored hash from the database is used, not a recomputed one.
