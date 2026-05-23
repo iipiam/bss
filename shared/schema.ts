@@ -1894,6 +1894,7 @@ export const productItems = pgTable("product_items", {
   productId: varchar("product_id").references(() => serviceProducts.id, { onDelete: "cascade" }).notNull(),
   name: text("name").notNull(),
   cost: decimal("cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  sellingPrice: decimal("selling_price", { precision: 12, scale: 2 }).notNull().default("0"),
   percentage: decimal("percentage", { precision: 6, scale: 2 }).notNull().default("0"),
   sortOrder: integer("sort_order").notNull().default(0),
 });

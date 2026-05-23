@@ -15613,6 +15613,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         items: items.map((it: any, idx: number) => ({
           name: String(it.name || ""),
           cost: String(it.cost ?? "0"),
+          sellingPrice: String(it.sellingPrice ?? "0"),
           percentage: String(it.percentage ?? "0"),
           sortOrder: idx,
         })).filter((it: any) => it.name),
@@ -15652,6 +15653,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           items: (items || []).map((it: any, idx: number) => ({
             name: String(it.name || ""),
             cost: String(it.cost ?? "0"),
+            sellingPrice: String(it.sellingPrice ?? "0"),
             percentage: String(it.percentage ?? "0"),
             sortOrder: idx,
           })).filter((it: any) => it.name),

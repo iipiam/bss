@@ -96,6 +96,7 @@ type ServiceFormValues = z.infer<typeof serviceFormSchema>;
 interface ProductItemDraft {
   name: string;
   cost: string;
+  sellingPrice: string;
   percentage: string;
 }
 interface ProductServiceDraft {
@@ -211,7 +212,7 @@ export default function ServiceCatalog() {
     setProductDescription(p.description || "");
     setProductCategory(p.category || "");
     setProductStatus(p.status);
-    setProductItems(p.items.map((i) => ({ name: i.name, cost: i.cost, percentage: i.percentage })));
+    setProductItems(p.items.map((i) => ({ name: i.name, cost: i.cost, sellingPrice: (i as any).sellingPrice ?? "0", percentage: i.percentage })));
     setProductServices(p.services.map((s) => ({ serviceCatalogId: s.serviceCatalogId || "", name: s.name || "", unitPrice: s.unitPrice || "", quantity: s.quantity })));
     setProductTasks(p.tasks.map((tk) => ({ name: tk.name, description: tk.description || "", duration: String(tk.duration) })));
   };
@@ -226,6 +227,7 @@ export default function ServiceCatalog() {
         items: productItems.map((i, idx) => ({
           name: i.name,
           cost: i.cost || "0",
+          sellingPrice: i.sellingPrice || "0",
           percentage: i.percentage || "0",
           sortOrder: idx,
         })),
@@ -303,6 +305,7 @@ export default function ServiceCatalog() {
   };
 
   const productTotalCost = productItems.reduce((sum, i) => sum + parseFloat(i.cost || "0"), 0);
+  const productTotalSellingPrice = productItems.reduce((sum, i) => sum + parseFloat(i.sellingPrice || "0"), 0);
   const productTotalPercentage = productItems.reduce((sum, i) => sum + parseFloat(i.percentage || "0"), 0);
   const productServicesCost = productServices.reduce((sum, s) => {
     const qty = parseFloat(s.quantity || "1") || 1;
@@ -317,9 +320,13 @@ export default function ServiceCatalog() {
   });
 
   const reportTotals = (() => {
-    if (!reportProduct) return { itemsCost: 0, servicesCost: 0, total: 0 };
+    if (!reportProduct) return { itemsCost: 0, itemsSellingPrice: 0, servicesCost: 0, total: 0 };
     const itemsCost = (reportProduct.items || []).reduce(
       (s, it) => s + (parseFloat(it.cost || "0") || 0),
+      0,
+    );
+    const itemsSellingPrice = (reportProduct.items || []).reduce(
+      (s, it) => s + (parseFloat(((it as any).sellingPrice) || "0") || 0),
       0,
     );
     const servicesCost = (reportProduct.services || []).reduce((s, sv) => {
@@ -327,7 +334,7 @@ export default function ServiceCatalog() {
       const unit = parseFloat(sv.unitPrice || "0") || 0;
       return s + qty * unit;
     }, 0);
-    return { itemsCost, servicesCost, total: itemsCost + servicesCost };
+    return { itemsCost, itemsSellingPrice, servicesCost, total: itemsCost + servicesCost };
   })();
 
   const reportSellingPriceNum = parseFloat(reportSellingPrice || "0") || 0;
@@ -1055,21 +1062,23 @@ export default function ServiceCatalog() {
                   <Layers className="h-4 w-4" /> {t.productItems || "Items"}
                 </Label>
                 <Button type="button" size="sm" variant="outline" data-testid="button-add-product-item"
-                  onClick={() => setProductItems([...productItems, { name: "", cost: "", percentage: "" }])}>
+                  onClick={() => setProductItems([...productItems, { name: "", cost: "", sellingPrice: "", percentage: "" }])}>
                   <Plus className="h-3 w-3 mr-1" /> {t.addItem || "Add Item"}
                 </Button>
               </div>
               {productItems.map((it, idx) => (
                 <div key={idx} className="grid grid-cols-12 gap-2 items-end" data-testid={`row-item-${idx}`}>
-                  <div className="col-span-5"><Input placeholder={t.productName || "Name"} value={it.name} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], name: e.target.value }; setProductItems(a); }} /></div>
-                  <div className="col-span-3"><Input type="number" placeholder={t.itemCost || "Cost (SAR)"} value={it.cost} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], cost: e.target.value }; setProductItems(a); }} /></div>
-                  <div className="col-span-3"><Input type="number" placeholder={t.itemPercentage || "% of Total"} value={it.percentage} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], percentage: e.target.value }; setProductItems(a); }} /></div>
+                  <div className="col-span-4"><Input placeholder={t.productName || "Name"} value={it.name} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], name: e.target.value }; setProductItems(a); }} /></div>
+                  <div className="col-span-3"><Input type="number" placeholder={t.itemCost || "Cost (SAR)"} value={it.cost} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], cost: e.target.value }; setProductItems(a); }} data-testid={`input-item-cost-${idx}`} /></div>
+                  <div className="col-span-2"><Input type="number" placeholder={(t as any).sellingPrice || "Sell (SAR)"} value={it.sellingPrice} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], sellingPrice: e.target.value }; setProductItems(a); }} data-testid={`input-item-selling-price-${idx}`} /></div>
+                  <div className="col-span-2"><Input type="number" placeholder={t.itemPercentage || "% of Total"} value={it.percentage} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], percentage: e.target.value }; setProductItems(a); }} /></div>
                   <div className="col-span-1"><Button type="button" size="icon" variant="ghost" onClick={() => setProductItems(productItems.filter((_, i) => i !== idx))} data-testid={`button-remove-item-${idx}`}><X className="h-4 w-4" /></Button></div>
                 </div>
               ))}
               {productItems.length > 0 && (
-                <div className="flex items-center justify-end gap-4 text-sm pt-2 border-t">
+                <div className="flex items-center justify-end gap-4 text-sm pt-2 border-t flex-wrap">
                   <span className="text-muted-foreground">{t.totalItemsCost || "Total Cost"}: <span className="font-semibold text-foreground" data-testid="text-total-items-cost">{productTotalCost.toFixed(2)} SAR</span></span>
+                  <span className="text-muted-foreground">{(t as any).totalSellPrice || "Total Sell Price"}: <span className="font-semibold text-foreground" data-testid="text-total-selling-price">{productTotalSellingPrice.toFixed(2)} SAR</span></span>
                   <span className="text-muted-foreground">{t.totalPercentage || "Total %"}: <span className={`font-semibold ${productTotalPercentage !== 100 ? "text-destructive" : "text-foreground"}`} data-testid="text-total-percentage">{productTotalPercentage.toFixed(2)}%</span></span>
                 </div>
               )}
@@ -1263,12 +1272,21 @@ export default function ServiceCatalog() {
                   <div className="text-sm text-muted-foreground">{t.noItems || "No items"}</div>
                 ) : (
                   <div className="space-y-1">
-                    {reportProduct.items.map((it) => (
-                      <div key={it.id} className="flex items-center justify-between text-sm" data-testid={`report-item-${it.id}`}>
-                        <span>{it.name}</span>
-                        <span className="font-medium">{(parseFloat(it.cost || "0") || 0).toFixed(2)} SAR</span>
-                      </div>
-                    ))}
+                    {reportProduct.items.map((it) => {
+                      const itCost = parseFloat(it.cost || "0") || 0;
+                      const itSell = parseFloat(((it as any).sellingPrice) || "0") || 0;
+                      return (
+                        <div key={it.id} className="flex items-center justify-between text-sm gap-2" data-testid={`report-item-${it.id}`}>
+                          <span className="flex-1 min-w-0 truncate">{it.name}</span>
+                          <span className="text-muted-foreground text-xs whitespace-nowrap">
+                            {(t as any).cost || "Cost"}: <span className="text-foreground font-medium">{itCost.toFixed(2)}</span>
+                          </span>
+                          <span className="text-muted-foreground text-xs whitespace-nowrap">
+                            {(t as any).sell || "Sell"}: <span className="text-foreground font-medium">{itSell.toFixed(2)}</span>
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -1299,6 +1317,10 @@ export default function ServiceCatalog() {
                   <span className="font-medium" data-testid="report-items-cost">{reportTotals.itemsCost.toFixed(2)} SAR</span>
                 </div>
                 <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{(t as any).totalSellPrice || "Total Sell Price (items)"}</span>
+                  <span className="font-medium" data-testid="report-items-selling-price">{reportTotals.itemsSellingPrice.toFixed(2)} SAR</span>
+                </div>
+                <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">{t.servicesCost || "Services cost"}</span>
                   <span className="font-medium" data-testid="report-services-cost">{reportTotals.servicesCost.toFixed(2)} SAR</span>
                 </div>
@@ -1322,6 +1344,17 @@ export default function ServiceCatalog() {
                     />
                   </div>
                   <div className="flex gap-1 flex-wrap">
+                    {reportTotals.itemsSellingPrice > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setReportSellingPrice(reportTotals.itemsSellingPrice.toFixed(2))}
+                        data-testid="button-suggest-items-selling"
+                      >
+                        {(t as any).useItemsSellPrice || "Use items sell price"}
+                      </Button>
+                    )}
                     {[1.3, 1.5, 2].map((mult) => (
                       <Button
                         key={mult}

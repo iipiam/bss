@@ -6574,6 +6574,13 @@ export const storage = new DatabaseStorage();
 
     console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings');
 
+    // product_items: add selling_price column for per-item selling price
+    await pool.query(`
+      ALTER TABLE product_items
+      ADD COLUMN IF NOT EXISTS selling_price NUMERIC(12, 2) NOT NULL DEFAULT 0
+    `);
+    console.log('[Migration] product_items column verified/added: selling_price');
+
     // Company Profiles: marketing-ready profile per restaurant
     await pool.query(`
       CREATE TABLE IF NOT EXISTS company_profiles (
