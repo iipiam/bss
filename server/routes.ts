@@ -16308,7 +16308,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       let sendError: string | undefined;
       try {
         const { Resend } = await import('resend');
-        let apiKey: string | undefined;
+        let connectorKey: string | undefined;
         let fromEmail: string | undefined;
         const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
         const xReplitToken = process.env.REPL_IDENTITY
@@ -16323,9 +16323,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           );
           const data = await r.json();
           const s = data.items?.[0]?.settings;
-          if (s?.api_key) { apiKey = s.api_key; fromEmail = s.from_email; }
+          if (s?.api_key) { connectorKey = s.api_key; fromEmail = s.from_email; }
         }
-        if (!apiKey) apiKey = process.env.RESEND_API_KEY;
+        // Prefer whichever candidate looks like a real Resend key (re_…),
+        // so a misconfigured connector cannot shadow a valid RESEND_API_KEY.
+        const envKey = process.env.RESEND_API_KEY;
+        const candidates = [connectorKey, envKey].filter(Boolean) as string[];
+        const apiKey = candidates.find(k => k.startsWith('re_')) || candidates[0];
         if (!fromEmail) fromEmail = process.env.EMAIL_FROM || process.env.IT_EMAIL || 'IT@kinbss.org';
         if (apiKey) {
           const resend = new Resend(apiKey);
@@ -18715,7 +18719,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       let sendError: string | undefined;
       try {
         const { Resend } = await import('resend');
-        let apiKey: string | undefined;
+        let connectorKey: string | undefined;
         let fromEmail: string | undefined;
         const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
         const xReplitToken = process.env.REPL_IDENTITY
@@ -18730,9 +18734,13 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           );
           const data = await r.json();
           const s = data.items?.[0]?.settings;
-          if (s?.api_key) { apiKey = s.api_key; fromEmail = s.from_email; }
+          if (s?.api_key) { connectorKey = s.api_key; fromEmail = s.from_email; }
         }
-        if (!apiKey) apiKey = process.env.RESEND_API_KEY;
+        // Prefer whichever candidate looks like a real Resend key (re_…),
+        // so a misconfigured connector cannot shadow a valid RESEND_API_KEY.
+        const envKey = process.env.RESEND_API_KEY;
+        const candidates = [connectorKey, envKey].filter(Boolean) as string[];
+        const apiKey = candidates.find(k => k.startsWith('re_')) || candidates[0];
         if (!fromEmail) fromEmail = process.env.EMAIL_FROM || process.env.IT_EMAIL || 'IT@kinbss.org';
         if (apiKey) {
           const resend = new Resend(apiKey);
