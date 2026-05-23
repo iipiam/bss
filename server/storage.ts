@@ -5495,7 +5495,8 @@ export class DatabaseStorage implements IStorage {
     id: string,
     restaurantId: string,
     approvedBy: string,
-  ): Promise<{ project: ServiceProject; customer: Customer } | undefined> {
+    pdfAttachment?: { fileName: string; mimeType: string; contentBase64: string; kind?: string } | null,
+  ): Promise<{ project: ServiceProject; customer: Customer; document: CustomerDocument | null } | undefined> {
     return await db.transaction(async (tx) => {
       const [project] = await tx.select().from(serviceProjects)
         .where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)));
@@ -5547,13 +5548,30 @@ export class DatabaseStorage implements IStorage {
         .returning();
 
       if (!updated) {
-        // Lost the race to another approval — return current state.
+        // Lost the race to another approval — return current state without
+        // inserting a duplicate document.
         const [current] = await tx.select().from(serviceProjects)
           .where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)));
-        return { project: current, customer };
+        return { project: current, customer, document: null };
       }
 
-      return { project: updated, customer };
+      // Attach PDF inside the SAME transaction so approval + document
+      // creation are atomic. If insertion throws, the whole approval rolls back.
+      let document: CustomerDocument | null = null;
+      if (pdfAttachment) {
+        const [created] = await tx.insert(customerDocuments).values({
+          restaurantId,
+          customerId: customer.id,
+          projectId: id,
+          kind: pdfAttachment.kind || 'agreement',
+          fileName: pdfAttachment.fileName,
+          mimeType: pdfAttachment.mimeType,
+          contentBase64: pdfAttachment.contentBase64,
+        }).returning();
+        document = created;
+      }
+
+      return { project: updated, customer, document };
     });
   }
 
