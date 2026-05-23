@@ -5480,8 +5480,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteServiceProject(id: string, restaurantId: string): Promise<boolean> {
-    const result = await db.delete(serviceProjects).where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)));
-    return (result.rowCount ?? 0) > 0;
+    return await db.transaction(async (tx) => {
+      // Clean up child rows first to avoid FK violations. All scoped by
+      // restaurantId for tenant isolation.
+      await tx.delete(quotations).where(and(eq(quotations.projectId, id), eq(quotations.restaurantId, restaurantId)));
+      await tx.delete(paymentSchedules).where(and(eq(paymentSchedules.projectId, id), eq(paymentSchedules.restaurantId, restaurantId)));
+      await tx.delete(projectServices).where(and(eq(projectServices.projectId, id), eq(projectServices.restaurantId, restaurantId)));
+      await tx.delete(projectBills).where(and(eq(projectBills.projectId, id), eq(projectBills.restaurantId, restaurantId)));
+      await tx.delete(projectProcurements).where(and(eq(projectProcurements.projectId, id), eq(projectProcurements.restaurantId, restaurantId)));
+      await tx.delete(projectTasks).where(and(eq(projectTasks.projectId, id), eq(projectTasks.restaurantId, restaurantId)));
+      await tx.delete(projectItems).where(and(eq(projectItems.projectId, id), eq(projectItems.restaurantId, restaurantId)));
+      const result = await tx.delete(serviceProjects).where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)));
+      return (result.rowCount ?? 0) > 0;
+    });
   }
 
   // Quotations
