@@ -168,6 +168,7 @@ export default function ServiceCatalog() {
   const [productItems, setProductItems] = useState<ProductItemDraft[]>([]);
   const [productServices, setProductServices] = useState<ProductServiceDraft[]>([]);
   const [productTasks, setProductTasks] = useState<ProductTaskDraft[]>([]);
+  const [productPhases, setProductPhases] = useState<number[]>([1]);
   const { toast } = useToast();
   const { t } = useLanguage();
   const layout = useDeviceLayout();
@@ -207,6 +208,7 @@ export default function ServiceCatalog() {
     setProductItems([]);
     setProductServices([]);
     setProductTasks([]);
+    setProductPhases([1]);
     setEditingProductId(null);
   };
 
@@ -218,6 +220,11 @@ export default function ServiceCatalog() {
     setProductItems(p.items.map((i) => ({ name: i.name, cost: i.cost, sellingPrice: (i as any).sellingPrice ?? "0", percentage: i.percentage, phase: String(i.phase ?? 1) })));
     setProductServices(p.services.map((s) => ({ serviceCatalogId: s.serviceCatalogId || "", name: s.name || "", unitPrice: s.unitPrice || "", quantity: s.quantity, phase: String(s.phase ?? 1) })));
     setProductTasks(p.tasks.map((tk) => ({ name: tk.name, description: tk.description || "", duration: String(tk.duration), phase: String(tk.phase ?? 1) })));
+    const phs = new Set<number>([1]);
+    p.items.forEach((i) => phs.add(i.phase ?? 1));
+    p.services.forEach((s) => phs.add(s.phase ?? 1));
+    p.tasks.forEach((tk) => phs.add(tk.phase ?? 1));
+    setProductPhases(Array.from(phs).sort((a, b) => a - b));
   };
 
   const saveProductMutation = useMutation({
@@ -1073,172 +1080,167 @@ export default function ServiceCatalog() {
               </Select>
             </div>
 
-            {/* Items */}
-            <div className="space-y-2 border-t pt-4">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <Label className="text-base font-semibold flex items-center gap-2">
-                  <Layers className="h-4 w-4" /> {t.productItems || "Items"}
-                </Label>
-                <Button type="button" size="sm" variant="outline" data-testid="button-add-product-item"
-                  onClick={() => { const nextPh = Math.max(1, ...productItems.map(x => parseInt(x.phase || "1", 10) || 1)); setProductItems([...productItems, { name: "", cost: "", sellingPrice: "", percentage: "", phase: String(nextPh) }]); }}>
-                  <Plus className="h-3 w-3 mr-1" /> {t.addItem || "Add Item"}
-                </Button>
-              </div>
-              {productItems.map((it, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-2 items-end" data-testid={`row-item-${idx}`}>
-                  <div className="col-span-3"><Input placeholder={t.productName || "Name"} value={it.name} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], name: e.target.value }; setProductItems(a); }} /></div>
-                  <div className="col-span-3"><Input type="number" placeholder={t.itemCost || "Cost (SAR)"} value={it.cost} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], cost: e.target.value }; setProductItems(a); }} data-testid={`input-item-cost-${idx}`} /></div>
-                  <div className="col-span-2"><Input type="number" placeholder={(t as any).sellingPrice || "Sell (SAR)"} value={it.sellingPrice} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], sellingPrice: e.target.value }; setProductItems(a); }} data-testid={`input-item-selling-price-${idx}`} /></div>
-                  <div className="col-span-2"><Input type="number" placeholder={t.itemPercentage || "%"} value={it.percentage} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], percentage: e.target.value }; setProductItems(a); }} /></div>
-                  <div className="col-span-1"><Input type="number" min="1" placeholder={(t as any).phase || "Phase"} value={it.phase} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], phase: e.target.value }; setProductItems(a); }} data-testid={`input-item-phase-${idx}`} /></div>
-                  <div className="col-span-1"><Button type="button" size="icon" variant="ghost" onClick={() => setProductItems(productItems.filter((_, i) => i !== idx))} data-testid={`button-remove-item-${idx}`}><X className="h-4 w-4" /></Button></div>
-                </div>
-              ))}
-              {productItems.length > 0 && (
-                <div className="flex items-center justify-end gap-4 text-sm pt-2 border-t flex-wrap">
-                  <span className="text-muted-foreground">{t.totalItemsCost || "Total Cost"}: <span className="font-semibold text-foreground" data-testid="text-total-items-cost">{productTotalCost.toFixed(2)} SAR</span></span>
-                  <span className="text-muted-foreground">{(t as any).totalSellPrice || "Total Sell Price"}: <span className="font-semibold text-foreground" data-testid="text-total-selling-price">{productTotalSellingPrice.toFixed(2)} SAR</span></span>
-                  <span className="text-muted-foreground">{t.totalPercentage || "Total %"}: <span className={`font-semibold ${productTotalPercentage !== 100 ? "text-destructive" : "text-foreground"}`} data-testid="text-total-percentage">{productTotalPercentage.toFixed(2)}%</span></span>
-                </div>
-              )}
-              {(productItems.length > 0 || productServices.length > 0) && (
-                <div className="rounded-md bg-muted/50 p-3 mt-2 space-y-1 text-sm">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{t.itemsCost || "Items cost"}</span>
-                    <span className="font-medium" data-testid="text-product-items-cost">{productTotalCost.toFixed(2)} SAR</span>
+            {/* Phases: each phase contains its own Items, Services, and Tasks */}
+            {productPhases.map((ph) => {
+              const phaseItems = productItems.map((it, i) => ({ it, i })).filter(({ it }) => (parseInt(it.phase || "1", 10) || 1) === ph);
+              const phaseServices = productServices.map((s, i) => ({ s, i })).filter(({ s }) => (parseInt(s.phase || "1", 10) || 1) === ph);
+              const phaseTasks = productTasks.map((tk, i) => ({ tk, i })).filter(({ tk }) => (parseInt(tk.phase || "1", 10) || 1) === ph);
+              return (
+                <div key={ph} className="space-y-3 border rounded-md p-3" data-testid={`phase-section-${ph}`}>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <Label className="text-base font-bold">{(t as any).phase || "Phase"} {ph}</Label>
+                    {productPhases.length > 1 && (
+                      <Button type="button" size="sm" variant="ghost" data-testid={`button-remove-phase-${ph}`}
+                        onClick={() => {
+                          setProductItems(productItems.filter((x) => (parseInt(x.phase || "1", 10) || 1) !== ph));
+                          setProductServices(productServices.filter((x) => (parseInt(x.phase || "1", 10) || 1) !== ph));
+                          setProductTasks(productTasks.filter((x) => (parseInt(x.phase || "1", 10) || 1) !== ph));
+                          setProductPhases(productPhases.filter((p) => p !== ph));
+                        }}>
+                        <X className="h-4 w-4 mr-1" /> {(t as any).removePhase || "Remove Phase"}
+                      </Button>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{(t as any).totalSellPrice || "Total Sell Price"}</span>
-                    <span className="font-medium" data-testid="text-product-items-selling-price">{productTotalSellingPrice.toFixed(2)} SAR</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">{t.servicesCost || "Services cost"}</span>
-                    <span className="font-medium" data-testid="text-product-services-cost">{productServicesCost.toFixed(2)} SAR</span>
-                  </div>
-                  <div className="flex items-center justify-between border-t pt-1">
-                    <span className="font-semibold">{t.totalProductCost || "Total product cost"}</span>
-                    <span className="font-bold text-base" data-testid="text-product-grand-total">{productGrandTotalCost.toFixed(2)} SAR</span>
-                  </div>
-                </div>
-              )}
-            </div>
 
-            {/* Services */}
-            <div className="space-y-2 border-t pt-4">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <Label className="text-base font-semibold flex items-center gap-2">
-                  <Wrench className="h-4 w-4" /> {t.productServices || "Services"}
-                </Label>
-                <Button type="button" size="sm" variant="outline" data-testid="button-add-product-service"
-                  onClick={() => { const nextPh = Math.max(1, ...productServices.map(x => parseInt(x.phase || "1", 10) || 1)); setProductServices([...productServices, { serviceCatalogId: "", name: "", unitPrice: "", quantity: "1", phase: String(nextPh) }]); }}>
-                  <Plus className="h-3 w-3 mr-1" /> {t.addProductService || "Add Service"}
-                </Button>
-              </div>
-              {productServices.map((s, idx) => (
-                <div key={idx} className="space-y-2 border rounded-md p-2" data-testid={`row-service-${idx}`}>
-                  {services.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1">
-                        <Select
-                          value={s.serviceCatalogId || "__custom__"}
-                          onValueChange={(v) => {
-                            const a = [...productServices];
-                            if (v === "__custom__") {
-                              a[idx] = { ...a[idx], serviceCatalogId: "" };
-                            } else {
-                              const cat = services.find((x) => x.id === v);
-                              a[idx] = { ...a[idx], serviceCatalogId: v, name: cat?.name || a[idx].name, unitPrice: cat?.unitPrice || a[idx].unitPrice };
-                            }
-                            setProductServices(a);
-                          }}
-                        >
-                          <SelectTrigger data-testid={`select-catalog-service-${idx}`}>
-                            <SelectValue placeholder={t.selectCatalogService || "Select from catalog (optional)"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__custom__">{t.customService || "Custom service"}</SelectItem>
-                            {services.map((sv) => (<SelectItem key={sv.id} value={sv.id}>{sv.name} ({parseFloat(sv.unitPrice).toLocaleString()} SAR)</SelectItem>))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-4">
-                      <Input
-                        placeholder={t.serviceName || "Service name"}
-                        value={s.name}
-                        onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], name: e.target.value }; setProductServices(a); }}
-                        data-testid={`input-service-name-${idx}`}
-                      />
-                    </div>
-                    <div className="col-span-3">
-                      <Input
-                        type="number"
-                        placeholder={t.unitPrice || "Unit price"}
-                        value={s.unitPrice}
-                        onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], unitPrice: e.target.value }; setProductServices(a); }}
-                        data-testid={`input-service-price-${idx}`}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Input
-                        type="number"
-                        placeholder={t.quantity || "Qty"}
-                        value={s.quantity}
-                        onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], quantity: e.target.value }; setProductServices(a); }}
-                        data-testid={`input-service-qty-${idx}`}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Input
-                        type="number"
-                        min="1"
-                        placeholder={(t as any).phase || "Phase"}
-                        value={s.phase}
-                        onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], phase: e.target.value }; setProductServices(a); }}
-                        data-testid={`input-service-phase-${idx}`}
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <Button type="button" size="icon" variant="ghost" onClick={() => setProductServices(productServices.filter((_, i) => i !== idx))} data-testid={`button-remove-service-${idx}`}>
-                        <X className="h-4 w-4" />
+                  {/* Items */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <Label className="text-sm font-semibold flex items-center gap-2">
+                        <Layers className="h-4 w-4" /> {t.productItems || "Items"}
+                      </Label>
+                      <Button type="button" size="sm" variant="outline" data-testid={`button-add-product-item-${ph}`}
+                        onClick={() => setProductItems([...productItems, { name: "", cost: "", sellingPrice: "", percentage: "", phase: String(ph) }])}>
+                        <Plus className="h-3 w-3 mr-1" /> {t.addItem || "Add Item"}
                       </Button>
                     </div>
+                    {phaseItems.map(({ it, i: idx }) => (
+                      <div key={idx} className="grid grid-cols-12 gap-2 items-end" data-testid={`row-item-${idx}`}>
+                        <div className="col-span-4"><Input placeholder={t.productName || "Name"} value={it.name} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], name: e.target.value }; setProductItems(a); }} /></div>
+                        <div className="col-span-3"><Input type="number" placeholder={t.itemCost || "Cost (SAR)"} value={it.cost} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], cost: e.target.value }; setProductItems(a); }} data-testid={`input-item-cost-${idx}`} /></div>
+                        <div className="col-span-2"><Input type="number" placeholder={(t as any).sellingPrice || "Sell (SAR)"} value={it.sellingPrice} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], sellingPrice: e.target.value }; setProductItems(a); }} data-testid={`input-item-selling-price-${idx}`} /></div>
+                        <div className="col-span-2"><Input type="number" placeholder={t.itemPercentage || "% of Total"} value={it.percentage} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], percentage: e.target.value }; setProductItems(a); }} /></div>
+                        <div className="col-span-1"><Button type="button" size="icon" variant="ghost" onClick={() => setProductItems(productItems.filter((_, i) => i !== idx))} data-testid={`button-remove-item-${idx}`}><X className="h-4 w-4" /></Button></div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Services */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <Label className="text-sm font-semibold flex items-center gap-2">
+                        <Wrench className="h-4 w-4" /> {t.productServices || "Services"}
+                      </Label>
+                      <Button type="button" size="sm" variant="outline" data-testid={`button-add-product-service-${ph}`}
+                        onClick={() => setProductServices([...productServices, { serviceCatalogId: "", name: "", unitPrice: "", quantity: "1", phase: String(ph) }])}>
+                        <Plus className="h-3 w-3 mr-1" /> {t.addProductService || "Add Service"}
+                      </Button>
+                    </div>
+                    {phaseServices.map(({ s, i: idx }) => (
+                      <div key={idx} className="space-y-2 border rounded-md p-2" data-testid={`row-service-${idx}`}>
+                        {services.length > 0 && (
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1">
+                              <Select
+                                value={s.serviceCatalogId || "__custom__"}
+                                onValueChange={(v) => {
+                                  const a = [...productServices];
+                                  if (v === "__custom__") {
+                                    a[idx] = { ...a[idx], serviceCatalogId: "" };
+                                  } else {
+                                    const cat = services.find((x) => x.id === v);
+                                    a[idx] = { ...a[idx], serviceCatalogId: v, name: cat?.name || a[idx].name, unitPrice: cat?.unitPrice || a[idx].unitPrice };
+                                  }
+                                  setProductServices(a);
+                                }}
+                              >
+                                <SelectTrigger data-testid={`select-catalog-service-${idx}`}>
+                                  <SelectValue placeholder={t.selectCatalogService || "Select from catalog (optional)"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="__custom__">{t.customService || "Custom service"}</SelectItem>
+                                  {services.map((sv) => (<SelectItem key={sv.id} value={sv.id}>{sv.name} ({parseFloat(sv.unitPrice).toLocaleString()} SAR)</SelectItem>))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          </div>
+                        )}
+                        <div className="grid grid-cols-12 gap-2 items-end">
+                          <div className="col-span-5">
+                            <Input placeholder={t.serviceName || "Service name"} value={s.name} onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], name: e.target.value }; setProductServices(a); }} data-testid={`input-service-name-${idx}`} />
+                          </div>
+                          <div className="col-span-3">
+                            <Input type="number" placeholder={t.unitPrice || "Unit price"} value={s.unitPrice} onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], unitPrice: e.target.value }; setProductServices(a); }} data-testid={`input-service-price-${idx}`} />
+                          </div>
+                          <div className="col-span-3">
+                            <Input type="number" placeholder={t.quantity || "Qty"} value={s.quantity} onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], quantity: e.target.value }; setProductServices(a); }} data-testid={`input-service-qty-${idx}`} />
+                          </div>
+                          <div className="col-span-1">
+                            <Button type="button" size="icon" variant="ghost" onClick={() => setProductServices(productServices.filter((_, i) => i !== idx))} data-testid={`button-remove-service-${idx}`}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Tasks */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <Label className="text-sm font-semibold flex items-center gap-2">
+                        <ListChecks className="h-4 w-4" /> {t.productTasks || "Tasks"}
+                      </Label>
+                      <Button type="button" size="sm" variant="outline" data-testid={`button-add-product-task-${ph}`}
+                        onClick={() => setProductTasks([...productTasks, { name: "", description: "", duration: "1", phase: String(ph) }])}>
+                        <Plus className="h-3 w-3 mr-1" /> {t.addProductTask || "Add Task"}
+                      </Button>
+                    </div>
+                    {phaseTasks.map(({ tk, i: idx }) => (
+                      <div key={idx} className="grid grid-cols-12 gap-2 items-end" data-testid={`row-task-${idx}`}>
+                        <div className="col-span-7"><Input placeholder={t.productName || "Task name"} value={tk.name} onChange={(e) => { const a = [...productTasks]; a[idx] = { ...a[idx], name: e.target.value }; setProductTasks(a); }} /></div>
+                        <div className="col-span-4"><Input type="number" placeholder={`${t.taskDuration || "Duration"} (${t.durationDays || "days"})`} value={tk.duration} onChange={(e) => { const a = [...productTasks]; a[idx] = { ...a[idx], duration: e.target.value }; setProductTasks(a); }} /></div>
+                        <div className="col-span-1"><Button type="button" size="icon" variant="ghost" onClick={() => setProductTasks(productTasks.filter((_, i) => i !== idx))} data-testid={`button-remove-task-${idx}`}><X className="h-4 w-4" /></Button></div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+              );
+            })}
+
+            <div className="flex justify-end">
+              <Button type="button" size="sm" variant="outline" data-testid="button-add-product-phase"
+                onClick={() => {
+                  const nextPh = Math.max(0, ...productPhases) + 1;
+                  setProductPhases([...productPhases, nextPh]);
+                }}>
+                <Plus className="h-3 w-3 mr-1" /> {(t as any).addPhase || "Add Phase"}
+              </Button>
             </div>
 
-            {/* Tasks */}
-            <div className="space-y-2 border-t pt-4">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <Label className="text-base font-semibold flex items-center gap-2">
-                  <ListChecks className="h-4 w-4" /> {t.productTasks || "Tasks"}
-                </Label>
-                <Button type="button" size="sm" variant="outline" data-testid="button-add-product-task"
-                  onClick={() => { const nextPh = Math.max(1, ...productTasks.map(x => parseInt(x.phase || "1", 10) || 1)); setProductTasks([...productTasks, { name: "", description: "", duration: "1", phase: String(nextPh) }]); }}>
-                  <Plus className="h-3 w-3 mr-1" /> {t.addProductTask || "Add Task"}
-                </Button>
-              </div>
-              {productTasks.map((tk, idx) => (
-                <div key={idx} className="grid grid-cols-12 gap-2 items-end" data-testid={`row-task-${idx}`}>
-                  <div className="col-span-6"><Input placeholder={t.productName || "Task name"} value={tk.name} onChange={(e) => { const a = [...productTasks]; a[idx] = { ...a[idx], name: e.target.value }; setProductTasks(a); }} /></div>
-                  <div className="col-span-3"><Input type="number" placeholder={`${t.taskDuration || "Duration"} (${t.durationDays || "days"})`} value={tk.duration} onChange={(e) => { const a = [...productTasks]; a[idx] = { ...a[idx], duration: e.target.value }; setProductTasks(a); }} /></div>
-                  <div className="col-span-2"><Input type="number" min="1" placeholder={(t as any).phase || "Phase"} value={tk.phase} onChange={(e) => { const a = [...productTasks]; a[idx] = { ...a[idx], phase: e.target.value }; setProductTasks(a); }} data-testid={`input-task-phase-${idx}`} /></div>
-                  <div className="col-span-1"><Button type="button" size="icon" variant="ghost" onClick={() => setProductTasks(productTasks.filter((_, i) => i !== idx))} data-testid={`button-remove-task-${idx}`}><X className="h-4 w-4" /></Button></div>
+            {(productItems.length > 0 || productServices.length > 0) && (
+              <div className="rounded-md bg-muted/50 p-3 space-y-1 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t.totalItemsCost || "Total Cost"}</span>
+                  <span className="font-medium" data-testid="text-product-items-cost">{productTotalCost.toFixed(2)} SAR</span>
                 </div>
-              ))}
-              <div className="flex justify-end">
-                <Button type="button" size="sm" variant="outline" data-testid="button-add-product-phase"
-                  onClick={() => {
-                    const nextPh = Math.max(1, ...productItems.map(x => parseInt(x.phase || "1", 10) || 1), ...productServices.map(x => parseInt(x.phase || "1", 10) || 1), ...productTasks.map(x => parseInt(x.phase || "1", 10) || 1)) + 1;
-                    setProductTasks([...productTasks, { name: "", description: "", duration: "1", phase: String(nextPh) }]);
-                  }}>
-                  <Plus className="h-3 w-3 mr-1" /> {(t as any).addPhase || "Add Phase"}
-                </Button>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{(t as any).totalSellPrice || "Total Sell Price"}</span>
+                  <span className="font-medium" data-testid="text-product-items-selling-price">{productTotalSellingPrice.toFixed(2)} SAR</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t.totalPercentage || "Total %"}</span>
+                  <span className={`font-medium ${productTotalPercentage !== 100 ? "text-destructive" : ""}`} data-testid="text-total-percentage">{productTotalPercentage.toFixed(2)}%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">{t.servicesCost || "Services cost"}</span>
+                  <span className="font-medium" data-testid="text-product-services-cost">{productServicesCost.toFixed(2)} SAR</span>
+                </div>
+                <div className="flex items-center justify-between border-t pt-1">
+                  <span className="font-semibold">{t.totalProductCost || "Total product cost"}</span>
+                  <span className="font-bold text-base" data-testid="text-product-grand-total">{productGrandTotalCost.toFixed(2)} SAR</span>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="flex justify-end gap-2 pt-4 border-t">
               <Button type="button" variant="outline" onClick={() => handleOpenProductDialog(false)} data-testid="button-cancel-product">{t.cancel}</Button>
