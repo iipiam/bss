@@ -34,6 +34,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
+import { usePermissions } from "@/hooks/usePermissions";
 import { Link, useParams, useLocation } from "wouter";
 import { format } from "date-fns";
 
@@ -182,6 +183,8 @@ export default function ProjectDetail() {
   const [delItem, setDelItem] = useState<{ type: string; id: string; name: string } | null>(null);
   const [declineOpen, setDeclineOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
+  const { canEdit } = usePermissions();
+  const canDecide = canEdit('orders');
 
   const { data: project, isLoading } = useQuery<ServiceProject>({
     queryKey: ["/api/service-projects", projectId],
@@ -680,7 +683,7 @@ export default function ProjectDetail() {
                 <>
                   <Button
                     onClick={() => approveMutation.mutate()}
-                    disabled={approveMutation.isPending}
+                    disabled={!canDecide || approveMutation.isPending}
                     data-testid="button-approve-project"
                     className="bg-green-600 hover:bg-green-700 text-white border-green-700"
                   >
@@ -690,6 +693,7 @@ export default function ProjectDetail() {
                   <Button
                     variant="destructive"
                     onClick={() => setDeclineOpen(true)}
+                    disabled={!canDecide}
                     data-testid="button-decline-project"
                   >
                     <ShieldX className="h-4 w-4 mr-2" />
@@ -697,21 +701,10 @@ export default function ProjectDetail() {
                   </Button>
                 </>
               )}
-              {project.approvalStatus === 'declined' && (
-                <Button
-                  variant="outline"
-                  onClick={() => approveMutation.mutate()}
-                  disabled={approveMutation.isPending}
-                  data-testid="button-approve-after-decline"
-                >
-                  <ShieldCheck className="h-4 w-4 mr-2" />
-                  {t.approveAnyway || "Approve Anyway"}
-                </Button>
-              )}
               {project.approvalStatus === 'approved' && (project.lifecycleStatus || 'not_started') === 'not_started' && (
                 <Button
                   onClick={() => lifecycleMutation.mutate('in_progress')}
-                  disabled={lifecycleMutation.isPending}
+                  disabled={!canDecide || lifecycleMutation.isPending}
                   data-testid="button-start-project"
                 >
                   <PlayCircle className="h-4 w-4 mr-2" />
@@ -721,7 +714,7 @@ export default function ProjectDetail() {
               {project.approvalStatus === 'approved' && project.lifecycleStatus === 'in_progress' && (
                 <Button
                   onClick={() => lifecycleMutation.mutate('finished')}
-                  disabled={lifecycleMutation.isPending}
+                  disabled={!canDecide || lifecycleMutation.isPending}
                   data-testid="button-finish-project"
                   className="bg-green-600 hover:bg-green-700 text-white border-green-700"
                 >
@@ -1345,7 +1338,7 @@ export default function ProjectDetail() {
             <Button
               variant="destructive"
               onClick={() => declineMutation.mutate(declineReason.trim())}
-              disabled={!declineReason.trim() || declineMutation.isPending}
+              disabled={!canDecide || !declineReason.trim() || declineMutation.isPending}
               data-testid="button-confirm-decline"
             >
               {declineMutation.isPending ? (t.declining || "Declining…") : (t.decline || "Decline")}

@@ -469,8 +469,8 @@ export type Customer = typeof customers.$inferSelect;
 export const customerDocuments = pgTable("customer_documents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
-  customerId: varchar("customer_id").notNull(),
-  projectId: varchar("project_id"),
+  customerId: varchar("customer_id").notNull().references(() => customers.id, { onDelete: "cascade" }),
+  projectId: varchar("project_id").references(() => serviceProjects.id, { onDelete: "set null" }),
   kind: text("kind").notNull().default("other"), // "quotation" | "agreement" | "dossier" | "other"
   fileName: text("file_name").notNull(),
   mimeType: text("mime_type").notNull().default("application/pdf"),
@@ -1743,7 +1743,7 @@ export const serviceProjects = pgTable("service_projects", {
   approvedAt: timestamp("approved_at"),
   approvedBy: varchar("approved_by"),
   declineReason: text("decline_reason"),
-  customerId: varchar("customer_id"),
+  customerId: varchar("customer_id").references(() => customers.id),
   priority: text("priority").notNull().default("medium"), // "low", "medium", "high", "urgent"
   startDate: timestamp("start_date"),
   endDate: timestamp("end_date"),

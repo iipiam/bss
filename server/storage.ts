@@ -5523,8 +5523,14 @@ export class DatabaseStorage implements IStorage {
         customer = created;
       }
 
-      // Atomic transition: only flip to "approved" if currently not approved.
-      // This makes concurrent approve calls idempotent — the second one is a no-op.
+      // State machine: approval is only allowed from "pending".
+      // Reopening declined or finished projects is out of scope for this task.
+      if (project.approvalStatus && project.approvalStatus !== "pending") {
+        throw new Error(`Cannot approve project: current approval status is "${project.approvalStatus}". Only pending projects can be approved.`);
+      }
+
+      // Atomic transition: only flip to "approved" if still pending. Concurrent
+      // approve calls become a no-op (the second update returns no rows).
       const [updated] = await tx.update(serviceProjects)
         .set({
           approvalStatus: "approved",
@@ -5536,12 +5542,12 @@ export class DatabaseStorage implements IStorage {
         .where(and(
           eq(serviceProjects.id, id),
           eq(serviceProjects.restaurantId, restaurantId),
-          ne(serviceProjects.approvalStatus, "approved"),
+          eq(serviceProjects.approvalStatus, "pending"),
         ))
         .returning();
 
       if (!updated) {
-        // Already approved by a concurrent request — return current state.
+        // Lost the race to another approval — return current state.
         const [current] = await tx.select().from(serviceProjects)
           .where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)));
         return { project: current, customer };
@@ -5556,15 +5562,26 @@ export class DatabaseStorage implements IStorage {
     restaurantId: string,
     reason: string,
   ): Promise<ServiceProject | undefined> {
+    // State machine: decline is only allowed from "pending" (matches approve).
+    const [existing] = await db.select().from(serviceProjects)
+      .where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)));
+    if (!existing) return undefined;
+    if (existing.approvalStatus && existing.approvalStatus !== "pending") {
+      throw new Error(`Cannot decline project: current approval status is "${existing.approvalStatus}". Only pending projects can be declined.`);
+    }
     const [updated] = await db.update(serviceProjects)
       .set({
         approvalStatus: "declined",
         declineReason: reason,
         lifecycleStatus: "not_started",
       })
-      .where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)))
+      .where(and(
+        eq(serviceProjects.id, id),
+        eq(serviceProjects.restaurantId, restaurantId),
+        eq(serviceProjects.approvalStatus, "pending"),
+      ))
       .returning();
-    return updated;
+    return updated || existing;
   }
 
   async setServiceProjectLifecycle(
@@ -6741,7 +6758,20 @@ export const storage = new DatabaseStorage();
     await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS approved_by VARCHAR(255)`);
     await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS decline_reason TEXT`);
     await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS customer_id VARCHAR(255)`);
-    console.log('[Migration] service_projects decision-center columns verified/added: approval_status, lifecycle_status, approved_at, approved_by, decline_reason, customer_id');
+    // Add FK for service_projects.customer_id -> customers(id) if missing.
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_constraint WHERE conname = 'service_projects_customer_id_fkey'
+        ) THEN
+          ALTER TABLE service_projects
+            ADD CONSTRAINT service_projects_customer_id_fkey
+            FOREIGN KEY (customer_id) REFERENCES customers(id);
+        END IF;
+      END$$;
+    `);
+    console.log('[Migration] service_projects decision-center columns verified/added: approval_status, lifecycle_status, approved_at, approved_by, decline_reason, customer_id (+FK)');
 
     // customer_documents: stores PDFs (and other files) attached to a customer
     // record. Used by the project Decision Center when approving a project.
@@ -6760,7 +6790,23 @@ export const storage = new DatabaseStorage();
     `);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_customer_documents_customer ON customer_documents (restaurant_id, customer_id)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_customer_documents_project ON customer_documents (restaurant_id, project_id)`);
-    console.log('[Migration] Table verified/created: customer_documents');
+    // Add FK constraints (cascade on customer delete, null on project delete) if missing.
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'customer_documents_customer_id_fkey') THEN
+          ALTER TABLE customer_documents
+            ADD CONSTRAINT customer_documents_customer_id_fkey
+            FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'customer_documents_project_id_fkey') THEN
+          ALTER TABLE customer_documents
+            ADD CONSTRAINT customer_documents_project_id_fkey
+            FOREIGN KEY (project_id) REFERENCES service_projects(id) ON DELETE SET NULL;
+        END IF;
+      END$$;
+    `);
+    console.log('[Migration] Table verified/created: customer_documents (+FKs)');
 
     console.log('[Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings, customer_documents');
 
