@@ -201,7 +201,7 @@ import {
   projectItems,
 } from "@shared/schema";
 import { db, pool } from "./db";
-import { eq, and, gte, lte, lt, sql, or, isNull, isNotNull, desc } from "drizzle-orm";
+import { eq, and, gte, lte, lt, sql, or, isNull, isNotNull, desc, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 
@@ -5700,7 +5700,7 @@ export class DatabaseStorage implements IStorage {
       if (pLinks.length > 0) {
         const catalogIds = pLinks.map(l => l.serviceCatalogId).filter((x): x is string => !!x);
         const catalogRows = catalogIds.length > 0
-          ? await tx.select().from(serviceCatalog).where(and(eq(serviceCatalog.restaurantId, restaurantId), sql`${serviceCatalog.id} = ANY(${catalogIds})`))
+          ? await tx.select().from(serviceCatalog).where(and(eq(serviceCatalog.restaurantId, restaurantId), inArray(serviceCatalog.id, catalogIds)))
           : [];
         const byId = new Map(catalogRows.map(c => [c.id, c]));
         const rows = pLinks.map(link => {
@@ -5742,6 +5742,15 @@ export class DatabaseStorage implements IStorage {
           sourceProductId: productId,
         }))).returning();
       }
+
+      const allItems = await tx.select().from(projectItems).where(and(eq(projectItems.projectId, projectId), eq(projectItems.restaurantId, restaurantId)));
+      const allServices = await tx.select().from(projectServices).where(and(eq(projectServices.projectId, projectId), eq(projectServices.restaurantId, restaurantId)));
+      const itemsTotal = allItems.reduce((s, it) => s + (parseFloat(it.cost || "0") || 0), 0);
+      const servicesTotal = allServices.reduce((s, sv) => s + (parseFloat(sv.totalPrice || "0") || 0), 0);
+      const newTotal = (itemsTotal + servicesTotal).toFixed(2);
+      await tx.update(serviceProjects)
+        .set({ actualCost: newTotal })
+        .where(and(eq(serviceProjects.id, projectId), eq(serviceProjects.restaurantId, restaurantId)));
 
       return { items: insertedItems, services: insertedServices, tasks: insertedTasks };
     });

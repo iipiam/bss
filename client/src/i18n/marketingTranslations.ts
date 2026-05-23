@@ -64,6 +64,9 @@ export type MarketingT = {
   selectMenuItemPlaceholder: string;
   noMenuItems: string;
   linkedFromMenuToast: string;
+  selectFromCatalog: string;
+  noCatalogProducts: string;
+  linkedFromCatalogToast: string;
   productName: string;
   sellingPrice: string; sellingPriceHelp: string;
   variableCost: string; variableCostHelp: string;
@@ -349,6 +352,9 @@ const en: MarketingT = {
   selectMenuItemPlaceholder: "Choose a menu item…",
   noMenuItems: "No menu items found",
   linkedFromMenuToast: "Product linked from menu with costs",
+  selectFromCatalog: "Select from Service Catalog Products",
+  noCatalogProducts: "No products in Service Catalog",
+  linkedFromCatalogToast: "Product linked from Service Catalog",
   productName: "Product name",
   sellingPrice: "Selling Price / Unit",
   sellingPriceHelp: "Price you charge for one unit.",
@@ -632,6 +638,9 @@ const ar: MarketingT = {
   selectMenuItemPlaceholder: "اختر صنفًا من القائمة…",
   noMenuItems: "لا توجد أصناف في القائمة",
   linkedFromMenuToast: "تم ربط المنتج من القائمة مع التكاليف",
+  selectFromCatalog: "اختر من منتجات كتالوج الخدمات",
+  noCatalogProducts: "لا توجد منتجات في كتالوج الخدمات",
+  linkedFromCatalogToast: "تم ربط المنتج من كتالوج الخدمات",
   productName: "اسم المنتج",
   sellingPrice: "سعر البيع / الوحدة",
   sellingPriceHelp: "السعر الذي تتقاضاه عن الوحدة الواحدة.",

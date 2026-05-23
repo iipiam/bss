@@ -324,6 +324,7 @@ export default function Marketing() {
 
   // ---- Menu / cost data from BSS ----
   const { data: menuItems = [] } = useQuery<MenuItem[]>({ queryKey: ["/api/menu"] });
+  const { data: serviceProductsList = [] } = useQuery<Array<{ id: string; name: string }>>({ queryKey: ["/api/service-products"] });
   const { data: recipes = [] } = useQuery<Recipe[]>({ queryKey: ["/api/recipes"] });
   const { data: inventory = [] } = useQuery<InventoryItem[]>({ queryKey: ["/api/inventory"] });
   const { data: shopBills = [] } = useQuery<ShopBill[]>({ queryKey: ["/api/shop/bills"] });
@@ -533,6 +534,39 @@ export default function Marketing() {
     };
     setProducts((arr) => [...arr, linked]);
     toast({ title: t.linkedFromMenuToast, description: mi.name });
+  };
+
+  const addProductFromCatalog = async (productId: string) => {
+    const sp = serviceProductsList.find((p) => p.id === productId);
+    if (!sp) return;
+    try {
+      const res = await apiRequest("GET", `/api/service-products/${productId}`);
+      const detail = await res.json();
+      const itemsTotal = (detail.items || []).reduce(
+        (s: number, it: any) => s + (parseFloat(it.cost || "0") || 0),
+        0,
+      );
+      const servicesTotal = (detail.services || []).reduce((s: number, sv: any) => {
+        const qty = parseFloat(sv.quantity || "1") || 1;
+        const unit = parseFloat(sv.unitPrice || "0") || 0;
+        return s + qty * unit;
+      }, 0);
+      const variableCost = itemsTotal + servicesTotal;
+      const linked: FinProduct = {
+        id: crypto.randomUUID(),
+        name: sp.name,
+        sellingPrice: Math.round(variableCost * 1.5),
+        variableCost: Math.round(variableCost),
+        fixedCosts: Math.round(monthlyFixedCosts),
+        initialCapital: 20000,
+        monthlyUnits: 100,
+        growthRate: 5,
+      };
+      setProducts((arr) => [...arr, linked]);
+      toast({ title: t.linkedFromCatalogToast, description: sp.name });
+    } catch (e: any) {
+      toast({ title: t.error, description: String(e?.message || e), variant: "destructive" });
+    }
   };
 
   // ---- Financial model ----
@@ -1283,17 +1317,31 @@ export default function Marketing() {
                 <CardDescription>{t.finDesc}</CardDescription>
               </div>
               <div className="flex gap-2 flex-wrap items-center">
-                <Select value="" onValueChange={(v) => v && addProductFromMenu(v)}>
-                  <SelectTrigger className="w-[220px] h-9" data-testid="select-menu-item">
-                    <SelectValue placeholder={t.selectFromMenu} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {menuItems.length === 0 ? (
-                      <div className="px-2 py-1.5 text-sm text-muted-foreground">{t.noMenuItems}</div>
-                    ) : (
-                      menuItems.map((mi) => (
+                {menuItems.length > 0 && (
+                  <Select value="" onValueChange={(v) => v && addProductFromMenu(v)}>
+                    <SelectTrigger className="w-[220px] h-9" data-testid="select-menu-item">
+                      <SelectValue placeholder={t.selectFromMenu} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {menuItems.map((mi) => (
                         <SelectItem key={mi.id} value={mi.id} data-testid={`option-menu-${mi.id}`}>
                           {mi.name} — {fmt(parseFloat(mi.price) || 0)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                <Select value="" onValueChange={(v) => v && addProductFromCatalog(v)}>
+                  <SelectTrigger className="w-[260px] h-9" data-testid="select-catalog-product">
+                    <SelectValue placeholder={t.selectFromCatalog} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {serviceProductsList.length === 0 ? (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">{t.noCatalogProducts}</div>
+                    ) : (
+                      serviceProductsList.map((sp) => (
+                        <SelectItem key={sp.id} value={sp.id} data-testid={`option-catalog-product-${sp.id}`}>
+                          {sp.name}
                         </SelectItem>
                       ))
                     )}
