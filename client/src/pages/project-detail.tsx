@@ -419,6 +419,7 @@ export default function ProjectDetail() {
           quantity: qty,
           unitPrice,
           total,
+          phase: s.phase ?? 1,
         };
       });
       const subtotal = items.reduce((sum, it) => sum + it.total, 0);

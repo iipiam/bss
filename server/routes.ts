@@ -16821,15 +16821,29 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const companyInfo = await storage.getCompanySettings(restaurantId);
       
       const items = Array.isArray(quotation.items) ? quotation.items : [];
-      const itemRows = items.map((item: any, idx: number) => `
+      const phasesQ = Array.from(new Set(items.map((it: any) => Number(it.phase) || 1))).sort((a: number, b: number) => a - b);
+      let qIdx = 0;
+      const itemRows = phasesQ.length === 0
+        ? ''
+        : phasesQ.map((ph: number) => {
+            const phaseItems = items.filter((it: any) => (Number(it.phase) || 1) === ph);
+            const phaseSum = phaseItems.reduce((s: number, it: any) => s + parseFloat(it.total || 0), 0);
+            const header = phasesQ.length > 1 || ph !== 1
+              ? `<tr class="phase-header"><td colspan="5" style="background:#eef2f7;color:#1a365d;font-weight:700;padding:8px 12px;">${isAr ? `المرحلة ${ph}` : `Phase ${ph}`} — ${phaseItems.length} ${isAr ? 'بند' : 'item(s)'} — ${phaseSum.toLocaleString('en-US', {minimumFractionDigits: 2})} SAR</td></tr>`
+              : '';
+            const rows = phaseItems.map((item: any) => {
+              qIdx += 1;
+              return `
         <tr>
-          <td style="text-align:center">${idx + 1}</td>
+          <td style="text-align:center">${qIdx}</td>
           <td>${escapeHtml(item.name)}</td>
           <td style="text-align:center">${item.quantity || 1}</td>
           <td style="text-align:right">${parseFloat(item.unitPrice || 0).toLocaleString('en-US', {minimumFractionDigits: 2})} SAR</td>
           <td style="text-align:right">${parseFloat(item.total || 0).toLocaleString('en-US', {minimumFractionDigits: 2})} SAR</td>
-        </tr>
-      `).join('');
+        </tr>`;
+            }).join('');
+            return header + rows;
+          }).join('');
 
       const htmlContent = `
         <!DOCTYPE html>
@@ -16980,15 +16994,26 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const totalPaid = schedules.filter(s => s.status === 'paid').reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
     const totalScheduled = schedules.reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
 
-    const serviceRows = services.map((svc, idx) => `
+    const svcPhases = Array.from(new Set(services.map(s => (s as any).phase ?? 1))).sort((a: number, b: number) => a - b);
+    let svcIdx = 0;
+    const serviceRows = svcPhases.map((ph: number) => {
+      const phaseSvcs = services.filter(s => ((s as any).phase ?? 1) === ph);
+      const phaseSum = phaseSvcs.reduce((s, sv) => s + parseFloat(sv.totalPrice || '0'), 0);
+      const header = `<tr><td colspan="6" style="background:#eef2f7;color:#1a365d;font-weight:700;padding:7px 8px;">Phase ${ph} / المرحلة ${ph} — ${phaseSvcs.length} — ${phaseSum.toFixed(2)} SAR</td></tr>`;
+      const rows = phaseSvcs.map(svc => {
+        svcIdx += 1;
+        return `
         <tr>
-          <td>${idx + 1}</td>
+          <td>${svcIdx}</td>
           <td>${escapeHtml(svc.name)}</td>
           <td>${escapeHtml(svc.pricingMethod)}</td>
           <td style="text-align:right">${parseFloat(svc.unitPrice || '0').toFixed(2)}</td>
           <td style="text-align:center">${svc.quantity}</td>
           <td style="text-align:right">${parseFloat(svc.totalPrice || '0').toFixed(2)} SAR</td>
-        </tr>`).join('');
+        </tr>`;
+      }).join('');
+      return header + rows;
+    }).join('');
     const billRows = bills.map((b, idx) => `
         <tr>
           <td>${idx + 1}</td>
@@ -17006,14 +17031,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           <td style="text-align:right">${parseFloat(p.totalPrice || '0').toFixed(2)} SAR</td>
           <td>${escapeHtml(p.status)}</td>
         </tr>`).join('');
-    const taskRows = tasks.map((t, idx) => `
-        <tr style="${t.isCritical ? 'background:#fef2f2;' : ''}">
-          <td>${idx + 1}</td>
-          <td>${escapeHtml(t.name)}${t.isCritical ? ' ⚠' : ''}</td>
-          <td style="text-align:center">${t.duration} days</td>
-          <td>${escapeHtml(t.status)}</td>
-          <td style="text-align:center">${t.slack ?? '-'}</td>
-        </tr>`).join('');
+    const taskPhases = Array.from(new Set(tasks.map(t => (t as any).phase ?? 1))).sort((a: number, b: number) => a - b);
+    let tIdx = 0;
+    const taskRows = taskPhases.map((ph: number) => {
+      const phaseTks = tasks.filter(t => ((t as any).phase ?? 1) === ph);
+      const sumDur = phaseTks.reduce((s, tk) => s + (tk.duration || 0), 0);
+      const header = `<tr><td colspan="5" style="background:#eef2f7;color:#1a365d;font-weight:700;padding:7px 8px;">Phase ${ph} / المرحلة ${ph} — ${phaseTks.length} task(s) — ${sumDur} days</td></tr>`;
+      const rows = phaseTks.map(tk => {
+        tIdx += 1;
+        return `
+        <tr style="${tk.isCritical ? 'background:#fef2f2;' : ''}">
+          <td>${tIdx}</td>
+          <td>${escapeHtml(tk.name)}${tk.isCritical ? ' !' : ''}</td>
+          <td style="text-align:center">${tk.duration} days</td>
+          <td>${escapeHtml(tk.status)}</td>
+          <td style="text-align:center">${tk.slack ?? '-'}</td>
+        </tr>`;
+      }).join('');
+      return header + rows;
+    }).join('');
     const scheduleRows = schedules.map((s, idx) => `
         <tr>
           <td>${idx + 1}</td>
@@ -17264,15 +17300,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const bodyHtml = body.replace(/\n/g, '<br/>');
       const terms = (company?.termsAndConditions || '').trim();
 
-      const servicesRows = services.length > 0
-        ? services.map((svc, i) => {
-            const qty = parseFloat(svc.quantity || '1');
-            const unit = svc.unit ? escapeHtml(svc.unit) : '';
-            const unitPrice = parseFloat(svc.unitPrice || '0');
-            const total = parseFloat(svc.totalPrice || '0');
-            return `
+      const agPhases = Array.from(new Set(services.map(s => (s as any).phase ?? 1))).sort((a: number, b: number) => a - b);
+      let agIdx = 0;
+      const servicesRows = services.length === 0
+        ? `<tr><td colspan="5" class="empty">No services added to this project.</td></tr>`
+        : agPhases.map((ph: number) => {
+            const phaseSvcs = services.filter(s => ((s as any).phase ?? 1) === ph);
+            const phaseSum = phaseSvcs.reduce((s, sv) => s + parseFloat(sv.totalPrice || '0'), 0);
+            const header = `<tr><td colspan="5" style="background:#eef2f7;color:#1a365d;font-weight:700;padding:8px 10px;">Phase ${ph} / المرحلة ${ph} — ${phaseSvcs.length} — ${fmtMoney(phaseSum)}</td></tr>`;
+            const rows = phaseSvcs.map(svc => {
+              agIdx += 1;
+              const qty = parseFloat(svc.quantity || '1');
+              const unit = svc.unit ? escapeHtml(svc.unit) : '';
+              const unitPrice = parseFloat(svc.unitPrice || '0');
+              const total = parseFloat(svc.totalPrice || '0');
+              return `
               <tr>
-                <td class="num">${i + 1}</td>
+                <td class="num">${agIdx}</td>
                 <td>
                   <div class="svc-name">${escapeHtml(svc.name || '')}</div>
                   ${svc.description ? `<div class="svc-desc">${escapeHtml(svc.description)}</div>` : ''}
@@ -17281,8 +17325,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
                 <td class="num">${fmtMoney(unitPrice)}</td>
                 <td class="num">${fmtMoney(total)}</td>
               </tr>`;
-          }).join('')
-        : `<tr><td colspan="5" class="empty">No services added to this project.</td></tr>`;
+            }).join('');
+            return header + rows;
+          }).join('');
 
       const logoHtml = company?.companyLogo
         ? `<img src="${escapeHtml(company.companyLogo)}" alt="logo" class="logo" />`
