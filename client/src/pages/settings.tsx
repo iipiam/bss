@@ -56,7 +56,45 @@ export default function SettingsPage() {
   const { toast } = useToast();
   const { t, setLanguage, language } = useLanguage();
   const { restaurant, isLoading: authLoading } = useAuth();
-  const { labels, isRealEstate } = useBusinessType();
+  const { labels, isRealEstate, isFactory, isRestaurant, isServiceBusiness, businessType } = useBusinessType();
+
+  // Business-name field label + placeholder per business type
+  const businessNameLabel = isRealEstate
+    ? ((t as any).brokerageName || "Brokerage Name")
+    : isFactory
+      ? ((t as any).factoryName || "Factory Name")
+      : isServiceBusiness
+        ? ((t as any).companyName || "Company Name")
+        : t.restaurantName;
+  const businessNamePlaceholder = isRealEstate
+    ? ((t as any).enterBrokerageName || "Enter brokerage name")
+    : isFactory
+      ? ((t as any).enterFactoryName || "Enter factory name")
+      : isServiceBusiness
+        ? ((t as any).enterCompanyName || "Enter company name")
+        : t.enterRestaurantName;
+  const businessInfoTitle = isRealEstate
+    ? ((t as any).brokerageInformation || "Brokerage Information")
+    : isFactory
+      ? ((t as any).factoryInformation || "Factory Information")
+      : isServiceBusiness
+        ? ((t as any).companyInformation || "Company Information")
+        : t.restaurantInformation;
+  const settingsSubtitle = isRealEstate
+    ? ((t as any).settingsDescriptionRealEstate || "Configure brokerage information and preferences")
+    : isFactory
+      ? ((t as any).settingsDescriptionFactory || "Configure factory information and preferences")
+      : isServiceBusiness
+        ? ((t as any).settingsDescriptionService || "Configure company information and preferences")
+        : t.settingsDescription;
+
+  // Restaurant + factory use shifts (kitchen/production shifts). Real-estate and
+  // service businesses run on regular business hours, so hide the Shift 2 toggle
+  // and present a single "Business Hours" block instead of "Shift 1".
+  const hasShifts = isRestaurant || isFactory;
+  const primaryHoursLabel = hasShifts
+    ? (t.shift1 || "Shift 1")
+    : ((t as any).businessHours || "Business Hours");
   const [formData, setFormData] = useState<Partial<Settings>>({});
   const [showShift2, setShowShift2] = useState(false);
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule>(createDefaultWeeklySchedule());
@@ -292,23 +330,23 @@ export default function SettingsPage() {
     <div className="p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold mb-2">{t.settings}</h1>
-        <p className="text-muted-foreground">{isRealEstate ? (t as any).settingsDescriptionRealEstate : t.settingsDescription}</p>
+        <p className="text-muted-foreground">{settingsSubtitle}</p>
       </div>
 
       <form onSubmit={handleSubmit}>
         <Card>
           <CardHeader>
-            <CardTitle>{isRealEstate ? (t as any).brokerageInformation : t.restaurantInformation}</CardTitle>
+            <CardTitle>{businessInfoTitle}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="restaurantName">{isRealEstate ? (t as any).brokerageName : t.restaurantName}</Label>
+                <Label htmlFor="restaurantName">{businessNameLabel}</Label>
                 <Input
                   id="restaurantName"
                   value={formData.restaurantName || settings?.restaurantName || ""}
                   onChange={(e) => handleChange("restaurantName", e.target.value)}
-                  placeholder={isRealEstate ? (t as any).enterBrokerageName : t.enterRestaurantName}
+                  placeholder={businessNamePlaceholder}
                   data-testid="input-restaurant-name"
                   required
                 />
@@ -392,9 +430,9 @@ export default function SettingsPage() {
                 </Select>
               </div>
 
-              {/* Shift 1 */}
+              {/* Primary operating hours (relabeled per business type) */}
               <div className="md:col-span-2 flex items-center justify-between">
-                <Label className="text-sm font-medium text-muted-foreground">{t.shift1 || "Shift 1"}</Label>
+                <Label className="text-sm font-medium text-muted-foreground">{primaryHoursLabel}</Label>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="openingTime">{t.openingTime}</Label>
@@ -420,8 +458,8 @@ export default function SettingsPage() {
                 />
               </div>
 
-              {/* Add Shift Button - shown when Shift 2 is hidden */}
-              {!showShift2 && (
+              {/* Add Shift Button - only for businesses that run shifts */}
+              {hasShifts && !showShift2 && (
                 <div className="md:col-span-2">
                   <Button
                     type="button"
@@ -436,8 +474,8 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Shift 2 - shown by choice */}
-              {showShift2 && (
+              {/* Shift 2 - shown by choice, shift-based businesses only */}
+              {hasShifts && showShift2 && (
                 <>
                   <div className="md:col-span-2 flex items-center justify-between">
                     <Label className="text-sm font-medium text-muted-foreground">{t.shift2 || "Shift 2"}</Label>
@@ -670,9 +708,9 @@ export default function SettingsPage() {
                         {/* Expanded Day Schedule */}
                         {isExpanded && daySchedule.enabled && (
                           <div className="p-4 space-y-4 border-t bg-background">
-                            {/* Shift 1 */}
+                            {/* Primary shift / business hours */}
                             <div className="space-y-2">
-                              <Label className="text-sm font-medium text-muted-foreground">{t.shift1 || "Shift 1"}</Label>
+                              <Label className="text-sm font-medium text-muted-foreground">{primaryHoursLabel}</Label>
                               <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                   <Label className="text-xs">{t.openingTime}</Label>
@@ -695,7 +733,8 @@ export default function SettingsPage() {
                               </div>
                             </div>
 
-                            {/* Shift 2 Toggle */}
+                            {/* Shift 2 Toggle - only for shift-based businesses */}
+                            {hasShifts && (
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <Switch
@@ -715,8 +754,10 @@ export default function SettingsPage() {
                               </div>
                             </div>
 
+                            )}
+
                             {/* Shift 2 Times */}
-                            {daySchedule.shift2.enabled && (
+                            {hasShifts && daySchedule.shift2.enabled && (
                               <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                   <Label className="text-xs">{t.openingTime}</Label>
@@ -773,7 +814,7 @@ export default function SettingsPage() {
       </Card>
 
       <DevicePreferenceSection />
-      <NotificationToneSection />
+      {hasShifts && <NotificationToneSection />}
       <ChatNotificationSection />
     </div>
   );
