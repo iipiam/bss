@@ -56,6 +56,7 @@ interface ProjectServiceItem {
   id: string; projectId: string; serviceCatalogId: string | null; name: string;
   description: string | null; pricingMethod: string; unitPrice: string; quantity: string;
   unit: string | null; totalPrice: string; status: string; notes: string | null;
+  phase?: number;
 }
 interface ProjectBillItem {
   id: string; projectId: string; description: string; amount: string; category: string | null;
@@ -77,6 +78,7 @@ interface ProjectTaskItem {
   duration: number; dependencies: string[] | null; status: string; isCritical: boolean;
   earlyStart: number | null; earlyFinish: number | null; lateStart: number | null;
   lateFinish: number | null; slack: number | null; sortOrder: number;
+  phase?: number;
 }
 interface CatalogItem {
   id: string; name: string; description: string | null; pricingMethod: string;
@@ -90,6 +92,7 @@ const serviceSchema = z.object({
   quantity: z.string().min(1), unit: z.string().optional().default(""),
   totalPrice: z.string().min(1), status: z.string().min(1),
   notes: z.string().optional().default(""),
+  phase: z.string().optional().default("1"),
 });
 const billSchema = z.object({
   description: z.string().min(1), amount: z.string().min(1),
@@ -114,6 +117,7 @@ const taskSchema = z.object({
   name: z.string().min(1), description: z.string().optional().default(""),
   duration: z.string().min(1), dependencies: z.string().optional().default(""),
   status: z.string().min(1),
+  phase: z.string().optional().default("1"),
 });
 
 type ServiceFormValues = z.infer<typeof serviceSchema>;
@@ -272,11 +276,11 @@ export default function ProjectDetail() {
     },
   });
 
-  const svcForm = useForm<ServiceFormValues>({ resolver: zodResolver(serviceSchema), defaultValues: { serviceCatalogId: "", name: "", description: "", pricingMethod: "lump_sum", unitPrice: "0", quantity: "1", unit: "", totalPrice: "0", status: "pending", notes: "" } });
+  const svcForm = useForm<ServiceFormValues>({ resolver: zodResolver(serviceSchema), defaultValues: { serviceCatalogId: "", name: "", description: "", pricingMethod: "lump_sum", unitPrice: "0", quantity: "1", unit: "", totalPrice: "0", status: "pending", notes: "", phase: "1" } });
   const billForm = useForm<BillFormValues>({ resolver: zodResolver(billSchema), defaultValues: { description: "", amount: "", category: "", vendor: "", billDate: new Date().toISOString().split("T")[0], dueDate: "", status: "pending", paidDate: "", notes: "" } });
   const procForm = useForm<ProcurementFormValues>({ resolver: zodResolver(procurementSchema), defaultValues: { itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "" } });
   const payForm = useForm<PaymentFormValues>({ resolver: zodResolver(paymentSchema), defaultValues: { milestoneName: "", amount: "", dueDate: "", status: "pending", paidDate: "", notes: "" } });
-  const taskForm = useForm<TaskFormValues>({ resolver: zodResolver(taskSchema), defaultValues: { name: "", description: "", duration: "1", dependencies: "", status: "pending" } });
+  const taskForm = useForm<TaskFormValues>({ resolver: zodResolver(taskSchema), defaultValues: { name: "", description: "", duration: "1", dependencies: "", status: "pending", phase: "1" } });
 
   function makeMutation(endpoint: string, qk: string[], method: "POST" | "PATCH" | "DELETE", closeFn: () => void) {
     return useMutation({
@@ -516,7 +520,7 @@ export default function ProjectDetail() {
 
   function openEditSvc(s: ProjectServiceItem) {
     setEditSvc(s);
-    svcForm.reset({ serviceCatalogId: s.serviceCatalogId || "", name: s.name, description: s.description || "", pricingMethod: s.pricingMethod, unitPrice: s.unitPrice, quantity: s.quantity, unit: s.unit || "", totalPrice: s.totalPrice, status: s.status, notes: s.notes || "" });
+    svcForm.reset({ serviceCatalogId: s.serviceCatalogId || "", name: s.name, description: s.description || "", pricingMethod: s.pricingMethod, unitPrice: s.unitPrice, quantity: s.quantity, unit: s.unit || "", totalPrice: s.totalPrice, status: s.status, notes: s.notes || "", phase: String(s.phase ?? 1) });
     setSvcOpen(true);
   }
   function openEditBill(b: ProjectBillItem) {
@@ -575,12 +579,13 @@ export default function ProjectDetail() {
   }
   function openEditTask(tk: ProjectTaskItem) {
     setEditTask(tk);
-    taskForm.reset({ name: tk.name, description: tk.description || "", duration: String(tk.duration), dependencies: (tk.dependencies || []).join(","), status: tk.status });
+    taskForm.reset({ name: tk.name, description: tk.description || "", duration: String(tk.duration), dependencies: (tk.dependencies || []).join(","), status: tk.status, phase: String(tk.phase ?? 1) });
     setTaskOpen(true);
   }
 
   function submitSvc(data: ServiceFormValues) {
-    const body: any = { ...data, projectId, serviceCatalogId: data.serviceCatalogId || null, description: data.description || null, unit: data.unit || null, notes: data.notes || null };
+    const phaseNum = Math.max(1, parseInt(data.phase || "1") || 1);
+    const body: any = { ...data, projectId, serviceCatalogId: data.serviceCatalogId || null, description: data.description || null, unit: data.unit || null, notes: data.notes || null, phase: phaseNum };
     if (editSvc) body._editId = editSvc.id;
     svcMut.mutate(body);
   }
@@ -601,7 +606,8 @@ export default function ProjectDetail() {
   }
   function submitTask(data: TaskFormValues) {
     const deps = data.dependencies ? data.dependencies.split(",").map(d => d.trim()).filter(Boolean) : [];
-    const body: any = { name: data.name, description: data.description || null, duration: parseInt(data.duration), dependencies: deps.length ? deps : null, status: data.status, projectId };
+    const phaseNum = Math.max(1, parseInt(data.phase || "1") || 1);
+    const body: any = { name: data.name, description: data.description || null, duration: parseInt(data.duration), dependencies: deps.length ? deps : null, status: data.status, projectId, phase: phaseNum };
     if (editTask) body._editId = editTask.id;
     taskMut.mutate(body);
   }
@@ -850,8 +856,21 @@ export default function ProjectDetail() {
           </div>
           </div>
           {services.length === 0 ? <p className="text-muted-foreground text-center py-8">{t.noServices || "No services added yet"}</p> : (
-            <div className="space-y-3">
-              {services.map(s => (
+            <div className="space-y-4">
+              {Array.from(new Set(services.map(s => s.phase ?? 1))).sort((a, b) => a - b).map(ph => {
+                const phaseServices = services.filter(s => (s.phase ?? 1) === ph);
+                const phaseTotal = phaseServices.reduce((sum, s) => sum + parseFloat(s.totalPrice || "0"), 0);
+                return (
+                  <div key={`svc-phase-${ph}`} className="space-y-2" data-testid={`group-service-phase-${ph}`}>
+                    <div className="flex items-center justify-between gap-2 flex-wrap px-1 py-1 border-b">
+                      <p className="font-semibold text-sm">{(t as any).phase || "Phase"} {ph}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{phaseServices.length} {(t.services || "services").toString().toLowerCase()}</span>
+                        <span className="font-semibold text-foreground">{fmtNum(String(phaseTotal))} SAR</span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {phaseServices.map(s => (
                 <Card key={s.id} data-testid={`card-service-${s.id}`}>
                   <CardContent className="pt-4 pb-4">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -894,7 +913,19 @@ export default function ProjectDetail() {
                   </CardContent>
                 </Card>
               ))}
-              <div className="flex justify-end pt-2 border-t"><p className="font-bold">{t.total}: {fmtNum(String(totalServices))} SAR</p></div>
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="flex items-center justify-between pt-2 border-t flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={() => {
+                  const next = Math.max(1, ...services.map(s => s.phase ?? 1)) + 1;
+                  setEditSvc(null);
+                  svcForm.reset({ serviceCatalogId: "", name: "", description: "", pricingMethod: "lump_sum", unitPrice: "0", quantity: "1", unit: "", totalPrice: "0", status: "pending", notes: "", phase: String(next) });
+                  setSvcOpen(true);
+                }} data-testid="button-add-service-phase"><Plus className="h-4 w-4 mr-2" />{(t as any).addPhase || "Add Phase"}</Button>
+                <p className="font-bold">{t.total}: {fmtNum(String(totalServices))} SAR</p>
+              </div>
             </div>
           )}
         </TabsContent>
@@ -1089,8 +1120,26 @@ export default function ProjectDetail() {
             </div>
           </div>
           {tasks.length === 0 ? <p className="text-muted-foreground text-center py-8">{t.noTasks || "No tasks added yet"}</p> : (
-            <div className="space-y-3">
-              {tasks.map(tk => (
+            <div className="space-y-4">
+              {Array.from(new Set(tasks.map(tk => tk.phase ?? 1))).sort((a, b) => a - b).map(ph => {
+                const phaseTasks = tasks.filter(tk => (tk.phase ?? 1) === ph);
+                const phaseDur = phaseTasks.reduce((m, tk) => Math.max(m, (tk.earlyFinish ?? 0)), 0)
+                  - phaseTasks.reduce((m, tk) => Math.min(m, (tk.earlyStart ?? Infinity)), Infinity);
+                const sumDur = phaseTasks.reduce((s, tk) => s + (tk.duration || 0), 0);
+                const phaseHasCpm = phaseTasks.some(tk => tk.earlyStart !== null);
+                return (
+                  <div key={`task-phase-${ph}`} className="space-y-2" data-testid={`group-task-phase-${ph}`}>
+                    <div className="flex items-center justify-between gap-2 flex-wrap px-1 py-1 border-b">
+                      <p className="font-semibold text-sm">{(t as any).phase || "Phase"} {ph}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{phaseTasks.length} {(t.tasks || "tasks").toString().toLowerCase()}</span>
+                        <span className="font-semibold text-foreground">
+                          {phaseHasCpm ? `${Math.max(0, phaseDur)} ${t.days || "days"}` : `${sumDur} ${t.days || "days"} (sum)`}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {phaseTasks.map(tk => (
                 <Card key={tk.id} className={tk.isCritical ? "border-2 border-red-500" : ""} data-testid={`card-task-${tk.id}`}>
                   <CardContent className="pt-4 pb-4">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -1172,6 +1221,18 @@ export default function ProjectDetail() {
                   </CardContent>
                 </Card>
               ))}
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="flex items-center justify-between pt-2 border-t flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={() => {
+                  const next = Math.max(1, ...tasks.map(tk => tk.phase ?? 1)) + 1;
+                  setEditTask(null);
+                  taskForm.reset({ name: "", description: "", duration: "1", dependencies: "", status: "pending", phase: String(next) });
+                  setTaskOpen(true);
+                }} data-testid="button-add-task-phase"><Plus className="h-4 w-4 mr-2" />{(t as any).addPhase || "Add Phase"}</Button>
+              </div>
             </div>
           )}
         </TabsContent>
@@ -1467,13 +1528,18 @@ export default function ProjectDetail() {
                   <FormItem><FormLabel>{t.total}</FormLabel><FormControl><Input data-testid="input-service-total" type="number" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
-              <FormField control={svcForm.control} name="status" render={({ field }) => (
-                <FormItem><FormLabel>{t.status}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl><SelectTrigger data-testid="select-service-status"><SelectValue /></SelectTrigger></FormControl>
-                    <SelectContent><SelectItem value="pending">{t.pending}</SelectItem><SelectItem value="in_progress">{t.inProgress || "In Progress"}</SelectItem><SelectItem value="completed">{t.completed}</SelectItem></SelectContent>
-                  </Select><FormMessage /></FormItem>
-              )} />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={svcForm.control} name="status" render={({ field }) => (
+                  <FormItem><FormLabel>{t.status}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl><SelectTrigger data-testid="select-service-status"><SelectValue /></SelectTrigger></FormControl>
+                      <SelectContent><SelectItem value="pending">{t.pending}</SelectItem><SelectItem value="in_progress">{t.inProgress || "In Progress"}</SelectItem><SelectItem value="completed">{t.completed}</SelectItem></SelectContent>
+                    </Select><FormMessage /></FormItem>
+                )} />
+                <FormField control={svcForm.control} name="phase" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).phase || "Phase"}</FormLabel><FormControl><Input data-testid="input-service-phase" type="number" min="1" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
               <FormField control={svcForm.control} name="notes" render={({ field }) => (
                 <FormItem><FormLabel>{t.notes}</FormLabel><FormControl><Textarea data-testid="input-service-notes" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
@@ -1654,9 +1720,12 @@ export default function ProjectDetail() {
               <FormField control={taskForm.control} name="description" render={({ field }) => (
                 <FormItem><FormLabel>{t.description}</FormLabel><FormControl><Textarea data-testid="input-task-description" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <FormField control={taskForm.control} name="duration" render={({ field }) => (
                   <FormItem><FormLabel>{t.durationDays || "Duration (days)"}</FormLabel><FormControl><Input data-testid="input-task-duration" type="number" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={taskForm.control} name="phase" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).phase || "Phase"}</FormLabel><FormControl><Input data-testid="input-task-phase" type="number" min="1" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
                 <FormField control={taskForm.control} name="status" render={({ field }) => (
                   <FormItem><FormLabel>{t.status}</FormLabel>

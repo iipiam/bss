@@ -6848,6 +6848,12 @@ export const storage = new DatabaseStorage();
     `);
     console.log('[Migration] project_items column verified/added: selling_price');
 
+    // Phase grouping for BizFlow Manager (items/services/tasks)
+    await pool.query(`ALTER TABLE project_items ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
+    await pool.query(`ALTER TABLE project_services ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
+    await pool.query(`ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
+    console.log('[Migration] phase column verified/added: project_items, project_services, project_tasks');
+
     // Company Profiles: marketing-ready profile per restaurant
     await pool.query(`
       CREATE TABLE IF NOT EXISTS company_profiles (

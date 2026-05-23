@@ -1820,6 +1820,7 @@ export const projectServices = pgTable("project_services", {
   status: text("status").notNull().default("pending"),
   notes: text("notes"),
   sourceProductId: varchar("source_product_id"),
+  phase: integer("phase").notNull().default(1),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -1890,6 +1891,7 @@ export const projectTasks = pgTable("project_tasks", {
   slack: integer("slack"),
   sortOrder: integer("sort_order").notNull().default(0),
   sourceProductId: varchar("source_product_id"),
+  phase: integer("phase").notNull().default(1),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -1967,6 +1969,7 @@ export const projectItems = pgTable("project_items", {
   sellingPrice: decimal("selling_price", { precision: 12, scale: 2 }).notNull().default("0"),
   percentage: decimal("percentage", { precision: 6, scale: 2 }).notNull().default("0"),
   sortOrder: integer("sort_order").notNull().default(0),
+  phase: integer("phase").notNull().default(1),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 export const insertProjectItemSchema = createInsertSchema(projectItems).omit({ id: true, createdAt: true });

@@ -16598,26 +16598,43 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       const taskMap = new Map(tasks.map(t => [t.id, { ...t }]));
 
-      for (const task of tasks) {
-        const deps = (task.dependencies || []).filter(d => taskMap.has(d));
-        const earlyStart = deps.length === 0 ? 0 : Math.max(...deps.map(d => taskMap.get(d)!.earlyFinish || 0));
-        const earlyFinish = earlyStart + task.duration;
-        taskMap.get(task.id)!.earlyStart = earlyStart;
-        taskMap.get(task.id)!.earlyFinish = earlyFinish;
-      }
+      // Group tasks by phase and process each phase independently.
+      // Phases run strictly in sequence: phase N starts when phase N-1 finishes.
+      // Only intra-phase dependencies are honored for CPM math.
+      const phases = Array.from(new Set(tasks.map(t => (t as any).phase ?? 1))).sort((a, b) => a - b);
+      let phaseOffset = 0;
+      for (const phase of phases) {
+        const phaseTasks = tasks.filter(t => ((t as any).phase ?? 1) === phase);
+        const phaseIds = new Set(phaseTasks.map(t => t.id));
 
-      const projectDuration = Math.max(...Array.from(taskMap.values()).map(t => t.earlyFinish || 0));
+        // Forward pass within phase
+        for (const task of phaseTasks) {
+          const deps = (task.dependencies || []).filter(d => phaseIds.has(d));
+          const localES = deps.length === 0 ? 0 : Math.max(...deps.map(d => (taskMap.get(d)!.earlyFinish || 0) - phaseOffset));
+          const localEF = localES + task.duration;
+          taskMap.get(task.id)!.earlyStart = localES + phaseOffset;
+          taskMap.get(task.id)!.earlyFinish = localEF + phaseOffset;
+        }
 
-      const reverseTasks = [...tasks].reverse();
-      for (const task of reverseTasks) {
-        const successors = tasks.filter(t => (t.dependencies || []).includes(task.id));
-        const lateFinish = successors.length === 0 ? projectDuration : Math.min(...successors.map(s => taskMap.get(s.id)!.lateStart || projectDuration));
-        const lateStart = lateFinish - task.duration;
-        const slack = lateStart - (taskMap.get(task.id)!.earlyStart || 0);
-        taskMap.get(task.id)!.lateStart = lateStart;
-        taskMap.get(task.id)!.lateFinish = lateFinish;
-        taskMap.get(task.id)!.slack = slack;
-        taskMap.get(task.id)!.isCritical = slack === 0;
+        const phaseDuration = Math.max(0, ...phaseTasks.map(t => (taskMap.get(t.id)!.earlyFinish || 0) - phaseOffset));
+
+        // Backward pass within phase
+        const reversed = [...phaseTasks].reverse();
+        for (const task of reversed) {
+          const successors = phaseTasks.filter(t => (t.dependencies || []).includes(task.id));
+          const localLF = successors.length === 0
+            ? phaseDuration
+            : Math.min(...successors.map(s => (taskMap.get(s.id)!.lateStart || phaseDuration + phaseOffset) - phaseOffset));
+          const localLS = localLF - task.duration;
+          const localES = (taskMap.get(task.id)!.earlyStart || phaseOffset) - phaseOffset;
+          const slack = localLS - localES;
+          taskMap.get(task.id)!.lateStart = localLS + phaseOffset;
+          taskMap.get(task.id)!.lateFinish = localLF + phaseOffset;
+          taskMap.get(task.id)!.slack = slack;
+          taskMap.get(task.id)!.isCritical = slack === 0;
+        }
+
+        phaseOffset += phaseDuration;
       }
 
       const updatedTasks = Array.from(taskMap.values());
