@@ -57,6 +57,7 @@ const Reports = lazy(() => import("@/pages/reports"));
 const Forecasting = lazy(() => import("@/pages/forecasting"));
 const Analysis = lazy(() => import("@/pages/analysis"));
 const Profitability = lazy(() => import("@/pages/profitability"));
+const ServiceProfitability = lazy(() => import("@/pages/service-profitability"));
 const MenuProfitability = lazy(() => import("@/pages/menu-profitability"));
 const Financial = lazy(() => import("@/pages/financial"));
 const Invoices = lazy(() => import("@/pages/invoices"));
@@ -157,6 +158,7 @@ function Router() {
         <Route path="/forecasting" component={Forecasting} />
         <Route path="/analysis" component={Analysis} />
         <Route path="/profitability" component={Profitability} />
+        <Route path="/service-profitability">{() => <BusinessTypeGuard allowedTypes={['design_services', 'installation_services', 'it_services']}><ServiceProfitability /></BusinessTypeGuard>}</Route>
         <Route path="/menu-profitability" component={MenuProfitability} />
         <Route path="/financial" component={Financial} />
         <Route path="/invoices" component={Invoices} />
