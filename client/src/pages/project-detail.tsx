@@ -193,6 +193,15 @@ export default function ProjectDetail() {
     },
     enabled: !!projectId,
   });
+  const { data: projectItemsData } = useQuery<{ items: { id: string; cost: string; sellingPrice?: string }[]; services: any[] }>({
+    queryKey: ["/api/service-projects", projectId, "items"],
+    queryFn: async () => {
+      const res = await fetch(`/api/service-projects/${projectId}/items`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed"); return res.json();
+    },
+    enabled: !!projectId,
+  });
+  const projectItemsList = projectItemsData?.items || [];
   const { data: bills = [] } = useQuery<ProjectBillItem[]>({
     queryKey: ["/api/project-bills", projectId],
     queryFn: async () => {
@@ -239,6 +248,7 @@ export default function ProjectDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/project-services", projectId] });
       queryClient.invalidateQueries({ queryKey: ["/api/project-tasks", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/service-projects", projectId, "items"] });
       setApplyProductOpen(false);
       setSelectedProductId("");
       toast({ title: t.productApplied || "Product applied", description: t.productAppliedDesc || "Items, services, and tasks were added to the project." });
@@ -495,7 +505,9 @@ export default function ProjectDetail() {
     taskMut.mutate(body);
   }
 
-  const totalServices = services.reduce((s, x) => s + parseFloat(x.totalPrice || "0"), 0);
+  const totalServicesOnly = services.reduce((s, x) => s + parseFloat(x.totalPrice || "0"), 0);
+  const totalItemsSelling = projectItemsList.reduce((s, it) => s + (parseFloat((it.sellingPrice as any) || "0") || 0), 0);
+  const totalServices = totalServicesOnly + totalItemsSelling;
   const totalBills = bills.reduce((s, x) => s + parseFloat(x.amount || "0"), 0);
   const totalProc = procurements.reduce((s, x) => s + parseFloat(x.totalPrice || "0"), 0);
   const totalPayments = payments.reduce((s, x) => s + parseFloat(x.amount || "0"), 0);

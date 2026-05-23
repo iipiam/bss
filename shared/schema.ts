@@ -1940,6 +1940,7 @@ export const projectItems = pgTable("project_items", {
   sourceProductId: varchar("source_product_id").references(() => serviceProducts.id),
   name: text("name").notNull(),
   cost: decimal("cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  sellingPrice: decimal("selling_price", { precision: 12, scale: 2 }).notNull().default("0"),
   percentage: decimal("percentage", { precision: 6, scale: 2 }).notNull().default("0"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),

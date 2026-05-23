@@ -5693,7 +5693,9 @@ export class DatabaseStorage implements IStorage {
       if (pItems.length > 0) {
         insertedItems = await tx.insert(projectItems).values(pItems.map((it, idx) => ({
           restaurantId, projectId, sourceProductId: productId,
-          name: it.name, cost: it.cost, percentage: it.percentage, sortOrder: idx,
+          name: it.name, cost: it.cost,
+          sellingPrice: (it as any).sellingPrice ?? "0",
+          percentage: it.percentage, sortOrder: idx,
         }))).returning();
       }
 
@@ -6580,6 +6582,14 @@ export const storage = new DatabaseStorage();
       ADD COLUMN IF NOT EXISTS selling_price NUMERIC(12, 2) NOT NULL DEFAULT 0
     `);
     console.log('[Migration] product_items column verified/added: selling_price');
+
+    // project_items: add selling_price column so applied-product items contribute
+    // their selling price to the project's Total Services Value metric
+    await pool.query(`
+      ALTER TABLE project_items
+      ADD COLUMN IF NOT EXISTS selling_price NUMERIC(12, 2) NOT NULL DEFAULT 0
+    `);
+    console.log('[Migration] project_items column verified/added: selling_price');
 
     // Company Profiles: marketing-ready profile per restaurant
     await pool.query(`

@@ -87,6 +87,7 @@ export const db = drizzle(pool, { schema });
          source_product_id varchar,
          name text NOT NULL,
          cost numeric(12,2) NOT NULL DEFAULT 0,
+         selling_price numeric(12,2) NOT NULL DEFAULT 0,
          percentage numeric(6,2) NOT NULL DEFAULT 0,
          sort_order integer NOT NULL DEFAULT 0,
          created_at timestamp NOT NULL DEFAULT now()
