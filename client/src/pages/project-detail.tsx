@@ -251,7 +251,7 @@ export default function ProjectDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/service-projects", projectId, "items"] });
       setApplyProductOpen(false);
       setSelectedProductId("");
-      toast({ title: t.productApplied || "Product applied", description: t.productAppliedDesc || "Items, services, and tasks were added to the project." });
+      toast({ title: t.productApplied || "Product applied", description: t.productAppliedDesc || "Services and tasks were added to the project." });
     },
     onError: (e: any) => {
       toast({ title: t.error, description: e.message, variant: "destructive" });

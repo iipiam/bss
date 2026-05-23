@@ -5686,26 +5686,32 @@ export class DatabaseStorage implements IStorage {
       const pLinks = await tx.select().from(productServiceLinks).where(and(eq(productServiceLinks.productId, productId), eq(productServiceLinks.restaurantId, restaurantId))).orderBy(productServiceLinks.sortOrder);
       const pTasks = await tx.select().from(productTasks).where(and(eq(productTasks.productId, productId), eq(productTasks.restaurantId, restaurantId))).orderBy(productTasks.sortOrder);
 
-      let insertedItems: ProjectItem[] = [];
+      const insertedItems: ProjectItem[] = [];
       let insertedServices: ProjectService[] = [];
       let insertedTasks: ProjectTask[] = [];
 
-      if (pItems.length > 0) {
-        insertedItems = await tx.insert(projectItems).values(pItems.map((it, idx) => ({
-          restaurantId, projectId, sourceProductId: productId,
-          name: it.name, cost: it.cost,
-          sellingPrice: (it as any).sellingPrice ?? "0",
-          percentage: it.percentage, sortOrder: idx,
-        }))).returning();
-      }
+      // Product items are inserted directly as project services so they appear
+      // in the Services tab (instead of a hidden project_items bucket). Each
+      // item becomes a lump-sum service priced at its selling price.
+      const itemServiceRows: InsertProjectService[] = pItems.map((it) => {
+        const sell = parseFloat((it as any).sellingPrice ?? "0") || 0;
+        return {
+          restaurantId, projectId, serviceCatalogId: null,
+          name: it.name, description: null, pricingMethod: "lump_sum",
+          unitPrice: sell.toFixed(2), quantity: "1", unit: null,
+          totalPrice: sell.toFixed(2), status: "pending", notes: null,
+          sourceProductId: productId,
+        };
+      });
 
+      let linkServiceRows: InsertProjectService[] = [];
       if (pLinks.length > 0) {
         const catalogIds = pLinks.map(l => l.serviceCatalogId).filter((x): x is string => !!x);
         const catalogRows = catalogIds.length > 0
           ? await tx.select().from(serviceCatalog).where(and(eq(serviceCatalog.restaurantId, restaurantId), inArray(serviceCatalog.id, catalogIds)))
           : [];
         const byId = new Map(catalogRows.map(c => [c.id, c]));
-        const rows = pLinks.map(link => {
+        linkServiceRows = pLinks.map(link => {
           const qty = parseFloat(link.quantity || "1") || 1;
           if (link.serviceCatalogId) {
             const cat = byId.get(link.serviceCatalogId);
@@ -5732,9 +5738,11 @@ export class DatabaseStorage implements IStorage {
             sourceProductId: productId,
           };
         }).filter(Boolean) as InsertProjectService[];
-        if (rows.length > 0) {
-          insertedServices = await tx.insert(projectServices).values(rows).returning();
-        }
+      }
+
+      const allServiceRows = [...itemServiceRows, ...linkServiceRows];
+      if (allServiceRows.length > 0) {
+        insertedServices = await tx.insert(projectServices).values(allServiceRows).returning();
       }
 
       if (pTasks.length > 0) {
