@@ -60,6 +60,8 @@ import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
 import { useAuth } from "@/lib/auth";
 import { useState, useEffect } from "react";
 import { queryClient } from "@/lib/queryClient";
+import { Link } from "wouter";
+import { PlayCircle, CheckSquare } from "lucide-react";
 
 interface PerformanceMetric {
   current: number;
@@ -528,6 +530,59 @@ export default function Dashboard() {
   const recentProjects = [...serviceProjectsList]
     .sort((a: any, b: any) => new Date(b?.createdAt || 0).getTime() - new Date(a?.createdAt || 0).getTime())
     .slice(0, 5);
+
+  // Project task reminders (service businesses only)
+  const { data: allProjectTasks = [] } = useQuery<any[]>({
+    queryKey: ["/api/project-tasks"],
+    enabled: isServiceBusiness,
+    staleTime: 0,
+  });
+
+  const projectById = new Map<string, any>(serviceProjectsList.map((p: any) => [p.id, p]));
+  const activeProjectIds = new Set(
+    serviceProjectsList
+      .filter((p: any) => p?.approvalStatus === 'approved' && p?.lifecycleStatus !== 'finished')
+      .map((p: any) => p.id)
+  );
+
+  const tasksInActiveProjects = allProjectTasks.filter((tk: any) => activeProjectIds.has(tk.projectId) && tk.status !== 'completed');
+  const completedIdsByProject = new Map<string, Set<string>>();
+  for (const tk of allProjectTasks) {
+    if (tk.status === 'completed') {
+      if (!completedIdsByProject.has(tk.projectId)) completedIdsByProject.set(tk.projectId, new Set());
+      completedIdsByProject.get(tk.projectId)!.add(tk.id);
+    }
+  }
+  const parseDeps = (raw: any): string[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.filter(Boolean);
+    return String(raw).split(',').map(s => s.trim()).filter(Boolean);
+  };
+  const taskReminders = tasksInActiveProjects
+    .map((tk: any) => {
+      const done = completedIdsByProject.get(tk.projectId) || new Set();
+      const deps = parseDeps(tk.dependencies);
+      const isReady = tk.status === 'pending' && deps.every((d: string) => done.has(d));
+      return { tk, isReady };
+    })
+    .filter(({ tk, isReady }) => tk.status === 'in_progress' || isReady)
+    .sort((a, b) => {
+      if (a.tk.status === b.tk.status) {
+        const sa = a.tk.slack ?? 999;
+        const sb = b.tk.slack ?? 999;
+        return sa - sb;
+      }
+      return a.tk.status === 'in_progress' ? -1 : 1;
+    })
+    .slice(0, 6);
+
+  const taskStatusMut = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) =>
+      apiRequest("PATCH", `/api/project-tasks/${id}`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/project-tasks"] });
+    },
+  });
 
   const { toast } = useToast();
 
@@ -1242,6 +1297,69 @@ export default function Dashboard() {
                 {recentProjects.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">
                     {(t as any).noRecentProjects || "No recent projects"}
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {isServiceBusiness && (
+          <Card data-testid="card-task-reminders">
+            <CardHeader className={layout.cardHeaderPadding}>
+              <CardTitle className={layout.isMobile ? "text-base" : ""}>
+                {(t as any).taskReminders || "Task Reminders"}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {(t as any).taskRemindersDesc || "In-progress and ready-to-start tasks across active projects"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className={layout.cardPadding}>
+              <div className={layout.isMobile ? "space-y-2" : "space-y-3"}>
+                {taskReminders.map(({ tk, isReady }) => {
+                  const proj = projectById.get(tk.projectId);
+                  return (
+                    <div
+                      key={tk.id}
+                      className={`flex items-center justify-between gap-2 hover-elevate ${layout.isMobile ? "p-2" : "p-3"} rounded-md`}
+                      data-testid={`reminder-task-${tk.id}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <Badge variant={tk.status === 'in_progress' ? 'default' : 'secondary'} className={tk.status === 'in_progress' ? 'bg-blue-600 text-white shrink-0' : 'shrink-0'}>
+                            {tk.status === 'in_progress' ? ((t as any).inProgress || 'In Progress') : ((t as any).ready || 'Ready')}
+                          </Badge>
+                          <p className={`font-medium truncate ${layout.isMobile ? "text-sm" : ""}`}>{tk.name}</p>
+                        </div>
+                        {proj && (
+                          <Link
+                            href={`/service-projects/${proj.id}`}
+                            className="text-xs text-muted-foreground hover:underline truncate block mt-1"
+                            data-testid={`link-reminder-project-${tk.id}`}
+                          >
+                            #{proj.projectNumber} • {proj.name}
+                          </Link>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => taskStatusMut.mutate({ id: tk.id, status: tk.status === 'in_progress' ? 'completed' : 'in_progress' })}
+                        disabled={taskStatusMut.isPending}
+                        data-testid={`button-reminder-action-${tk.id}`}
+                      >
+                        {tk.status === 'in_progress' ? (
+                          <><CheckSquare className="h-4 w-4 mr-1" />{(t as any).complete || 'Complete'}</>
+                        ) : (
+                          <><PlayCircle className="h-4 w-4 mr-1" />{(t as any).start || 'Start'}</>
+                        )}
+                      </Button>
+                    </div>
+                  );
+                })}
+                {taskReminders.length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4" data-testid="text-no-task-reminders">
+                    {(t as any).noTaskReminders || "No tasks to act on right now"}
                   </p>
                 )}
               </div>

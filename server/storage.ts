@@ -652,6 +652,7 @@ export interface IStorage {
 
   // Project Tasks
   getProjectTasks(restaurantId: string, projectId: string): Promise<ProjectTask[]>;
+  getAllProjectTasks(restaurantId: string): Promise<ProjectTask[]>;
   createProjectTask(task: InsertProjectTask): Promise<ProjectTask>;
   updateProjectTask(id: string, restaurantId: string, data: Partial<InsertProjectTask>): Promise<ProjectTask | undefined>;
   deleteProjectTask(id: string, restaurantId: string): Promise<boolean>;
@@ -5787,6 +5788,10 @@ export class DatabaseStorage implements IStorage {
   // Project Tasks
   async getProjectTasks(restaurantId: string, projectId: string): Promise<ProjectTask[]> {
     return db.select().from(projectTasks).where(and(eq(projectTasks.restaurantId, restaurantId), eq(projectTasks.projectId, projectId))).orderBy(projectTasks.createdAt);
+  }
+
+  async getAllProjectTasks(restaurantId: string): Promise<ProjectTask[]> {
+    return db.select().from(projectTasks).where(eq(projectTasks.restaurantId, restaurantId)).orderBy(projectTasks.createdAt);
   }
 
   async createProjectTask(task: InsertProjectTask): Promise<ProjectTask> {

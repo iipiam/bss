@@ -337,7 +337,7 @@ export default function ProjectDetail() {
       return await apiRequest("PATCH", `/api/project-tasks/${id}`, { status });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/project-tasks", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-tasks"] });
       toast({ title: t.saved || "Saved", description: t.taskStatusUpdated || "Task status updated" });
     },
     onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },

@@ -16312,8 +16312,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
       const projectId = req.query.projectId as string;
-      if (!projectId) return res.status(400).json({ message: "projectId is required" });
-      const tasks = await storage.getProjectTasks(restaurantId, projectId);
+      const tasks = projectId
+        ? await storage.getProjectTasks(restaurantId, projectId)
+        : await storage.getAllProjectTasks(restaurantId);
       res.json(tasks);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
