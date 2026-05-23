@@ -5893,6 +5893,7 @@ export class DatabaseStorage implements IStorage {
           unitPrice: sell.toFixed(2), quantity: "1", unit: null,
           totalPrice: sell.toFixed(2), status: "pending", notes: null,
           sourceProductId: productId,
+          phase: (it as any).phase ?? 1,
         };
       });
 
@@ -5916,6 +5917,7 @@ export class DatabaseStorage implements IStorage {
               unitPrice: cat.unitPrice, quantity: String(qty), unit: cat.unit,
               totalPrice: total, status: "pending", notes: null,
               sourceProductId: productId,
+              phase: (link as any).phase ?? 1,
             };
           }
           const name = link.name?.trim();
@@ -5928,6 +5930,7 @@ export class DatabaseStorage implements IStorage {
             unitPrice: String(unit), quantity: String(qty), unit: null,
             totalPrice: total, status: "pending", notes: null,
             sourceProductId: productId,
+            phase: (link as any).phase ?? 1,
           };
         }).filter(Boolean) as InsertProjectService[];
       }
@@ -5942,6 +5945,7 @@ export class DatabaseStorage implements IStorage {
           restaurantId, projectId, name: tk.name, description: tk.description,
           duration: tk.duration, status: "pending", sortOrder: idx,
           sourceProductId: productId,
+          phase: (tk as any).phase ?? 1,
         }))).returning();
       }
 
@@ -6852,7 +6856,10 @@ export const storage = new DatabaseStorage();
     await pool.query(`ALTER TABLE project_items ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     await pool.query(`ALTER TABLE project_services ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     await pool.query(`ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
-    console.log('[Migration] phase column verified/added: project_items, project_services, project_tasks');
+    await pool.query(`ALTER TABLE product_items ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
+    await pool.query(`ALTER TABLE product_service_links ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
+    await pool.query(`ALTER TABLE product_tasks ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
+    console.log('[Migration] phase column verified/added: project_items, project_services, project_tasks, product_items, product_service_links, product_tasks');
 
     // Company Profiles: marketing-ready profile per restaurant
     await pool.query(`

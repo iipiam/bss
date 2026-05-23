@@ -1923,6 +1923,7 @@ export const productItems = pgTable("product_items", {
   sellingPrice: decimal("selling_price", { precision: 12, scale: 2 }).notNull().default("0"),
   percentage: decimal("percentage", { precision: 6, scale: 2 }).notNull().default("0"),
   sortOrder: integer("sort_order").notNull().default(0),
+  phase: integer("phase").notNull().default(1),
 });
 export const insertProductItemSchema = createInsertSchema(productItems).omit({ id: true });
 export type InsertProductItem = z.infer<typeof insertProductItemSchema>;
@@ -1939,6 +1940,7 @@ export const productServiceLinks = pgTable("product_service_links", {
   unitPrice: decimal("unit_price", { precision: 12, scale: 2 }),
   quantity: decimal("quantity", { precision: 12, scale: 2 }).notNull().default("1"),
   sortOrder: integer("sort_order").notNull().default(0),
+  phase: integer("phase").notNull().default(1),
 });
 export const insertProductServiceLinkSchema = createInsertSchema(productServiceLinks).omit({ id: true });
 export type InsertProductServiceLink = z.infer<typeof insertProductServiceLinkSchema>;
@@ -1953,6 +1955,7 @@ export const productTasks = pgTable("product_tasks", {
   description: text("description"),
   duration: integer("duration").notNull().default(1),
   sortOrder: integer("sort_order").notNull().default(0),
+  phase: integer("phase").notNull().default(1),
 });
 export const insertProductTaskSchema = createInsertSchema(productTasks).omit({ id: true });
 export type InsertProductTask = z.infer<typeof insertProductTaskSchema>;

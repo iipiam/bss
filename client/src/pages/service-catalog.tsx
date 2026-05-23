@@ -98,17 +98,20 @@ interface ProductItemDraft {
   cost: string;
   sellingPrice: string;
   percentage: string;
+  phase: string;
 }
 interface ProductServiceDraft {
   serviceCatalogId: string;
   name: string;
   unitPrice: string;
   quantity: string;
+  phase: string;
 }
 interface ProductTaskDraft {
   name: string;
   description: string;
   duration: string;
+  phase: string;
 }
 interface ServiceProduct {
   id: string;
@@ -120,9 +123,9 @@ interface ServiceProduct {
   createdAt: string;
 }
 interface ServiceProductDetail extends ServiceProduct {
-  items: Array<{ id: string; name: string; cost: string; percentage: string; sortOrder: number }>;
-  services: Array<{ id: string; serviceCatalogId: string | null; name: string | null; unitPrice: string | null; quantity: string; sortOrder: number }>;
-  tasks: Array<{ id: string; name: string; description: string | null; duration: number; sortOrder: number }>;
+  items: Array<{ id: string; name: string; cost: string; percentage: string; sortOrder: number; phase?: number }>;
+  services: Array<{ id: string; serviceCatalogId: string | null; name: string | null; unitPrice: string | null; quantity: string; sortOrder: number; phase?: number }>;
+  tasks: Array<{ id: string; name: string; description: string | null; duration: number; sortOrder: number; phase?: number }>;
 }
 
 const getPricingMethodLabel = (method: string, t: any): string => {
@@ -212,9 +215,9 @@ export default function ServiceCatalog() {
     setProductDescription(p.description || "");
     setProductCategory(p.category || "");
     setProductStatus(p.status);
-    setProductItems(p.items.map((i) => ({ name: i.name, cost: i.cost, sellingPrice: (i as any).sellingPrice ?? "0", percentage: i.percentage })));
-    setProductServices(p.services.map((s) => ({ serviceCatalogId: s.serviceCatalogId || "", name: s.name || "", unitPrice: s.unitPrice || "", quantity: s.quantity })));
-    setProductTasks(p.tasks.map((tk) => ({ name: tk.name, description: tk.description || "", duration: String(tk.duration) })));
+    setProductItems(p.items.map((i) => ({ name: i.name, cost: i.cost, sellingPrice: (i as any).sellingPrice ?? "0", percentage: i.percentage, phase: String(i.phase ?? 1) })));
+    setProductServices(p.services.map((s) => ({ serviceCatalogId: s.serviceCatalogId || "", name: s.name || "", unitPrice: s.unitPrice || "", quantity: s.quantity, phase: String(s.phase ?? 1) })));
+    setProductTasks(p.tasks.map((tk) => ({ name: tk.name, description: tk.description || "", duration: String(tk.duration), phase: String(tk.phase ?? 1) })));
   };
 
   const saveProductMutation = useMutation({
@@ -230,6 +233,7 @@ export default function ServiceCatalog() {
           sellingPrice: i.sellingPrice || "0",
           percentage: i.percentage || "0",
           sortOrder: idx,
+          phase: Math.max(1, parseInt(i.phase || "1", 10) || 1),
         })),
         services: productServices.map((s, idx) => ({
           serviceCatalogId: s.serviceCatalogId || null,
@@ -237,12 +241,14 @@ export default function ServiceCatalog() {
           unitPrice: s.unitPrice || null,
           quantity: s.quantity || "1",
           sortOrder: idx,
+          phase: Math.max(1, parseInt(s.phase || "1", 10) || 1),
         })),
         tasks: productTasks.map((tk, idx) => ({
           name: tk.name,
           description: tk.description || null,
           duration: parseInt(tk.duration || "1", 10),
           sortOrder: idx,
+          phase: Math.max(1, parseInt(tk.phase || "1", 10) || 1),
         })),
       };
       const invalid = productServices.find((s) => !s.serviceCatalogId && s.name.trim() && (!s.unitPrice || isNaN(parseFloat(s.unitPrice)) || parseFloat(s.unitPrice) <= 0));
@@ -1074,16 +1080,17 @@ export default function ServiceCatalog() {
                   <Layers className="h-4 w-4" /> {t.productItems || "Items"}
                 </Label>
                 <Button type="button" size="sm" variant="outline" data-testid="button-add-product-item"
-                  onClick={() => setProductItems([...productItems, { name: "", cost: "", sellingPrice: "", percentage: "" }])}>
+                  onClick={() => { const nextPh = Math.max(1, ...productItems.map(x => parseInt(x.phase || "1", 10) || 1)); setProductItems([...productItems, { name: "", cost: "", sellingPrice: "", percentage: "", phase: String(nextPh) }]); }}>
                   <Plus className="h-3 w-3 mr-1" /> {t.addItem || "Add Item"}
                 </Button>
               </div>
               {productItems.map((it, idx) => (
                 <div key={idx} className="grid grid-cols-12 gap-2 items-end" data-testid={`row-item-${idx}`}>
-                  <div className="col-span-4"><Input placeholder={t.productName || "Name"} value={it.name} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], name: e.target.value }; setProductItems(a); }} /></div>
+                  <div className="col-span-3"><Input placeholder={t.productName || "Name"} value={it.name} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], name: e.target.value }; setProductItems(a); }} /></div>
                   <div className="col-span-3"><Input type="number" placeholder={t.itemCost || "Cost (SAR)"} value={it.cost} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], cost: e.target.value }; setProductItems(a); }} data-testid={`input-item-cost-${idx}`} /></div>
                   <div className="col-span-2"><Input type="number" placeholder={(t as any).sellingPrice || "Sell (SAR)"} value={it.sellingPrice} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], sellingPrice: e.target.value }; setProductItems(a); }} data-testid={`input-item-selling-price-${idx}`} /></div>
-                  <div className="col-span-2"><Input type="number" placeholder={t.itemPercentage || "% of Total"} value={it.percentage} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], percentage: e.target.value }; setProductItems(a); }} /></div>
+                  <div className="col-span-2"><Input type="number" placeholder={t.itemPercentage || "%"} value={it.percentage} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], percentage: e.target.value }; setProductItems(a); }} /></div>
+                  <div className="col-span-1"><Input type="number" min="1" placeholder={(t as any).phase || "Phase"} value={it.phase} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], phase: e.target.value }; setProductItems(a); }} data-testid={`input-item-phase-${idx}`} /></div>
                   <div className="col-span-1"><Button type="button" size="icon" variant="ghost" onClick={() => setProductItems(productItems.filter((_, i) => i !== idx))} data-testid={`button-remove-item-${idx}`}><X className="h-4 w-4" /></Button></div>
                 </div>
               ))}
@@ -1123,7 +1130,7 @@ export default function ServiceCatalog() {
                   <Wrench className="h-4 w-4" /> {t.productServices || "Services"}
                 </Label>
                 <Button type="button" size="sm" variant="outline" data-testid="button-add-product-service"
-                  onClick={() => setProductServices([...productServices, { serviceCatalogId: "", name: "", unitPrice: "", quantity: "1" }])}>
+                  onClick={() => { const nextPh = Math.max(1, ...productServices.map(x => parseInt(x.phase || "1", 10) || 1)); setProductServices([...productServices, { serviceCatalogId: "", name: "", unitPrice: "", quantity: "1", phase: String(nextPh) }]); }}>
                   <Plus className="h-3 w-3 mr-1" /> {t.addProductService || "Add Service"}
                 </Button>
               </div>
@@ -1157,7 +1164,7 @@ export default function ServiceCatalog() {
                     </div>
                   )}
                   <div className="grid grid-cols-12 gap-2 items-end">
-                    <div className="col-span-5">
+                    <div className="col-span-4">
                       <Input
                         placeholder={t.serviceName || "Service name"}
                         value={s.name}
@@ -1174,13 +1181,23 @@ export default function ServiceCatalog() {
                         data-testid={`input-service-price-${idx}`}
                       />
                     </div>
-                    <div className="col-span-3">
+                    <div className="col-span-2">
                       <Input
                         type="number"
                         placeholder={t.quantity || "Qty"}
                         value={s.quantity}
                         onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], quantity: e.target.value }; setProductServices(a); }}
                         data-testid={`input-service-qty-${idx}`}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Input
+                        type="number"
+                        min="1"
+                        placeholder={(t as any).phase || "Phase"}
+                        value={s.phase}
+                        onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], phase: e.target.value }; setProductServices(a); }}
+                        data-testid={`input-service-phase-${idx}`}
                       />
                     </div>
                     <div className="col-span-1">
@@ -1200,17 +1217,27 @@ export default function ServiceCatalog() {
                   <ListChecks className="h-4 w-4" /> {t.productTasks || "Tasks"}
                 </Label>
                 <Button type="button" size="sm" variant="outline" data-testid="button-add-product-task"
-                  onClick={() => setProductTasks([...productTasks, { name: "", description: "", duration: "1" }])}>
+                  onClick={() => { const nextPh = Math.max(1, ...productTasks.map(x => parseInt(x.phase || "1", 10) || 1)); setProductTasks([...productTasks, { name: "", description: "", duration: "1", phase: String(nextPh) }]); }}>
                   <Plus className="h-3 w-3 mr-1" /> {t.addProductTask || "Add Task"}
                 </Button>
               </div>
               {productTasks.map((tk, idx) => (
                 <div key={idx} className="grid grid-cols-12 gap-2 items-end" data-testid={`row-task-${idx}`}>
-                  <div className="col-span-7"><Input placeholder={t.productName || "Task name"} value={tk.name} onChange={(e) => { const a = [...productTasks]; a[idx] = { ...a[idx], name: e.target.value }; setProductTasks(a); }} /></div>
-                  <div className="col-span-4"><Input type="number" placeholder={`${t.taskDuration || "Duration"} (${t.durationDays || "days"})`} value={tk.duration} onChange={(e) => { const a = [...productTasks]; a[idx] = { ...a[idx], duration: e.target.value }; setProductTasks(a); }} /></div>
+                  <div className="col-span-6"><Input placeholder={t.productName || "Task name"} value={tk.name} onChange={(e) => { const a = [...productTasks]; a[idx] = { ...a[idx], name: e.target.value }; setProductTasks(a); }} /></div>
+                  <div className="col-span-3"><Input type="number" placeholder={`${t.taskDuration || "Duration"} (${t.durationDays || "days"})`} value={tk.duration} onChange={(e) => { const a = [...productTasks]; a[idx] = { ...a[idx], duration: e.target.value }; setProductTasks(a); }} /></div>
+                  <div className="col-span-2"><Input type="number" min="1" placeholder={(t as any).phase || "Phase"} value={tk.phase} onChange={(e) => { const a = [...productTasks]; a[idx] = { ...a[idx], phase: e.target.value }; setProductTasks(a); }} data-testid={`input-task-phase-${idx}`} /></div>
                   <div className="col-span-1"><Button type="button" size="icon" variant="ghost" onClick={() => setProductTasks(productTasks.filter((_, i) => i !== idx))} data-testid={`button-remove-task-${idx}`}><X className="h-4 w-4" /></Button></div>
                 </div>
               ))}
+              <div className="flex justify-end">
+                <Button type="button" size="sm" variant="outline" data-testid="button-add-product-phase"
+                  onClick={() => {
+                    const nextPh = Math.max(1, ...productItems.map(x => parseInt(x.phase || "1", 10) || 1), ...productServices.map(x => parseInt(x.phase || "1", 10) || 1), ...productTasks.map(x => parseInt(x.phase || "1", 10) || 1)) + 1;
+                    setProductTasks([...productTasks, { name: "", description: "", duration: "1", phase: String(nextPh) }]);
+                  }}>
+                  <Plus className="h-3 w-3 mr-1" /> {(t as any).addPhase || "Add Phase"}
+                </Button>
+              </div>
             </div>
 
             <div className="flex justify-end gap-2 pt-4 border-t">

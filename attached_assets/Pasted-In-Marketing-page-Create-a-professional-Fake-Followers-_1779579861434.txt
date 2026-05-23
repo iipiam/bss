@@ -1,0 +1,94 @@
+In Marketing page, Create a professional **Fake Followers & Audience Quality Analyzer**.
+
+Tab Title: "Fake Followers Detector - Influencer Analyzer 2026"
+
+Make it modern, clean, with red/yellow/green color coding and emojis.
+
+### Main Features:
+
+1. **Manual Analysis Mode** (الأساسي)
+Create A Blogger/ Influencer File then save  
+ - Inputs:
+     - Username (@handle)
+     - Total Followers
+     - Total Following
+     - Average Likes per Post
+     - Average Comments per Post
+     - Number of Posts
+     - Follower Growth in Last 30 Days (optional)
+     - % of Comments that are generic (Nice, ❤️, Good, etc.)
+
+   - Calculate & Analyze:
+     - Estimated Fake Followers Percentage
+     - Audience Quality Score (0-100)
+     - Red Flags Detected (list)
+     - Recommendations (Accept / Review / Reject)
+
+2. **Scoring System** (استخدم صيغ منطقية):
+   - Fake % = 
+        - Low engagement (ER < 2%) → +30%
+        - Very high following/followers ratio → +20%
+        - Sudden growth → +25%
+        - Many generic comments → +15%
+   - Show final Fake Followers % with color:
+        - Green: <15% (Excellent)
+        - Yellow: 15-30% (Acceptable)
+        - Red: >30% (High Risk)
+
+3. **Benchmarks Section**
+   - Food Niche Benchmarks (Saudi Arabia):
+     - Good Fake Rate: <18%
+     - Average: 18-35%
+     - Bad: >35%
+   - Show warning messages in Arabic and English.
+
+4. **Multiple Influencers Table**
+   - Allow adding several influencers
+   - Columns: Username, Followers, Est. Fake %, Quality Score, Status (Good / Risky / Reject), Notes
+   - Average Fake Rate for all
+   - Download/ Export table as CSV and PDF
+
+5. **Extra Features:**
+   - Instructions with "How to Read Results" + Tips in (Arabic/ English):
+
+✅ نسبة المتابعين الحقيقيين (Real Followers %) + كشف البوتات (Fake Followers)
+هذا المعيار مهم جدًا في Scorecard التقييم الخاص بك. إذا كان نسبة المتابعين المزيفين أكثر من 25-30%، فمن الأفضل استبعاد المدون.
+أفضل الطرق والأدوات للكشف عن البوتات (محدث 2026)
+1. أدوات مجانية سريعة (موصى بها لك في البداية)
+استخدم هذه الأدوات أولاً لفحص 50-100 حساب بسرعة:
+الأداة	المنصات	مجانية؟	دقة تقريبية	رابط مباشر
+Modash Fake Follower Check	Instagram (الأفضل)	مجاني تمامًا (بدون تسجيل)	عالية جدًا	modash.io/fake-follower-check
+HypeAuditor	Instagram	مجاني (محدود)	ممتازة	hypeauditor.com/free-tools
+Upfluence	Instagram	مجاني بدون تسجيل	جيدة	upfluence.com/instagram-fake-follower-check
+Collabstr	Instagram + TikTok	مجاني	جيدة	collabstr.com
+StarNgage	Instagram + TikTok	مجاني	جيدة	starngage.com
+Social Auditor	Instagram + TikTok + YouTube	مجاني محدود	جيدة	socialauditor.io
+ViralMango	الثلاث منصات	مجاني	جيدة	analytics.viralmango.com
+
+
+كيف تستخدمها (خطوة بخطوة):
+1.	افتح الأداة (مثل Modash).
+2.	أدخل اسم المستخدم (@username).
+3.	انتظر 10-30 ثانية.
+4.	ستظهر لك:
+o	Fake Followers % (النسبة المزيفة)
+o	Audience Quality Score
+o	Top Countries (مهم لترى إذا كان الجمهور سعودي أم هندي/برازيلي)
+o	Suspicious Growth (ارتفاع مفاجئ في المتابعين)
+القاعدة الذهبية لك:
+•	أقل من 15% مزيف → ممتاز
+•	15-25% → مقبول (لكن راقب)
+•	أكثر من 30% → استبعده فورًا
+2. أدوات مدفوعة (للمستوى الاحترافي)
+عندما تكبر قائمتك إلى 50 مدون:
+•	HypeAuditor → الأقوى في كشف البوتات المتطورة.
+•	Modash → ممتاز للبحث + الفحص معًا.
+•	Lessie AI → مجاني/رخيص ويغطي TikTok جيدًا.
+
+   - Support English and Arabic
+   - Nice charts (pie chart for Real vs Fake, bar chart for comparison)
+   - Clear Data button
+   - Professional UI with Streamlit
+
+Use libraries: streamlit, pandas, plotly, numpy.
+Make the The Tab very practical for someone can managing 10+ bloggers/Influencers.

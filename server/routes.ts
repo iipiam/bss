@@ -15617,6 +15617,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           sellingPrice: String(it.sellingPrice ?? "0"),
           percentage: String(it.percentage ?? "0"),
           sortOrder: idx,
+          phase: Math.max(1, parseInt(String(it.phase ?? "1"), 10) || 1),
         })).filter((it: any) => it.name),
         services: services.map((s: any, idx: number) => ({
           serviceCatalogId: s.serviceCatalogId ? String(s.serviceCatalogId) : null,
@@ -15624,12 +15625,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           unitPrice: s.unitPrice != null && s.unitPrice !== "" ? String(s.unitPrice) : null,
           quantity: String(s.quantity ?? "1"),
           sortOrder: idx,
+          phase: Math.max(1, parseInt(String(s.phase ?? "1"), 10) || 1),
         })).filter((s: any) => s.serviceCatalogId || s.name),
         tasks: tasks.map((tk: any, idx: number) => ({
           name: String(tk.name || ""),
           description: tk.description ? String(tk.description) : null,
           duration: parseInt(String(tk.duration ?? "1"), 10) || 1,
           sortOrder: idx,
+          phase: Math.max(1, parseInt(String(tk.phase ?? "1"), 10) || 1),
         })).filter((tk: any) => tk.name),
       });
       res.status(201).json(product);
@@ -15657,6 +15660,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             sellingPrice: String(it.sellingPrice ?? "0"),
             percentage: String(it.percentage ?? "0"),
             sortOrder: idx,
+            phase: Math.max(1, parseInt(String(it.phase ?? "1"), 10) || 1),
           })).filter((it: any) => it.name),
           services: (services || []).map((s: any, idx: number) => ({
             serviceCatalogId: s.serviceCatalogId ? String(s.serviceCatalogId) : null,
@@ -15664,12 +15668,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             unitPrice: s.unitPrice != null && s.unitPrice !== "" ? String(s.unitPrice) : null,
             quantity: String(s.quantity ?? "1"),
             sortOrder: idx,
+            phase: Math.max(1, parseInt(String(s.phase ?? "1"), 10) || 1),
           })).filter((s: any) => s.serviceCatalogId || s.name),
           tasks: (tasks || []).map((tk: any, idx: number) => ({
             name: String(tk.name || ""),
             description: tk.description ? String(tk.description) : null,
             duration: parseInt(String(tk.duration ?? "1"), 10) || 1,
             sortOrder: idx,
+            phase: Math.max(1, parseInt(String(tk.phase ?? "1"), 10) || 1),
           })).filter((tk: any) => tk.name),
         });
       }
