@@ -16143,6 +16143,132 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  app.post("/api/payment-schedules/:id/send-email", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const schedule = await storage.getPaymentSchedule(req.params.id, restaurantId);
+      if (!schedule) return res.status(404).json({ message: "Payment schedule not found" });
+      if (!schedule.invoiceId) return res.status(400).json({ message: "No invoice generated yet for this payment" });
+
+      const project = await storage.getServiceProject(schedule.projectId, restaurantId);
+      const toEmail: string | undefined = (req.body?.email as string | undefined) || project?.clientEmail || undefined;
+      if (!toEmail) return res.status(400).json({ message: "Client email is not set" });
+
+      const invoice = await storage.getInvoice(schedule.invoiceId, restaurantId);
+      if (!invoice) return res.status(404).json({ message: "Invoice not found" });
+
+      // Resolve PDF bytes — reuse on-disk PDF or regenerate via ZATCA pipeline
+      let pdfBuffer: Buffer | null = null;
+      if (invoice.pdfPath) {
+        const relativePath = invoice.pdfPath.replace(/^\/+/, '');
+        const filePath = path.normalize(path.join(process.cwd(), 'public', relativePath));
+        if (fs.existsSync(filePath)) {
+          pdfBuffer = fs.readFileSync(filePath);
+        }
+      }
+      if (!pdfBuffer) {
+        const settings = await storage.getSettings(restaurantId);
+        const order = invoice.orderId ? await storage.getOrder(invoice.orderId, restaurantId) : null;
+        const branch = invoice.branchId ? await storage.getBranch(invoice.branchId, restaurantId) : null;
+        const baseUrl = `${req.protocol}://${req.get('host')}`;
+        const pdfData: any = {
+          order: order || {
+            orderNumber: invoice.invoiceNumber,
+            items: invoice.items,
+            subtotal: invoice.subtotal,
+            tax: invoice.vatAmount,
+            total: invoice.total,
+            customerName: invoice.customerName || project?.clientName || "Customer",
+            createdAt: invoice.createdAt,
+          },
+          companyName: settings?.restaurantName || "Business",
+          companyVAT: settings?.vatNumber || "",
+          branchAddress: branch?.location || settings?.address || "",
+          companyEmail: settings?.email || "",
+          companyPhone: settings?.phone || "",
+          invoiceNumber: invoice.invoiceNumber,
+          invoiceDate: new Date(invoice.createdAt),
+          invoiceId: invoice.id,
+          baseUrl,
+          logoPath: settings?.logoPath || undefined,
+          invoiceType: invoice.invoiceType as "simplified" | "standard",
+          customerVatNumber: invoice.customerVatNumber || undefined,
+        };
+        const result = await generateZATCAInvoice(pdfData);
+        pdfBuffer = result.pdfBuffer;
+        try {
+          const invoicesDir = path.join(process.cwd(), "public", "invoices");
+          if (!fs.existsSync(invoicesDir)) fs.mkdirSync(invoicesDir, { recursive: true });
+          const pdfFilename = `${invoice.invoiceNumber}.pdf`;
+          fs.writeFileSync(path.join(invoicesDir, pdfFilename), pdfBuffer);
+          await storage.updateInvoice(invoice.id, restaurantId, { pdfPath: `/invoices/${pdfFilename}` });
+        } catch {}
+      }
+
+      const clientName = project?.clientName || invoice.customerName || "Customer";
+      const subject = `Invoice ${invoice.invoiceNumber} — ${project?.name || schedule.milestoneName}`;
+      const html = `<p>Dear ${escapeHtml(clientName)},</p><p>Please find attached your invoice <strong>${escapeHtml(invoice.invoiceNumber)}</strong> for <strong>${escapeHtml(schedule.milestoneName)}</strong> (amount: ${escapeHtml(String(schedule.amount))} SAR).</p><p>Thank you for your business.</p>`;
+      const text = `Invoice ${invoice.invoiceNumber}\nMilestone: ${schedule.milestoneName}\nAmount: ${schedule.amount} SAR\n\nPlease find attached.`;
+
+      let sent = false;
+      let sendError: string | undefined;
+      try {
+        const { Resend } = await import('resend');
+        let apiKey: string | undefined;
+        let fromEmail: string | undefined;
+        const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+        const xReplitToken = process.env.REPL_IDENTITY
+          ? 'repl ' + process.env.REPL_IDENTITY
+          : process.env.WEB_REPL_RENEWAL
+          ? 'depl ' + process.env.WEB_REPL_RENEWAL
+          : null;
+        if (xReplitToken && hostname) {
+          const r = await fetch(
+            'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
+            { headers: { 'Accept': 'application/json', 'X_REPLIT_TOKEN': xReplitToken } as any }
+          );
+          const data = await r.json();
+          const s = data.items?.[0]?.settings;
+          if (s?.api_key) { apiKey = s.api_key; fromEmail = s.from_email; }
+        }
+        if (!apiKey) apiKey = process.env.RESEND_API_KEY;
+        if (!fromEmail) fromEmail = process.env.EMAIL_FROM || process.env.IT_EMAIL || 'IT@kinbss.org';
+        if (apiKey) {
+          const resend = new Resend(apiKey);
+          const data: any = await resend.emails.send({
+            from: fromEmail!,
+            to: toEmail,
+            subject,
+            html,
+            text,
+            attachments: [{ filename: `invoice-${invoice.invoiceNumber}.pdf`, content: Buffer.from(pdfBuffer) }],
+          });
+          if (data?.error) sendError = data.error.message; else sent = true;
+        }
+      } catch (e: any) {
+        sendError = e.message;
+      }
+
+      if (!sent) {
+        const hasSmtp = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD);
+        if (!hasSmtp) {
+          return res.status(500).json({ message: sendError || 'No email provider is configured. Please set RESEND_API_KEY or SMTP credentials.' });
+        }
+        const { sendGenericEmail } = await import('./emailService');
+        const result = await sendGenericEmail({
+          to: toEmail, subject, html, text,
+          attachments: [{ filename: `invoice-${invoice.invoiceNumber}.pdf`, content: Buffer.from(pdfBuffer), contentType: 'application/pdf' }],
+        });
+        if (!result.ok) return res.status(500).json({ message: sendError || result.error || 'Failed to send email' });
+      }
+      res.json({ success: true, to: toEmail });
+    } catch (error: any) {
+      console.error("[PaymentSchedule] send-email error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // ==================== PROJECT SERVICES ====================
   app.get("/api/project-services", requireAuth, async (req, res) => {
     try {

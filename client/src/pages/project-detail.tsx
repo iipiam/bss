@@ -363,6 +363,28 @@ export default function ProjectDetail() {
     onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
   });
 
+  const payStatusMut = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const body: any = { status };
+      if (status === "paid") body.paidDate = new Date().toISOString().split("T")[0];
+      return apiRequest("PATCH", `/api/payment-schedules/${id}`, body);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/payment-schedules", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/service-projects", projectId] });
+      toast({ title: t.saved || "Saved", description: (t as any).paymentStatusUpdated || "Payment status updated" });
+    },
+    onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
+  });
+
+  const payEmailMut = useMutation({
+    mutationFn: async (id: string) => apiRequest("POST", `/api/payment-schedules/${id}/send-email`, {}),
+    onSuccess: () => {
+      toast({ title: t.saved || "Sent", description: (t as any).invoiceEmailed || "Invoice emailed to client" });
+    },
+    onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },
+  });
+
   const cpmMut = useMutation({
     mutationFn: async () => {
       return await apiRequest("POST", "/api/project-tasks/calculate-cpm", { projectId });
@@ -1000,11 +1022,31 @@ export default function ProjectDetail() {
                       <div className="flex items-center gap-2 shrink-0 flex-wrap">
                         <Badge variant={statusBadge(p.status)} className={statusClass(p.status)}>{p.status}</Badge>
                         <span className="font-semibold">{fmtNum(p.amount)} SAR</span>
+                        {(p.status === "pending" || p.status === "invoiced" || p.status === "overdue") && (
+                          <Button variant="outline" size="sm" onClick={() => payStatusMut.mutate({ id: p.id, status: "paid" })} disabled={payStatusMut.isPending} data-testid={`button-mark-paid-${p.id}`}>
+                            <CheckSquare className="h-4 w-4 mr-1" />{(t as any).markPaid || "Mark Paid"}
+                          </Button>
+                        )}
+                        {p.status === "pending" && (
+                          <Button variant="ghost" size="sm" onClick={() => payStatusMut.mutate({ id: p.id, status: "invoiced" })} disabled={payStatusMut.isPending} data-testid={`button-mark-invoiced-${p.id}`}>
+                            {(t as any).markInvoiced || "Invoiced"}
+                          </Button>
+                        )}
+                        {p.status === "paid" && (
+                          <Button variant="ghost" size="sm" onClick={() => payStatusMut.mutate({ id: p.id, status: "pending" })} disabled={payStatusMut.isPending} data-testid={`button-reopen-payment-${p.id}`}>
+                            {(t as any).reopen || "Reopen"}
+                          </Button>
+                        )}
                         {p.status === "paid" && p.invoiceId && (
                           <>
                             <Button variant="outline" size="sm" onClick={() => downloadPaymentInvoice(p)} data-testid={`button-download-invoice-${p.id}`}>
                               <Download className="h-4 w-4 mr-1" />{t.downloadInvoice || "Invoice"}
                             </Button>
+                            {project?.clientEmail && (
+                              <Button variant="outline" size="sm" onClick={() => payEmailMut.mutate(p.id)} disabled={payEmailMut.isPending} data-testid={`button-email-invoice-${p.id}`}>
+                                <Mail className="h-4 w-4 mr-1" />{(t as any).email || "Email"}
+                              </Button>
+                            )}
                             {project?.clientPhone && (
                               <Button variant="outline" size="sm" onClick={() => sendInvoiceWhatsApp(p)} data-testid={`button-whatsapp-${p.id}`}>
                                 <MessageCircle className="h-4 w-4 mr-1" />WhatsApp
