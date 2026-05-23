@@ -18,7 +18,11 @@ import {
   Headphones,
   MessageSquare,
   FileWarning,
-  Printer
+  Printer,
+  Home,
+  Briefcase,
+  FileSignature,
+  Factory,
 } from "lucide-react";
 
 // Use placeholder URLs for production builds - avoids asset dependency
@@ -120,27 +124,213 @@ const tutorialMetadata = {
   ]
 };
 
+// Per-business-type title/description overrides for the existing base tutorial
+// indices. Step content is kept as-is (translated per language); only the gallery
+// title + description swap so concepts match the business vocabulary.
+const tutorialOverrides: Partial<
+  Record<TutorialBusinessType, Record<number, { title?: string; description?: string }>>
+> = {
+  factory: {
+    1: {
+      title: "Raw Materials & Stock",
+      description: "Track raw materials, finished-goods stock and reorder levels with Excel import/export.",
+    },
+    2: {
+      title: "Product Management",
+      description: "Maintain your factory product catalogue with VAT-inclusive pricing and linked production recipes.",
+    },
+    3: {
+      title: "Production Recipes",
+      description: "Define bill-of-materials production recipes, auto-cost from raw materials and optimise output margins.",
+    },
+    5: {
+      title: "Production Orders",
+      description: "Manage production work orders from intake to dispatch with workshop coordination.",
+    },
+    8: {
+      title: "Product Profitability",
+      description: "Analyse margin, cost structure and pricing across your finished products.",
+    },
+    9: {
+      title: "Production Forecasting",
+      description: "Predict future product demand and plan raw-material purchasing and shift staffing.",
+    },
+  },
+  real_estate: {
+    4: {
+      title: "Client Management",
+      description: "Maintain a database of buyers, sellers and tenants with their inquiry and deal history.",
+    },
+  },
+  design_services: {
+    4: {
+      title: "Client Management",
+      description: "Maintain a database of clients with their project history, briefs and contact details.",
+    },
+  },
+  installation_services: {
+    4: {
+      title: "Client Management",
+      description: "Maintain a database of clients with their installation history and site contact details.",
+    },
+  },
+  it_services: {
+    4: {
+      title: "Client Management",
+      description: "Maintain a database of clients with their engagement history and account contacts.",
+    },
+  },
+};
+
+// Net-new tutorials only relevant to specific business types. These are appended
+// to the gallery after the base list is filtered/overridden. They carry their own
+// metadata (icon/image/gradient) so they don't depend on the index-aligned
+// tutorialMetadata used by the base list.
+type ExtraTutorial = Tutorial & { _businessTypes: TutorialBusinessType[] };
+
+const propertyImg = "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&q=80";
+const inquiryImg = "https://images.unsplash.com/photo-1521791136064-7986c2920216?w=800&q=80";
+const projectImg = "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&q=80";
+const quotationImg = "https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80";
+const productionImg = "https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=800&q=80";
+
+const realEstateExtras: ExtraTutorial[] = [
+  {
+    title: "Property Listings",
+    description: "Create and manage your property listings with photos, pricing and availability.",
+    estimatedTime: "6 minutes",
+    icon: Home,
+    image: propertyImg,
+    screenshot: propertyImg,
+    gradient: "from-emerald-500 to-teal-500",
+    _businessTypes: ["real_estate"],
+    steps: [
+      { title: "Open Properties", description: "Click 'Properties' in the sidebar to view your current listings." },
+      { title: "Add a Listing", description: "Click 'Add Property', enter address, type (apartment/villa/office/land), size, asking price and listing status." },
+      { title: "Upload Photos", description: "Attach high-quality photos to make the listing more attractive to buyers and tenants.", tips: ["Hero image first", "Show every room"] },
+      { title: "Set Availability", description: "Toggle each listing as available or off-market without deleting it.", tips: ["Off-market listings stay in history for reporting"] },
+      { title: "Track Performance", description: "Review how many inquiries each listing receives from the Analytics dashboard." },
+    ],
+  },
+  {
+    title: "Inquiries",
+    description: "Track every inquiry on your listings from first contact through viewing and offer.",
+    estimatedTime: "5 minutes",
+    icon: ClipboardList,
+    image: inquiryImg,
+    screenshot: inquiryImg,
+    gradient: "from-blue-500 to-indigo-500",
+    _businessTypes: ["real_estate"],
+    steps: [
+      { title: "Open Inquiries", description: "Click 'Orders' (Inquiries) in the sidebar to view all client inquiries on your listings." },
+      { title: "Log a New Inquiry", description: "Click 'Add Inquiry', link the property, capture the client's name, contact and stated budget." },
+      { title: "Update Stage", description: "Move each inquiry through the stages: New → Viewing Scheduled → Offer Made → Closed.", tips: ["Update the same day you take an action — pipelines decay fast"] },
+      { title: "Filter Your Pipeline", description: "Filter by listing, stage or date range to see what needs attention." },
+      { title: "Convert to Deal", description: "When an offer is accepted, mark the inquiry as Closed-Won so it flows into your revenue reports." },
+    ],
+  },
+];
+
+const serviceExtras: ExtraTutorial[] = [
+  {
+    title: "Service Projects",
+    description: "Run the full project lifecycle: approval, scope, services, bills, procurement, tasks and payment schedule.",
+    estimatedTime: "10 minutes",
+    icon: Briefcase,
+    image: projectImg,
+    screenshot: projectImg,
+    gradient: "from-violet-500 to-purple-500",
+    _businessTypes: ["design_services", "installation_services", "it_services"],
+    steps: [
+      { title: "Create a Project", description: "From the sidebar open 'Service Projects' and click 'New Project'. Enter project name, client, estimated cost and scope summary." },
+      { title: "Approve or Decline", description: "Owners and authorised employees can approve a project in the Decision Center, or decline it with a reason.", tips: ["Approval is required before billing can start"] },
+      { title: "Add Services & Items", description: "Use the project detail page to add the scoped services and project items with selling prices." },
+      { title: "Schedule Payments", description: "Define milestone-based payment schedules so the client and your finance team see the cash plan." },
+      { title: "Manage Bills & Procurement", description: "Attach project bills (subcontractors, salaries) and procurement orders to keep all cost lines under one project." },
+      { title: "Track Tasks (CPM)", description: "Break the work into tasks with dependencies and durations so the system can compute the critical path and finish date." },
+      { title: "Download the Dossier", description: "Generate the project dossier PDF for the client or for internal review.", tips: ["Requires the Projects permission"] },
+      { title: "Finish the Project", description: "Move the lifecycle to Finished when scope is delivered; the dashboard updates automatically." },
+    ],
+  },
+  {
+    title: "Quotations",
+    description: "Build, send and convert bilingual quotations into approved projects.",
+    estimatedTime: "7 minutes",
+    icon: FileSignature,
+    image: quotationImg,
+    screenshot: quotationImg,
+    gradient: "from-blue-500 to-purple-500",
+    _businessTypes: ["design_services", "installation_services", "it_services"],
+    steps: [
+      { title: "Create a Quotation", description: "Open 'Quotations' from the sidebar and click 'New Quotation'. Pick the client and add line items with prices." },
+      { title: "Apply Terms & Template", description: "Pull in your company agreement template and terms from Company Settings so every quotation is consistent." },
+      { title: "Download PDF", description: "Generate the bilingual PDF and send it to the client.", tips: ["Requires the Quotations permission"] },
+      { title: "Track Status", description: "Move the quotation through Draft → Sent → Accepted / Rejected as the client responds." },
+      { title: "Convert to Project", description: "Once accepted, convert the quotation into a Service Project so the scope and pricing flow straight in.", tips: ["Avoid manually re-keying scope — use Convert"] },
+    ],
+  },
+];
+
+const factoryExtras: ExtraTutorial[] = [
+  {
+    title: "Production Workflow",
+    description: "Plan a production run end-to-end: raw materials, recipe, work order, output and cost reconciliation.",
+    estimatedTime: "8 minutes",
+    icon: Factory,
+    image: productionImg,
+    screenshot: productionImg,
+    gradient: "from-orange-500 to-red-500",
+    _businessTypes: ["factory"],
+    steps: [
+      { title: "Confirm Raw Material Stock", description: "Open Inventory and confirm you have enough of every raw material the recipe consumes." },
+      { title: "Open the Production Recipe", description: "From Recipes, open the production recipe for the product you're going to make and review the yield." },
+      { title: "Create a Production Order", description: "From Orders, create a new production order, pick the product, set the batch quantity and assign a shift." },
+      { title: "Run & Mark Complete", description: "When the batch is finished, mark the order as Completed. Raw-material stock is auto-deducted and finished-goods stock auto-increases." },
+      { title: "Review Profitability", description: "Check the Profitability page to see the actual margin on this batch versus the forecast." },
+    ],
+  },
+];
+
+const extraTutorials: Partial<Record<TutorialBusinessType, ExtraTutorial[]>> = {
+  factory: factoryExtras,
+  real_estate: realEstateExtras,
+  design_services: serviceExtras,
+  installation_services: serviceExtras,
+  it_services: serviceExtras,
+};
+
 export const getTutorialsByLanguage = (
   language: Language,
   t: any,
   businessType?: TutorialBusinessType,
 ): Tutorial[] => {
   const content = tutorialContent[language] || tutorialContent.en;
+  const overrides = businessType ? tutorialOverrides[businessType] || {} : {};
 
-  return content
-    .map((tutorial, index) => ({
-      ...tutorial,
-      icon: tutorialMetadata.icons[index],
-      image: tutorialMetadata.images[index],
-      screenshot: tutorialMetadata.screenshots[index],
-      gradient: tutorialMetadata.gradients[index],
-      _businessTypes: tutorialBusinessTypes[index] || ALL_BUSINESS_TYPES,
-    }))
+  const base: Tutorial[] = content
+    .map((tutorial, index) => {
+      const o = overrides[index];
+      return {
+        ...tutorial,
+        title: o?.title ?? tutorial.title,
+        description: o?.description ?? tutorial.description,
+        icon: tutorialMetadata.icons[index],
+        image: tutorialMetadata.images[index],
+        screenshot: tutorialMetadata.screenshots[index],
+        gradient: tutorialMetadata.gradients[index],
+        _businessTypes: tutorialBusinessTypes[index] || ALL_BUSINESS_TYPES,
+      };
+    })
     .filter((tutorial) => {
       if (!businessType) return true;
       return tutorial._businessTypes.includes(businessType);
     })
     .map(({ _businessTypes, ...rest }) => rest);
+
+  const extras = businessType ? (extraTutorials[businessType] || []) : [];
+  const extrasClean: Tutorial[] = extras.map(({ _businessTypes, ...rest }) => rest);
+
+  return [...base, ...extrasClean];
 };
 
 const tutorialContent: Record<Language, Omit<Tutorial, 'icon' | 'image' | 'screenshot' | 'gradient'>[]> = {
