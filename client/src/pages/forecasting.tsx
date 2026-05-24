@@ -7,10 +7,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip as UITooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import type { Transaction, Order, MenuItem, Recipe, InventoryItem } from "@shared/schema";
 
 export default function Forecasting() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [forecastPeriod, setForecastPeriod] = useState("7");
 
   const { data: transactions = [] } = useQuery<Transaction[]>({
@@ -336,6 +338,7 @@ export default function Forecasting() {
   const sufficientItems = inventoryForecasts.filter(i => i.status === 'sufficient').length;
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -360,7 +363,10 @@ export default function Forecasting() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>{t.totalSales}</CardDescription>
+            <CardDescription>
+              {t.totalSales}
+              <InfoTip>{isRTL ? "إجمالي إيرادات المبيعات خلال آخر 30 يومًا." : "Total sales revenue over the last 30 days."}</InfoTip>
+            </CardDescription>
             <CardTitle className="text-3xl font-bold font-mono">
               {totalSales.toFixed(2)} SAR
             </CardTitle>
@@ -375,7 +381,10 @@ export default function Forecasting() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>{(t as any).averageDailySales || "Average Daily Sales"}</CardDescription>
+            <CardDescription>
+              {(t as any).averageDailySales || "Average Daily Sales"}
+              <InfoTip>{isRTL ? "متوسط المبيعات اليومية خلال آخر 30 يومًا." : "Average sales per day over the last 30 days."}</InfoTip>
+            </CardDescription>
             <CardTitle className="text-3xl font-bold font-mono">
               {avgDailySales.toFixed(2)} SAR
             </CardTitle>
@@ -390,7 +399,10 @@ export default function Forecasting() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>{t.predictedSales}</CardDescription>
+            <CardDescription>
+              {t.predictedSales}
+              <InfoTip>{isRTL ? "الإيرادات المتوقعة للفترة القادمة بناءً على تحليل الاتجاه." : "Projected revenue for the upcoming period based on trend analysis."}</InfoTip>
+            </CardDescription>
             <CardTitle className="text-3xl font-bold font-mono">
               {predictedRevenue.toFixed(2)} SAR
             </CardTitle>
@@ -405,7 +417,10 @@ export default function Forecasting() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardDescription>{t.trendAnalysis}</CardDescription>
+            <CardDescription>
+              {t.trendAnalysis}
+              <InfoTip>{isRTL ? "تغيّر المبيعات في آخر 7 أيام مقارنة بالأسبوع السابق." : "Sales change over the last 7 days versus the previous week."}</InfoTip>
+            </CardDescription>
             <CardTitle className="text-3xl font-bold font-mono">
               {trendPercentage >= 0 ? '+' : ''}{trendPercentage.toFixed(1)}%
             </CardTitle>
@@ -502,7 +517,10 @@ export default function Forecasting() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card className="bg-muted/50">
                   <CardHeader className="pb-3">
-                    <CardDescription>{t.totalPredictedRevenue || "Total Predicted Revenue"}</CardDescription>
+                    <CardDescription>
+                      {t.totalPredictedRevenue || "Total Predicted Revenue"}
+                      <InfoTip>{isRTL ? "إجمالي الإيرادات المتوقعة لجميع الأصناف خلال الفترة المختارة." : "Sum of predicted revenue across all items for the selected period."}</InfoTip>
+                    </CardDescription>
                     <CardTitle className="text-2xl font-bold font-mono">
                       {totalForecastedItemRevenue.toFixed(2)} SAR
                     </CardTitle>
@@ -515,7 +533,10 @@ export default function Forecasting() {
                 </Card>
                 <Card className="bg-muted/50">
                   <CardHeader className="pb-3">
-                    <CardDescription>{t.last7DaysRevenue || "Last 7 Days Revenue"}</CardDescription>
+                    <CardDescription>
+                      {t.last7DaysRevenue || "Last 7 Days Revenue"}
+                      <InfoTip>{isRTL ? "إجمالي الإيرادات الفعلية من مبيعات الأصناف خلال آخر 7 أيام." : "Actual item-sales revenue earned during the last 7 days."}</InfoTip>
+                    </CardDescription>
                     <CardTitle className="text-2xl font-bold font-mono">
                       {totalLast7Revenue.toFixed(2)} SAR
                     </CardTitle>
@@ -523,7 +544,10 @@ export default function Forecasting() {
                 </Card>
                 <Card className="bg-muted/50">
                   <CardHeader className="pb-3">
-                    <CardDescription>{t.revenueTrend || "Revenue Trend"}</CardDescription>
+                    <CardDescription>
+                      {t.revenueTrend || "Revenue Trend"}
+                      <InfoTip>{isRTL ? "تغيّر إيرادات الأصناف في آخر 7 أيام مقارنة بالأسبوع السابق." : "Change in item revenue over the last 7 days versus the previous week."}</InfoTip>
+                    </CardDescription>
                     <CardTitle className={`text-2xl font-bold font-mono ${itemRevenueTrendPercentage >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                       {itemRevenueTrendPercentage >= 0 ? '+' : ''}{itemRevenueTrendPercentage.toFixed(1)}%
                     </CardTitle>
@@ -635,7 +659,10 @@ export default function Forecasting() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card className="bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900">
                   <CardHeader className="pb-3">
-                    <CardDescription className="text-red-600 dark:text-red-400">{t.criticalStock || "Critical Stock"}</CardDescription>
+                    <CardDescription className="text-red-600 dark:text-red-400">
+                      {t.criticalStock || "Critical Stock"}
+                      <InfoTip>{isRTL ? "أصناف يقل مخزونها كثيرًا عن المطلوب وتحتاج إعادة طلب فوري." : "Items with stock far below required levels — reorder immediately."}</InfoTip>
+                    </CardDescription>
                     <CardTitle className="text-2xl font-bold text-red-600 dark:text-red-400">
                       {criticalItems}
                     </CardTitle>
@@ -648,7 +675,10 @@ export default function Forecasting() {
                 </Card>
                 <Card className="bg-yellow-50 dark:bg-yellow-950/30 border-yellow-200 dark:border-yellow-900">
                   <CardHeader className="pb-3">
-                    <CardDescription className="text-yellow-600 dark:text-yellow-400">{t.lowStock || "Low Stock"}</CardDescription>
+                    <CardDescription className="text-yellow-600 dark:text-yellow-400">
+                      {t.lowStock || "Low Stock"}
+                      <InfoTip>{isRTL ? "أصناف يقترب مخزونها من الحد المطلوب — يُنصح بإعادة الطلب قريبًا." : "Items approaching required levels — reorder soon."}</InfoTip>
+                    </CardDescription>
                     <CardTitle className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                       {lowItems}
                     </CardTitle>
@@ -661,7 +691,10 @@ export default function Forecasting() {
                 </Card>
                 <Card className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-900">
                   <CardHeader className="pb-3">
-                    <CardDescription className="text-green-600 dark:text-green-400">{t.sufficientStock || "Sufficient Stock"}</CardDescription>
+                    <CardDescription className="text-green-600 dark:text-green-400">
+                      {t.sufficientStock || "Sufficient Stock"}
+                      <InfoTip>{isRTL ? "أصناف مستوى مخزونها كافٍ لتغطية الطلب المتوقع." : "Items with stock adequate to cover forecasted demand."}</InfoTip>
+                    </CardDescription>
                     <CardTitle className="text-2xl font-bold text-green-600 dark:text-green-400">
                       {sufficientItems}
                     </CardTitle>
@@ -796,7 +829,10 @@ export default function Forecasting() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Card className="bg-muted/50">
                   <CardHeader className="pb-3">
-                    <CardDescription>{(t as any).totalItemsTracked || "Total Items Tracked"}</CardDescription>
+                    <CardDescription>
+                      {(t as any).totalItemsTracked || "Total Items Tracked"}
+                      <InfoTip>{isRTL ? "عدد أصناف القائمة التي تم بيعها خلال آخر 30 يومًا." : "Number of menu items with sales in the last 30 days."}</InfoTip>
+                    </CardDescription>
                     <CardTitle className="text-2xl font-bold">
                       {itemDemandForecasts.length}
                     </CardTitle>
@@ -804,7 +840,10 @@ export default function Forecasting() {
                 </Card>
                 <Card className="bg-muted/50">
                   <CardHeader className="pb-3">
-                    <CardDescription>{(t as any).trendingUp || "Trending Up"}</CardDescription>
+                    <CardDescription>
+                      {(t as any).trendingUp || "Trending Up"}
+                      <InfoTip>{isRTL ? "عدد الأصناف التي يزيد طلبها بأكثر من 5٪." : "Items whose demand is rising by more than 5%."}</InfoTip>
+                    </CardDescription>
                     <CardTitle className="text-2xl font-bold text-green-600">
                       {itemDemandForecasts.filter(i => i.trend === 'up').length}
                     </CardTitle>
@@ -812,7 +851,10 @@ export default function Forecasting() {
                 </Card>
                 <Card className="bg-muted/50">
                   <CardHeader className="pb-3">
-                    <CardDescription>{(t as any).trendingDown || "Trending Down"}</CardDescription>
+                    <CardDescription>
+                      {(t as any).trendingDown || "Trending Down"}
+                      <InfoTip>{isRTL ? "عدد الأصناف التي ينخفض طلبها بأكثر من 5٪." : "Items whose demand is falling by more than 5%."}</InfoTip>
+                    </CardDescription>
                     <CardTitle className="text-2xl font-bold text-red-600">
                       {itemDemandForecasts.filter(i => i.trend === 'down').length}
                     </CardTitle>
@@ -901,5 +943,6 @@ export default function Forecasting() {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }

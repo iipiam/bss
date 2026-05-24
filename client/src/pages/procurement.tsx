@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -60,7 +61,8 @@ const statusIcons = {
 
 export default function ProcurementPage() {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const tipText = (en: string, ar: string) => (language === 'Arabic' ? ar : en);
   const [selectedType, setSelectedType] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all-statuses");
   const [searchQuery, setSearchQuery] = useState<string>("");
@@ -529,6 +531,7 @@ export default function ProcurementPage() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -597,7 +600,7 @@ export default function ProcurementPage() {
                     name="priority"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.priority}</FormLabel>
+                        <FormLabel>{t.priority}<InfoTip>{tipText("Urgency level: low, medium, high, or urgent.", "مستوى الأولوية: منخفض، متوسط، عالٍ، أو عاجل.")}</InfoTip></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-priority">
@@ -745,7 +748,7 @@ export default function ProcurementPage() {
                     name="unitPrice"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.pricePerUnit} (SAR)</FormLabel>
+                        <FormLabel>{t.pricePerUnit} (SAR)<InfoTip>{tipText("Auto-calculated from total cost divided by quantity.", "يُحسب تلقائياً من إجمالي التكلفة مقسوماً على الكمية.")}</InfoTip></FormLabel>
                         <FormControl>
                           <Input 
                             placeholder="0.00" 
@@ -766,7 +769,7 @@ export default function ProcurementPage() {
                     name="totalCost"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.totalCost} (SAR)</FormLabel>
+                        <FormLabel>{t.totalCost} (SAR)<InfoTip>{tipText("Total purchase amount in SAR (used to derive unit price).", "إجمالي مبلغ الشراء بالريال السعودي (يُستخدم لاحتساب سعر الوحدة).")}</InfoTip></FormLabel>
                         <FormControl>
                           <Input placeholder="0.00" {...field} data-testid="input-total-cost" />
                         </FormControl>
@@ -796,7 +799,7 @@ export default function ProcurementPage() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.status}</FormLabel>
+                        <FormLabel>{t.status}<InfoTip>{tipText("Workflow stage: pending, approved, ordered, received, completed, or cancelled.", "مرحلة الطلب: قيد الانتظار، معتمد، مطلوب، مستلم، مكتمل، أو ملغى.")}</InfoTip></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-status">
@@ -955,7 +958,10 @@ export default function ProcurementPage() {
       <div className="grid md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">{t.totalRequests}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.totalRequests}
+              <InfoTip>{tipText("Total number of procurement requests created.", "إجمالي عدد طلبات الشراء التي تم إنشاؤها.")}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.total}</div>
@@ -963,7 +969,10 @@ export default function ProcurementPage() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">{t.pending}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.pending}
+              <InfoTip>{tipText("Requests awaiting approval.", "الطلبات في انتظار الموافقة.")}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
@@ -971,7 +980,10 @@ export default function ProcurementPage() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">{t.approved}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.approved}
+              <InfoTip>{tipText("Requests approved but not yet ordered.", "الطلبات المعتمدة ولم يتم طلبها بعد.")}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">{stats.approved}</div>
@@ -979,7 +991,10 @@ export default function ProcurementPage() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">{t.inProgress}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.inProgress}
+              <InfoTip>{tipText("Orders that are placed or received.", "الطلبات المُرسلة أو المستلمة.")}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-purple-600">{stats.inProgress}</div>
@@ -987,7 +1002,10 @@ export default function ProcurementPage() {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">{t.completed}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.completed}
+              <InfoTip>{tipText("Fully completed procurement requests.", "طلبات الشراء المكتملة بالكامل.")}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
@@ -1303,18 +1321,23 @@ export default function ProcurementPage() {
                                     {t.reorder}
                                   </Button>
                                 )}
-                                <Button 
-                                  size="sm" 
-                                  variant="destructive" 
-                                  onClick={() => {
-                                    if (confirm(t.deleteProcurementConfirm)) {
-                                      deleteMutation.mutate(item.id);
-                                    }
-                                  }}
-                                  data-testid={`button-delete-${item.id}`}
-                                >
-                                  {t.delete}
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      size="sm" 
+                                      variant="destructive" 
+                                      onClick={() => {
+                                        if (confirm(t.deleteProcurementConfirm)) {
+                                          deleteMutation.mutate(item.id);
+                                        }
+                                      }}
+                                      data-testid={`button-delete-${item.id}`}
+                                    >
+                                      {t.delete}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>{tipText("Permanently delete this procurement request.", "حذف طلب الشراء هذا نهائياً.")}</TooltipContent>
+                                </Tooltip>
                               </div>
                             </div>
                           </div>
@@ -1464,7 +1487,7 @@ export default function ProcurementPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="reorder-expiration-days">{t.expirationDays}</Label>
+              <Label htmlFor="reorder-expiration-days">{t.expirationDays}<InfoTip>{tipText("Number of days until this stock expires (leave blank if none).", "عدد الأيام حتى انتهاء صلاحية المخزون (اتركه فارغاً إن لم يوجد).")}</InfoTip></Label>
               <Input
                 id="reorder-expiration-days"
                 type="number"
@@ -1524,5 +1547,6 @@ export default function ProcurementPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

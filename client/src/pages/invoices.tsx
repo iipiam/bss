@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,7 @@ type InvoiceTypeFilter = "all" | "standard" | "simplified";
 type NoteType = "credit_note" | "debit_note";
 
 export default function Invoices() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState<InvoiceTypeFilter>("all");
   const [adjustmentDialogOpen, setAdjustmentDialogOpen] = useState(false);
@@ -234,6 +235,7 @@ export default function Invoices() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold mb-2">{t.invoices}</h1>
@@ -346,11 +348,16 @@ export default function Invoices() {
                       </Button>
                       {getInvoiceType(invoice) === "standard" && !(invoice as any).documentType && (
                         <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" data-testid={`button-actions-${invoice.id}`}>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" data-testid={`button-actions-${invoice.id}`}>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                            </TooltipTrigger>
+                            <TooltipContent>{isRTL ? "المزيد من الإجراءات" : "More actions"}</TooltipContent>
+                          </Tooltip>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               onClick={() => openAdjustmentDialog(invoice, "credit_note")}
@@ -411,7 +418,10 @@ export default function Invoices() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="adjustment-reason">Reason for {noteType === "credit_note" ? "Credit" : "Debit"} Note</Label>
+                <Label htmlFor="adjustment-reason">
+                  Reason for {noteType === "credit_note" ? "Credit" : "Debit"} Note
+                  <InfoTip>{isRTL ? "اشرح سبب إصدار هذا الإشعار (3 أحرف على الأقل)." : "Explain why this note is being issued (minimum 3 characters)."}</InfoTip>
+                </Label>
                 <Textarea
                   id="adjustment-reason"
                   placeholder={noteType === "credit_note" 
@@ -448,5 +458,6 @@ export default function Invoices() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

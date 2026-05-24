@@ -9,7 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Edit, Trash2, GripVertical, Calculator, TrendingUp, FileText } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -68,9 +69,11 @@ interface SortableDeliveryAppCardProps {
   testOrderAmount: number;
   t: any;
   layout: any;
+  isRTL: boolean;
 }
 
-function SortableDeliveryAppCard({ app, onEdit, onDelete, testOrderAmount, t, layout }: SortableDeliveryAppCardProps) {
+function SortableDeliveryAppCard({ app, onEdit, onDelete, testOrderAmount, t, layout, isRTL }: SortableDeliveryAppCardProps) {
+  const tip = (en: string, ar: string) => (isRTL ? ar : en);
   const {
     attributes,
     listeners,
@@ -202,7 +205,7 @@ function SortableDeliveryAppCard({ app, onEdit, onDelete, testOrderAmount, t, la
                   <Edit className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{t.edit}</TooltipContent>
+              <TooltipContent>{tip("Edit this delivery app's fees and tiers.", "تعديل رسوم وشرائح هذا التطبيق.")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -216,7 +219,7 @@ function SortableDeliveryAppCard({ app, onEdit, onDelete, testOrderAmount, t, la
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{t.delete}</TooltipContent>
+              <TooltipContent>{tip("Permanently delete this delivery app.", "حذف تطبيق التوصيل نهائياً.")}</TooltipContent>
             </Tooltip>
           </div>
         </CardContent>
@@ -233,7 +236,8 @@ export default function DeliveryApps() {
   const [deletingApp, setDeletingApp] = useState<DeliveryApp | null>(null);
   const [testOrderAmount, setTestOrderAmount] = useState(100);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const tip = (en: string, ar: string) => (isRTL ? ar : en);
 
   const subsidyTierSchema = z.object({
     minAmount: z.coerce.number().min(0, t.minAmountMustBeZeroOrHigher),
@@ -703,6 +707,7 @@ export default function DeliveryApps() {
   ];
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className="flex items-center justify-between gap-4">
         <div>
@@ -759,7 +764,7 @@ export default function DeliveryApps() {
                   name="commission"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.commission}</FormLabel>
+                      <FormLabel>{t.commission}<InfoTip>{tip("Platform commission percentage taken from each order.", "نسبة عمولة المنصة من كل طلب.")}</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -778,7 +783,7 @@ export default function DeliveryApps() {
                   name="bankingFees"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.bankingFees}</FormLabel>
+                      <FormLabel>{t.bankingFees}<InfoTip>{tip("Payment processing fee percentage charged by the platform.", "نسبة رسوم المعالجة البنكية التي تأخذها المنصة.")}</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -797,7 +802,7 @@ export default function DeliveryApps() {
                   name="markUp"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.markUp || "Mark-Up %"}</FormLabel>
+                      <FormLabel>{t.markUp || "Mark-Up %"}<InfoTip>{tip("Extra percentage added to menu prices on this platform.", "نسبة الزيادة المضافة على أسعار القائمة في هذه المنصة.")}</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -813,7 +818,7 @@ export default function DeliveryApps() {
                 />
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <FormLabel>Subsidy Tiers</FormLabel>
+                    <FormLabel>Subsidy Tiers<InfoTip>{tip("Order amount ranges where the platform subsidizes part of the price.", "نطاقات قيمة الطلب التي تدعم فيها المنصة جزءاً من السعر.")}</InfoTip></FormLabel>
                     <Button
                       type="button"
                       size="sm"
@@ -836,7 +841,7 @@ export default function DeliveryApps() {
                           name={`subsidyTiers.${index}.minAmount`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">Min (SAR)</FormLabel>
+                              <FormLabel className="text-xs">Min (SAR)<InfoTip>{tip("Lowest order amount this tier applies to.", "أقل مبلغ طلب تنطبق عليه هذه الشريحة.")}</InfoTip></FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
@@ -855,7 +860,7 @@ export default function DeliveryApps() {
                           name={`subsidyTiers.${index}.maxAmount`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">Max (SAR)</FormLabel>
+                              <FormLabel className="text-xs">Max (SAR)<InfoTip>{tip("Highest order amount for this tier (blank for no limit).", "أعلى مبلغ طلب لهذه الشريحة (اتركه فارغاً بلا حد).")}</InfoTip></FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
@@ -879,7 +884,7 @@ export default function DeliveryApps() {
                           name={`subsidyTiers.${index}.subsidy`}
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel className="text-xs">Subsidy (SAR)</FormLabel>
+                              <FormLabel className="text-xs">Subsidy (SAR)<InfoTip>{tip("Amount the platform contributes per order in this tier.", "المبلغ الذي تساهم به المنصة لكل طلب في هذه الشريحة.")}</InfoTip></FormLabel>
                               <FormControl>
                                 <Input
                                   type="number"
@@ -911,7 +916,7 @@ export default function DeliveryApps() {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{t.delete}</TooltipContent>
+                        <TooltipContent>{tip("Remove this subsidy tier.", "إزالة شريحة الدعم هذه.")}</TooltipContent>
                       </Tooltip>
                     </div>
                   ))}
@@ -924,7 +929,7 @@ export default function DeliveryApps() {
                   name="posFees"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.posFees}</FormLabel>
+                      <FormLabel>{t.posFees}<InfoTip>{tip("Fixed POS/processing fee deducted per order.", "رسوم نقطة البيع الثابتة المخصومة لكل طلب.")}</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -957,7 +962,7 @@ export default function DeliveryApps() {
         <CardHeader className={layout.cardHeaderPadding}>
           <div className="flex items-center gap-2">
             <Calculator className="h-5 w-5 text-primary" />
-            <h2 className={`${layout.textXl} font-semibold`}>{t.netEarningsCalculator}</h2>
+            <h2 className={`${layout.textXl} font-semibold`}>{t.netEarningsCalculator}<InfoTip>{tip("Estimate net earnings after commission, fees, subsidy and VAT.", "تقدير صافي الأرباح بعد العمولة والرسوم والدعم وضريبة القيمة المضافة.")}</InfoTip></h2>
           </div>
         </CardHeader>
         <CardContent className={layout.cardPadding}>
@@ -1057,6 +1062,7 @@ export default function DeliveryApps() {
                   testOrderAmount={testOrderAmount}
                   t={t}
                   layout={layout}
+                  isRTL={isRTL}
                 />
               ))}
             </div>
@@ -1105,7 +1111,7 @@ export default function DeliveryApps() {
                         name="deliveryAppId"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Delivery App</FormLabel>
+                            <FormLabel>Delivery App<InfoTip>{tip("Which delivery platform this profitability entry belongs to.", "تطبيق التوصيل الذي يخص هذا السجل.")}</InfoTip></FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger data-testid="select-delivery-app">
@@ -1127,7 +1133,7 @@ export default function DeliveryApps() {
                         name="periodType"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Period Type</FormLabel>
+                            <FormLabel>Period Type<InfoTip>{tip("Choose whether this entry covers a day range, week, or month.", "اختر ما إذا كان السجل لنطاق يومي أو أسبوعي أو شهري.")}</InfoTip></FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger data-testid="select-period-type">
@@ -1221,7 +1227,7 @@ export default function DeliveryApps() {
                         name="orders"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Orders</FormLabel>
+                            <FormLabel>Orders<InfoTip>{tip("Total number of orders received in this period.", "إجمالي عدد الطلبات في هذه الفترة.")}</InfoTip></FormLabel>
                             <FormControl>
                               <Input type="number" placeholder="0" {...field} data-testid="input-orders" />
                             </FormControl>
@@ -1234,7 +1240,7 @@ export default function DeliveryApps() {
                         name="sales"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Sales (SAR)</FormLabel>
+                            <FormLabel>Sales (SAR)<InfoTip>{tip("Gross sales amount before deductions.", "إجمالي المبيعات قبل الخصومات.")}</InfoTip></FormLabel>
                             <FormControl>
                               <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-sales" />
                             </FormControl>
@@ -1247,7 +1253,7 @@ export default function DeliveryApps() {
                         name="revenue"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Revenue (SAR)</FormLabel>
+                            <FormLabel>Revenue (SAR)<InfoTip>{tip("Net revenue received from the platform.", "صافي الإيرادات المستلمة من المنصة.")}</InfoTip></FormLabel>
                             <FormControl>
                               <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-revenue" />
                             </FormControl>
@@ -1260,7 +1266,7 @@ export default function DeliveryApps() {
                         name="commission"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Commission (SAR)</FormLabel>
+                            <FormLabel>Commission (SAR)<InfoTip>{tip("Total commission paid to the platform.", "إجمالي العمولة المدفوعة للمنصة.")}</InfoTip></FormLabel>
                             <FormControl>
                               <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-commission-amount" />
                             </FormControl>
@@ -1273,7 +1279,7 @@ export default function DeliveryApps() {
                         name="banking"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Banking (SAR)</FormLabel>
+                            <FormLabel>Banking (SAR)<InfoTip>{tip("Total banking/processing fees deducted.", "إجمالي الرسوم البنكية المخصومة.")}</InfoTip></FormLabel>
                             <FormControl>
                               <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-banking" />
                             </FormControl>
@@ -1286,7 +1292,7 @@ export default function DeliveryApps() {
                         name="subsidy"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Subsidy (SAR)</FormLabel>
+                            <FormLabel>Subsidy (SAR)<InfoTip>{tip("Platform subsidy received in this period.", "إجمالي الدعم من المنصة في هذه الفترة.")}</InfoTip></FormLabel>
                             <FormControl>
                               <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-subsidy" />
                             </FormControl>
@@ -1299,7 +1305,7 @@ export default function DeliveryApps() {
                         name="vat"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>VAT (SAR)</FormLabel>
+                            <FormLabel>VAT (SAR)<InfoTip>{tip("Value-added tax amount for the period.", "قيمة ضريبة القيمة المضافة للفترة.")}</InfoTip></FormLabel>
                             <FormControl>
                               <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-vat" />
                             </FormControl>
@@ -1312,7 +1318,7 @@ export default function DeliveryApps() {
                         name="posFees"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>POS Fees (SAR)</FormLabel>
+                            <FormLabel>POS Fees (SAR)<InfoTip>{tip("Fixed POS fees deducted across all orders.", "إجمالي رسوم نقطة البيع المخصومة من جميع الطلبات.")}</InfoTip></FormLabel>
                             <FormControl>
                               <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-pos-fees-amount" />
                             </FormControl>
@@ -1325,7 +1331,7 @@ export default function DeliveryApps() {
                         name="profit"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Profit (SAR)</FormLabel>
+                            <FormLabel>Profit (SAR)<InfoTip>{tip("Calculated profit before net adjustments.", "الربح المحسوب قبل التسويات الصافية.")}</InfoTip></FormLabel>
                             <FormControl>
                               <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-profit" />
                             </FormControl>
@@ -1338,7 +1344,7 @@ export default function DeliveryApps() {
                         name="netEarnings"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Net Earnings (SAR)</FormLabel>
+                            <FormLabel>Net Earnings (SAR)<InfoTip>{tip("Final amount kept after all deductions.", "المبلغ النهائي بعد جميع الخصومات.")}</InfoTip></FormLabel>
                             <FormControl>
                               <Input type="number" step="0.01" placeholder="0.00" {...field} data-testid="input-net-earnings" />
                             </FormControl>
@@ -1467,7 +1473,7 @@ export default function DeliveryApps() {
                                   <Edit className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>{t.edit}</TooltipContent>
+                              <TooltipContent>{tip("Edit this profitability entry.", "تعديل سجل الربحية هذا.")}</TooltipContent>
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -1481,7 +1487,7 @@ export default function DeliveryApps() {
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>{t.delete}</TooltipContent>
+                              <TooltipContent>{tip("Permanently delete this profitability entry.", "حذف سجل الربحية نهائياً.")}</TooltipContent>
                             </Tooltip>
                           </div>
                         </TableCell>
@@ -1536,5 +1542,6 @@ export default function DeliveryApps() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }

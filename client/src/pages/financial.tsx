@@ -13,7 +13,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { queryClient } from "@/lib/queryClient";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter } from "@/components/ui/table";
 
 interface DeliveryBreakdown {
@@ -51,7 +52,7 @@ export default function Financial() {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
   const [selectedPeriod, setSelectedPeriod] = useState<"monthly" | "yearly">("monthly");
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   const { data: financialData, isLoading: financialLoading } = useQuery({
     queryKey: ["/api/analytics/financial", selectedYear, selectedPeriod],
@@ -494,6 +495,7 @@ export default function Financial() {
   const endingEquity = beginningEquity + netIncome + ownerInvestments - ownerWithdrawals;
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -526,7 +528,7 @@ export default function Financial() {
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalRevenue}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{t.totalRevenue}<InfoTip>{isRTL ? "إجمالي الإيرادات للسنة المختارة." : "Total sales revenue for the selected year."}</InfoTip></CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -537,7 +539,7 @@ export default function Financial() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.vatCollected}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{t.vatCollected}<InfoTip>{isRTL ? "ضريبة القيمة المضافة 15% المحصلة من المبيعات." : "15% Saudi VAT collected on sales."}</InfoTip></CardTitle>
             <Receipt className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -548,7 +550,7 @@ export default function Financial() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.transactions}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{t.transactions}<InfoTip>{isRTL ? "إجمالي عدد عمليات البيع المسجلة." : "Total number of recorded sales transactions."}</InfoTip></CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -559,7 +561,7 @@ export default function Financial() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.invoicesGenerated}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{t.invoicesGenerated}<InfoTip>{isRTL ? "عدد الفواتير المتوافقة مع زاتكا المُصدرة." : "Number of ZATCA-compliant invoices issued."}</InfoTip></CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -660,7 +662,7 @@ export default function Financial() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.totalExpenses}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.totalExpenses}<InfoTip>{isRTL ? "إجمالي الفواتير بالإضافة إلى قيمة المخزون للسنة." : "Bills plus inventory value for the year."}</InfoTip></CardTitle>
                 <Wallet className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -671,7 +673,7 @@ export default function Financial() {
 
             <Card className="bg-gradient-to-r from-blue-500/5 to-blue-600/10">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.inventoryValue || "Inventory Value"}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.inventoryValue || "Inventory Value"}<InfoTip>{isRTL ? "إجمالي قيمة المخزون الحالي." : "Total value of current stock on hand."}</InfoTip></CardTitle>
                 <Package className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
@@ -682,7 +684,7 @@ export default function Financial() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.paidBills}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.paidBills}<InfoTip>{isRTL ? "إجمالي مبلغ الفواتير المدفوعة لهذه السنة." : "Total amount of bills paid this year."}</InfoTip></CardTitle>
                 <TrendingUp className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
@@ -693,7 +695,7 @@ export default function Financial() {
 
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.pendingBills}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.pendingBills}<InfoTip>{isRTL ? "إجمالي الفواتير غير المدفوعة بانتظار الدفع." : "Outstanding bills awaiting payment."}</InfoTip></CardTitle>
                 <TrendingDown className="h-4 w-4 text-orange-500" />
               </CardHeader>
               <CardContent>
@@ -1533,7 +1535,7 @@ export default function Financial() {
           <div className="grid gap-6 md:grid-cols-3">
             <Card className="bg-gradient-to-r from-blue-500/5 to-blue-600/10">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.totalAssets || "Total Assets"}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.totalAssets || "Total Assets"}<InfoTip>{isRTL ? "إجمالي الأصول = نقد + مخزون." : "Sum of all assets (cash + inventory)."}</InfoTip></CardTitle>
                 <TrendingUp className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
@@ -1542,7 +1544,7 @@ export default function Financial() {
             </Card>
             <Card className="bg-gradient-to-r from-orange-500/5 to-orange-600/10">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.totalLiabilities || "Total Liabilities"}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.totalLiabilities || "Total Liabilities"}<InfoTip>{isRTL ? "ضريبة القيمة المضافة المستحقة + الفواتير المعلقة." : "VAT payable plus pending bills owed."}</InfoTip></CardTitle>
                 <TrendingDown className="h-4 w-4 text-orange-500" />
               </CardHeader>
               <CardContent>
@@ -1551,7 +1553,7 @@ export default function Financial() {
             </Card>
             <Card className={ownersEquity >= 0 ? "bg-gradient-to-r from-green-500/5 to-green-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.ownersEquity || "Owner's Equity"}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.ownersEquity || "Owner's Equity"}<InfoTip>{isRTL ? "حقوق الملكية = الأصول - الالتزامات." : "Equity = Assets minus Liabilities."}</InfoTip></CardTitle>
                 <Scale className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
@@ -1644,7 +1646,7 @@ export default function Financial() {
           <div className="grid gap-6 md:grid-cols-3">
             <Card className={cashFromOperations >= 0 ? "bg-gradient-to-r from-blue-500/5 to-blue-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.operatingActivities || "Operating Activities"}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.operatingActivities || "Operating Activities"}<InfoTip>{isRTL ? "صافي النقد الناتج من العمليات التشغيلية اليومية." : "Net cash generated from day-to-day operations."}</InfoTip></CardTitle>
                 <TrendingUp className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
@@ -1655,7 +1657,7 @@ export default function Financial() {
             </Card>
             <Card className={cashFromInvesting >= 0 ? "bg-gradient-to-r from-purple-500/5 to-purple-600/10" : "bg-gradient-to-r from-orange-500/5 to-orange-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.investingActivities || "Investing Activities"}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.investingActivities || "Investing Activities"}<InfoTip>{isRTL ? "النقد المستخدم للاستثمار مثل شراء المخزون." : "Cash used for investments like inventory purchases."}</InfoTip></CardTitle>
                 <ArrowDownUp className="h-4 w-4 text-purple-500" />
               </CardHeader>
               <CardContent>
@@ -1666,7 +1668,7 @@ export default function Financial() {
             </Card>
             <Card className={netCashFlow >= 0 ? "bg-gradient-to-r from-green-500/5 to-green-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.netCashFlow || "Net Cash Flow"}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.netCashFlow || "Net Cash Flow"}<InfoTip>{isRTL ? "صافي التدفق النقدي = التشغيلي + الاستثماري." : "Net cash flow = operations plus investing."}</InfoTip></CardTitle>
                 <DollarSign className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
@@ -1768,7 +1770,7 @@ export default function Financial() {
           <div className="grid gap-6 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.beginningEquity || "Beginning Equity"}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.beginningEquity || "Beginning Equity"}<InfoTip>{isRTL ? "حقوق المالك في بداية الفترة." : "Owner's equity at the start of the period."}</InfoTip></CardTitle>
                 <Scale className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -1781,7 +1783,7 @@ export default function Financial() {
 
             <Card className={netIncome >= 0 ? "bg-gradient-to-r from-green-500/5 to-green-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.netChange || "Net Change"}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.netChange || "Net Change"}<InfoTip>{isRTL ? "صافي الدخل + الاستثمارات - السحوبات." : "Income + investments minus withdrawals."}</InfoTip></CardTitle>
                 {netIncome >= 0 ? <TrendingUp className="h-4 w-4 text-green-500" /> : <TrendingDown className="h-4 w-4 text-red-500" />}
               </CardHeader>
               <CardContent>
@@ -1794,7 +1796,7 @@ export default function Financial() {
 
             <Card className={endingEquity >= 0 ? "bg-gradient-to-r from-indigo-500/5 to-indigo-600/10" : "bg-gradient-to-r from-red-500/5 to-red-600/10"}>
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.endingEquity || "Ending Equity"}</CardTitle>
+                <CardTitle className="text-sm font-medium flex items-center">{t.endingEquity || "Ending Equity"}<InfoTip>{isRTL ? "حقوق المالك في نهاية الفترة." : "Owner's equity at the end of the period."}</InfoTip></CardTitle>
                 <DollarSign className="h-4 w-4 text-indigo-500" />
               </CardHeader>
               <CardContent>
@@ -1869,5 +1871,6 @@ export default function Financial() {
         </TabsContent>
       </Tabs>
     </div>
+    </TooltipProvider>
   );
 }

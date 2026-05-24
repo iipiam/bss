@@ -19,7 +19,8 @@ import { Plus, Pencil, Trash2, DollarSign, FileText, Search, Sparkles, Upload, D
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 const createSalaryFormSchema = (t: any) => z.object({
   employeeName: z.string().min(1, t.employeeNameRequired),
@@ -42,7 +43,7 @@ const createBillFormSchema = (t: any) => z.object({
 });
 
 export default function Shop() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { labels } = useBusinessType();
   const { toast } = useToast();
   const [salaryDialogOpen, setSalaryDialogOpen] = useState(false);
@@ -472,6 +473,7 @@ export default function Shop() {
   const pendingBills = totalBills - paidBills;
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -500,7 +502,7 @@ export default function Shop() {
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.totalSalaries}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.totalSalaries}<InfoTip>{isRTL ? "إجمالي جميع رواتب الموظفين." : "Sum of all employee salaries."}</InfoTip></CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -509,7 +511,7 @@ export default function Shop() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.paidSalaries}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.paidSalaries}<InfoTip>{isRTL ? "إجمالي الرواتب المدفوعة بالفعل." : "Salaries already paid out."}</InfoTip></CardTitle>
                 <DollarSign className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
@@ -518,7 +520,7 @@ export default function Shop() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.pendingSalaries}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.pendingSalaries}<InfoTip>{isRTL ? "الرواتب التي لم تُدفع بعد." : "Salaries not yet paid."}</InfoTip></CardTitle>
                 <DollarSign className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
@@ -574,7 +576,7 @@ export default function Shop() {
                           name="position"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.position}</FormLabel>
+                              <FormLabel>{t.position}<InfoTip>{isRTL ? "المسمى الوظيفي للموظف." : "Employee's job title."}</InfoTip></FormLabel>
                               <FormControl>
                                 <Input {...field} data-testid="input-position" />
                               </FormControl>
@@ -587,7 +589,7 @@ export default function Shop() {
                           name="amount"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.monthlySalary}</FormLabel>
+                              <FormLabel>{t.monthlySalary}<InfoTip>{isRTL ? "مبلغ الراتب الشهري بالعملة الافتراضية." : "Monthly salary amount in default currency."}</InfoTip></FormLabel>
                               <FormControl>
                                 <Input type="number" step="0.01" {...field} data-testid="input-monthly-salary" />
                               </FormControl>
@@ -600,7 +602,7 @@ export default function Shop() {
                           name="paymentDate"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.paymentDate}</FormLabel>
+                              <FormLabel>{t.paymentDate}<InfoTip>{isRTL ? "التاريخ المستحق لدفع الراتب." : "Date the salary is due to be paid."}</InfoTip></FormLabel>
                               <FormControl>
                                 <Input type="date" {...field} data-testid="input-payment-date" />
                               </FormControl>
@@ -613,7 +615,7 @@ export default function Shop() {
                           name="status"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.status}</FormLabel>
+                              <FormLabel>{t.status}<InfoTip>{isRTL ? "حالة الدفع الحالية لهذا الراتب." : "Current payment status of this salary."}</InfoTip></FormLabel>
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger data-testid="select-salary-status">
@@ -634,7 +636,7 @@ export default function Shop() {
                           name="notes"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.notes}</FormLabel>
+                              <FormLabel>{t.notes}<InfoTip>{isRTL ? "ملاحظات داخلية اختيارية." : "Optional internal notes."}</InfoTip></FormLabel>
                               <FormControl>
                                 <Textarea {...field} value={field.value || ""} data-testid="input-salary-notes" />
                               </FormControl>
@@ -710,7 +712,7 @@ export default function Shop() {
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.delete}</TooltipContent>
+                          <TooltipContent>{isRTL ? "حذف سجل الراتب نهائيًا." : "Permanently delete this salary record."}</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
@@ -727,7 +729,7 @@ export default function Shop() {
           <div className="grid gap-4 md:grid-cols-3">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.totalBills}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.totalBills}<InfoTip>{isRTL ? "إجمالي جميع فواتير المتجر." : "Sum of all shop bills."}</InfoTip></CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -736,7 +738,7 @@ export default function Shop() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.paidBills}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.paidBills}<InfoTip>{isRTL ? "الفواتير المسددة بالكامل." : "Bills already paid."}</InfoTip></CardTitle>
                 <FileText className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
@@ -745,7 +747,7 @@ export default function Shop() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.pendingBills}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.pendingBills}<InfoTip>{isRTL ? "الفواتير غير المسددة أو المتأخرة." : "Bills unpaid or overdue."}</InfoTip></CardTitle>
                 <FileText className="h-4 w-4 text-orange-600" />
               </CardHeader>
               <CardContent>
@@ -778,7 +780,7 @@ export default function Shop() {
                       </DialogHeader>
                       <div className="space-y-4">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium">{t.paymentMonth}</label>
+                          <label className="text-sm font-medium">{t.paymentMonth}<InfoTip>{isRTL ? "الشهر الذي سيتم إنشاء فواتير الرواتب له." : "Month to generate salary bills for."}</InfoTip></label>
                           <Input
                             type="month"
                             value={selectedMonth}
@@ -827,7 +829,7 @@ export default function Shop() {
                           name="billType"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.billType}</FormLabel>
+                              <FormLabel>{t.billType}<InfoTip>{isRTL ? "فئة هذه الفاتورة (إيجار، كهرباء، إلخ)." : "Category of this bill (rent, electricity, etc.)."}</InfoTip></FormLabel>
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger data-testid="select-bill-type">
@@ -854,7 +856,7 @@ export default function Shop() {
                           name="amount"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.amount}</FormLabel>
+                              <FormLabel>{t.amount}<InfoTip>{isRTL ? "إجمالي مبلغ الفاتورة بالعملة الافتراضية." : "Total bill amount in default currency."}</InfoTip></FormLabel>
                               <FormControl>
                                 <Input type="number" step="0.01" {...field} data-testid="input-bill-amount" />
                               </FormControl>
@@ -867,7 +869,7 @@ export default function Shop() {
                           name="paymentDate"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.paymentDate}</FormLabel>
+                              <FormLabel>{t.paymentDate}<InfoTip>{isRTL ? "التاريخ المستحق لسداد الفاتورة." : "Date the bill is due to be paid."}</InfoTip></FormLabel>
                               <FormControl>
                                 <Input type="date" {...field} data-testid="input-bill-payment-date" />
                               </FormControl>
@@ -880,7 +882,7 @@ export default function Shop() {
                           name="paymentPeriod"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.paymentPeriod}</FormLabel>
+                              <FormLabel>{t.paymentPeriod}<InfoTip>{isRTL ? "تكرار تكرار هذه الفاتورة." : "How often this bill recurs."}</InfoTip></FormLabel>
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger data-testid="select-payment-period">
@@ -905,7 +907,7 @@ export default function Shop() {
                           name="status"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.status}</FormLabel>
+                              <FormLabel>{t.status}<InfoTip>{isRTL ? "حالة الدفع الحالية لهذه الفاتورة." : "Current payment status of this bill."}</InfoTip></FormLabel>
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <FormControl>
                                   <SelectTrigger data-testid="select-bill-status">
@@ -927,7 +929,7 @@ export default function Shop() {
                           name="description"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.description}</FormLabel>
+                              <FormLabel>{t.description}<InfoTip>{isRTL ? "تفاصيل إضافية اختيارية حول الفاتورة." : "Optional extra details about the bill."}</InfoTip></FormLabel>
                               <FormControl>
                                 <Textarea {...field} value={field.value || ""} data-testid="input-bill-description" />
                               </FormControl>
@@ -1026,7 +1028,7 @@ export default function Shop() {
                                     <X className="w-4 h-4" />
                                   </Button>
                                 </TooltipTrigger>
-                                <TooltipContent>{t.deleteInvoice || "Delete Invoice"}</TooltipContent>
+                                <TooltipContent>{isRTL ? "إزالة الفاتورة المرفقة نهائيًا." : "Permanently remove the attached invoice."}</TooltipContent>
                               </Tooltip>
                             </>
                           ) : (
@@ -1088,7 +1090,7 @@ export default function Shop() {
                                 <Trash2 className="w-4 h-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>{t.delete}</TooltipContent>
+                            <TooltipContent>{isRTL ? "حذف هذه الفاتورة نهائيًا." : "Permanently delete this bill."}</TooltipContent>
                           </Tooltip>
                         </div>
                       </div>
@@ -1193,5 +1195,6 @@ export default function Shop() {
         </TabsContent>
       </Tabs>
     </div>
+    </TooltipProvider>
   );
 }

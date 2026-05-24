@@ -4,6 +4,13 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 const salesByBranch = [
   { branch: "Main - Riyadh", sales: 45200 },
@@ -37,9 +44,10 @@ const inventoryByCategory = [
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 export default function Reports() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -63,7 +71,10 @@ export default function Reports() {
           <div className="grid gap-6 md:grid-cols-3">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">{t.totalRevenue}</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {t.totalRevenue}
+                  <InfoTip>{isRTL ? "إجمالي الإيرادات لهذا الشهر." : "Total revenue generated this month."}</InfoTip>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold font-mono">116,500 SAR</p>
@@ -72,7 +83,10 @@ export default function Reports() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">{t.totalOrders}</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {t.totalOrders}
+                  <InfoTip>{isRTL ? "عدد الطلبات في الفترة الحالية." : "Number of orders in the current period."}</InfoTip>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold font-mono">847</p>
@@ -81,7 +95,10 @@ export default function Reports() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">{t.avgOrderValue}</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {t.avgOrderValue}
+                  <InfoTip>{isRTL ? "متوسط قيمة الطلب الواحد." : "Average revenue per order."}</InfoTip>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold font-mono">138 SAR</p>
@@ -139,7 +156,10 @@ export default function Reports() {
           <div className="grid gap-6 md:grid-cols-3">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">{t.totalItems}</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {t.totalItems}
+                  <InfoTip>{isRTL ? "إجمالي الأصناف المخزنة." : "Total items currently in inventory."}</InfoTip>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold font-mono">127</p>
@@ -148,7 +168,10 @@ export default function Reports() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">{t.lowStockItems}</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {t.lowStockItems}
+                  <InfoTip>{isRTL ? "أصناف بحاجة إلى إعادة التخزين." : "Items below the reorder threshold."}</InfoTip>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold font-mono text-orange-600">7</p>
@@ -157,7 +180,10 @@ export default function Reports() {
             </Card>
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm font-medium text-muted-foreground">{(t as any).inventoryValue || "Inventory Value"}</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  {(t as any).inventoryValue || "Inventory Value"}
+                  <InfoTip>{isRTL ? "القيمة الإجمالية للمخزون الحالي." : "Total monetary value of current stock."}</InfoTip>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-3xl font-bold font-mono">28,450 SAR</p>
@@ -226,5 +252,6 @@ export default function Reports() {
         </TabsContent>
       </Tabs>
     </div>
+    </TooltipProvider>
   );
 }

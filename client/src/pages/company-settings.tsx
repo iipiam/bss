@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -179,6 +180,7 @@ export default function CompanySettingsPage() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-6 space-y-6 overflow-y-auto h-full" data-testid="page-company-settings">
       <div className="flex items-center gap-3">
         <Building2 className="h-6 w-6 text-primary" />
@@ -253,7 +255,10 @@ export default function CompanySettingsPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="companyAddress">{t.companyAddress || "Company Address"}</Label>
+                <Label htmlFor="companyAddress">
+                  {t.companyAddress || "Company Address"}
+                  <InfoTip>Full registered address shown on invoices and agreements. / العنوان المسجل بالكامل المعروض على الفواتير والاتفاقيات.</InfoTip>
+                </Label>
                 <Textarea
                   id="companyAddress"
                   value={companyAddress}
@@ -435,7 +440,7 @@ export default function CompanySettingsPage() {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.delete}</TooltipContent>
+                          <TooltipContent>Permanently delete this document. / حذف هذا المستند نهائياً.</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
@@ -447,5 +452,6 @@ export default function CompanySettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
+    </TooltipProvider>
   );
 }

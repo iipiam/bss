@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -135,7 +136,7 @@ export default function Contracts() {
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
   const [deletingContract, setDeletingContract] = useState<Contract | null>(null);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const layout = useDeviceLayout();
 
   const form = useForm<ContractFormValues>({
@@ -354,6 +355,7 @@ export default function Contracts() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div
         className={`flex ${layout.isMobile ? "flex-col gap-3" : "items-center justify-between"}`}
@@ -402,7 +404,7 @@ export default function Contracts() {
                     name="contractNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{(t as any).contractNumber || "Contract Number"}</FormLabel>
+                        <FormLabel>{(t as any).contractNumber || "Contract Number"}<InfoTip>{isRTL ? "معرّف فريد للعقد (مثل CTR-001)." : "Unique identifier for the contract (e.g. CTR-001)."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contract-number"
@@ -419,7 +421,7 @@ export default function Contracts() {
                     name="propertyName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{(t as any).propertyName || "Property Name"}</FormLabel>
+                        <FormLabel>{(t as any).propertyName || "Property Name"}<InfoTip>{isRTL ? "اسم العقار المرتبط بهذا العقد." : "Name of the property linked to this contract."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-property-name"
@@ -495,7 +497,7 @@ export default function Contracts() {
                     name="contractType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.contractType}</FormLabel>
+                        <FormLabel>{t.contractType}<InfoTip>{isRTL ? "نوع العقد: بيع، إيجار طويل، أو تأجير." : "Type of contract: sale, lease, or rental."}</InfoTip></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-contract-type">
@@ -517,7 +519,7 @@ export default function Contracts() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.status}</FormLabel>
+                        <FormLabel>{t.status}<InfoTip>{isRTL ? "الحالة الحالية للعقد." : "Current status of the contract."}</InfoTip></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-contract-status">
@@ -544,7 +546,7 @@ export default function Contracts() {
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.startDate}</FormLabel>
+                        <FormLabel>{t.startDate}<InfoTip>{isRTL ? "تاريخ بدء سريان العقد." : "Date the contract becomes effective."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-start-date"
@@ -561,7 +563,7 @@ export default function Contracts() {
                     name="endDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.endDate}</FormLabel>
+                        <FormLabel>{t.endDate}<InfoTip>{isRTL ? "تاريخ انتهاء العقد." : "Date the contract expires."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-end-date"
@@ -581,7 +583,7 @@ export default function Contracts() {
                     name="value"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{(t as any).valueSAR || "Value (SAR)"}</FormLabel>
+                        <FormLabel>{(t as any).valueSAR || "Value (SAR)"}<InfoTip>{isRTL ? "إجمالي قيمة العقد بالريال السعودي." : "Total contract value in SAR."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contract-value"
@@ -599,7 +601,7 @@ export default function Contracts() {
                     name="commissionRate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{(t as any).commissionRatePercent || "Commission Rate (%)"}</FormLabel>
+                        <FormLabel>{(t as any).commissionRatePercent || "Commission Rate (%)"}<InfoTip>{isRTL ? "نسبة العمولة المئوية من قيمة العقد." : "Commission percentage of the contract value."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-commission-rate"
@@ -620,7 +622,7 @@ export default function Contracts() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.notes}</FormLabel>
+                      <FormLabel>{t.notes}<InfoTip>{isRTL ? "ملاحظات إضافية حول العقد." : "Additional notes about the contract."}</InfoTip></FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-contract-notes"
@@ -679,6 +681,7 @@ export default function Contracts() {
             <div className="flex items-center gap-2 mb-1">
               <FileText className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{(t as any).totalContracts || "Total Contracts"}</p>
+              <InfoTip>{isRTL ? "إجمالي عدد العقود المسجلة." : "Total number of recorded contracts."}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-contracts">
               {contracts.length}
@@ -690,6 +693,7 @@ export default function Contracts() {
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.active}</p>
+              <InfoTip>{isRTL ? "العقود النشطة حاليًا." : "Contracts currently active."}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-active-contracts">
               {activeContracts.length}
@@ -701,6 +705,7 @@ export default function Contracts() {
             <div className="flex items-center gap-2 mb-1">
               <Handshake className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.completed}</p>
+              <InfoTip>{isRTL ? "العقود المكتملة." : "Contracts that have been completed."}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-completed-contracts">
               {completedContracts.length}
@@ -712,6 +717,7 @@ export default function Contracts() {
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{(t as any).totalValue || "Total Value"}</p>
+              <InfoTip>{isRTL ? "إجمالي قيمة جميع العقود." : "Combined value of all contracts."}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-value">
               {totalValue.toLocaleString()} SAR
@@ -779,7 +785,7 @@ export default function Contracts() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>{t.delete}</TooltipContent>
+                    <TooltipContent>{isRTL ? "تحذير: حذف هذا العقد نهائيًا." : "Warning: permanently delete this contract."}</TooltipContent>
                   </Tooltip>
                 </div>
               </CardHeader>
@@ -877,5 +883,6 @@ export default function Contracts() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import {
   Card,
@@ -94,6 +95,7 @@ interface PrinterCardProps {
   onDelete: (printer: PrinterType) => void;
   onSetDefault: (printer: PrinterType) => void;
   t: Translations;
+  isAr: boolean;
 }
 function PrinterCard({
   printer,
@@ -101,6 +103,7 @@ function PrinterCard({
   onDelete,
   onSetDefault,
   t,
+  isAr,
 }: PrinterCardProps) {
   const getConnectionIcon = (type: string) => {
     switch (type) {
@@ -216,7 +219,7 @@ function PrinterCard({
                   <Trash2 className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>{t.delete}</TooltipContent>
+              <TooltipContent>{isAr ? "حذف الطابعة نهائياً" : "Permanently delete this printer"}</TooltipContent>
             </Tooltip>
           </div>
         </div>
@@ -236,7 +239,8 @@ export default function PrinterSettings() {
   );
   const [showInvoicePreview, setShowInvoicePreview] = useState(false);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isAr = language === "Arabic";
   const printerFormSchema = z
     .object({
       name: z.string().min(1, t.enterPrinterName || "Printer name is required"),
@@ -479,6 +483,7 @@ export default function PrinterSettings() {
     });
   };
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.device === "iphone" ? "p-3" : "p-6"} space-y-6`}>
       <Card>
         <CardHeader>
@@ -487,6 +492,7 @@ export default function PrinterSettings() {
               <CardTitle className="flex items-center gap-2">
                 <Printer className="h-5 w-5" />
                 {t.configurePrinters}
+                <InfoTip>{isAr ? "إدارة طابعات الإيصالات والمطبخ لكل فرع." : "Manage receipt and kitchen printers for each branch."}</InfoTip>
               </CardTitle>
               <CardDescription>{t.printersDescription}</CardDescription>
             </div>
@@ -541,7 +547,7 @@ export default function PrinterSettings() {
                       name="brand"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.printerBrand}</FormLabel>
+                          <FormLabel>{t.printerBrand}<InfoTip>{isAr ? "اختر الشركة المصنعة لضمان التوافق." : "Select manufacturer for driver compatibility."}</InfoTip></FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             value={field.value}
@@ -573,6 +579,7 @@ export default function PrinterSettings() {
                         <FormItem>
                           <FormLabel>
                             {t.printerType || "Printer Type"}
+                            <InfoTip>{isAr ? "حراري للإيصالات؛ ليزر/نفث الحبر للمستندات." : "Thermal for receipts; laser/inkjet for documents."}</InfoTip>
                           </FormLabel>
                           <Select
                             onValueChange={field.onChange}
@@ -604,7 +611,7 @@ export default function PrinterSettings() {
                       name="connectionType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.connectionType}</FormLabel>
+                          <FormLabel>{t.connectionType}<InfoTip>{isAr ? "كيف ترتبط الطابعة: شبكة، USB، أو بلوتوث." : "How the printer connects: network, USB, or Bluetooth."}</InfoTip></FormLabel>
                           <Select
                             onValueChange={field.onChange}
                             value={field.value}
@@ -645,7 +652,7 @@ export default function PrinterSettings() {
                         name="ipAddress"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t.ipAddress}</FormLabel>
+                            <FormLabel>{t.ipAddress}<InfoTip>{isAr ? "عنوان IP الثابت للطابعة الشبكية." : "Static IP of the network printer."}</InfoTip></FormLabel>
                             <FormControl>
                               <Input
                                 placeholder={t.enterIpAddress}
@@ -733,6 +740,7 @@ export default function PrinterSettings() {
                   onDelete={handleDelete}
                   onSetDefault={handleSetDefault}
                   t={t}
+                  isAr={isAr}
                 />
               ))}
             </div>
@@ -745,6 +753,7 @@ export default function PrinterSettings() {
           <CardTitle className="flex items-center gap-2">
             <ShoppingCart className="h-5 w-5" />
             Order Simulation
+            <InfoTip>{isAr ? "اختبر إرسال طلب إلى الطابعة الافتراضية." : "Test sending an order to the default printer."}</InfoTip>
           </CardTitle>
           <CardDescription>
             Test proceeding an order with checkout or print (using default
@@ -932,5 +941,6 @@ export default function PrinterSettings() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }

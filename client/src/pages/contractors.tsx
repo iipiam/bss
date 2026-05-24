@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -132,7 +133,7 @@ export default function ContractorsPage() {
   const [editingContractor, setEditingContractor] = useState<Contractor | null>(null);
   const [deletingContractor, setDeletingContractor] = useState<Contractor | null>(null);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const layout = useDeviceLayout();
 
   const form = useForm<ContractorFormValues>({
@@ -331,6 +332,7 @@ export default function ContractorsPage() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div
         className={`flex ${layout.isMobile ? "flex-col gap-3" : "items-center justify-between"}`}
@@ -397,7 +399,7 @@ export default function ContractorsPage() {
                     name="company"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.company}</FormLabel>
+                        <FormLabel>{t.company}<InfoTip>{isRTL ? "اسم الشركة التي يعمل بها المقاول." : "Company the contractor works for."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contractor-company"
@@ -414,7 +416,7 @@ export default function ContractorsPage() {
                     name="specialization"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.specialization}</FormLabel>
+                        <FormLabel>{t.specialization}<InfoTip>{isRTL ? "مجال خبرة المقاول الرئيسي." : "Contractor's main area of expertise."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contractor-specialization"
@@ -472,7 +474,7 @@ export default function ContractorsPage() {
                     name="licenseNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.licenseNumber}</FormLabel>
+                        <FormLabel>{t.licenseNumber}<InfoTip>{isRTL ? "رقم الرخصة المهنية للمقاول." : "Contractor's professional license number."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contractor-license"
@@ -489,7 +491,7 @@ export default function ContractorsPage() {
                     name="rating"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.rating} (1-5)</FormLabel>
+                        <FormLabel>{t.rating} (1-5)<InfoTip>{isRTL ? "تقييم أداء المقاول من 1 إلى 5." : "Rate contractor performance from 1 to 5."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-contractor-rating"
@@ -512,7 +514,7 @@ export default function ContractorsPage() {
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.status}</FormLabel>
+                      <FormLabel>{t.status}<InfoTip>{isRTL ? "حدد ما إذا كان المقاول نشطًا أم غير نشط." : "Set whether the contractor is active or inactive."}</InfoTip></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-contractor-status">
@@ -534,7 +536,7 @@ export default function ContractorsPage() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.notes}</FormLabel>
+                      <FormLabel>{t.notes}<InfoTip>{isRTL ? "ملاحظات داخلية اختيارية حول المقاول." : "Optional internal notes about the contractor."}</InfoTip></FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-contractor-notes"
@@ -593,6 +595,7 @@ export default function ContractorsPage() {
             <div className="flex items-center gap-2 mb-1">
               <Users className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.totalContractors}</p>
+              <InfoTip>{isRTL ? "إجمالي عدد المقاولين المسجلين." : "Total number of registered contractors."}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-contractors">
               {contractors.length}
@@ -604,6 +607,7 @@ export default function ContractorsPage() {
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.activeContractors}</p>
+              <InfoTip>{isRTL ? "المقاولون النشطون والمتاحون حاليًا." : "Contractors currently active and available."}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-active-contractors">
               {activeContractors.length}
@@ -615,6 +619,7 @@ export default function ContractorsPage() {
             <div className="flex items-center gap-2 mb-1">
               <Star className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.avgRating}</p>
+              <InfoTip>{isRTL ? "متوسط التقييم لجميع المقاولين." : "Average rating across all contractors."}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-average-rating">
               {averageRating}
@@ -626,6 +631,7 @@ export default function ContractorsPage() {
             <div className="flex items-center gap-2 mb-1">
               <Wrench className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.specializations}</p>
+              <InfoTip>{isRTL ? "عدد التخصصات الفريدة." : "Number of unique specializations covered."}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-specializations-count">
               {specializations.size}
@@ -693,7 +699,7 @@ export default function ContractorsPage() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>{t.delete}</TooltipContent>
+                    <TooltipContent>{isRTL ? "حذف هذا المقاول نهائيًا." : "Permanently delete this contractor."}</TooltipContent>
                   </Tooltip>
                 </div>
               </CardHeader>
@@ -790,5 +796,6 @@ export default function ContractorsPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }

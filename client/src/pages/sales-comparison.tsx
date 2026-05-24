@@ -5,6 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Store, ShoppingBag, Truck, TrendingUp, DollarSign, Download, FileSpreadsheet, RefreshCw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
+import { Tooltip as UITooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { exportToPDF, exportToExcel } from "@/lib/exportUtils";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -12,7 +14,7 @@ import { queryClient } from "@/lib/queryClient";
 
 export default function SalesComparison() {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [isSyncing, setIsSyncing] = useState(false);
   const { data, isLoading } = useQuery<any>({
     queryKey: ["/api/analytics/sales-comparison"],
@@ -161,6 +163,7 @@ export default function SalesComparison() {
   ];
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -205,7 +208,10 @@ export default function SalesComparison() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">{t.totalOrders}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.totalOrders}
+              <InfoTip>{isRTL ? "إجمالي عدد الطلبات عبر جميع القنوات." : "Total number of orders across all channels."}</InfoTip>
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -218,7 +224,10 @@ export default function SalesComparison() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">{t.totalRevenue}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.totalRevenue}
+              <InfoTip>{isRTL ? "إجمالي الإيرادات من جميع قنوات البيع." : "Total revenue from all sales channels."}</InfoTip>
+            </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -231,7 +240,10 @@ export default function SalesComparison() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">{t.dineIn}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.dineIn}
+              <InfoTip>{isRTL ? "نسبة طلبات تناول الطعام داخل المطعم من الإجمالي." : "Share of dine-in orders out of total orders."}</InfoTip>
+            </CardTitle>
             <Store className="h-4 w-4 text-green-600 dark:text-green-400" />
           </CardHeader>
           <CardContent>
@@ -244,7 +256,10 @@ export default function SalesComparison() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">{t.deliveryApps}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.deliveryApps}
+              <InfoTip>{isRTL ? "نسبة طلبات تطبيقات التوصيل من إجمالي الطلبات." : "Share of delivery app orders out of total orders."}</InfoTip>
+            </CardTitle>
             <Truck className="h-4 w-4 text-red-600 dark:text-red-400" />
           </CardHeader>
           <CardContent>
@@ -417,5 +432,6 @@ export default function SalesComparison() {
         </Card>
       )}
     </div>
+    </TooltipProvider>
   );
 }

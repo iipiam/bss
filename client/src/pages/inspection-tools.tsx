@@ -14,6 +14,8 @@ import {
   XCircle, AlertTriangle, Cpu, HardDrive, Clock, Search, Play, FileWarning,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 interface Health {
   uptime: number;
@@ -89,6 +91,7 @@ export default function InspectionTools() {
   );
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="container mx-auto p-6 space-y-6" data-testid="page-inspection-tools">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
@@ -120,7 +123,7 @@ export default function InspectionTools() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                <CardTitle className="text-sm font-medium">Server Status</CardTitle>
+                <CardTitle className="text-sm font-medium">Server Status<InfoTip>Indicates whether the backend server is reachable and healthy.</InfoTip></CardTitle>
                 {health?.database.status === "ok" ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4 text-destructive" />}
               </CardHeader>
               <CardContent>
@@ -132,7 +135,7 @@ export default function InspectionTools() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                <CardTitle className="text-sm font-medium">Uptime</CardTitle>
+                <CardTitle className="text-sm font-medium">Uptime<InfoTip>How long the server has been running since its last restart.</InfoTip></CardTitle>
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -144,7 +147,7 @@ export default function InspectionTools() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                <CardTitle className="text-sm font-medium">Memory</CardTitle>
+                <CardTitle className="text-sm font-medium">Memory<InfoTip>Current Node.js heap memory usage on the server.</InfoTip></CardTitle>
                 <Cpu className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -158,7 +161,7 @@ export default function InspectionTools() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-                <CardTitle className="text-sm font-medium">Database</CardTitle>
+                <CardTitle className="text-sm font-medium">Database<InfoTip>Round-trip latency for a ping query to the database.</InfoTip></CardTitle>
                 {health?.database.status === "ok" ? <Database className="h-4 w-4 text-green-500" /> : <AlertTriangle className="h-4 w-4 text-destructive" />}
               </CardHeader>
               <CardContent>
@@ -342,5 +345,6 @@ export default function InspectionTools() {
         </TabsContent>
       </Tabs>
     </div>
+    </TooltipProvider>
   );
 }

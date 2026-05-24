@@ -9,7 +9,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Plus, Search, Edit, UtensilsCrossed, Settings2, Trash2, X, Download, Upload, FileDown, ImagePlus } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -72,7 +73,7 @@ const formatToast = (template: string | undefined, label: string | undefined): s
 
 export default function Menu() {
   const layout = useDeviceLayout();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { labels, isRealEstate } = useBusinessType();
   const [searchQuery, setSearchQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -597,6 +598,7 @@ export default function Menu() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className={layout.isMobile ? 'space-y-4' : 'flex items-center justify-between'}>
         <div>
@@ -723,7 +725,7 @@ export default function Menu() {
                                   <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                               </TooltipTrigger>
-                              <TooltipContent>{t.delete}</TooltipContent>
+                              <TooltipContent>Delete category permanently / حذف الفئة نهائياً</TooltipContent>
                             </Tooltip>
                           ) : (
                             <span className="text-xs text-muted-foreground">{t.inUse || "In use"}</span>
@@ -818,7 +820,7 @@ export default function Menu() {
                               <X className="h-3 w-3" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Remove image</TooltipContent>
+                          <TooltipContent>Remove image / إزالة الصورة</TooltipContent>
                         </Tooltip>
                       </div>
                     )}
@@ -867,7 +869,7 @@ export default function Menu() {
                       name="recipeId"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.recipeOptional || "Recipe (Optional)"}</FormLabel>
+                          <FormLabel>{t.recipeOptional || "Recipe (Optional)"}<InfoTip>Link this item to a recipe so ingredients are deducted from inventory on each sale. / اربط هذا الصنف بوصفة لخصم المكونات من المخزون عند البيع.</InfoTip></FormLabel>
                           <Select 
                             onValueChange={(value) => {
                               field.onChange(value);
@@ -899,7 +901,7 @@ export default function Menu() {
                         name="portionSize"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t.portionSize || "Portion Size"}</FormLabel>
+                            <FormLabel>{t.portionSize || "Portion Size"}<InfoTip>Multiplier applied to recipe ingredients (e.g., 0.5x uses half the recipe). / مضاعف يطبق على مكونات الوصفة.</InfoTip></FormLabel>
                             <Select
                               onValueChange={field.onChange}
                               value={field.value}
@@ -956,7 +958,7 @@ export default function Menu() {
                           name="inventoryItemId"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.linkToInventoryItem || "Link to Inventory Item (Optional)"}</FormLabel>
+                              <FormLabel>{t.linkToInventoryItem || "Link to Inventory Item (Optional)"}<InfoTip>Track stock by linking this item directly to an inventory product. / تتبع المخزون بربط الصنف بمنتج من المخزون.</InfoTip></FormLabel>
                               <Select
                                 onValueChange={field.onChange}
                                 value={field.value}
@@ -984,7 +986,7 @@ export default function Menu() {
                           name="stockNo"
                           render={({ field }) => (
                             <FormItem>
-                              <FormLabel>{t.stockQuantityPerItem || "Stock Quantity Per Item (Optional)"}</FormLabel>
+                              <FormLabel>{t.stockQuantityPerItem || "Stock Quantity Per Item (Optional)"}<InfoTip>Amount deducted from inventory per sale (e.g., 1.5 units). / الكمية المخصومة من المخزون لكل عملية بيع.</InfoTip></FormLabel>
                               <FormControl>
                                 <Input
                                   {...field}
@@ -1007,7 +1009,7 @@ export default function Menu() {
                   name="price"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.priceInclVAT || "Price (SAR, incl. VAT)"}</FormLabel>
+                      <FormLabel>{t.priceInclVAT || "Price (SAR, incl. VAT)"}<InfoTip>Enter VAT-inclusive price. Base and 15% VAT are calculated automatically. / أدخل السعر شامل ضريبة القيمة المضافة 15٪.</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -1032,7 +1034,7 @@ export default function Menu() {
                   name="discount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.discountPercent || "Discount %"}</FormLabel>
+                      <FormLabel>{t.discountPercent || "Discount %"}<InfoTip>Percentage discount applied to the price (0–100). / نسبة الخصم على السعر (0–100).</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           {...field}
@@ -1059,7 +1061,7 @@ export default function Menu() {
                   name="displaySize"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.displaySizePosMenu || "Display Size (POS/Menu)"}</FormLabel>
+                      <FormLabel>{t.displaySizePosMenu || "Display Size (POS/Menu)"}<InfoTip>Controls how large the item card appears in POS and Menu views. / يحدد حجم بطاقة الصنف في واجهة البيع والقائمة.</InfoTip></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-display-size">
@@ -1294,7 +1296,7 @@ export default function Menu() {
                         <Edit className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>{t.edit}</TooltipContent>
+                    <TooltipContent>Edit item / تعديل العنصر</TooltipContent>
                   </Tooltip>
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -1308,7 +1310,7 @@ export default function Menu() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>{t.delete}</TooltipContent>
+                    <TooltipContent>Delete this item permanently / حذف نهائي</TooltipContent>
                   </Tooltip>
                 </div>
               </CardFooter>
@@ -1340,5 +1342,6 @@ export default function Menu() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }

@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -16,7 +18,7 @@ import { format } from "date-fns";
 import * as XLSX from "xlsx";
 
 export default function Bills() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [billTypeFilter, setBillTypeFilter] = useState<string>("all");
@@ -115,6 +117,7 @@ export default function Bills() {
   const statuses = ["all", "pending", "paid", "overdue"];
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -141,6 +144,7 @@ export default function Bills() {
               <div className="py-4">
                 <label className="text-sm font-medium mb-2 block">
                   {"Select Month"}
+                  <InfoTip>{isRTL ? "ينشئ فواتير الرواتب لجميع الموظفين الذين لديهم راتب شهري للشهر المحدد فقط." : "Generates salary bills only for employees with a monthly salary for the selected month."}</InfoTip>
                 </label>
                 <Input
                   type="month"
@@ -173,7 +177,10 @@ export default function Bills() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalBills || "Total Bills"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">
+              {t.totalBills || "Total Bills"}
+              <InfoTip>{isRTL ? "إجمالي مبلغ جميع الفواتير المطابقة للفلاتر الحالية." : "Sum of all bills matching the current filters."}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalAmount.toFixed(2)} {t.sar || "SAR"}</div>
@@ -185,7 +192,10 @@ export default function Bills() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.paid || "Paid"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">
+              {t.paid || "Paid"}
+              <InfoTip>{isRTL ? "إجمالي الفواتير المدفوعة بالفعل." : "Total amount of bills already paid."}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{paidAmount.toFixed(2)} {t.sar || "SAR"}</div>
@@ -197,7 +207,10 @@ export default function Bills() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.pending || "Pending"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">
+              {t.pending || "Pending"}
+              <InfoTip>{isRTL ? "إجمالي الفواتير غير المدفوعة بعد." : "Total amount of bills not yet paid."}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">{pendingAmount.toFixed(2)} {t.sar || "SAR"}</div>
@@ -381,5 +394,6 @@ export default function Bills() {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }

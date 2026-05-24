@@ -16,6 +16,8 @@ import { Switch } from "@/components/ui/switch";
 import { notificationTones, toneIds, playNotificationTone, getToneName, type ToneId } from "@/lib/notificationTones";
 import { useBusinessType } from "@/hooks/useBusinessType";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 type DaySchedule = {
   enabled: boolean;
@@ -54,7 +56,8 @@ const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'f
 
 export default function SettingsPage() {
   const { toast } = useToast();
-  const { t, setLanguage, language } = useLanguage();
+  const { t, setLanguage, language, isRTL } = useLanguage();
+  const tip = (en: string, ar: string) => (isRTL ? ar : en);
   const { restaurant, isLoading: authLoading } = useAuth();
   const { labels, isRealEstate, isFactory, isRestaurant, isServiceBusiness, businessType } = useBusinessType();
 
@@ -327,6 +330,7 @@ export default function SettingsPage() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-8 space-y-6">
       <div>
         <h1 className="text-3xl font-bold mb-2">{t.settings}</h1>
@@ -353,7 +357,10 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="vatNumber">{t.vatNumber}</Label>
+                <Label htmlFor="vatNumber">
+                  {t.vatNumber}
+                  <InfoTip>{tip("15-digit VAT registration number issued by ZATCA.", "رقم تسجيل ضريبة القيمة المضافة المكون من 15 رقمًا الصادر من هيئة الزكاة.")}</InfoTip>
+                </Label>
                 <Input
                   id="vatNumber"
                   value={formData.vatNumber || settings?.vatNumber || ""}
@@ -432,7 +439,10 @@ export default function SettingsPage() {
 
               {/* Primary operating hours (relabeled per business type) */}
               <div className="md:col-span-2 flex items-center justify-between">
-                <Label className="text-sm font-medium text-muted-foreground">{primaryHoursLabel}</Label>
+                <Label className="text-sm font-medium text-muted-foreground">
+                  {primaryHoursLabel}
+                  <InfoTip>{tip("Default daily operating hours used across the system.", "ساعات العمل اليومية الافتراضية المستخدمة في النظام.")}</InfoTip>
+                </Label>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="openingTime">{t.openingTime}</Label>
@@ -521,7 +531,10 @@ export default function SettingsPage() {
             <div className="pt-6 border-t">
               <div className="space-y-4">
                 <div>
-                  <Label className="text-base font-semibold">{t.businessLogo}</Label>
+                  <Label className="text-base font-semibold">
+                    {t.businessLogo}
+                    <InfoTip>{tip("Logo appears on invoices and printed documents.", "يظهر الشعار على الفواتير والمستندات المطبوعة.")}</InfoTip>
+                  </Label>
                   <p className="text-sm text-muted-foreground mt-1">{t.logoForInvoices}</p>
                   <p className="text-xs text-muted-foreground mt-1">{t.supportedFormats}</p>
                 </div>
@@ -635,16 +648,21 @@ export default function SettingsPage() {
                   </Button>
 
                   {settings?.logoPath && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleRemoveLogo}
-                      disabled={removeLogoMutation.isPending}
-                      data-testid="button-remove-logo"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      {removeLogoMutation.isPending ? t.loading : t.removeLogo}
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleRemoveLogo}
+                          disabled={removeLogoMutation.isPending}
+                          data-testid="button-remove-logo"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {removeLogoMutation.isPending ? t.loading : t.removeLogo}
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{tip("Permanently removes the current logo.", "يحذف الشعار الحالي بشكل دائم.")}</TooltipContent>
+                    </Tooltip>
                   )}
                 </div>
               </div>
@@ -700,9 +718,14 @@ export default function SettingsPage() {
                               </span>
                             )}
                           </div>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                            {isExpanded ? <X className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                {isExpanded ? <X className="h-4 w-4" /> : <Clock className="h-4 w-4" />}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{isExpanded ? tip("Collapse schedule", "طي الجدول") : tip("Expand schedule", "توسيع الجدول")}</TooltipContent>
+                          </Tooltip>
                         </div>
 
                         {/* Expanded Day Schedule */}
@@ -817,6 +840,7 @@ export default function SettingsPage() {
       {hasShifts && <NotificationToneSection />}
       <ChatNotificationSection />
     </div>
+    </TooltipProvider>
   );
 }
 

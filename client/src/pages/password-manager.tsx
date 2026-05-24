@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { useToast } from "@/hooks/use-toast";
 import { Key, Shield, User, Lock } from "lucide-react";
 import type { User as UserType } from "@shared/schema";
@@ -14,7 +16,7 @@ import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function PasswordManager() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { user: currentUser } = useAuth();
   const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
@@ -109,6 +111,7 @@ export default function PasswordManager() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
@@ -124,7 +127,10 @@ export default function PasswordManager() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{(t as any).allUserAccounts || "All User Accounts"}</CardTitle>
+          <CardTitle>
+            {(t as any).allUserAccounts || "All User Accounts"}
+            <InfoTip>{isRTL ? "ابحث عن مستخدم وأعد تعيين كلمة المرور الخاصة به." : "Search for a user and reset their password."}</InfoTip>
+          </CardTitle>
           <CardDescription>
             {(t as any).searchAndResetPassword || "Search for a user and reset their password"}
           </CardDescription>
@@ -257,5 +263,6 @@ export default function PasswordManager() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

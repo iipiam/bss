@@ -64,7 +64,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { usePermissions } from "@/hooks/usePermissions";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 import { format } from "date-fns";
 
@@ -551,6 +552,7 @@ export default function Quotations() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div
         className={`flex ${layout.isMobile ? "flex-col gap-3" : "items-center justify-between"}`}
@@ -616,7 +618,7 @@ export default function Quotations() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.status}</FormLabel>
+                        <FormLabel>{t.status}<InfoTip>{language === 'Arabic' ? 'الحالة الحالية لعرض السعر.' : 'Current lifecycle status of the quotation.'}</InfoTip></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-quotation-status">
@@ -698,7 +700,7 @@ export default function Quotations() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.description}</FormLabel>
+                      <FormLabel>{t.description}<InfoTip>{language === 'Arabic' ? 'وصف موجز لنطاق العمل أو الخدمة.' : 'Brief description of the scope or service.'}</InfoTip></FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-quotation-description"
@@ -716,6 +718,7 @@ export default function Quotations() {
                   <div className="flex items-center justify-between gap-2">
                     <FormLabel className="m-0">
                       {t.lineItems || "Line Items"}
+                      <InfoTip>{language === 'Arabic' ? 'الخدمات والكميات المضمنة في عرض السعر.' : 'Services and quantities included in this quotation.'}</InfoTip>
                     </FormLabel>
                     <Button
                       type="button"
@@ -854,7 +857,7 @@ export default function Quotations() {
                     name="vatRate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.vatRate}</FormLabel>
+                        <FormLabel>{t.vatRate}<InfoTip>{language === 'Arabic' ? 'نسبة ضريبة القيمة المضافة المطبقة (٪).' : 'Applied VAT percentage rate.'}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-vat-rate"
@@ -900,7 +903,7 @@ export default function Quotations() {
                   name="validUntil"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.validUntil}</FormLabel>
+                      <FormLabel>{t.validUntil}<InfoTip>{language === 'Arabic' ? 'تاريخ انتهاء صلاحية عرض السعر.' : 'Date until which this quotation remains valid.'}</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-valid-until"
@@ -918,7 +921,7 @@ export default function Quotations() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.notes}</FormLabel>
+                      <FormLabel>{t.notes}<InfoTip>{language === 'Arabic' ? 'ملاحظات أو شروط إضافية للعميل.' : 'Additional notes or terms for the client.'}</InfoTip></FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-quotation-notes"
@@ -977,6 +980,7 @@ export default function Quotations() {
             <div className="flex items-center gap-2 mb-1">
               <FileText className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.totalQuotations}</p>
+              <InfoTip>{language === 'Arabic' ? 'إجمالي عدد عروض الأسعار المسجلة.' : 'Total number of quotations recorded.'}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-quotations">
               {quotations.length}
@@ -988,6 +992,7 @@ export default function Quotations() {
             <div className="flex items-center gap-2 mb-1">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.pendingQuotations}</p>
+              <InfoTip>{language === 'Arabic' ? 'عروض الأسعار بحالة مسودة أو مُرسلة.' : 'Quotations in draft or sent status.'}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-pending-quotations">
               {pendingQuotations.length}
@@ -999,6 +1004,7 @@ export default function Quotations() {
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.approvedQuotations}</p>
+              <InfoTip>{language === 'Arabic' ? 'عروض الأسعار التي تمت الموافقة عليها.' : 'Quotations that have been approved.'}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-approved-quotations">
               {approvedQuotations.length}
@@ -1010,6 +1016,7 @@ export default function Quotations() {
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.approvedAmount}</p>
+              <InfoTip>{language === 'Arabic' ? 'إجمالي قيمة عروض الأسعار المعتمدة.' : 'Total value of approved quotations.'}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-approved-amount">
               {totalApprovedAmount.toLocaleString()} SAR
@@ -1093,7 +1100,7 @@ export default function Quotations() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>{t.delete}</TooltipContent>
+                    <TooltipContent>{language === 'Arabic' ? 'تحذير: حذف عرض السعر نهائياً.' : 'Warning: permanently delete this quotation.'}</TooltipContent>
                   </Tooltip>
                   {(quotation.status === "draft" || quotation.status === "sent") && (
                     <>
@@ -1350,5 +1357,6 @@ export default function Quotations() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

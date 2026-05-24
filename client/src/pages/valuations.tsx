@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -101,7 +102,7 @@ export default function Valuations() {
   const [editingValuation, setEditingValuation] = useState<Valuation | null>(null);
   const [deletingValuation, setDeletingValuation] = useState<Valuation | null>(null);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const layout = useDeviceLayout();
 
   const form = useForm<ValuationFormValues>({
@@ -327,6 +328,7 @@ export default function Valuations() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div
         className={`flex ${layout.isMobile ? "flex-col gap-3" : "items-center justify-between gap-2"}`}
@@ -388,7 +390,7 @@ export default function Valuations() {
                   name="propertyType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{(t as any).propertyType || "Property Type"}</FormLabel>
+                      <FormLabel>{(t as any).propertyType || "Property Type"}<InfoTip>{isRTL ? "نوع العقار (سكني، تجاري، إلخ)." : "Category of the property (residential, commercial, etc.)."}</InfoTip></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-property-type">
@@ -412,7 +414,7 @@ export default function Valuations() {
                   name="location"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.location}</FormLabel>
+                      <FormLabel>{t.location}<InfoTip>{isRTL ? "العنوان أو الموقع الجغرافي للعقار." : "Address or geographic location of the property."}</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-location"
@@ -431,7 +433,7 @@ export default function Valuations() {
                     name="area"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{(t as any).area || "Area"}</FormLabel>
+                        <FormLabel>{(t as any).area || "Area"}<InfoTip>{isRTL ? "مساحة العقار." : "Total area of the property."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-area"
@@ -450,7 +452,7 @@ export default function Valuations() {
                     name="areaUnit"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{(t as any).areaUnit || "Area Unit"}</FormLabel>
+                        <FormLabel>{(t as any).areaUnit || "Area Unit"}<InfoTip>{isRTL ? "وحدة قياس المساحة (متر مربع أو قدم مربع)." : "Unit of measurement for the area (sqm or sqft)."}</InfoTip></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-area-unit">
@@ -474,7 +476,7 @@ export default function Valuations() {
                     name="estimatedValue"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{(t as any).estimatedValueSAR || "Estimated Value (SAR)"}</FormLabel>
+                        <FormLabel>{(t as any).estimatedValueSAR || "Estimated Value (SAR)"}<InfoTip>{isRTL ? "القيمة المقدرة للعقار بالريال السعودي." : "Your estimated value of the property in SAR."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-estimated-value"
@@ -493,7 +495,7 @@ export default function Valuations() {
                     name="marketValue"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{(t as any).marketValueSAR || "Market Value (SAR)"}</FormLabel>
+                        <FormLabel>{(t as any).marketValueSAR || "Market Value (SAR)"}<InfoTip>{isRTL ? "القيمة السوقية الحالية للعقار بالريال السعودي." : "Current market value of the property in SAR."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-market-value"
@@ -513,7 +515,7 @@ export default function Valuations() {
                   name="assessmentDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{(t as any).assessmentDate || "Assessment Date"}</FormLabel>
+                      <FormLabel>{(t as any).assessmentDate || "Assessment Date"}<InfoTip>{isRTL ? "تاريخ إجراء التقييم." : "Date the valuation was performed."}</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-assessment-date"
@@ -531,7 +533,7 @@ export default function Valuations() {
                   name="valuationType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{(t as any).valuationType || "Valuation Type"}</FormLabel>
+                      <FormLabel>{(t as any).valuationType || "Valuation Type"}<InfoTip>{isRTL ? "الغرض من التقييم (سوق، استثمار، تأمين، ضريبة)." : "Purpose of the valuation (market, investment, insurance, tax)."}</InfoTip></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-valuation-type">
@@ -555,7 +557,7 @@ export default function Valuations() {
                   name="status"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.status}</FormLabel>
+                      <FormLabel>{t.status}<InfoTip>{isRTL ? "حالة التقييم الحالية." : "Current stage of this valuation."}</InfoTip></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-status">
@@ -578,7 +580,7 @@ export default function Valuations() {
                   name="notes"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.notes}</FormLabel>
+                      <FormLabel>{t.notes}<InfoTip>{isRTL ? "ملاحظات أو تفاصيل إضافية." : "Any additional notes or details."}</InfoTip></FormLabel>
                       <FormControl>
                         <Textarea
                           data-testid="input-notes"
@@ -633,7 +635,7 @@ export default function Valuations() {
             <div className="flex items-center gap-3">
               <Calculator className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-muted-foreground">{(t as any).totalValuations || "Total Valuations"}</p>
+                <p className="text-sm text-muted-foreground">{(t as any).totalValuations || "Total Valuations"}<InfoTip>{isRTL ? "إجمالي عدد التقييمات المسجلة." : "Total number of recorded valuations."}</InfoTip></p>
                 <p className="text-2xl font-bold" data-testid="text-total-valuations">
                   {totalValuations}
                 </p>
@@ -646,7 +648,7 @@ export default function Valuations() {
             <div className="flex items-center gap-3">
               <Clock className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-muted-foreground">{t.pending}</p>
+                <p className="text-sm text-muted-foreground">{t.pending}<InfoTip>{isRTL ? "التقييمات قيد الانتظار." : "Valuations awaiting assessment."}</InfoTip></p>
                 <p className="text-2xl font-bold" data-testid="text-pending-count">
                   {pendingCount}
                 </p>
@@ -659,7 +661,7 @@ export default function Valuations() {
             <div className="flex items-center gap-3">
               <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-muted-foreground">{t.completed}</p>
+                <p className="text-sm text-muted-foreground">{t.completed}<InfoTip>{isRTL ? "التقييمات المنجزة." : "Valuations that are finalized."}</InfoTip></p>
                 <p className="text-2xl font-bold" data-testid="text-completed-count">
                   {completedCount}
                 </p>
@@ -672,7 +674,7 @@ export default function Valuations() {
             <div className="flex items-center gap-3">
               <TrendingUp className="h-5 w-5 text-muted-foreground" />
               <div>
-                <p className="text-sm text-muted-foreground">{(t as any).averageValue || "Average Value"}</p>
+                <p className="text-sm text-muted-foreground">{(t as any).averageValue || "Average Value"}<InfoTip>{isRTL ? "متوسط القيمة التقديرية لجميع العقارات." : "Mean estimated value across all properties."}</InfoTip></p>
                 <p className="text-2xl font-bold" data-testid="text-average-value">
                   {parseFloat(averageValue.toFixed(0)).toLocaleString()} SAR
                 </p>
@@ -744,7 +746,7 @@ export default function Valuations() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>{t.delete}</TooltipContent>
+                    <TooltipContent>{isRTL ? "تحذير: حذف هذا التقييم نهائياً." : "Warning: permanently delete this valuation."}</TooltipContent>
                   </Tooltip>
                 </div>
               </CardHeader>
@@ -838,5 +840,6 @@ export default function Valuations() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }

@@ -13,7 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Download, Upload, Save, Loader2, Palette, Eye, FileText, Type, Layout, ArrowUp, ArrowDown, CreditCard, ScanLine, Mail, Phone, Globe, MapPin, Linkedin, Instagram, Twitter, MessageCircle, Calendar as CalendarIcon } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import type { CompanyProfile, InsertCompanyProfile } from "@shared/schema";
 
 type ProfileForm = Omit<InsertCompanyProfile, "restaurantId">;
@@ -462,7 +463,10 @@ export default function CompanyProfilePage() {
     );
   }
 
+  const tip = (en: string, ar: string) => (isRTL ? ar : en);
+
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-4 md:p-6 space-y-4 max-w-[1600px] mx-auto" dir={isRTL ? "rtl" : "ltr"} key={`cp-${language}`}>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -616,7 +620,7 @@ export default function CompanyProfilePage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <Label>{L.taglineEn}</Label>
+                    <Label>{L.taglineEn}<InfoTip>{tip("Short brand statement shown under your name.", "عبارة قصيرة تظهر تحت اسم الشركة.")}</InfoTip></Label>
                     <Input value={form.tagline || ""} onChange={(e) => update("tagline", e.target.value)} data-testid="input-tagline" />
                   </div>
                   <div>
@@ -626,7 +630,7 @@ export default function CompanyProfilePage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <Label>{L.aboutEn}</Label>
+                    <Label>{L.aboutEn}<InfoTip>{tip("Brief overview of your company.", "نبذة مختصرة عن شركتك.")}</InfoTip></Label>
                     <Textarea rows={4} value={form.about || ""} onChange={(e) => update("about", e.target.value)} data-testid="input-about" />
                   </div>
                   <div>
@@ -636,7 +640,7 @@ export default function CompanyProfilePage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <Label>{L.visionEn}</Label>
+                    <Label>{L.visionEn}<InfoTip>{tip("Your long-term aspiration as a company.", "تطلعك بعيد المدى كشركة.")}</InfoTip></Label>
                     <Textarea rows={3} value={form.vision || ""} onChange={(e) => update("vision", e.target.value)} data-testid="input-vision" />
                   </div>
                   <div>
@@ -646,7 +650,7 @@ export default function CompanyProfilePage() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div>
-                    <Label>{L.missionEn}</Label>
+                    <Label>{L.missionEn}<InfoTip>{tip("Your daily purpose and how you serve customers.", "غرضك اليومي وكيفية خدمة العملاء.")}</InfoTip></Label>
                     <Textarea rows={3} value={form.mission || ""} onChange={(e) => update("mission", e.target.value)} data-testid="input-mission" />
                   </div>
                   <div>
@@ -809,19 +813,19 @@ export default function CompanyProfilePage() {
                       <div className="flex items-center gap-2">
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button size="icon" variant="ghost" aria-label="Move up" onClick={() => moveItem("partners", i, -1)} disabled={i === 0} data-testid={`button-partner-up-${i}`}>
+                            <Button size="icon" variant="ghost" aria-label={tip("Move up", "تحريك لأعلى")} onClick={() => moveItem("partners", i, -1)} disabled={i === 0} data-testid={`button-partner-up-${i}`}>
                               <ArrowUp className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Move up</TooltipContent>
+                          <TooltipContent>{tip("Move up", "تحريك لأعلى")}</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button size="icon" variant="ghost" aria-label="Move down" onClick={() => moveItem("partners", i, 1)} disabled={i === (form.partners || []).length - 1} data-testid={`button-partner-down-${i}`}>
+                            <Button size="icon" variant="ghost" aria-label={tip("Move down", "تحريك لأسفل")} onClick={() => moveItem("partners", i, 1)} disabled={i === (form.partners || []).length - 1} data-testid={`button-partner-down-${i}`}>
                               <ArrowDown className="h-4 w-4" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Move down</TooltipContent>
+                          <TooltipContent>{tip("Move down", "تحريك لأسفل")}</TooltipContent>
                         </Tooltip>
                         <Button size="sm" variant="ghost" onClick={() => removeItem("partners", i)} className="flex-1" data-testid={`button-remove-partner-${i}`}>
                           <Trash2 className="h-3.5 w-3.5 mr-1" /> {L.remove}
@@ -839,11 +843,11 @@ export default function CompanyProfilePage() {
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div><Label>{L.email}</Label><Input type="email" value={form.contactEmail || ""} onChange={(e) => update("contactEmail", e.target.value)} data-testid="input-contact-email" /></div>
                 <div><Label>{L.phone}</Label><Input value={form.contactPhone || ""} onChange={(e) => update("contactPhone", e.target.value)} data-testid="input-contact-phone" /></div>
-                <div><Label>{L.website}</Label><Input value={form.contactWebsite || ""} onChange={(e) => update("contactWebsite", e.target.value)} placeholder="https://" data-testid="input-contact-website" /></div>
-                <div className="md:row-span-2"><Label>{L.address}</Label><Textarea rows={3} value={form.contactAddress || ""} onChange={(e) => update("contactAddress", e.target.value)} data-testid="input-contact-address" /></div>
-                <div><Label>{L.linkedin}</Label><Input value={form.socialLinkedin || ""} onChange={(e) => update("socialLinkedin", e.target.value)} data-testid="input-linkedin" /></div>
-                <div><Label>{L.instagram}</Label><Input value={form.socialInstagram || ""} onChange={(e) => update("socialInstagram", e.target.value)} data-testid="input-instagram" /></div>
-                <div><Label>{L.twitter}</Label><Input value={form.socialTwitter || ""} onChange={(e) => update("socialTwitter", e.target.value)} data-testid="input-twitter" /></div>
+                <div><Label>{L.website}<InfoTip>{tip("Public URL of your website.", "رابط موقعك الإلكتروني العام.")}</InfoTip></Label><Input value={form.contactWebsite || ""} onChange={(e) => update("contactWebsite", e.target.value)} placeholder="https://" data-testid="input-contact-website" /></div>
+                <div className="md:row-span-2"><Label>{L.address}<InfoTip>{tip("Physical business address.", "العنوان الفعلي للشركة.")}</InfoTip></Label><Textarea rows={3} value={form.contactAddress || ""} onChange={(e) => update("contactAddress", e.target.value)} data-testid="input-contact-address" /></div>
+                <div><Label>{L.linkedin}<InfoTip>{tip("LinkedIn profile or company URL.", "رابط حساب لينكدإن.")}</InfoTip></Label><Input value={form.socialLinkedin || ""} onChange={(e) => update("socialLinkedin", e.target.value)} data-testid="input-linkedin" /></div>
+                <div><Label>{L.instagram}<InfoTip>{tip("Instagram profile URL or handle.", "رابط أو معرف إنستغرام.")}</InfoTip></Label><Input value={form.socialInstagram || ""} onChange={(e) => update("socialInstagram", e.target.value)} data-testid="input-instagram" /></div>
+                <div><Label>{L.twitter}<InfoTip>{tip("X / Twitter profile URL or handle.", "رابط أو معرف إكس / تويتر.")}</InfoTip></Label><Input value={form.socialTwitter || ""} onChange={(e) => update("socialTwitter", e.target.value)} data-testid="input-twitter" /></div>
               </CardContent>
             </Card>
           </div>
@@ -917,6 +921,7 @@ export default function CompanyProfilePage() {
         </TabsContent>
       </Tabs>
     </div>
+    </TooltipProvider>
   );
 }
 
@@ -1270,10 +1275,10 @@ function BusinessCardEditor({ value, onChange, isRTL }: { value: BusinessCard; o
           <section className="space-y-3">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">{tr("Common", "شائعة")}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="md:col-span-2"><Label>{tr("Address", "العنوان")}</Label><Textarea rows={2} value={value.address || ""} onChange={(e) => set("address", e.target.value)} data-testid="input-bc-address" /></div>
-              <div className="md:col-span-2"><Label>{tr("Tagline / Slogan", "الشعار النصي")}</Label><Input value={value.tagline || ""} onChange={(e) => set("tagline", e.target.value)} data-testid="input-bc-tagline" /></div>
-              <div><Label>{tr("LinkedIn URL", "رابط لينكدإن")}</Label><Input value={value.linkedin || ""} onChange={(e) => set("linkedin", e.target.value)} data-testid="input-bc-linkedin" /></div>
-              <div><Label>{tr("QR Code Data (URL / vCard)", "بيانات رمز QR")}</Label><Input value={value.qrData || ""} onChange={(e) => set("qrData", e.target.value)} placeholder={tr("Defaults to website", "افتراضيًا الموقع")} data-testid="input-bc-qrdata" /></div>
+              <div className="md:col-span-2"><Label>{tr("Address", "العنوان")}<InfoTip>{tr("Mailing or office address.", "العنوان البريدي أو المكتب.")}</InfoTip></Label><Textarea rows={2} value={value.address || ""} onChange={(e) => set("address", e.target.value)} data-testid="input-bc-address" /></div>
+              <div className="md:col-span-2"><Label>{tr("Tagline / Slogan", "الشعار النصي")}<InfoTip>{tr("Short personal or company slogan.", "شعار قصير شخصي أو للشركة.")}</InfoTip></Label><Input value={value.tagline || ""} onChange={(e) => set("tagline", e.target.value)} data-testid="input-bc-tagline" /></div>
+              <div><Label>{tr("LinkedIn URL", "رابط لينكدإن")}<InfoTip>{tr("Full LinkedIn profile URL.", "رابط حساب لينكدإن كاملاً.")}</InfoTip></Label><Input value={value.linkedin || ""} onChange={(e) => set("linkedin", e.target.value)} data-testid="input-bc-linkedin" /></div>
+              <div><Label>{tr("QR Code Data (URL / vCard)", "بيانات رمز QR")}<InfoTip>{tr("URL or vCard text encoded into the QR.", "رابط أو بيانات vCard لتشفيرها في رمز QR.")}</InfoTip></Label><Input value={value.qrData || ""} onChange={(e) => set("qrData", e.target.value)} placeholder={tr("Defaults to website", "افتراضيًا الموقع")} data-testid="input-bc-qrdata" /></div>
               <div><Label>{tr("Secondary Phone (Office)", "هاتف ثانوي")}</Label><Input value={value.secondaryPhone || ""} onChange={(e) => set("secondaryPhone", e.target.value)} data-testid="input-bc-phone2" /></div>
               <div><Label>{tr("Fax", "فاكس")}</Label><Input value={value.fax || ""} onChange={(e) => set("fax", e.target.value)} data-testid="input-bc-fax" /></div>
             </div>
@@ -1287,13 +1292,13 @@ function BusinessCardEditor({ value, onChange, isRTL }: { value: BusinessCard; o
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div><Label>{tr("Instagram", "إنستغرام")}</Label><Input value={value.instagram || ""} onChange={(e) => set("instagram", e.target.value)} data-testid="input-bc-instagram" /></div>
               <div><Label>{tr("X / Twitter", "إكس / تويتر")}</Label><Input value={value.twitter || ""} onChange={(e) => set("twitter", e.target.value)} data-testid="input-bc-twitter" /></div>
-              <div><Label>{tr("WhatsApp Number", "رقم واتساب")}</Label><Input value={value.whatsapp || ""} onChange={(e) => set("whatsapp", e.target.value)} data-testid="input-bc-whatsapp" /></div>
-              <div><Label>{tr("Calendly / Booking Link", "رابط الحجز")}</Label><Input value={value.calendly || ""} onChange={(e) => set("calendly", e.target.value)} data-testid="input-bc-calendly" /></div>
-              <div><Label>{tr("Pronouns", "الضمائر")}</Label><Input value={value.pronouns || ""} onChange={(e) => set("pronouns", e.target.value)} placeholder="he/him, she/her, they/them" data-testid="input-bc-pronouns" /></div>
+              <div><Label>{tr("WhatsApp Number", "رقم واتساب")}<InfoTip>{tr("Phone number for WhatsApp chat link.", "رقم الهاتف لإنشاء رابط واتساب.")}</InfoTip></Label><Input value={value.whatsapp || ""} onChange={(e) => set("whatsapp", e.target.value)} data-testid="input-bc-whatsapp" /></div>
+              <div><Label>{tr("Calendly / Booking Link", "رابط الحجز")}<InfoTip>{tr("Public scheduling or booking URL.", "رابط حجز المواعيد العام.")}</InfoTip></Label><Input value={value.calendly || ""} onChange={(e) => set("calendly", e.target.value)} data-testid="input-bc-calendly" /></div>
+              <div><Label>{tr("Pronouns", "الضمائر")}<InfoTip>{tr("Preferred pronouns shown on the card.", "الضمائر المفضلة لعرضها على البطاقة.")}</InfoTip></Label><Input value={value.pronouns || ""} onChange={(e) => set("pronouns", e.target.value)} placeholder="he/him, she/her, they/them" data-testid="input-bc-pronouns" /></div>
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
-                <Label>{tr("Areas of Expertise / Services", "مجالات الخبرة / الخدمات")}</Label>
+                <Label>{tr("Areas of Expertise / Services", "مجالات الخبرة / الخدمات")}<InfoTip>{tr("Short tags shown on the back of the card.", "وسوم قصيرة تظهر على الجهة الخلفية للبطاقة.")}</InfoTip></Label>
                 <Button size="sm" variant="outline" onClick={() => set("expertise", [...expertise, ""])} data-testid="button-bc-add-expertise">
                   <Plus className="h-4 w-4 mr-1" /> {tr("Add", "إضافة")}
                 </Button>
@@ -1303,9 +1308,14 @@ function BusinessCardEditor({ value, onChange, isRTL }: { value: BusinessCard; o
                 {expertise.map((item, i) => (
                   <div key={i} className="flex gap-2">
                     <Input value={item} onChange={(e) => set("expertise", expertise.map((x, j) => j === i ? e.target.value : x))} data-testid={`input-bc-expertise-${i}`} />
-                    <Button size="icon" variant="ghost" onClick={() => set("expertise", expertise.filter((_, j) => j !== i))} data-testid={`button-bc-remove-expertise-${i}`}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button size="icon" variant="ghost" aria-label={tr("Remove", "إزالة")} onClick={() => set("expertise", expertise.filter((_, j) => j !== i))} data-testid={`button-bc-remove-expertise-${i}`}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{tr("Remove this item", "حذف هذا العنصر")}</TooltipContent>
+                    </Tooltip>
                   </div>
                 ))}
               </div>

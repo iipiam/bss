@@ -11,6 +11,8 @@ import { useBusinessType } from "@/hooks/useBusinessType";
 import { useAuth } from "@/lib/auth";
 import { useEffect } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 function KitchenOrderCard({ 
   order, 
@@ -109,7 +111,8 @@ export default function Kitchen() {
   const layout = useDeviceLayout();
   const { labels } = useBusinessType();
   const { accountType } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isAr = language === 'Arabic';
   
   // Use IT-specific endpoint for IT accounts, regular endpoint for client accounts
   const ordersEndpoint = accountType === 'it' ? '/api/it/orders' : '/api/orders';
@@ -192,6 +195,7 @@ export default function Kitchen() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div>
         <h1 className={`${layout.text3Xl} font-bold mb-2`}>{labels.kitchen}{t.displaySuffix}</h1>
@@ -201,7 +205,10 @@ export default function Kitchen() {
       <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 3, tablet: 2, mobile: 1 })}`}>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">{t.pending}</h2>
+            <h2 className="text-xl font-semibold">
+              {t.pending}
+              <InfoTip>{isAr ? 'طلبات جديدة لم يبدأ تحضيرها بعد.' : 'New orders that have not started preparation yet.'}</InfoTip>
+            </h2>
             <Badge variant="secondary">{pendingOrders.length}</Badge>
           </div>
           {pendingOrders.length === 0 ? (
@@ -225,7 +232,10 @@ export default function Kitchen() {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">{t.inProgressOrders}</h2>
+            <h2 className="text-xl font-semibold">
+              {t.inProgressOrders}
+              <InfoTip>{isAr ? 'طلبات يتم تحضيرها حالياً في المطبخ.' : 'Orders currently being prepared in the kitchen.'}</InfoTip>
+            </h2>
             <Badge variant="default">{inProgressOrders.length}</Badge>
           </div>
           {inProgressOrders.length === 0 ? (
@@ -249,7 +259,10 @@ export default function Kitchen() {
 
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">{t.ready}</h2>
+            <h2 className="text-xl font-semibold">
+              {t.ready}
+              <InfoTip>{isAr ? 'طلبات جاهزة للتقديم أو التسليم.' : 'Orders that are ready to be served or delivered.'}</InfoTip>
+            </h2>
             <Badge variant="default" className="bg-green-600">{readyOrders.length}</Badge>
           </div>
           {readyOrders.length === 0 ? (
@@ -272,5 +285,6 @@ export default function Kitchen() {
         </div>
       </div>
     </div>
+    </TooltipProvider>
   );
 }

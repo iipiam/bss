@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,7 +50,7 @@ type LicenseFormData = {
 };
 
 export default function Licenses() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { toast } = useToast();
   const { restaurant } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -337,6 +338,7 @@ export default function Licenses() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="container mx-auto p-6 max-w-7xl">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -375,7 +377,7 @@ export default function Licenses() {
                     name="licenseType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>License Type</FormLabel>
+                        <FormLabel>License Type<InfoTip>{isRTL ? "نوع الرخصة أو الشهادة." : "Category of license or certificate."}</InfoTip></FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-license-type">
@@ -399,7 +401,7 @@ export default function Licenses() {
                     name="licenseNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>License Number</FormLabel>
+                        <FormLabel>License Number<InfoTip>{isRTL ? "الرقم الرسمي الصادر من الجهة المختصة." : "Official number issued by the authority."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input {...field} placeholder="Enter license number" data-testid="input-license-number" />
                         </FormControl>
@@ -428,7 +430,7 @@ export default function Licenses() {
                   name="issuingAuthority"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Issuing Authority</FormLabel>
+                      <FormLabel>Issuing Authority<InfoTip>{isRTL ? "الجهة الحكومية التي أصدرت الرخصة." : "Government body that issued this license."}</InfoTip></FormLabel>
                       <FormControl>
                         <Input {...field} placeholder="Enter issuing authority" data-testid="input-issuing-authority" />
                       </FormControl>
@@ -443,7 +445,7 @@ export default function Licenses() {
                     name="issueDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Issue Date</FormLabel>
+                        <FormLabel>Issue Date<InfoTip>{isRTL ? "تاريخ إصدار الرخصة." : "Date the license was issued."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input {...field} type="date" data-testid="input-issue-date" />
                         </FormControl>
@@ -456,7 +458,7 @@ export default function Licenses() {
                     name="expiryDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Expiry Date</FormLabel>
+                        <FormLabel>Expiry Date<InfoTip>{isRTL ? "تاريخ انتهاء صلاحية الرخصة." : "Date the license expires."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input {...field} type="date" data-testid="input-expiry-date" />
                         </FormControl>
@@ -472,7 +474,7 @@ export default function Licenses() {
                     name="renewalReminderDays"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Renewal Reminder (days before expiry)</FormLabel>
+                        <FormLabel>Renewal Reminder (days before expiry)<InfoTip>{isRTL ? "عدد الأيام قبل انتهاء الصلاحية لإرسال تنبيه." : "Days before expiry to send a renewal alert."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input 
                             {...field} 
@@ -492,7 +494,7 @@ export default function Licenses() {
                     name="fee"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.licenseFee || "License Fee"} ({t.optional || "optional"})</FormLabel>
+                        <FormLabel>{t.licenseFee || "License Fee"} ({t.optional || "optional"})<InfoTip>{isRTL ? "تكلفة إصدار أو تجديد الرخصة." : "Cost paid to issue or renew the license."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input 
                             {...field} 
@@ -514,7 +516,7 @@ export default function Licenses() {
                   name="documentUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.licenseDocument || "License Document"} ({t.optional || "optional"})</FormLabel>
+                      <FormLabel>{t.licenseDocument || "License Document"} ({t.optional || "optional"})<InfoTip>{isRTL ? "ارفع نسخة من الرخصة (PDF أو صورة)." : "Upload a scan of the license (PDF or image)."}</InfoTip></FormLabel>
                       <FormControl>
                         <div className="space-y-3">
                           {/* Hidden input for form value */}
@@ -819,12 +821,18 @@ export default function Licenses() {
             <Button variant="outline" onClick={() => setDeletingLicense(null)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Delete License
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="destructive" onClick={confirmDelete}>
+                  Delete License
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{isRTL ? "تحذير: لا يمكن التراجع عن الحذف." : "Warning: this action cannot be undone."}</TooltipContent>
+            </Tooltip>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

@@ -19,7 +19,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import {
   ArrowLeft, Plus, Edit, Trash2, DollarSign, Calendar, Phone, Mail,
   User, MapPin, Clock, FileText, CheckCircle, Layers, Receipt,
@@ -696,6 +697,7 @@ export default function ProjectDetail() {
   if (!project) return <div className="flex flex-col items-center justify-center p-12"><p>{t.projectNotFound || "Project not found"}</p><Link href="/service-projects"><Button variant="outline" className="mt-4" data-testid="button-back-to-projects"><ArrowLeft className="h-4 w-4 mr-2" />{t.backToProjects || "Back to Projects"}</Button></Link></div>;
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className={`flex ${layout.isMobile ? "flex-col gap-3" : "items-center justify-between gap-4"}`}>
         <div className="flex items-center gap-3 flex-wrap">
@@ -891,10 +893,10 @@ export default function ProjectDetail() {
 
         <TabsContent value="overview" className="space-y-6">
           <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, tablet: 2, mobile: 2 })}`}>
-            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Layers className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalServicesValue || "Services Value"}</p></div><p className="text-2xl font-bold" data-testid="text-total-services">{fmtNum(String(totalServices))} SAR</p></CardContent></Card>
-            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Receipt className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalBillsAmount || "Total Bills"}</p></div><p className="text-2xl font-bold" data-testid="text-total-bills">{fmtNum(String(totalBills))} SAR</p></CardContent></Card>
-            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><ShoppingCart className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalProcurements || "Procurements"}</p></div><p className="text-2xl font-bold" data-testid="text-total-procurements">{fmtNum(String(totalProc))} SAR</p></CardContent></Card>
-            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><CreditCard className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.paymentProgress || "Payment Progress"}</p></div><p className="text-2xl font-bold" data-testid="text-payment-progress">{paymentProgress.toFixed(0)}%</p><Progress value={paymentProgress} className="mt-2" /></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Layers className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalServicesValue || "Services Value"}</p><InfoTip>{language === 'Arabic' ? 'إجمالي قيمة الخدمات المضافة للمشروع.' : 'Total billable value of services on this project.'}</InfoTip></div><p className="text-2xl font-bold" data-testid="text-total-services">{fmtNum(String(totalServices))} SAR</p></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Receipt className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalBillsAmount || "Total Bills"}</p><InfoTip>{language === 'Arabic' ? 'مجموع جميع فواتير المشروع.' : 'Sum of all bills recorded for this project.'}</InfoTip></div><p className="text-2xl font-bold" data-testid="text-total-bills">{fmtNum(String(totalBills))} SAR</p></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><ShoppingCart className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalProcurements || "Procurements"}</p><InfoTip>{language === 'Arabic' ? 'إجمالي تكلفة المشتريات للمشروع.' : 'Total cost of items procured for this project.'}</InfoTip></div><p className="text-2xl font-bold" data-testid="text-total-procurements">{fmtNum(String(totalProc))} SAR</p></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><CreditCard className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.paymentProgress || "Payment Progress"}</p><InfoTip>{language === 'Arabic' ? 'نسبة المبالغ المحصلة من إجمالي جدول الدفعات.' : 'Share of scheduled payments already collected.'}</InfoTip></div><p className="text-2xl font-bold" data-testid="text-payment-progress">{paymentProgress.toFixed(0)}%</p><Progress value={paymentProgress} className="mt-2" /></CardContent></Card>
           </div>
           <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 2, tablet: 1, mobile: 1 })}`}>
             <Card>
@@ -979,7 +981,7 @@ export default function ProjectDetail() {
                           <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" aria-label={t.delete} onClick={() => setDelItem({ type: "project-services", id: s.id, name: s.name })} data-testid={`button-delete-service-${s.id}`}><Trash2 className="h-4 w-4" /></Button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.delete}</TooltipContent>
+                          <TooltipContent>{language === 'Arabic' ? 'حذف نهائي لهذه الخدمة.' : 'Permanently delete this service.'}</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
@@ -1031,7 +1033,7 @@ export default function ProjectDetail() {
                           <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" aria-label={t.delete} onClick={() => setDelItem({ type: "project-bills", id: b.id, name: b.description })} data-testid={`button-delete-bill-${b.id}`}><Trash2 className="h-4 w-4" /></Button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.delete}</TooltipContent>
+                          <TooltipContent>{language === 'Arabic' ? 'حذف نهائي لهذه الفاتورة.' : 'Permanently delete this bill.'}</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
@@ -1086,7 +1088,7 @@ export default function ProjectDetail() {
                           <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" aria-label={t.delete} onClick={() => setDelItem({ type: "project-procurements", id: p.id, name: p.itemName })} data-testid={`button-delete-procurement-${p.id}`}><Trash2 className="h-4 w-4" /></Button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.delete}</TooltipContent>
+                          <TooltipContent>{language === 'Arabic' ? 'حذف نهائي لعنصر المشتريات.' : 'Permanently delete this procurement.'}</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
@@ -1168,7 +1170,7 @@ export default function ProjectDetail() {
                           <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" aria-label={t.delete} onClick={() => setDelItem({ type: "payment-schedules", id: p.id, name: p.milestoneName })} data-testid={`button-delete-payment-${p.id}`}><Trash2 className="h-4 w-4" /></Button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.delete}</TooltipContent>
+                          <TooltipContent>{language === 'Arabic' ? 'حذف نهائي لهذه الدفعة.' : 'Permanently delete this payment.'}</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
@@ -1295,7 +1297,7 @@ export default function ProjectDetail() {
                           <TooltipTrigger asChild>
                             <Button variant="ghost" size="icon" aria-label={t.delete} onClick={() => setDelItem({ type: "project-tasks", id: tk.id, name: tk.name })} data-testid={`button-delete-task-${tk.id}`}><Trash2 className="h-4 w-4" /></Button>
                           </TooltipTrigger>
-                          <TooltipContent>{t.delete}</TooltipContent>
+                          <TooltipContent>{language === 'Arabic' ? 'حذف نهائي لهذه المهمة.' : 'Permanently delete this task.'}</TooltipContent>
                         </Tooltip>
                       </div>
                     </div>
@@ -2361,5 +2363,6 @@ export default function ProjectDetail() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

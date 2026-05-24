@@ -6,7 +6,8 @@ import { useInvestmentAgreementTemplatesT } from "@/i18n/investmentAgreementTemp
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -184,6 +185,7 @@ export default function InvestmentAgreementTemplatesPage() {
   }, [content, customPlaceholders, t.moneyInvestor]);
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-4 md:p-6 space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex items-center gap-2">
         <FileText className="h-6 w-6 text-primary" />
@@ -236,7 +238,7 @@ export default function InvestmentAgreementTemplatesPage() {
             </div>
 
             <div>
-              <Label>{t.placeholders}</Label>
+              <Label>{t.placeholders}<InfoTip>{isRTL ? "انقر على متغير لإدراجه في النموذج." : "Click a placeholder to insert it into the template."}</InfoTip></Label>
               <div className="flex flex-wrap gap-1 mt-1">
                 {PLACEHOLDERS.map((ph) => (
                   <Button key={ph} type="button" size="sm" variant="outline" onClick={() => insertPlaceholder(ph)} data-testid={`button-ph-${ph}`}>
@@ -248,7 +250,7 @@ export default function InvestmentAgreementTemplatesPage() {
 
             <div className="border rounded-md p-3 space-y-3">
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <Label className="text-sm font-semibold">{t.customPlaceholders}</Label>
+                <Label className="text-sm font-semibold">{t.customPlaceholders}<InfoTip>{isRTL ? "أضف متغيرات مخصصة بمفتاح وقيمة افتراضية." : "Add custom placeholders with key and default value."}</InfoTip></Label>
                 <span className="text-xs text-muted-foreground">{t.customPlaceholdersDesc}</span>
               </div>
 
@@ -277,11 +279,16 @@ export default function InvestmentAgreementTemplatesPage() {
                         placeholder={t.placeholderValue}
                         data-testid={`input-custom-ph-value-${idx}`}
                       />
-                      <Button type="button" size="sm" variant="outline" className="col-span-1"
-                        onClick={() => insertPlaceholder(cp.key)} disabled={!cp.key}
-                        data-testid={`button-insert-custom-ph-${idx}`}>
-                        <ListPlus className="h-3 w-3" />
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button type="button" size="sm" variant="outline" className="col-span-1"
+                            onClick={() => insertPlaceholder(cp.key)} disabled={!cp.key}
+                            data-testid={`button-insert-custom-ph-${idx}`}>
+                            <ListPlus className="h-3 w-3" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{isRTL ? "إدراج هذا المتغير في النموذج." : "Insert this placeholder into the template."}</TooltipContent>
+                      </Tooltip>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button type="button" size="icon" variant="ghost" aria-label={t.delete} className="col-span-1"
@@ -316,7 +323,7 @@ export default function InvestmentAgreementTemplatesPage() {
 
             <div>
               <div className="flex items-center justify-between gap-2 flex-wrap">
-                <Label>{t.templateContent}</Label>
+                <Label>{t.templateContent}<InfoTip>{isRTL ? "حرر نص الاتفاقية باستخدام المتغيرات بين أقواس مزدوجة." : "Edit the agreement body using double-brace placeholders."}</InfoTip></Label>
                 <Button type="button" size="sm" variant="ghost" onClick={loadDefaultContent}
                   data-testid="button-load-default" title={t.loadDefaultDesc}>
                   <RefreshCw className="h-3 w-3 me-1" /> {t.loadDefault}
@@ -338,11 +345,16 @@ export default function InvestmentAgreementTemplatesPage() {
                 {selectedId ? t.updateTemplate : t.saveTemplate}
               </Button>
               {selectedId && (
-                <Button variant="outline"
-                  onClick={() => { if (confirm(t.confirmDelete)) deleteMut.mutate(); }}
-                  data-testid="button-delete-template">
-                  <Trash2 className="h-4 w-4 me-2" /> {t.delete}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline"
+                      onClick={() => { if (confirm(t.confirmDelete)) deleteMut.mutate(); }}
+                      data-testid="button-delete-template">
+                      <Trash2 className="h-4 w-4 me-2" /> {t.delete}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isRTL ? "تحذير: سيتم حذف هذا النموذج نهائياً." : "Warning: this will permanently delete the template."}</TooltipContent>
+                </Tooltip>
               )}
             </div>
 
@@ -356,5 +368,6 @@ export default function InvestmentAgreementTemplatesPage() {
         </Card>
       </div>
     </div>
+    </TooltipProvider>
   );
 }

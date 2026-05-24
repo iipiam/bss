@@ -62,6 +62,13 @@ import { useState, useEffect } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
 import { PlayCircle, CheckSquare } from "lucide-react";
+import {
+  Tooltip as UITooltip,
+  TooltipProvider,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 interface PerformanceMetric {
   current: number;
@@ -195,7 +202,7 @@ const PeakHoursCard = ({
   };
   titleOverride?: string;
 }) => {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -239,7 +246,10 @@ const PeakHoursCard = ({
                 <Clock className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <CardTitle>{titleOverride || t.peakHoursAnalysis}</CardTitle>
+                <CardTitle className="flex items-center">
+                  {titleOverride || t.peakHoursAnalysis}
+                  <InfoTip>{isRTL ? "ساعات الذروة بناءً على إجمالي المبيعات لكل ساعة." : "Busiest hours based on total sales per hour."}</InfoTip>
+                </CardTitle>
                 <p className="text-sm text-muted-foreground mt-1">
                   {t.hourlySalesDistribution}
                 </p>
@@ -394,7 +404,7 @@ const PeakHoursCard = ({
 };
 
 export default function Dashboard() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const layout = useDeviceLayout();
   const chartConfig = useCompactChartConfig();
   const { lastNotification, isConnected } = useNotifications();
@@ -784,6 +794,7 @@ export default function Dashboard() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div>
         <h1
@@ -914,8 +925,9 @@ export default function Dashboard() {
                 <Wallet className="w-5 h-5 text-orange-600" />
               </div>
               <div>
-                <CardTitle className={layout.isMobile ? "text-base" : ""}>
+                <CardTitle className={`flex items-center ${layout.isMobile ? "text-base" : ""}`}>
                   {t.operatingExpenses}
+                  <InfoTip>{isRTL ? "إجمالي الفواتير المتكررة الشهرية بالإضافة إلى تكلفة البضاعة المباعة." : "Total monthly recurring bills plus cost of goods sold."}</InfoTip>
                 </CardTitle>
                 <CardDescription className="text-xs">
                   {t.expenseTrendsAndSummary}
@@ -1368,5 +1380,6 @@ export default function Dashboard() {
         )}
       </div>
     </div>
+    </TooltipProvider>
   );
 }

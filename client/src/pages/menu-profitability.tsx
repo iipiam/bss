@@ -11,6 +11,8 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { Tooltip as UITooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { exportToPDF } from "@/lib/exportUtils";
 
@@ -54,7 +56,7 @@ const COLORS = {
 
 export default function MenuProfitability() {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [activeTab, setActiveTab] = useState("overview");
 
   const { data, isLoading, isError, refetch } = useQuery<MenuProfitabilityData>({
@@ -187,6 +189,7 @@ export default function MenuProfitability() {
   }));
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-6 space-y-6">
       <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
@@ -222,7 +225,10 @@ export default function MenuProfitability() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium">{(t as any).totalMenuItems || "Total Menu Items"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">
+              {(t as any).totalMenuItems || "Total Menu Items"}
+              <InfoTip>{isRTL ? "إجمالي أصناف القائمة التي تم تحليلها." : "Total number of menu items analyzed."}</InfoTip>
+            </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -233,7 +239,10 @@ export default function MenuProfitability() {
 
         <Card className="border-red-200 dark:border-red-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-red-600">{(t as any).lossItemsLabel || "Loss Items"}</CardTitle>
+            <CardTitle className="text-sm font-medium text-red-600 flex items-center">
+              {(t as any).lossItemsLabel || "Loss Items"}
+              <InfoTip>{isRTL ? "أصناف تُباع بسعر أقل من تكلفتها." : "Items being sold below their cost."}</InfoTip>
+            </CardTitle>
             <TrendingDown className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
@@ -244,7 +253,10 @@ export default function MenuProfitability() {
 
         <Card className="border-yellow-200 dark:border-yellow-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-yellow-600">{(t as any).lowMarginLabel || "Low Margin"}</CardTitle>
+            <CardTitle className="text-sm font-medium text-yellow-600 flex items-center">
+              {(t as any).lowMarginLabel || "Low Margin"}
+              <InfoTip>{isRTL ? "أصناف بهامش ربح أقل من 20%." : "Items with profit margin below 20%."}</InfoTip>
+            </CardTitle>
             <AlertTriangle className="h-4 w-4 text-yellow-500" />
           </CardHeader>
           <CardContent>
@@ -255,7 +267,10 @@ export default function MenuProfitability() {
 
         <Card className="border-green-200 dark:border-green-900">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-            <CardTitle className="text-sm font-medium text-green-600">{(t as any).profitableLabel || "Profitable"}</CardTitle>
+            <CardTitle className="text-sm font-medium text-green-600 flex items-center">
+              {(t as any).profitableLabel || "Profitable"}
+              <InfoTip>{isRTL ? "أصناف بهامش ربح صحي 20% أو أكثر." : "Items with healthy margin of 20% or more."}</InfoTip>
+            </CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -404,6 +419,7 @@ export default function MenuProfitability() {
         </TabsContent>
       </Tabs>
     </div>
+    </TooltipProvider>
   );
 }
 

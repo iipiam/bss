@@ -31,6 +31,8 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/lib/auth";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 // Default weekly schedule (Saudi weekend: Friday off)
 const DEFAULT_WEEKLY_SCHEDULE = {
@@ -150,7 +152,7 @@ function getDayLabels(t: any) {
 }
 
 export default function Employees() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const layout = useDeviceLayout();
   const { restaurant } = useAuth();
 
@@ -516,6 +518,7 @@ export default function Employees() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={layout.padding + " space-y-6"}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -695,7 +698,7 @@ export default function Employees() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="recruitmentSource">{t.recruitmentSource || "Recruitment Source"}</Label>
+                    <Label htmlFor="recruitmentSource">{t.recruitmentSource || "Recruitment Source"}<InfoTip>{isRTL ? "كيف تم توظيف هذا الموظف." : "How this employee was recruited."}</InfoTip></Label>
                     <Select value={formData.recruitmentSource} onValueChange={(value) => setFormData({ ...formData, recruitmentSource: value })}>
                       <SelectTrigger className="h-[44px]" data-testid="select-recruitment-source">
                         <SelectValue placeholder={t.selectSource || "Select source"} />
@@ -710,7 +713,7 @@ export default function Employees() {
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="contractType">{t.contractType || "Contract Type"}</Label>
+                    <Label htmlFor="contractType">{t.contractType || "Contract Type"}<InfoTip>{isRTL ? "نوع عقد العمل." : "Employment contract type."}</InfoTip></Label>
                     <Select value={formData.contractType} onValueChange={(value) => setFormData({ ...formData, contractType: value })}>
                       <SelectTrigger className="h-[44px]" data-testid="select-contract-type">
                         <SelectValue placeholder={t.selectType || "Select type"} />
@@ -727,7 +730,7 @@ export default function Employees() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="probationEndDate">{t.probationEndDate || "Probation End Date"}</Label>
+                    <Label htmlFor="probationEndDate">{t.probationEndDate || "Probation End Date"}<InfoTip>{isRTL ? "تاريخ انتهاء فترة التجربة." : "Date when probation period ends."}</InfoTip></Label>
                     <Input
                       id="probationEndDate"
                       type="date"
@@ -738,7 +741,7 @@ export default function Employees() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="salary">{t.monthlySalary || "Monthly Salary"} ({t.sar || "SAR"})</Label>
+                    <Label htmlFor="salary">{t.monthlySalary || "Monthly Salary"} ({t.sar || "SAR"})<InfoTip>{isRTL ? "إجمالي الراتب الشهري بالريال السعودي." : "Gross monthly salary in SAR."}</InfoTip></Label>
                     <Input
                       id="salary"
                       type="number"
@@ -757,7 +760,7 @@ export default function Employees() {
               <TabsContent value="vacation" className="space-y-4 mt-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="vacationDaysTotal">{t.vacationDaysTotal || "Total Vacation Days"}</Label>
+                    <Label htmlFor="vacationDaysTotal">{t.vacationDaysTotal || "Total Vacation Days"}<InfoTip>{isRTL ? "إجمالي أيام الإجازة السنوية المستحقة." : "Total annual vacation days granted."}</InfoTip></Label>
                     <Input
                       id="vacationDaysTotal"
                       type="number"
@@ -768,7 +771,7 @@ export default function Employees() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="vacationDaysUsed">{t.vacationDaysUsed || "Vacation Days Used"}</Label>
+                    <Label htmlFor="vacationDaysUsed">{t.vacationDaysUsed || "Vacation Days Used"}<InfoTip>{isRTL ? "عدد أيام الإجازة المستخدمة هذا العام." : "Vacation days already used this year."}</InfoTip></Label>
                     <Input
                       id="vacationDaysUsed"
                       type="number"
@@ -784,7 +787,7 @@ export default function Employees() {
                   <CardContent className="pt-6">
                     <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-sm text-muted-foreground">{t.vacationDaysRemaining || "Vacation Days Remaining"}</p>
+                        <p className="text-sm text-muted-foreground">{t.vacationDaysRemaining || "Vacation Days Remaining"}<InfoTip>{isRTL ? "إجمالي الأيام ناقص الأيام المستخدمة." : "Total days minus used days."}</InfoTip></p>
                         <p className="text-2xl font-bold">{vacationDaysRemaining}</p>
                       </div>
                       <Clock className="h-8 w-8 text-muted-foreground" />
@@ -821,7 +824,7 @@ export default function Employees() {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="visaExpiryDate">{t.visaExpiryDate || "Visa Expiry Date"}</Label>
+                    <Label htmlFor="visaExpiryDate">{t.visaExpiryDate || "Visa Expiry Date"}<InfoTip>{isRTL ? "تاريخ انتهاء صلاحية التأشيرة." : "Date the work visa expires."}</InfoTip></Label>
                     <Input
                       id="visaExpiryDate"
                       type="date"
@@ -832,7 +835,7 @@ export default function Employees() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="visaStatus">{t.visaStatus || "Visa Status"}</Label>
+                    <Label htmlFor="visaStatus">{t.visaStatus || "Visa Status"}<InfoTip>{isRTL ? "الحالة الحالية للتأشيرة." : "Current status of the visa."}</InfoTip></Label>
                     <Select value={formData.visaStatus} onValueChange={(value) => setFormData({ ...formData, visaStatus: value })}>
                       <SelectTrigger className="h-[44px]" data-testid="select-visa-status">
                         <SelectValue placeholder={t.selectStatus || "Select status"} />
@@ -887,7 +890,7 @@ export default function Employees() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="ticketStatus">{t.ticketStatus || "Ticket Status"}</Label>
+                    <Label htmlFor="ticketStatus">{t.ticketStatus || "Ticket Status"}<InfoTip>{isRTL ? "حالة تذكرة سفر الموظف." : "Status of the employee travel ticket."}</InfoTip></Label>
                     <Select value={formData.ticketStatus} onValueChange={(value) => setFormData({ ...formData, ticketStatus: value })}>
                       <SelectTrigger className="h-[44px]" data-testid="select-ticket-status">
                         <SelectValue placeholder={t.selectStatus || "Select status"} />
@@ -906,7 +909,7 @@ export default function Employees() {
               <TabsContent value="performance" className="space-y-4 mt-4">
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-2">
-                    <Label htmlFor="performanceRating">{t.performanceRating || "Performance Rating"} (0.00 - 5.00)</Label>
+                    <Label htmlFor="performanceRating">{t.performanceRating || "Performance Rating"} (0.00 - 5.00)<InfoTip>{isRTL ? "تقييم الأداء من 0 إلى 5." : "Performance rating on a 0–5 scale."}</InfoTip></Label>
                     <Input
                       id="performanceRating"
                       type="number"
@@ -1147,14 +1150,19 @@ export default function Employees() {
                     <Edit className="mr-2 h-4 w-4" />
                     {t.editEmployee || "Edit"}
                   </Button>
-                  <Button
-                    variant="outline"
-                    className="h-[44px]"
-                    onClick={() => setUserToDelete(user)}
-                    data-testid={`button-delete-${user.id}`}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="h-[44px]"
+                        onClick={() => setUserToDelete(user)}
+                        data-testid={`button-delete-${user.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{isRTL ? "حذف الموظف نهائيًا" : "Delete employee permanently"}</TooltipContent>
+                  </Tooltip>
                 </div>
               </CardContent>
             </Card>
@@ -1341,7 +1349,7 @@ export default function Employees() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-recruitmentSource">{t.recruitmentSource || "Recruitment Source"}</Label>
+                  <Label htmlFor="edit-recruitmentSource">{t.recruitmentSource || "Recruitment Source"}<InfoTip>{isRTL ? "كيف تم توظيف هذا الموظف." : "How this employee was recruited."}</InfoTip></Label>
                   <Select value={formData.recruitmentSource} onValueChange={(value) => setFormData({ ...formData, recruitmentSource: value })}>
                     <SelectTrigger className="h-[44px]" data-testid="select-edit-recruitment-source">
                       <SelectValue placeholder={t.selectSource || "Select source"} />
@@ -1356,7 +1364,7 @@ export default function Employees() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-contractType">{t.contractType || "Contract Type"}</Label>
+                  <Label htmlFor="edit-contractType">{t.contractType || "Contract Type"}<InfoTip>{isRTL ? "نوع عقد العمل." : "Employment contract type."}</InfoTip></Label>
                   <Select value={formData.contractType} onValueChange={(value) => setFormData({ ...formData, contractType: value })}>
                     <SelectTrigger className="h-[44px]" data-testid="select-edit-contract-type">
                       <SelectValue placeholder={t.selectType || "Select type"} />
@@ -1373,7 +1381,7 @@ export default function Employees() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-probationEndDate">{t.probationEndDate || "Probation End Date"}</Label>
+                  <Label htmlFor="edit-probationEndDate">{t.probationEndDate || "Probation End Date"}<InfoTip>{isRTL ? "تاريخ انتهاء فترة التجربة." : "Date when probation period ends."}</InfoTip></Label>
                   <Input
                     id="edit-probationEndDate"
                     type="date"
@@ -1384,7 +1392,7 @@ export default function Employees() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-salary">{t.monthlySalary || "Monthly Salary"} ({t.sar || "SAR"})</Label>
+                  <Label htmlFor="edit-salary">{t.monthlySalary || "Monthly Salary"} ({t.sar || "SAR"})<InfoTip>{isRTL ? "إجمالي الراتب الشهري بالريال السعودي." : "Gross monthly salary in SAR."}</InfoTip></Label>
                   <Input
                     id="edit-salary"
                     type="number"
@@ -1403,7 +1411,7 @@ export default function Employees() {
             <TabsContent value="vacation" className="space-y-4 mt-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-vacationDaysTotal">{t.vacationDaysTotal || "Total Vacation Days"}</Label>
+                  <Label htmlFor="edit-vacationDaysTotal">{t.vacationDaysTotal || "Total Vacation Days"}<InfoTip>{isRTL ? "إجمالي أيام الإجازة السنوية المستحقة." : "Total annual vacation days granted."}</InfoTip></Label>
                   <Input
                     id="edit-vacationDaysTotal"
                     type="number"
@@ -1414,7 +1422,7 @@ export default function Employees() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-vacationDaysUsed">{t.vacationDaysUsed || "Vacation Days Used"}</Label>
+                  <Label htmlFor="edit-vacationDaysUsed">{t.vacationDaysUsed || "Vacation Days Used"}<InfoTip>{isRTL ? "عدد أيام الإجازة المستخدمة هذا العام." : "Vacation days already used this year."}</InfoTip></Label>
                   <Input
                     id="edit-vacationDaysUsed"
                     type="number"
@@ -1430,7 +1438,7 @@ export default function Employees() {
                 <CardContent className="pt-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-muted-foreground">{t.vacationDaysRemaining || "Vacation Days Remaining"}</p>
+                      <p className="text-sm text-muted-foreground">{t.vacationDaysRemaining || "Vacation Days Remaining"}<InfoTip>{isRTL ? "إجمالي الأيام ناقص الأيام المستخدمة." : "Total days minus used days."}</InfoTip></p>
                       <p className="text-2xl font-bold">{vacationDaysRemaining}</p>
                     </div>
                     <Clock className="h-8 w-8 text-muted-foreground" />
@@ -1467,7 +1475,7 @@ export default function Employees() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-visaExpiryDate">{t.visaExpiryDate || "Visa Expiry Date"}</Label>
+                  <Label htmlFor="edit-visaExpiryDate">{t.visaExpiryDate || "Visa Expiry Date"}<InfoTip>{isRTL ? "تاريخ انتهاء صلاحية التأشيرة." : "Date the work visa expires."}</InfoTip></Label>
                   <Input
                     id="edit-visaExpiryDate"
                     type="date"
@@ -1478,7 +1486,7 @@ export default function Employees() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-visaStatus">{t.visaStatus || "Visa Status"}</Label>
+                  <Label htmlFor="edit-visaStatus">{t.visaStatus || "Visa Status"}<InfoTip>{isRTL ? "الحالة الحالية للتأشيرة." : "Current status of the visa."}</InfoTip></Label>
                   <Select value={formData.visaStatus} onValueChange={(value) => setFormData({ ...formData, visaStatus: value })}>
                     <SelectTrigger className="h-[44px]" data-testid="select-edit-visa-status">
                       <SelectValue placeholder={t.selectStatus || "Select status"} />
@@ -1533,7 +1541,7 @@ export default function Employees() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-ticketStatus">{t.ticketStatus || "Ticket Status"}</Label>
+                  <Label htmlFor="edit-ticketStatus">{t.ticketStatus || "Ticket Status"}<InfoTip>{isRTL ? "حالة تذكرة سفر الموظف." : "Status of the employee travel ticket."}</InfoTip></Label>
                   <Select value={formData.ticketStatus} onValueChange={(value) => setFormData({ ...formData, ticketStatus: value })}>
                     <SelectTrigger className="h-[44px]" data-testid="select-edit-ticket-status">
                       <SelectValue placeholder={t.selectStatus || "Select status"} />
@@ -1552,7 +1560,7 @@ export default function Employees() {
             <TabsContent value="performance" className="space-y-4 mt-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-performanceRating">{t.performanceRating || "Performance Rating"} (0.00 - 5.00)</Label>
+                  <Label htmlFor="edit-performanceRating">{t.performanceRating || "Performance Rating"} (0.00 - 5.00)<InfoTip>{isRTL ? "تقييم الأداء من 0 إلى 5." : "Performance rating on a 0–5 scale."}</InfoTip></Label>
                   <Input
                     id="edit-performanceRating"
                     type="number"
@@ -1664,5 +1672,6 @@ export default function Employees() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }

@@ -9,6 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { 
   Activity, 
   Search, 
@@ -268,6 +270,7 @@ export default function ActivityLog() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-4 md:p-6 space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -303,7 +306,10 @@ export default function ActivityLog() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalActivities}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">
+              {t.totalActivities}
+              <InfoTip>{language === "Arabic" ? "إجمالي عدد الإجراءات المسجلة." : "Total number of recorded employee actions."}</InfoTip>
+            </CardTitle>
             <Activity className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -314,7 +320,10 @@ export default function ActivityLog() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-            <CardTitle className="text-sm font-medium">{t.activeEmployees}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">
+              {t.activeEmployees}
+              <InfoTip>{language === "Arabic" ? "عدد الموظفين الفريدين ضمن النشاطات المعروضة." : "Number of unique employees in the shown activities."}</InfoTip>
+            </CardTitle>
             <User className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -325,7 +334,10 @@ export default function ActivityLog() {
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 pb-2">
-            <CardTitle className="text-sm font-medium">{t.mostActiveCategory}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">
+              {t.mostActiveCategory}
+              <InfoTip>{language === "Arabic" ? "الفئة التي تحتوي على أكبر عدد من النشاطات." : "Category with the highest number of activities."}</InfoTip>
+            </CardTitle>
             <Filter className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -453,5 +465,6 @@ export default function ActivityLog() {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }

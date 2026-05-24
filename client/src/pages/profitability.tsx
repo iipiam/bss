@@ -14,13 +14,15 @@ import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, L
 import type { MenuItem, Recipe, Order, ShopBill, InventoryItem } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { exportToPDF } from "@/lib/exportUtils";
+import { Tooltip as UITooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 const COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 export default function Profitability() {
   const [period, setPeriod] = useState<string>("month");
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   const { data: menuItems = [], isLoading: isLoadingMenu } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
@@ -367,6 +369,7 @@ export default function Profitability() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -465,7 +468,7 @@ export default function Profitability() {
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card data-testid="card-total-revenue">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalRevenue}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{t.totalRevenue}<InfoTip>{isRTL ? "إجمالي إيرادات المبيعات (قبل الضريبة) في الفترة المحددة." : "Total sales revenue (pre-VAT) for the selected period."}</InfoTip></CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -476,7 +479,7 @@ export default function Profitability() {
 
         <Card data-testid="card-total-profit">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).totalProfit || "Total Profit"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).totalProfit || "Total Profit"}<InfoTip>{isRTL ? "الإيرادات ناقص تكاليف الوصفات." : "Revenue minus recipe ingredient costs."}</InfoTip></CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -489,7 +492,7 @@ export default function Profitability() {
 
         <Card data-testid="card-avg-margin">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).avgProfitMargin || "Avg Profit Margin"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).avgProfitMargin || "Avg Profit Margin"}<InfoTip>{isRTL ? "متوسط هامش الربح عبر جميع الأصناف." : "Average profit margin across all items."}</InfoTip></CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -500,7 +503,7 @@ export default function Profitability() {
 
         <Card data-testid="card-total-cost">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).totalCosts || "Total Costs"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).totalCosts || "Total Costs"}<InfoTip>{isRTL ? "إجمالي تكاليف الوصفات للأصناف المباعة." : "Total recipe/ingredient costs of items sold."}</InfoTip></CardTitle>
             <Calculator className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -761,12 +764,13 @@ export default function Profitability() {
         </Tabs>
       )}
     </div>
+    </TooltipProvider>
   );
 }
 
 // Pricing Analysis Tab Component
 function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] }) {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   // Items below cost (negative margin)
   const belowCostItems = profitabilityData.filter(item => item.margin < 0);
   
@@ -809,7 +813,7 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).belowCost || "Below Cost"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).belowCost || "Below Cost"}<InfoTip>{isRTL ? "أصناف تُباع بسعر أقل من تكلفتها." : "Items priced below their cost."}</InfoTip></CardTitle>
             <AlertTriangle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
@@ -820,7 +824,7 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).lowMargin || "Low Margin"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).lowMargin || "Low Margin"}<InfoTip>{isRTL ? "أصناف بهامش ربح 0-20%." : "Items with 0-20% profit margin."}</InfoTip></CardTitle>
             <TrendingDown className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
@@ -831,7 +835,7 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).healthyMargin || "Healthy Margin"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).healthyMargin || "Healthy Margin"}<InfoTip>{isRTL ? "أصناف بهامش ربح 20-40%." : "Items with 20-40% profit margin."}</InfoTip></CardTitle>
             <DollarSign className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
@@ -842,7 +846,7 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).premiumMargin || "Premium Margin"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).premiumMargin || "Premium Margin"}<InfoTip>{isRTL ? "أصناف بهامش ربح 40% أو أكثر." : "Items with 40%+ profit margin."}</InfoTip></CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -1119,7 +1123,7 @@ function PricingAnalysisTab({ profitabilityData }: { profitabilityData: any[] })
 
 // Scaling Analysis Tab Component
 function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { profitabilityData: any[], totalRevenue: number, totalProfit: number }) {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const itemsWithSales = profitabilityData.filter(item => item.salesVolume > 0);
   const avgUnitsSold = itemsWithSales.reduce((sum, item) => sum + item.salesVolume, 0) / itemsWithSales.length || 0;
   const avgProfitPerUnit = totalProfit / itemsWithSales.reduce((sum, item) => sum + item.salesVolume, 0) || 0;
@@ -1152,7 +1156,7 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).avgProfitPerUnit || "Avg Profit/Unit"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).avgProfitPerUnit || "Avg Profit/Unit"}<InfoTip>{isRTL ? "متوسط الربح لكل صنف مباع." : "Average profit earned per item sold."}</InfoTip></CardTitle>
             <Calculator className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -1163,7 +1167,7 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).breakEvenUnits || "Break-Even Units"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).breakEvenUnits || "Break-Even Units"}<InfoTip>{isRTL ? "متوسط الوحدات المباعة لكل صنف." : "Average units sold per item."}</InfoTip></CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -1174,7 +1178,7 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).profitMarginLabel || "Profit Margin"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).profitMarginLabel || "Profit Margin"}<InfoTip>{isRTL ? "هامش الربح الإجمالي عبر جميع المبيعات." : "Overall profit margin across all sales."}</InfoTip></CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -1318,7 +1322,7 @@ function ScalingAnalysisTab({ profitabilityData, totalRevenue, totalProfit }: { 
 
 // Cost Management Tab Component
 function CostManagementTab({ profitabilityData, bills }: { profitabilityData: any[]; bills: ShopBill[] }) {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   // Identify cost reduction opportunities
   const highCostItems = profitabilityData
     .filter(item => item.cost > 0)
@@ -1422,7 +1426,7 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).operatingExpenses || "Operating Expenses"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).operatingExpenses || "Operating Expenses"}<InfoTip>{isRTL ? "إجمالي التكاليف التشغيلية الشهرية المتكررة." : "Total monthly recurring operating costs."}</InfoTip></CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -1433,7 +1437,7 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).paidExpenses || "Paid Expenses"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).paidExpenses || "Paid Expenses"}<InfoTip>{isRTL ? "المصاريف المدفوعة في هذه الفترة." : "Expenses already paid this period."}</InfoTip></CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -1444,7 +1448,7 @@ function CostManagementTab({ profitabilityData, bills }: { profitabilityData: an
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{(t as any).pendingExpenses || "Pending Expenses"}</CardTitle>
+            <CardTitle className="text-sm font-medium flex items-center">{(t as any).pendingExpenses || "Pending Expenses"}<InfoTip>{isRTL ? "المصاريف بانتظار الدفع." : "Expenses awaiting payment."}</InfoTip></CardTitle>
             <AlertTriangle className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -108,6 +109,7 @@ function CustomerExtras({ customerId }: { customerId: string }) {
   const [projOpen, setProjOpen] = useState(false);
   const [docOpen, setDocOpen] = useState(false);
   const { toast } = useToast();
+  const { isRTL } = useLanguage();
   const { data: projects = [] } = useQuery<CustomerProjectRow[]>({
     queryKey: ["/api/customers", customerId, "projects"],
     enabled: projOpen,
@@ -233,14 +235,19 @@ function CustomerExtras({ customerId }: { customerId: string }) {
                     {d.source === 'live' && <Badge variant="secondary" className="ml-1">live</Badge>}
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => downloadDoc(d.id, d.fileName)}
-                  data-testid={`button-download-doc-${d.id}`}
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => downloadDoc(d.id, d.fileName)}
+                      data-testid={`button-download-doc-${d.id}`}
+                    >
+                      <Download className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isRTL ? "تنزيل المستند" : "Download document"}</TooltipContent>
+                </Tooltip>
               </div>
             ))
           )}
@@ -465,6 +472,7 @@ export default function Customers() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div
         className={`flex ${layout.isMobile ? "flex-col gap-3" : "items-center justify-between"}`}
@@ -784,5 +792,6 @@ export default function Customers() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }

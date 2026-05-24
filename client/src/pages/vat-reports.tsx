@@ -14,10 +14,13 @@ import { format } from "date-fns";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { MonthlyVatReport } from "@shared/schema";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 export default function VatReports() {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isAr = language === 'Arabic';
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string>("");
@@ -148,6 +151,7 @@ export default function VatReports() {
   }, [reports]);
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-8 space-y-6">
       <div className="flex justify-between items-start gap-4 flex-wrap">
         <div>
@@ -172,7 +176,10 @@ export default function VatReports() {
             
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="month">{(t as any).month || "Month"}</Label>
+                <Label htmlFor="month">
+                  {(t as any).month || "Month"}
+                  <InfoTip>{isAr ? 'الشهر الميلادي للفترة الضريبية.' : 'Calendar month of the VAT reporting period.'}</InfoTip>
+                </Label>
                 <Select value={selectedMonth} onValueChange={setSelectedMonth}>
                   <SelectTrigger id="month" data-testid="select-month">
                     <SelectValue placeholder={(t as any).selectMonth || "Select month"} />
@@ -188,7 +195,10 @@ export default function VatReports() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="year">{t.year || "Year"}</Label>
+                <Label htmlFor="year">
+                  {t.year || "Year"}
+                  <InfoTip>{isAr ? 'السنة الميلادية للفترة الضريبية.' : 'Calendar year of the VAT reporting period.'}</InfoTip>
+                </Label>
                 <Select value={selectedYear} onValueChange={setSelectedYear}>
                   <SelectTrigger id="year" data-testid="select-year">
                     <SelectValue placeholder={(t as any).selectYear || "Select year"} />
@@ -250,7 +260,10 @@ export default function VatReports() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card data-testid="card-total-reports">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-              <CardTitle className="text-sm font-medium">{(t as any).totalReports || "Total Reports"}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {(t as any).totalReports || "Total Reports"}
+                <InfoTip>{isAr ? 'إجمالي عدد تقارير ضريبة القيمة المضافة التي تم إنشاؤها.' : 'Total count of VAT reports generated.'}</InfoTip>
+              </CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -261,7 +274,10 @@ export default function VatReports() {
 
           <Card data-testid="card-total-sales">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-              <CardTitle className="text-sm font-medium">{(t as any).totalSalesVat || "Total Sales VAT"}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {(t as any).totalSalesVat || "Total Sales VAT"}
+                <InfoTip>{isAr ? 'إجمالي ضريبة المخرجات المُحصلة من المبيعات.' : 'Total output VAT collected from sales.'}</InfoTip>
+              </CardTitle>
               <TrendingUp className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
@@ -274,7 +290,10 @@ export default function VatReports() {
 
           <Card data-testid="card-total-purchases">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-              <CardTitle className="text-sm font-medium">{(t as any).totalPurchasesVat || "Total Purchases VAT"}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {(t as any).totalPurchasesVat || "Total Purchases VAT"}
+                <InfoTip>{isAr ? 'إجمالي ضريبة المدخلات المدفوعة على المشتريات.' : 'Total input VAT paid on purchases.'}</InfoTip>
+              </CardTitle>
               <TrendingDown className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
@@ -287,7 +306,10 @@ export default function VatReports() {
 
           <Card data-testid="card-net-vat">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-              <CardTitle className="text-sm font-medium">{(t as any).netVatPayable || "Net VAT Payable"}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {(t as any).netVatPayable || "Net VAT Payable"}
+                <InfoTip>{isAr ? 'صافي الضريبة المستحقة للهيئة (المخرجات ناقص المدخلات).' : 'Net VAT owed to ZATCA (output minus input VAT).'}</InfoTip>
+              </CardTitle>
               <Calculator className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -415,5 +437,6 @@ export default function VatReports() {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }

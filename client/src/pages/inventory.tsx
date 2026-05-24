@@ -83,6 +83,8 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Plus, Search, Edit, Trash2, Download, Upload, FileDown, GripVertical, ChevronDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -230,17 +232,27 @@ function SortableInventoryRow({ item, onEdit, onDelete, disabled = false }: Sort
       </TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" className="h-[44px] w-[44px]" onClick={() => onEdit(item)} data-testid={`button-edit-${item.id}`}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            className="h-[44px] w-[44px]"
-            onClick={() => onDelete(item)}
-            data-testid={`button-delete-${item.id}`}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" className="h-[44px] w-[44px]" onClick={() => onEdit(item)} data-testid={`button-edit-${item.id}`}>
+                <Edit className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Edit item / تعديل العنصر</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-[44px] w-[44px]"
+                onClick={() => onDelete(item)}
+                data-testid={`button-delete-${item.id}`}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Delete this item permanently / حذف نهائي</TooltipContent>
+          </Tooltip>
         </div>
       </TableCell>
     </TableRow>
@@ -373,17 +385,27 @@ function SortableAddonRow({ addon, menuItemNames, onEdit, onDelete }: SortableAd
       </TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">
-          <Button variant="ghost" className="h-[44px] w-[44px]" onClick={() => onEdit(addon)} data-testid={`button-edit-addon-${addon.id}`}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            className="h-[44px] w-[44px]"
-            onClick={() => onDelete(addon)}
-            data-testid={`button-delete-addon-${addon.id}`}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" className="h-[44px] w-[44px]" onClick={() => onEdit(addon)} data-testid={`button-edit-addon-${addon.id}`}>
+                <Edit className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Edit add-on / تعديل الإضافة</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                className="h-[44px] w-[44px]"
+                onClick={() => onDelete(addon)}
+                data-testid={`button-delete-addon-${addon.id}`}
+              >
+                <Trash2 className="h-4 w-4 text-destructive" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Delete this add-on permanently / حذف نهائي</TooltipContent>
+          </Tooltip>
         </div>
       </TableCell>
     </TableRow>
@@ -1060,6 +1082,7 @@ export default function Inventory() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
         <div>
@@ -1087,7 +1110,7 @@ export default function Inventory() {
                   <span className={`${layout.isMobile ? 'text-lg' : 'text-xl'} font-bold text-primary`}>$</span>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground uppercase tracking-wider">{t.totalInventoryValue || "Total Inventory Value"}</p>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider">{t.totalInventoryValue || "Total Inventory Value"}<InfoTip>Total cost value of all current stock / إجمالي قيمة المخزون الحالي</InfoTip></p>
                   <p className={`${layout.isMobile ? 'text-xl' : 'text-2xl'} font-bold text-primary`} data-testid="total-inventory-value">
                     {inventoryItems.reduce((sum, item) => {
                       // Total Inventory Value = sum of all Total Prices (price field represents total cost of current stock)
@@ -1099,17 +1122,17 @@ export default function Inventory() {
               </div>
               <div className={`flex ${layout.isMobile ? 'justify-between' : 'gap-6'} text-sm`}>
                 <div className="text-center">
-                  <p className="text-muted-foreground">{t.totalItems || "Items"}</p>
+                  <p className="text-muted-foreground">{t.totalItems || "Items"}<InfoTip>Total number of inventory items / إجمالي عدد الأصناف</InfoTip></p>
                   <p className="font-semibold" data-testid="total-items-count">{inventoryItems.length}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-muted-foreground">{t.lowStockItems || "Low Stock"}</p>
+                  <p className="text-muted-foreground">{t.lowStockItems || "Low Stock"}<InfoTip>Items running low and need restocking / أصناف قاربت على النفاد</InfoTip></p>
                   <p className="font-semibold text-destructive" data-testid="low-stock-count">
                     {inventoryItems.filter(i => i.status === "Low Stock").length}
                   </p>
                 </div>
                 <div className="text-center">
-                  <p className="text-muted-foreground">{t.expiringSoon || "Expiring Soon"}</p>
+                  <p className="text-muted-foreground">{t.expiringSoon || "Expiring Soon"}<InfoTip>Items expiring within 7 days / أصناف تنتهي صلاحيتها خلال 7 أيام</InfoTip></p>
                   <p className="font-semibold text-yellow-600" data-testid="expiring-soon-count">
                     {inventoryItems.filter(i => {
                       const days = calculateDaysRemaining(i.purchaseDate, i.expirationDays);
@@ -1242,7 +1265,7 @@ export default function Inventory() {
                         name="referenceQuantity"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{t.referenceQuantity || "Reference Quantity"}</FormLabel>
+                            <FormLabel>{t.referenceQuantity || "Reference Quantity"}<InfoTip>Base unit used for cost calculation (e.g., 1 kg) / الوحدة الأساسية لحساب التكلفة</InfoTip></FormLabel>
                             <FormControl>
                               {watchedUnit === "pcs" ? (
                                 <Input 
@@ -1268,7 +1291,7 @@ export default function Inventory() {
                     
                     {/* Price per Unit - Calculated automatically */}
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">{t.pricePerUnit || "Price per Unit (SAR)"}</label>
+                      <label className="text-sm font-medium">{t.pricePerUnit || "Price per Unit (SAR)"}<InfoTip>Auto-calculated as Total Price ÷ Quantity / يُحسب تلقائيًا</InfoTip></label>
                       <div className="flex items-center gap-2">
                         <Input 
                           value={calculatedUnitPrice} 
@@ -1289,7 +1312,7 @@ export default function Inventory() {
                       name="price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.totalPrice || "Total Price (SAR)"}</FormLabel>
+                          <FormLabel>{t.totalPrice || "Total Price (SAR)"}<InfoTip>Total purchase price for the entire quantity / السعر الإجمالي للكمية كلها</InfoTip></FormLabel>
                           <FormControl>
                             <Input {...field} type="number" step="0.01" placeholder="0.00" data-testid="input-item-price" />
                           </FormControl>
@@ -1305,7 +1328,7 @@ export default function Inventory() {
                       name="expirationDays"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.expirationDays || "Expiration Days"}</FormLabel>
+                          <FormLabel>{t.expirationDays || "Expiration Days"}<InfoTip>Days until this item expires after purchase / عدد أيام الصلاحية بعد الشراء</InfoTip></FormLabel>
                           <FormControl>
                             <Input 
                               {...field} 
@@ -1342,7 +1365,7 @@ export default function Inventory() {
                       name="status"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.status || "Status"}</FormLabel>
+                          <FormLabel>{t.status || "Status"}<InfoTip>Current stock status: In Stock, Low Stock, or Out of Stock / حالة المخزون</InfoTip></FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger data-testid="select-item-status">
@@ -1812,5 +1835,6 @@ export default function Inventory() {
         </TabsContent>
       </Tabs>
     </div>
+    </TooltipProvider>
   );
 }

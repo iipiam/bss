@@ -9,6 +9,8 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -84,7 +86,7 @@ const violationFormSchema = z.object({
 type ViolationFormData = z.infer<typeof violationFormSchema>;
 
 export default function ViolationsPage() {
-  const { t: translations } = useLanguage();
+  const { t: translations, isRTL } = useLanguage();
   const t = translations as unknown as Record<string, string | undefined>;
   const { toast } = useToast();
   const [authorityFilter, setAuthorityFilter] = useState<string>("all");
@@ -347,6 +349,7 @@ export default function ViolationsPage() {
   const disputedCount = stats?.disputedCount ?? violations.filter(v => v.status === "disputed").length;
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
@@ -410,7 +413,10 @@ export default function ViolationsPage() {
                     name="authority"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.authority || "Authority"}</FormLabel>
+                        <FormLabel>
+                          {t.authority || "Authority"}
+                          <InfoTip>{isRTL ? "الجهة الحكومية التي أصدرت المخالفة." : "Government authority that issued the violation."}</InfoTip>
+                        </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-authority">
@@ -454,7 +460,10 @@ export default function ViolationsPage() {
                     name="feeAmount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.feeAmount || "Fee Amount"} (SAR)</FormLabel>
+                        <FormLabel>
+                          {t.feeAmount || "Fee Amount"} (SAR)
+                          <InfoTip>{isRTL ? "قيمة الغرامة بالريال السعودي." : "Fine amount in Saudi Riyal."}</InfoTip>
+                        </FormLabel>
                         <FormControl>
                           <Input 
                             type="number" 
@@ -476,7 +485,10 @@ export default function ViolationsPage() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.status || "Status"}</FormLabel>
+                        <FormLabel>
+                          {t.status || "Status"}
+                          <InfoTip>{isRTL ? "حالة سداد المخالفة أو الاعتراض عليها." : "Payment status or dispute state."}</InfoTip>
+                        </FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-status">
@@ -499,7 +511,10 @@ export default function ViolationsPage() {
                     name="branchId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.branch || "Branch"} ({t.optional || "Optional"})</FormLabel>
+                        <FormLabel>
+                          {t.branch || "Branch"} ({t.optional || "Optional"})
+                          <InfoTip>{isRTL ? "الفرع الذي ارتُكبت فيه المخالفة." : "Branch where the violation occurred."}</InfoTip>
+                        </FormLabel>
                         <Select 
                           onValueChange={(value) => field.onChange(value === "none" ? "" : value)} 
                           value={field.value || "none"}
@@ -530,7 +545,10 @@ export default function ViolationsPage() {
                     name="violationDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.violationDate || "Violation Date"}</FormLabel>
+                        <FormLabel>
+                          {t.violationDate || "Violation Date"}
+                          <InfoTip>{isRTL ? "تاريخ ارتكاب المخالفة." : "Date the violation occurred."}</InfoTip>
+                        </FormLabel>
                         <FormControl>
                           <Input type="date" {...field} data-testid="input-violation-date" />
                         </FormControl>
@@ -544,7 +562,10 @@ export default function ViolationsPage() {
                     name="resolvedDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.resolvedDate || "Resolved Date"} ({t.optional || "Optional"})</FormLabel>
+                        <FormLabel>
+                          {t.resolvedDate || "Resolved Date"} ({t.optional || "Optional"})
+                          <InfoTip>{isRTL ? "تاريخ تسوية أو إغلاق المخالفة." : "Date the violation was settled or closed."}</InfoTip>
+                        </FormLabel>
                         <FormControl>
                           <Input 
                             type="date" 
@@ -584,7 +605,10 @@ export default function ViolationsPage() {
       <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalViolations || "Total Violations"}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.totalViolations || "Total Violations"}
+              <InfoTip>{isRTL ? "إجمالي عدد المخالفات المسجلة." : "Total number of recorded violations."}</InfoTip>
+            </CardTitle>
             <AlertTriangle className="w-4 h-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -597,7 +621,10 @@ export default function ViolationsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.pendingViolations || "Pending"}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.pendingViolations || "Pending"}
+              <InfoTip>{isRTL ? "المخالفات التي لم تُسدد رسومها بعد." : "Violations awaiting payment."}</InfoTip>
+            </CardTitle>
             <Clock className="w-4 h-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
@@ -610,7 +637,10 @@ export default function ViolationsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.paidViolations || "Paid"}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.paidViolations || "Paid"}
+              <InfoTip>{isRTL ? "المخالفات التي تم سداد رسومها." : "Violations that have been paid."}</InfoTip>
+            </CardTitle>
             <CheckCircle2 className="w-4 h-4 text-green-600" />
           </CardHeader>
           <CardContent>
@@ -623,7 +653,10 @@ export default function ViolationsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.disputedViolations || "Disputed"}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {t.disputedViolations || "Disputed"}
+              <InfoTip>{isRTL ? "المخالفات قيد الاعتراض أو التظلم." : "Violations under dispute."}</InfoTip>
+            </CardTitle>
             <Shield className="w-4 h-4 text-red-600" />
           </CardHeader>
           <CardContent>
@@ -749,22 +782,32 @@ export default function ViolationsPage() {
                         <TableCell>
                           {violation.documentPath ? (
                             <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setViewDocumentUrl(violation.documentPath)}
-                                data-testid={`button-view-document-${violation.id}`}
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleDocumentDownload(violation.documentPath!)}
-                                data-testid={`button-download-document-${violation.id}`}
-                              >
-                                <Download className="w-4 h-4" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => setViewDocumentUrl(violation.documentPath)}
+                                    data-testid={`button-view-document-${violation.id}`}
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{isRTL ? "عرض المستند" : "View document"}</TooltipContent>
+                              </Tooltip>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDocumentDownload(violation.documentPath!)}
+                                    data-testid={`button-download-document-${violation.id}`}
+                                  >
+                                    <Download className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{isRTL ? "تنزيل المستند" : "Download document"}</TooltipContent>
+                              </Tooltip>
                             </div>
                           ) : (
                             <label className="cursor-pointer">
@@ -779,49 +822,68 @@ export default function ViolationsPage() {
                                 disabled={isUploading}
                                 data-testid={`input-upload-document-${violation.id}`}
                               />
-                              <Button variant="ghost" size="sm" asChild disabled={isUploading}>
-                                <span>
-                                  <Upload className="w-4 h-4" />
-                                </span>
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="sm" asChild disabled={isUploading}>
+                                    <span>
+                                      <Upload className="w-4 h-4" />
+                                    </span>
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{isRTL ? "رفع مستند المخالفة" : "Upload violation document"}</TooltipContent>
+                              </Tooltip>
                             </label>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-1">
                             {!violation.linkedBillId && violation.status !== "paid" && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => createBillMutation.mutate(violation.id)}
-                                disabled={createBillMutation.isPending}
-                                data-testid={`button-create-bill-${violation.id}`}
-                                title="Create Bill"
-                              >
-                                <FileText className="w-4 h-4" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => createBillMutation.mutate(violation.id)}
+                                    disabled={createBillMutation.isPending}
+                                    data-testid={`button-create-bill-${violation.id}`}
+                                  >
+                                    <FileText className="w-4 h-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{isRTL ? "إنشاء فاتورة من هذه المخالفة" : "Create a bill from this violation"}</TooltipContent>
+                              </Tooltip>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(violation)}
-                              data-testid={`button-edit-${violation.id}`}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                if (confirm(t.confirmDelete || "Are you sure you want to delete this violation?")) {
-                                  deleteMutation.mutate(violation.id);
-                                }
-                              }}
-                              disabled={deleteMutation.isPending}
-                              data-testid={`button-delete-${violation.id}`}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEdit(violation)}
+                                  data-testid={`button-edit-${violation.id}`}
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>{isRTL ? "تعديل المخالفة" : "Edit violation"}</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (confirm(t.confirmDelete || "Are you sure you want to delete this violation?")) {
+                                      deleteMutation.mutate(violation.id);
+                                    }
+                                  }}
+                                  disabled={deleteMutation.isPending}
+                                  data-testid={`button-delete-${violation.id}`}
+                                >
+                                  <Trash2 className="w-4 h-4 text-destructive" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>{isRTL ? "حذف المخالفة نهائياً" : "Permanently delete this violation"}</TooltipContent>
+                            </Tooltip>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -915,40 +977,55 @@ export default function ViolationsPage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => window.open(`/api/violation-references/${ref.id}/file`, '_blank')}
-                              data-testid={`button-view-ref-${ref.id}`}
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                const link = document.createElement('a');
-                                link.href = `/api/violation-references/${ref.id}/file`;
-                                link.download = ref.title + '.pdf';
-                                link.click();
-                              }}
-                              data-testid={`button-download-ref-${ref.id}`}
-                            >
-                              <Download className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                if (confirm(t.referenceDeleteConfirm || "Are you sure you want to delete this reference document?")) {
-                                  deleteReferenceMutation.mutate(ref.id);
-                                }
-                              }}
-                              disabled={deleteReferenceMutation.isPending}
-                              data-testid={`button-delete-ref-${ref.id}`}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => window.open(`/api/violation-references/${ref.id}/file`, '_blank')}
+                                  data-testid={`button-view-ref-${ref.id}`}
+                                >
+                                  <Eye className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>{isRTL ? "عرض المستند المرجعي" : "View reference document"}</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = `/api/violation-references/${ref.id}/file`;
+                                    link.download = ref.title + '.pdf';
+                                    link.click();
+                                  }}
+                                  data-testid={`button-download-ref-${ref.id}`}
+                                >
+                                  <Download className="w-4 h-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>{isRTL ? "تنزيل المستند المرجعي" : "Download reference document"}</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    if (confirm(t.referenceDeleteConfirm || "Are you sure you want to delete this reference document?")) {
+                                      deleteReferenceMutation.mutate(ref.id);
+                                    }
+                                  }}
+                                  disabled={deleteReferenceMutation.isPending}
+                                  data-testid={`button-delete-ref-${ref.id}`}
+                                >
+                                  <Trash2 className="w-4 h-4 text-destructive" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>{isRTL ? "حذف المستند المرجعي نهائياً" : "Permanently delete this reference document"}</TooltipContent>
+                            </Tooltip>
                           </div>
                         </div>
                       ))}
@@ -1054,5 +1131,6 @@ export default function ViolationsPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

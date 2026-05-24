@@ -34,7 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -711,6 +712,7 @@ export default function POS() {
   // Mobile layout for iPhone
   if (isMobile) {
     return (
+      <TooltipProvider delayDuration={150}>
       <div className="h-full flex flex-col">
         <div className="flex-shrink-0 p-4 border-b">
           <h1 className="text-2xl font-bold mb-3">{isRealEstate ? (t as any).dealProcessing : t.pointOfSale}</h1>
@@ -981,36 +983,51 @@ export default function POS() {
                               </div>
                             )}
                           </div>
-                          <Button
-                            variant="ghost"
-                            className="h-[44px] w-[44px]"
-                            onClick={() => removeItem(item.id)}
-                            data-testid={`button-remove-${item.id}`}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                className="h-[44px] w-[44px]"
+                                onClick={() => removeItem(item.id)}
+                                data-testid={`button-remove-${item.id}`}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Remove item / إزالة العنصر</TooltipContent>
+                          </Tooltip>
                         </div>
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <Button
-                              variant="outline"
-                              className="h-[44px] w-[44px]"
-                              onClick={() => updateQuantity(item.id, -1)}
-                              data-testid={`button-decrease-${item.id}`}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="h-[44px] w-[44px]"
+                                  onClick={() => updateQuantity(item.id, -1)}
+                                  data-testid={`button-decrease-${item.id}`}
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Decrease quantity / تقليل الكمية</TooltipContent>
+                            </Tooltip>
                             <span className="w-8 text-center font-mono font-semibold">
                               {item.quantity}
                             </span>
-                            <Button
-                              variant="outline"
-                              className="h-[44px] w-[44px]"
-                              onClick={() => updateQuantity(item.id, 1)}
-                              data-testid={`button-increase-${item.id}`}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="h-[44px] w-[44px]"
+                                  onClick={() => updateQuantity(item.id, 1)}
+                                  data-testid={`button-increase-${item.id}`}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Increase quantity / زيادة الكمية</TooltipContent>
+                            </Tooltip>
                           </div>
                           <p className="font-mono font-bold text-sm">
                             {calculateItemTotal(item).toFixed(2)} {t.sar}
@@ -1197,17 +1214,22 @@ export default function POS() {
                         )}
                       </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      className="h-[44px] w-[44px]"
-                      onClick={() => {
-                        setCustomerName("");
-                        setCustomerPhone("+966 ");
-                      }}
-                      data-testid="button-remove-customer"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          className="h-[44px] w-[44px]"
+                          onClick={() => {
+                            setCustomerName("");
+                            setCustomerPhone("+966 ");
+                          }}
+                          data-testid="button-remove-customer"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Remove customer / إزالة العميل</TooltipContent>
+                    </Tooltip>
                   </div>
                 </div>
               )}
@@ -1407,15 +1429,20 @@ export default function POS() {
               </div>
 
               <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  className="flex-1 h-[44px]"
-                  onClick={clearCart}
-                  disabled={cartItems.length === 0}
-                  data-testid="button-clear-cart"
-                >
-                  {t.clear}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="flex-1 h-[44px]"
+                      onClick={clearCart}
+                      disabled={cartItems.length === 0}
+                      data-testid="button-clear-cart"
+                    >
+                      {t.clear}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Clear all items from cart / مسح جميع العناصر</TooltipContent>
+                </Tooltip>
                 <Button
                   className="flex-1 h-[44px]"
                   onClick={handleCheckout}
@@ -1431,11 +1458,13 @@ export default function POS() {
           </div>
         )}
       </div>
+      </TooltipProvider>
     );
   }
 
   // Desktop/Tablet layout for iPad and Laptop
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="h-screen flex">
       <div className="flex-1 p-6 overflow-auto">
         <h1 className="text-3xl font-bold mb-6">{isRealEstate ? (t as any).dealProcessing : t.pointOfSale}</h1>
@@ -2089,15 +2118,20 @@ export default function POS() {
           </div>
 
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={clearCart}
-              disabled={cartItems.length === 0}
-              data-testid="button-clear-cart"
-            >
-              {t.clear}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={clearCart}
+                  disabled={cartItems.length === 0}
+                  data-testid="button-clear-cart"
+                >
+                  {t.clear}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Clear all items from cart / مسح جميع العناصر</TooltipContent>
+            </Tooltip>
             <Button
               className="flex-1"
               onClick={handleCheckout}
@@ -2177,28 +2211,38 @@ export default function POS() {
                 {t.quantity}
               </Label>
               <div className="flex items-center gap-3">
-                <Button
-                  variant="outline"
-                  className={isMobile ? "h-[44px] w-[44px]" : "h-10 w-10"}
-                  onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
-                  data-testid="button-decrease-quantity"
-                >
-                  <Minus className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={isMobile ? "h-[44px] w-[44px]" : "h-10 w-10"}
+                      onClick={() => setItemQuantity(Math.max(1, itemQuantity - 1))}
+                      data-testid="button-decrease-quantity"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Decrease quantity / تقليل الكمية</TooltipContent>
+                </Tooltip>
                 <span
                   className="text-lg font-mono font-semibold w-12 text-center"
                   data-testid="text-quantity"
                 >
                   {itemQuantity}
                 </span>
-                <Button
-                  variant="outline"
-                  className={isMobile ? "h-[44px] w-[44px]" : "h-10 w-10"}
-                  onClick={() => setItemQuantity(itemQuantity + 1)}
-                  data-testid="button-increase-quantity"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={isMobile ? "h-[44px] w-[44px]" : "h-10 w-10"}
+                      onClick={() => setItemQuantity(itemQuantity + 1)}
+                      data-testid="button-increase-quantity"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Increase quantity / زيادة الكمية</TooltipContent>
+                </Tooltip>
               </div>
             </div>
 
@@ -2298,5 +2342,6 @@ export default function POS() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

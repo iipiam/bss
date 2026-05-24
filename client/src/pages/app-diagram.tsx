@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Badge } from "@/components/ui/badge";
 import { Download, Network, Loader2, ZoomIn, ZoomOut, Maximize2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -112,6 +113,7 @@ export default function AppDiagram() {
     k === "writes" ? "#dc2626" : k === "reads" ? "#0891b2" : k === "uses" ? "#7c3aed" : "#64748b";
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="container mx-auto p-6 space-y-4" data-testid="page-app-diagram">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div className="flex items-center gap-3">
@@ -157,7 +159,7 @@ export default function AppDiagram() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-          <CardTitle className="text-base">Architecture Graph</CardTitle>
+          <CardTitle className="text-base">Architecture Graph<InfoTip>Interactive map of pages, API routes, storage, tables, and external services.</InfoTip></CardTitle>
           {graph && (
             <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap" data-testid="text-graph-stats">
               <span>{graph.nodes.length} nodes</span>
@@ -330,5 +332,6 @@ export default function AppDiagram() {
         </Card>
       )}
     </div>
+    </TooltipProvider>
   );
 }

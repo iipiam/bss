@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { TrendingUp, DollarSign, Calculator, Download, RefreshCw, Wallet, PieChart as PieIcon } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/lib/auth";
@@ -67,7 +69,7 @@ function inPeriod(dateStr: string | null | undefined, start: Date | null): boole
 }
 
 export default function ServiceProfitability() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { restaurant } = useAuth();
   const { toast } = useToast();
   const [period, setPeriod] = useState<Period>("month");
@@ -355,12 +357,14 @@ export default function ServiceProfitability() {
     sub,
     accent,
     icon,
+    tip,
   }: {
     label: string;
     value: string;
     sub?: string;
     accent: "green" | "blue" | "purple" | "amber" | "red";
     icon: React.ReactNode;
+    tip?: React.ReactNode;
   }) => {
     const accentMap: Record<string, string> = {
       green: "text-green-600 dark:text-green-400",
@@ -372,7 +376,10 @@ export default function ServiceProfitability() {
     return (
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">{label}</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            {label}
+            {tip && <InfoTip>{tip}</InfoTip>}
+          </CardTitle>
           <div className={accentMap[accent]}>{icon}</div>
         </CardHeader>
         <CardContent>
@@ -386,6 +393,7 @@ export default function ServiceProfitability() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-4 space-y-4 max-w-7xl mx-auto">
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div>
@@ -429,6 +437,7 @@ export default function ServiceProfitability() {
           sub={revOv !== "" ? (t as any).manualOverride || "manual override" : (t as any).autoFromPayments || "auto: paid milestones"}
           accent="green"
           icon={<DollarSign className="h-4 w-4" />}
+          tip={isRTL ? "إجمالي الإيرادات من دفعات المشاريع المسددة." : "Total income from paid project milestones."}
         />
         <StatCard
           label={(t as any).grossProfit || "Gross Profit"}
@@ -436,6 +445,7 @@ export default function ServiceProfitability() {
           sub={`${(t as any).grossMargin || "Gross margin"} ${pct(grossMargin)}`}
           accent="blue"
           icon={<TrendingUp className="h-4 w-4" />}
+          tip={isRTL ? "الإيرادات مطروحًا منها تكلفة البضاعة المباعة." : "Revenue minus cost of goods sold."}
         />
         <StatCard
           label={(t as any).operatingProfit || "Operating Profit (EBIT)"}
@@ -443,6 +453,7 @@ export default function ServiceProfitability() {
           sub={`${(t as any).operatingMargin || "Operating margin"} ${pct(operatingMargin)}`}
           accent="amber"
           icon={<PieIcon className="h-4 w-4" />}
+          tip={isRTL ? "الربح قبل الفوائد والضرائب." : "Earnings before interest and taxes."}
         />
         <StatCard
           label={(t as any).netProfit || "Net Profit"}
@@ -450,6 +461,7 @@ export default function ServiceProfitability() {
           sub={`${(t as any).netMargin || "Net margin"} ${pct(netMargin)}`}
           accent={netProfit >= 0 ? "purple" : "red"}
           icon={<Wallet className="h-4 w-4" />}
+          tip={isRTL ? "صافي الربح بعد جميع المصروفات والضرائب." : "Final profit after all expenses and taxes."}
         />
       </div>
 
@@ -464,7 +476,10 @@ export default function ServiceProfitability() {
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-1">
-            <Label>{(t as any).revenue || "Revenue"} (SAR)</Label>
+            <Label>
+              {(t as any).revenue || "Revenue"} (SAR)
+              <InfoTip>{isRTL ? "تجاوز إجمالي الإيرادات للفترة المختارة." : "Override total revenue for the selected period."}</InfoTip>
+            </Label>
             <Input
               type="number"
               value={revOv}
@@ -477,7 +492,10 @@ export default function ServiceProfitability() {
             </p>
           </div>
           <div className="space-y-1">
-            <Label>{(t as any).cogs || "Cost of Goods Sold (COGS)"} (SAR)</Label>
+            <Label>
+              {(t as any).cogs || "Cost of Goods Sold (COGS)"} (SAR)
+              <InfoTip>{isRTL ? "التكاليف المباشرة لمواد المشاريع والخدمات." : "Direct costs of project materials and services."}</InfoTip>
+            </Label>
             <Input
               type="number"
               value={cogsOv}
@@ -490,7 +508,10 @@ export default function ServiceProfitability() {
             </p>
           </div>
           <div className="space-y-1">
-            <Label>{(t as any).opex || "Operating Expenses"} (SAR)</Label>
+            <Label>
+              {(t as any).opex || "Operating Expenses"} (SAR)
+              <InfoTip>{isRTL ? "المصروفات التشغيلية مثل الإيجار والمرافق والرواتب." : "Operating expenses like rent, utilities, salaries."}</InfoTip>
+            </Label>
             <Input
               type="number"
               value={opexOv}
@@ -503,7 +524,10 @@ export default function ServiceProfitability() {
             </p>
           </div>
           <div className="space-y-1">
-            <Label>{(t as any).interest || "Interest"} (SAR)</Label>
+            <Label>
+              {(t as any).interest || "Interest"} (SAR)
+              <InfoTip>{isRTL ? "مصاريف الفوائد على القروض والديون." : "Interest expense on loans and debt."}</InfoTip>
+            </Label>
             <Input
               type="number"
               value={interest}
@@ -512,7 +536,10 @@ export default function ServiceProfitability() {
             />
           </div>
           <div className="space-y-1">
-            <Label>{(t as any).taxes || "Taxes"} (SAR)</Label>
+            <Label>
+              {(t as any).taxes || "Taxes"} (SAR)
+              <InfoTip>{isRTL ? "ضرائب الدخل المستحقة للفترة." : "Income tax expense for the period."}</InfoTip>
+            </Label>
             <Input
               type="number"
               value={taxes}
@@ -521,7 +548,10 @@ export default function ServiceProfitability() {
             />
           </div>
           <div className="space-y-1">
-            <Label>{(t as any).depreciation || "Depreciation & Amortization"} (SAR)</Label>
+            <Label>
+              {(t as any).depreciation || "Depreciation & Amortization"} (SAR)
+              <InfoTip>{isRTL ? "مصاريف غير نقدية لاستهلاك الأصول؛ تُضاف لحساب EBITDA." : "Non-cash asset expense; added back for EBITDA."}</InfoTip>
+            </Label>
             <Input
               type="number"
               value={depreciation}
@@ -530,7 +560,10 @@ export default function ServiceProfitability() {
             />
           </div>
           <div className="space-y-1">
-            <Label>{(t as any).totalAssets || "Total Assets"} (SAR)</Label>
+            <Label>
+              {(t as any).totalAssets || "Total Assets"} (SAR)
+              <InfoTip>{isRTL ? "إجمالي قيمة الأصول؛ يُستخدم لحساب ROA." : "Total asset value; used to compute ROA."}</InfoTip>
+            </Label>
             <Input
               type="number"
               value={totalAssets}
@@ -540,7 +573,10 @@ export default function ServiceProfitability() {
             <p className="text-xs text-muted-foreground">{(t as any).forRoa || "Used to compute ROA"}</p>
           </div>
           <div className="space-y-1">
-            <Label>{(t as any).equity || "Shareholders' Equity"} (SAR)</Label>
+            <Label>
+              {(t as any).equity || "Shareholders' Equity"} (SAR)
+              <InfoTip>{isRTL ? "حقوق المساهمين؛ تُستخدم لحساب ROE." : "Owner's equity; used to compute ROE."}</InfoTip>
+            </Label>
             <Input
               type="number"
               value={equity}
@@ -618,6 +654,7 @@ export default function ServiceProfitability() {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }
 

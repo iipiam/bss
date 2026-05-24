@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -45,7 +46,7 @@ interface SortableRecipeCardProps {
 }
 
 function SortableRecipeCard({ recipe, onEdit, onDelete }: SortableRecipeCardProps) {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const {
     attributes,
     listeners,
@@ -90,22 +91,32 @@ function SortableRecipeCard({ recipe, onEdit, onDelete }: SortableRecipeCardProp
             </div>
             <div className="text-right">
               <div className="flex gap-2 mb-2">
-                <Button 
-                  variant="ghost" 
-                  className="h-[44px] w-[44px]" 
-                  onClick={() => onEdit(recipe)}
-                  data-testid={`button-edit-recipe-${recipe.id}`}
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="h-[44px] w-[44px]" 
-                  onClick={() => onDelete(recipe)}
-                  data-testid={`button-delete-recipe-${recipe.id}`}
-                >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="h-[44px] w-[44px]" 
+                      onClick={() => onEdit(recipe)}
+                      data-testid={`button-edit-recipe-${recipe.id}`}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isRTL ? "تعديل الوصفة" : "Edit recipe"}</TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      className="h-[44px] w-[44px]" 
+                      onClick={() => onDelete(recipe)}
+                      data-testid={`button-delete-recipe-${recipe.id}`}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isRTL ? "حذف الوصفة نهائياً" : "Delete this recipe permanently"}</TooltipContent>
+                </Tooltip>
               </div>
               <p className="text-sm text-muted-foreground mb-1">{t.costPerServing}</p>
               <p className="text-2xl font-bold font-mono text-primary">{(parseFloat(recipe.cost) / (recipe.servings || 1)).toFixed(2)} SAR</p>
@@ -565,6 +576,7 @@ export default function Recipes() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className={`flex ${layout.isMobile ? 'flex-col gap-3' : 'items-center justify-between'}`}>
         <div>
@@ -673,7 +685,10 @@ export default function Recipes() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="cost">Total Cost (SAR)</Label>
+                  <Label htmlFor="cost">
+                    Total Cost (SAR)
+                    <InfoTip>{isRTL ? "يحتسب تلقائياً من المكونات وأسعار الوحدات." : "Auto-calculated from ingredients and unit prices."}</InfoTip>
+                  </Label>
                   <Input
                     id="cost"
                     type="text"
@@ -864,5 +879,6 @@ export default function Recipes() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }

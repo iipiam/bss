@@ -11,7 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Plus, Search, Edit, UserCircle, Trash2, DollarSign, TrendingUp, FileDown, Banknote, ChefHat, FileText, Upload, Eye, X, Calendar, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -1096,7 +1097,10 @@ export default function Investors() {
     );
   }
 
+  const tip = (en: string, ar: string) => (language === 'Arabic' ? ar : en);
+
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -1201,7 +1205,7 @@ export default function Investors() {
                   name="investorType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.investorType || "Investor Type"}</FormLabel>
+                      <FormLabel>{t.investorType || "Investor Type"}<InfoTip>{tip("Money investors fund capital; recipe owners earn from recipe sales.", "مستثمرو المال يقدمون رأس المال؛ أصحاب الوصفات يكسبون من مبيعات الوصفة.")}</InfoTip></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger className="h-[44px]" data-testid="select-investor-type">
@@ -1234,7 +1238,7 @@ export default function Investors() {
                     name="recipeId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.selectRecipe || "Select Recipe"}</FormLabel>
+                        <FormLabel>{t.selectRecipe || "Select Recipe"}<InfoTip>{tip("Investor earns a share of this recipe's net sales.", "يحصل المستثمر على حصة من صافي مبيعات هذه الوصفة.")}</InfoTip></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger className="h-[44px]" data-testid="select-recipe">
@@ -1264,7 +1268,7 @@ export default function Investors() {
                     name="amountInvested"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.amountInvested || "Amount Invested (SAR)"}</FormLabel>
+                        <FormLabel>{t.amountInvested || "Amount Invested (SAR)"}<InfoTip>{tip("Capital contributed by the investor in SAR.", "رأس المال المساهم من المستثمر بالريال السعودي.")}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -1286,7 +1290,7 @@ export default function Investors() {
                   name="interestPercentage"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.interestPercentage || "Interest Percentage (%)"}</FormLabel>
+                      <FormLabel>{t.interestPercentage || "Interest Percentage (%)"}<InfoTip>{tip("Percent (0-100) of net profit paid to this investor.", "نسبة (0-100) من صافي الربح تُدفع لهذا المستثمر.")}</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -1328,7 +1332,7 @@ export default function Investors() {
                   name="bankName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.bankName || "Bank Name"} ({t.optional || "Optional"})</FormLabel>
+                      <FormLabel>{t.bankName || "Bank Name"} ({t.optional || "Optional"})<InfoTip>{tip("Saudi bank holding the investor's account.", "البنك السعودي الذي يحتفظ بحساب المستثمر.")}</InfoTip></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value || ""}>
                         <FormControl>
                           <SelectTrigger className="h-[44px]" data-testid="select-bank-name">
@@ -1353,7 +1357,7 @@ export default function Investors() {
                   name="iban"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.ibanAccount || "IBAN Account"} ({t.optional || "Optional"})</FormLabel>
+                      <FormLabel>{t.ibanAccount || "IBAN Account"} ({t.optional || "Optional"})<InfoTip>{tip("Saudi IBAN: 'SA' followed by 22 digits.", "آيبان سعودي: 'SA' متبوع بـ 22 رقمًا.")}</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           placeholder="SA0000000000000000000000"
@@ -1374,6 +1378,7 @@ export default function Investors() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     {t.transactionDocument || "Transaction Document"} ({t.optional || "Optional"})
+                    <InfoTip>{tip("PDF proof of transfer; max 10MB.", "إثبات تحويل بصيغة PDF؛ بحد أقصى 10 ميجابايت.")}</InfoTip>
                   </label>
                   <input
                     ref={formFileInputRef}
@@ -1458,6 +1463,7 @@ export default function Investors() {
           <div className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-primary" />
             <h3 className={layout.textXl + " font-semibold"}>{t.netProfitSummary || "Net Profit Summary"}</h3>
+            <InfoTip>{tip("Net profit after all costs; basis for investor earnings.", "صافي الربح بعد جميع التكاليف؛ أساس أرباح المستثمرين.")}</InfoTip>
           </div>
         </CardHeader>
         <CardContent>
@@ -1676,15 +1682,21 @@ export default function Investors() {
                             <FileDown className="h-3 w-3 mr-1" />
                             {t.download || "Download"}
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setDeletingDocumentFor(investor)}
-                            className="h-8 text-destructive hover:text-destructive"
-                            data-testid={`button-delete-document-${investor.id}`}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setDeletingDocumentFor(investor)}
+                                className="h-8 text-destructive hover:text-destructive"
+                                data-testid={`button-delete-document-${investor.id}`}
+                                aria-label={tip("Delete document", "حذف المستند")}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{tip("Delete document (cannot be undone)", "حذف المستند (لا يمكن التراجع)")}</TooltipContent>
+                          </Tooltip>
                         </div>
                       ) : (
                         <div>
@@ -1822,15 +1834,21 @@ export default function Investors() {
                             <FileDown className="h-3 w-3 mr-1" />
                             {t.download || "Download"}
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setDeletingSignedFor(investor)}
-                            className="h-8 text-destructive hover:text-destructive"
-                            data-testid={`button-delete-signed-agreement-${investor.id}`}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setDeletingSignedFor(investor)}
+                                className="h-8 text-destructive hover:text-destructive"
+                                data-testid={`button-delete-signed-agreement-${investor.id}`}
+                                aria-label={tip("Delete signed agreement", "حذف الاتفاقية الموقعة")}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{tip("Delete signed agreement (cannot be undone)", "حذف الاتفاقية الموقعة (لا يمكن التراجع)")}</TooltipContent>
+                          </Tooltip>
                         </div>
                       ) : (
                         <div>
@@ -1904,15 +1922,21 @@ export default function Investors() {
                             <FileDown className="h-3 w-3 mr-1" />
                             {t.download || "Download"}
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setDeletingIbanCertFor(investor)}
-                            className="h-8 text-destructive hover:text-destructive"
-                            data-testid={`button-delete-iban-cert-${investor.id}`}
-                          >
-                            <X className="h-3 w-3" />
-                          </Button>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => setDeletingIbanCertFor(investor)}
+                                className="h-8 text-destructive hover:text-destructive"
+                                data-testid={`button-delete-iban-cert-${investor.id}`}
+                                aria-label={tip("Delete IBAN certificate", "حذف شهادة الآيبان")}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{tip("Delete IBAN certificate (cannot be undone)", "حذف شهادة الآيبان (لا يمكن التراجع)")}</TooltipContent>
+                          </Tooltip>
                         </div>
                       ) : (
                         <div>
@@ -2035,21 +2059,21 @@ export default function Investors() {
               {/* Summary */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 <div className="bg-muted/50 p-3 rounded-lg">
-                  <div className="text-sm text-muted-foreground">{t.netProfit || "Net Profit"}</div>
+                  <div className="text-sm text-muted-foreground">{t.netProfit || "Net Profit"}<InfoTip>{tip("Revenue minus COGS, salaries and bills for the month.", "الإيرادات ناقص تكلفة البضاعة والرواتب والفواتير لهذا الشهر.")}</InfoTip></div>
                   <div className={`text-lg font-bold ${parseFloat(monthlyReport.netProfit) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
                     SAR {parseFloat(monthlyReport.netProfit).toLocaleString()}
                   </div>
                 </div>
                 <div className="bg-muted/50 p-3 rounded-lg">
-                  <div className="text-sm text-muted-foreground">{t.totalRevenue || "Total Revenue"}</div>
+                  <div className="text-sm text-muted-foreground">{t.totalRevenue || "Total Revenue"}<InfoTip>{tip("Total sales income for the selected month.", "إجمالي إيرادات المبيعات للشهر المحدد.")}</InfoTip></div>
                   <div className="text-lg font-bold">SAR {parseFloat(monthlyReport.totalRevenue).toLocaleString()}</div>
                 </div>
                 <div className="bg-muted/50 p-3 rounded-lg">
-                  <div className="text-sm text-muted-foreground">{t.totalCOGS || "Total COGS"}</div>
+                  <div className="text-sm text-muted-foreground">{t.totalCOGS || "Total COGS"}<InfoTip>{tip("Cost of goods sold for the month.", "تكلفة البضائع المباعة لهذا الشهر.")}</InfoTip></div>
                   <div className="text-lg font-bold">SAR {parseFloat(monthlyReport.totalCOGS).toLocaleString()}</div>
                 </div>
                 <div className="bg-muted/50 p-3 rounded-lg">
-                  <div className="text-sm text-muted-foreground">{t.totalExpenses || "Total Expenses"}</div>
+                  <div className="text-sm text-muted-foreground">{t.totalExpenses || "Total Expenses"}<InfoTip>{tip("Salaries plus bills for the month.", "الرواتب بالإضافة إلى الفواتير لهذا الشهر.")}</InfoTip></div>
                   <div className="text-lg font-bold">
                     SAR {(parseFloat(monthlyReport.totalSalaries) + parseFloat(monthlyReport.totalBills)).toLocaleString()}
                   </div>
@@ -2215,5 +2239,6 @@ export default function Investors() {
       </AlertDialog>
 
     </div>
+    </TooltipProvider>
   );
 }

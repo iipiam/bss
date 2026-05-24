@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingUp, DollarSign, Package, ShoppingCart, ArrowUp, ArrowDown, Download, FileSpreadsheet, RefreshCw } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, PieChart, Pie, Cell } from "recharts";
+import { Tooltip as UITooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { exportToPDF, exportToExcel } from "@/lib/exportUtils";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
 export default function DeliveryAppProfitability() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isAr = language === 'Arabic';
   const { toast } = useToast();
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -137,6 +140,7 @@ export default function DeliveryAppProfitability() {
   }));
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -181,7 +185,10 @@ export default function DeliveryAppProfitability() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">{(t as any).totalOrders || "Total Orders"}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {(t as any).totalOrders || "Total Orders"}
+              <InfoTip>{isAr ? "إجمالي عدد الطلبات من جميع تطبيقات التوصيل." : "Total number of orders across all delivery apps."}</InfoTip>
+            </CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -194,7 +201,10 @@ export default function DeliveryAppProfitability() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">{(t as any).grossRevenue || "Gross Revenue"}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {(t as any).grossRevenue || "Gross Revenue"}
+              <InfoTip>{isAr ? "إجمالي الإيرادات قبل خصم الرسوم والتكاليف." : "Total revenue before deducting fees and costs."}</InfoTip>
+            </CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -207,7 +217,10 @@ export default function DeliveryAppProfitability() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">{(t as any).totalCosts || "Total Costs"}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {(t as any).totalCosts || "Total Costs"}
+              <InfoTip>{isAr ? "مجموع العمولات والرسوم والدعم والضريبة وتكلفة الأصناف." : "Sum of commissions, fees, subsidies, VAT and item costs."}</InfoTip>
+            </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -222,7 +235,10 @@ export default function DeliveryAppProfitability() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-            <CardTitle className="text-sm font-medium">{(t as any).netProfit || "Net Profit"}</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              {(t as any).netProfit || "Net Profit"}
+              <InfoTip>{isAr ? "صافي الربح بعد خصم جميع الرسوم والتكاليف." : "Net profit after deducting all fees and costs."}</InfoTip>
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -396,5 +412,6 @@ export default function DeliveryAppProfitability() {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }

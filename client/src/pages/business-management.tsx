@@ -20,7 +20,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Tooltip as UITooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip as UITooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { TableFooter } from "@/components/ui/table";
 import { 
   Building2, 
@@ -236,7 +237,7 @@ interface BusinessInfoData {
 
 export default function BusinessManagement() {
   const { user, accountType, isLoading: authLoading } = useAuth();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { device } = useDevice();
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -1037,6 +1038,7 @@ export default function BusinessManagement() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
@@ -1057,7 +1059,7 @@ export default function BusinessManagement() {
       <div className="grid gap-4 md:grid-cols-4">
         <Card data-testid="card-total-clients">
           <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalSubscriptions}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.totalSubscriptions}<InfoTip>{isRTL ? "إجمالي عدد العملاء المسجلين في المنصة." : "Total number of clients registered on the platform."}</InfoTip></CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -1068,7 +1070,7 @@ export default function BusinessManagement() {
 
         <Card data-testid="card-active-subscriptions">
           <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.activeSubscriptions}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.activeSubscriptions}<InfoTip>{isRTL ? "العملاء الذين لديهم اشتراك نشط حالياً." : "Clients with a currently active subscription."}</InfoTip></CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -1081,7 +1083,7 @@ export default function BusinessManagement() {
 
         <Card data-testid="card-total-revenue">
           <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalRevenue}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.totalRevenue}<InfoTip>{isRTL ? "إجمالي الإيرادات من اشتراكات العملاء شاملة الضريبة." : "Total revenue from client subscriptions including VAT."}</InfoTip></CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -1092,7 +1094,7 @@ export default function BusinessManagement() {
 
         <Card data-testid="card-total-vat">
           <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t.totalVatCollected}</CardTitle>
+            <CardTitle className="text-sm font-medium">{t.totalVatCollected}<InfoTip>{isRTL ? "إجمالي ضريبة القيمة المضافة 15% المحصلة من الاشتراكات." : "Total 15% VAT collected from subscriptions."}</InfoTip></CardTitle>
             <Percent className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -1498,7 +1500,7 @@ export default function BusinessManagement() {
                     <CardContent className="pt-6">
                       <div className="flex items-center gap-2">
                         <Receipt className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">{t.totalSubscriptions}</span>
+                        <span className="text-sm text-muted-foreground">{t.totalSubscriptions}<InfoTip>{isRTL ? "عدد فواتير الاشتراك ضمن الفترة المختارة." : "Number of subscription invoices in the selected period."}</InfoTip></span>
                       </div>
                       <div className="text-3xl font-bold mt-2">{vatSummary.totalSubscriptions}</div>
                     </CardContent>
@@ -1508,7 +1510,7 @@ export default function BusinessManagement() {
                     <CardContent className="pt-6">
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-5 w-5 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">{t.baseAmount}</span>
+                        <span className="text-sm text-muted-foreground">{t.baseAmount}<InfoTip>{isRTL ? "إجمالي الإيرادات قبل ضريبة القيمة المضافة." : "Total revenue before VAT is applied."}</InfoTip></span>
                       </div>
                       <div className="text-3xl font-bold mt-2">{formatCurrency(vatSummary.totalSubtotal)}</div>
                     </CardContent>
@@ -1518,7 +1520,7 @@ export default function BusinessManagement() {
                     <CardContent className="pt-6">
                       <div className="flex items-center gap-2">
                         <Percent className="h-5 w-5 text-blue-600" />
-                        <span className="text-sm text-blue-600">{t.totalVatCollected} (15%)</span>
+                        <span className="text-sm text-blue-600">{t.totalVatCollected} (15%)<InfoTip>{isRTL ? "ضريبة القيمة المضافة 15% المحصلة من الفواتير." : "15% VAT collected from invoices."}</InfoTip></span>
                       </div>
                       <div className="text-3xl font-bold mt-2 text-blue-600">{formatCurrency(vatSummary.totalVatCollected)}</div>
                     </CardContent>
@@ -1528,7 +1530,7 @@ export default function BusinessManagement() {
                     <CardContent className="pt-6">
                       <div className="flex items-center gap-2">
                         <CreditCard className="h-5 w-5 text-green-600" />
-                        <span className="text-sm text-green-600">{t.totalRevenue}</span>
+                        <span className="text-sm text-green-600">{t.totalRevenue}<InfoTip>{isRTL ? "إجمالي الإيرادات شاملة الضريبة." : "Total revenue including VAT."}</InfoTip></span>
                       </div>
                       <div className="text-3xl font-bold mt-2 text-green-600">{formatCurrency(vatSummary.totalRevenue)}</div>
                     </CardContent>
@@ -1566,7 +1568,7 @@ export default function BusinessManagement() {
           <div className="grid gap-4 md:grid-cols-4">
             <Card data-testid="card-total-expenses">
               <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.totalExpenses}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.totalExpenses}<InfoTip>{isRTL ? "إجمالي مصروفات الشركة شاملة الضريبة." : "Total company expenses including VAT."}</InfoTip></CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -1577,7 +1579,7 @@ export default function BusinessManagement() {
 
             <Card data-testid="card-paid-bills">
               <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.paidBills}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.paidBills}<InfoTip>{isRTL ? "عدد الفواتير المدفوعة بالكامل." : "Number of bills fully paid."}</InfoTip></CardTitle>
                 <CheckCircle className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
@@ -1588,7 +1590,7 @@ export default function BusinessManagement() {
 
             <Card data-testid="card-pending-bills">
               <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.pendingBills}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.pendingBills}<InfoTip>{isRTL ? "فواتير قيد الانتظار لم يحن موعد استحقاقها بعد." : "Bills awaiting payment, not yet overdue."}</InfoTip></CardTitle>
                 <Clock className="h-4 w-4 text-yellow-500" />
               </CardHeader>
               <CardContent>
@@ -1599,7 +1601,7 @@ export default function BusinessManagement() {
 
             <Card data-testid="card-overdue-bills">
               <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{t.overdueBills}</CardTitle>
+                <CardTitle className="text-sm font-medium">{t.overdueBills}<InfoTip>{isRTL ? "فواتير تجاوزت تاريخ الاستحقاق ولم تُدفع." : "Bills past their due date and unpaid."}</InfoTip></CardTitle>
                 <AlertCircle className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent>
@@ -1698,7 +1700,7 @@ export default function BusinessManagement() {
                       >
                         <div className="grid gap-4 md:grid-cols-2">
                           <div className="space-y-2">
-                            <Label htmlFor="billType">{t.billType || "Bill Type"} *</Label>
+                            <Label htmlFor="billType">{t.billType || "Bill Type"} *<InfoTip>{isRTL ? "اختر فئة المصروف (إيجار، مرافق، رواتب...)." : "Select the expense category (rent, utilities, salaries...)."}</InfoTip></Label>
                             <Select
                               value={newBillForm.billType}
                               onValueChange={(value) => setNewBillForm(prev => ({ ...prev, billType: value as typeof prev.billType }))}
@@ -1736,7 +1738,7 @@ export default function BusinessManagement() {
 
                         <div className="grid gap-4 md:grid-cols-3">
                           <div className="space-y-2">
-                            <Label htmlFor="totalAmount">{t.total || "Total"} (SAR) * <span className="text-xs text-muted-foreground">({t.vatInclusive || "VAT Inclusive"})</span></Label>
+                            <Label htmlFor="totalAmount">{t.total || "Total"} (SAR) * <span className="text-xs text-muted-foreground">({t.vatInclusive || "VAT Inclusive"})</span><InfoTip>{isRTL ? "أدخل المبلغ شاملاً ضريبة 15%؛ يتم حساب الأساس والضريبة تلقائياً." : "Enter the VAT-inclusive amount; base and VAT are auto-calculated."}</InfoTip></Label>
                             <Input
                               id="totalAmount"
                               type="number"
@@ -1777,7 +1779,7 @@ export default function BusinessManagement() {
 
                         <div className="grid gap-4 md:grid-cols-2">
                           <div className="space-y-2">
-                            <Label htmlFor="billDate">{t.billDate || "Bill Date"} *</Label>
+                            <Label htmlFor="billDate">{t.billDate || "Bill Date"} *<InfoTip>{isRTL ? "تاريخ إصدار الفاتورة." : "Date the bill was issued."}</InfoTip></Label>
                             <Input
                               id="billDate"
                               type="date"
@@ -1788,7 +1790,7 @@ export default function BusinessManagement() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="dueDate">{t.dueDate || "Due Date"}</Label>
+                            <Label htmlFor="dueDate">{t.dueDate || "Due Date"}<InfoTip>{isRTL ? "آخر تاريخ للدفع قبل اعتبار الفاتورة متأخرة." : "Latest payment date before the bill becomes overdue."}</InfoTip></Label>
                             <Input
                               id="dueDate"
                               type="date"
@@ -1801,7 +1803,7 @@ export default function BusinessManagement() {
 
                         <div className="grid gap-4 md:grid-cols-2">
                           <div className="space-y-2">
-                            <Label htmlFor="status">{t.status || "Status"}</Label>
+                            <Label htmlFor="status">{t.status || "Status"}<InfoTip>{isRTL ? "حالة الفاتورة: قيد الانتظار، مدفوعة، أو متأخرة." : "Bill status: pending, paid, or overdue."}</InfoTip></Label>
                             <Select
                               value={newBillForm.status}
                               onValueChange={(value) => setNewBillForm(prev => ({ ...prev, status: value as typeof prev.status }))}
@@ -1817,7 +1819,7 @@ export default function BusinessManagement() {
                             </Select>
                           </div>
                           <div className="space-y-2">
-                            <Label htmlFor="paymentPeriod">{t.paymentPeriod || "Payment Period"}</Label>
+                            <Label htmlFor="paymentPeriod">{t.paymentPeriod || "Payment Period"}<InfoTip>{isRTL ? "تكرار الدفع: مرة واحدة، أسبوعي، شهري، ربع سنوي أو سنوي." : "Payment frequency: one-time, weekly, monthly, quarterly or yearly."}</InfoTip></Label>
                             <Select
                               value={newBillForm.paymentPeriod}
                               onValueChange={(value) => setNewBillForm(prev => ({ ...prev, paymentPeriod: value as typeof prev.paymentPeriod }))}
@@ -2122,7 +2124,7 @@ export default function BusinessManagement() {
               <div className="grid gap-4 md:grid-cols-4">
                 <Card className="bg-green-50 dark:bg-green-950" data-testid="card-subscription-revenue">
                   <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t.subscriptionRevenue}</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t.subscriptionRevenue}<InfoTip>{isRTL ? "إيرادات الاشتراكات بعد خصم المبالغ المستردة." : "Subscription revenue net of refunds."}</InfoTip></CardTitle>
                     <TrendingUp className="h-4 w-4 text-green-600" />
                   </CardHeader>
                   <CardContent>
@@ -2133,7 +2135,7 @@ export default function BusinessManagement() {
 
                 <Card className="bg-blue-50 dark:bg-blue-950" data-testid="card-vat-collected">
                   <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t.vatCollected}</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t.vatCollected}<InfoTip>{isRTL ? "ضريبة القيمة المضافة 15% المحصلة من العملاء." : "15% VAT collected from clients."}</InfoTip></CardTitle>
                     <Percent className="h-4 w-4 text-blue-600" />
                   </CardHeader>
                   <CardContent>
@@ -2144,7 +2146,7 @@ export default function BusinessManagement() {
 
                 <Card className="bg-red-50 dark:bg-red-950" data-testid="card-total-expenses-analysis">
                   <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t.totalExpenses}</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t.totalExpenses}<InfoTip>{isRTL ? "إجمالي مصروفات تشغيل الأعمال خلال الفترة." : "Total operating business expenses for the period."}</InfoTip></CardTitle>
                     <Briefcase className="h-4 w-4 text-red-600" />
                   </CardHeader>
                   <CardContent>
@@ -2155,7 +2157,7 @@ export default function BusinessManagement() {
 
                 <Card className="bg-purple-50 dark:bg-purple-950" data-testid="card-net-profit">
                   <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">{t.netProfit}</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t.netProfit}<InfoTip>{isRTL ? "صافي الربح = الإيرادات − المصروفات." : "Net profit = revenue minus expenses."}</InfoTip></CardTitle>
                     <BarChart3 className="h-4 w-4 text-purple-600" />
                   </CardHeader>
                   <CardContent>
@@ -2505,7 +2507,7 @@ export default function BusinessManagement() {
                       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
                         <Card className="bg-teal-50 dark:bg-teal-950" data-testid="card-bep-fixed-costs">
                           <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{t.fixedCosts || "Fixed Costs"}</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t.fixedCosts || "Fixed Costs"}<InfoTip>{isRTL ? "إجمالي التكاليف الثابتة السنوية (إيجار، رواتب، إلخ)." : "Total annual fixed costs (rent, salaries, etc.)."}</InfoTip></CardTitle>
                             <Calculator className="h-4 w-4 text-teal-600" />
                           </CardHeader>
                           <CardContent>
@@ -2518,7 +2520,7 @@ export default function BusinessManagement() {
 
                         <Card className="bg-cyan-50 dark:bg-cyan-950" data-testid="card-bep-subscriptions">
                           <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{t.bepSubscriptions || "BEP Subs"}</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t.bepSubscriptions || "BEP Subs"}<InfoTip>{isRTL ? "عدد الاشتراكات اللازم لتغطية التكاليف الثابتة." : "Subscriptions needed to cover fixed costs."}</InfoTip></CardTitle>
                             <Target className="h-4 w-4 text-cyan-600" />
                           </CardHeader>
                           <CardContent>
@@ -2531,7 +2533,7 @@ export default function BusinessManagement() {
 
                         <Card className="bg-blue-50 dark:bg-blue-950" data-testid="card-bep-revenue">
                           <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{t.bepRevenue || "BEP Revenue"}</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t.bepRevenue || "BEP Revenue"}<InfoTip>{isRTL ? "الإيرادات اللازمة للوصول إلى نقطة التعادل." : "Revenue needed to reach break-even."}</InfoTip></CardTitle>
                             <TrendingUp className="h-4 w-4 text-blue-600" />
                           </CardHeader>
                           <CardContent>
@@ -2544,7 +2546,7 @@ export default function BusinessManagement() {
 
                         <Card data-testid="card-bep-current-revenue">
                           <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{t.avgRevenuePerSub || "Avg Revenue"}</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t.avgRevenuePerSub || "Avg Revenue"}<InfoTip>{isRTL ? "متوسط الإيراد لكل اشتراك." : "Average revenue per subscription."}</InfoTip></CardTitle>
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
                           </CardHeader>
                           <CardContent>
@@ -2557,7 +2559,7 @@ export default function BusinessManagement() {
 
                         <Card className={bepMetrics.marginOfSafety >= 0 ? "bg-green-50 dark:bg-green-950" : "bg-red-50 dark:bg-red-950"} data-testid="card-bep-margin-safety">
                           <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{t.marginOfSafety || "Safety"}</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t.marginOfSafety || "Safety"}<InfoTip>{isRTL ? "نسبة الإيرادات فوق نقطة التعادل." : "Percent of revenue above the break-even point."}</InfoTip></CardTitle>
                             <Activity className={`h-4 w-4 ${bepMetrics.marginOfSafety >= 0 ? 'text-green-600' : 'text-red-600'}`} />
                           </CardHeader>
                           <CardContent>
@@ -2570,7 +2572,7 @@ export default function BusinessManagement() {
 
                         <Card className={bepMetrics.isProfitable ? "bg-purple-50 dark:bg-purple-950" : "bg-red-50 dark:bg-red-950"} data-testid="card-bep-status">
                           <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{t.status || "Status"}</CardTitle>
+                            <CardTitle className="text-sm font-medium">{t.status || "Status"}<InfoTip>{isRTL ? "حالة الربحية: مربح أو أقل من نقطة التعادل." : "Profitability status: profitable or below BEP."}</InfoTip></CardTitle>
                             <BarChart3 className={`h-4 w-4 ${bepMetrics.isProfitable ? 'text-purple-600' : 'text-red-600'}`} />
                           </CardHeader>
                           <CardContent>
@@ -3032,7 +3034,7 @@ export default function BusinessManagement() {
           >
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="edit-billType">{t.billType || "Bill Type"} *</Label>
+                <Label htmlFor="edit-billType">{t.billType || "Bill Type"} *<InfoTip>{isRTL ? "اختر فئة المصروف (إيجار، مرافق، رواتب...)." : "Select the expense category (rent, utilities, salaries...)."}</InfoTip></Label>
                 <Select
                   value={editBillForm.billType}
                   onValueChange={(value) => setEditBillForm(prev => ({ ...prev, billType: value as typeof prev.billType }))}
@@ -3070,7 +3072,7 @@ export default function BusinessManagement() {
 
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="edit-totalAmount">{t.total || "Total"} (SAR) * <span className="text-xs text-muted-foreground">({t.vatInclusive || "VAT Inclusive"})</span></Label>
+                <Label htmlFor="edit-totalAmount">{t.total || "Total"} (SAR) * <span className="text-xs text-muted-foreground">({t.vatInclusive || "VAT Inclusive"})</span><InfoTip>{isRTL ? "أدخل المبلغ شاملاً ضريبة 15%؛ يتم حساب الأساس والضريبة تلقائياً." : "Enter the VAT-inclusive amount; base and VAT are auto-calculated."}</InfoTip></Label>
                 <Input
                   id="edit-totalAmount"
                   type="number"
@@ -3111,7 +3113,7 @@ export default function BusinessManagement() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="edit-billDate">{t.billDate || "Bill Date"} *</Label>
+                <Label htmlFor="edit-billDate">{t.billDate || "Bill Date"} *<InfoTip>{isRTL ? "تاريخ إصدار الفاتورة." : "Date the bill was issued."}</InfoTip></Label>
                 <Input
                   id="edit-billDate"
                   type="date"
@@ -3122,7 +3124,7 @@ export default function BusinessManagement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-dueDate">{t.dueDate || "Due Date"}</Label>
+                <Label htmlFor="edit-dueDate">{t.dueDate || "Due Date"}<InfoTip>{isRTL ? "آخر تاريخ للدفع قبل اعتبار الفاتورة متأخرة." : "Latest payment date before the bill becomes overdue."}</InfoTip></Label>
                 <Input
                   id="edit-dueDate"
                   type="date"
@@ -3135,7 +3137,7 @@ export default function BusinessManagement() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="edit-status">{t.status || "Status"}</Label>
+                <Label htmlFor="edit-status">{t.status || "Status"}<InfoTip>{isRTL ? "حالة الفاتورة: قيد الانتظار، مدفوعة، أو متأخرة." : "Bill status: pending, paid, or overdue."}</InfoTip></Label>
                 <Select
                   value={editBillForm.status}
                   onValueChange={(value) => setEditBillForm(prev => ({ ...prev, status: value as typeof prev.status }))}
@@ -3151,7 +3153,7 @@ export default function BusinessManagement() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-paymentPeriod">{t.paymentPeriod || "Payment Period"}</Label>
+                <Label htmlFor="edit-paymentPeriod">{t.paymentPeriod || "Payment Period"}<InfoTip>{isRTL ? "تكرار الدفع: مرة واحدة، أسبوعي، شهري، ربع سنوي أو سنوي." : "Payment frequency: one-time, weekly, monthly, quarterly or yearly."}</InfoTip></Label>
                 <Select
                   value={editBillForm.paymentPeriod}
                   onValueChange={(value) => setEditBillForm(prev => ({ ...prev, paymentPeriod: value as typeof prev.paymentPeriod }))}
@@ -3222,5 +3224,6 @@ export default function BusinessManagement() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

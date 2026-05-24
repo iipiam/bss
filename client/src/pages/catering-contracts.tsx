@@ -6,7 +6,8 @@ import { useCateringT } from "@/i18n/cateringContractsTranslations";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -245,7 +246,10 @@ export default function CateringContractsPage() {
     }
   };
 
+  const tip = (en: string, ar: string) => (isRTL ? ar : en);
+
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="container mx-auto p-6 max-w-7xl" dir={isRTL ? "rtl" : "ltr"}>
       <div className="mb-6">
         <h1 className="text-3xl font-bold flex items-center gap-2" data-testid="text-page-title">
@@ -307,12 +311,22 @@ export default function CateringContractsPage() {
                         <Button size="sm" variant="outline" onClick={() => sendWhatsApp(c)} data-testid={`button-whatsapp-${c.id}`}>
                           <MessageCircle className="h-4 w-4 me-1" /> {t.sendWhatsApp}
                         </Button>
-                        <Button size="sm" variant="outline" onClick={() => openEdit(c)} data-testid={`button-edit-${c.id}`}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => { if (confirm(t.confirmDelete)) deleteMut.mutate(c.id); }} data-testid={`button-delete-${c.id}`}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button size="sm" variant="outline" onClick={() => openEdit(c)} data-testid={`button-edit-${c.id}`}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{tip("Edit contract", "تعديل العقد")}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button size="sm" variant="outline" onClick={() => { if (confirm(t.confirmDelete)) deleteMut.mutate(c.id); }} data-testid={`button-delete-${c.id}`}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{tip("Permanently delete this contract.", "حذف هذا العقد نهائياً.")}</TooltipContent>
+                        </Tooltip>
                       </div>
                     </div>
                   </CardContent>
@@ -335,11 +349,11 @@ export default function CateringContractsPage() {
           <div className="grid gap-4 py-2">
             <div className="grid md:grid-cols-2 gap-3">
               <div>
-                <Label>{t.contractNumber}</Label>
+                <Label>{t.contractNumber}<InfoTip>{tip("Unique reference for this catering contract.", "رقم مرجعي فريد لعقد التموين.")}</InfoTip></Label>
                 <Input value={form.contractNumber || ""} onChange={(e) => setField("contractNumber", e.target.value)} data-testid="input-contract-number" />
               </div>
               <div>
-                <Label>{t.status}</Label>
+                <Label>{t.status}<InfoTip>{tip("Current lifecycle state of the contract.", "الحالة الحالية للعقد.")}</InfoTip></Label>
                 <Select value={form.status} onValueChange={(v) => setField("status", v)}>
                   <SelectTrigger data-testid="select-status"><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -362,29 +376,29 @@ export default function CateringContractsPage() {
                 <Input type="email" value={form.clientEmail || ""} onChange={(e) => setField("clientEmail", e.target.value)} data-testid="input-client-email" />
               </div>
               <div>
-                <Label>{t.deliveryLocation}</Label>
+                <Label>{t.deliveryLocation}<InfoTip>{tip("Address where meals will be delivered.", "العنوان الذي ستُسلَّم إليه الوجبات.")}</InfoTip></Label>
                 <Input value={form.deliveryLocation || ""} onChange={(e) => setField("deliveryLocation", e.target.value)} data-testid="input-delivery-location" />
               </div>
               <div>
-                <Label>{t.startDate}</Label>
+                <Label>{t.startDate}<InfoTip>{tip("First day of catering service.", "أول يوم لخدمة التموين.")}</InfoTip></Label>
                 <Input type="date" value={form.startDate || ""} onChange={(e) => setField("startDate", e.target.value)} data-testid="input-start-date" />
               </div>
               <div>
-                <Label>{t.endDate}</Label>
+                <Label>{t.endDate}<InfoTip>{tip("Last day of catering service.", "آخر يوم لخدمة التموين.")}</InfoTip></Label>
                 <Input type="date" value={form.endDate || ""} onChange={(e) => setField("endDate", e.target.value)} data-testid="input-end-date" />
               </div>
               <div>
-                <Label>{t.mealsPerDay}</Label>
+                <Label>{t.mealsPerDay}<InfoTip>{tip("Auto-computed from meals and quantity per day.", "يُحتسب تلقائياً من الوجبات والكميات اليومية.")}</InfoTip></Label>
                 <Input type="number" min="1" value={form.mealsPerDay || 1} onChange={(e) => setField("mealsPerDay", parseInt(e.target.value) || 1)} data-testid="input-meals-per-day" />
               </div>
               <div>
-                <Label>{t.deliveryTime}</Label>
+                <Label>{t.deliveryTime}<InfoTip>{tip("Time window for daily delivery.", "نافذة وقت التسليم اليومي.")}</InfoTip></Label>
                 <Input value={form.deliveryTime || ""} onChange={(e) => setField("deliveryTime", e.target.value)} placeholder="12:00 - 14:00" data-testid="input-delivery-time" />
               </div>
             </div>
 
             <div>
-              <Label>{t.deliveryDays}</Label>
+              <Label>{t.deliveryDays}<InfoTip>{tip("Weekdays meals are delivered.", "أيام الأسبوع التي تُسلَّم فيها الوجبات.")}</InfoTip></Label>
               <div className="flex flex-wrap gap-2 mt-1">
                 {DAY_KEYS.map((day) => {
                   const selected = (form.deliveryDays || []).includes(day);
@@ -410,7 +424,7 @@ export default function CateringContractsPage() {
 
             <div>
               <div className="flex items-center justify-between gap-2 mb-2">
-                <Label>{t.mealSelections}</Label>
+                <Label>{t.mealSelections}<InfoTip>{tip("Meals served per delivery with price and daily quantity.", "الوجبات المقدّمة لكل تسليم مع السعر والكمية اليومية.")}</InfoTip></Label>
                 <div className="flex items-center gap-2 flex-wrap">
                   <Button type="button" size="sm" variant="outline" onClick={() => { setPickedMenuIds({}); setMenuPickerOpen(true); }} data-testid="button-select-from-menu">
                     <ListPlus className="h-4 w-4 me-1" /> {t.selectFromMenu}
@@ -449,22 +463,22 @@ export default function CateringContractsPage() {
 
             <div className="grid md:grid-cols-3 gap-3">
               <div>
-                <Label>{t.totalValue}</Label>
+                <Label>{t.totalValue}<InfoTip>{tip("Auto-calculated total before discount.", "الإجمالي قبل الخصم محسوب تلقائياً.")}</InfoTip></Label>
                 <Input value={form.totalValue || "0"} onChange={(e) => setField("totalValue", e.target.value)} data-testid="input-total-value" />
               </div>
               <div>
-                <Label>{t.discountPercent}</Label>
+                <Label>{t.discountPercent}<InfoTip>{tip("Percentage discount applied to total.", "نسبة الخصم المطبقة على الإجمالي.")}</InfoTip></Label>
                 <Input type="number" step="0.01" value={form.discountPercent || "0"} onChange={(e) => setField("discountPercent", e.target.value)} data-testid="input-discount" />
               </div>
               <div>
-                <Label>{t.finalValue}</Label>
+                <Label>{t.finalValue}<InfoTip>{tip("Final amount after discount.", "القيمة النهائية بعد الخصم.")}</InfoTip></Label>
                 <Input value={form.finalValue || "0"} readOnly data-testid="input-final-value" />
               </div>
             </div>
 
             <div>
               <div className="flex items-center justify-between gap-2 mb-2">
-                <Label>{t.paymentInstallments}</Label>
+                <Label>{t.paymentInstallments}<InfoTip>{tip("Schedule of partial payments by percentage and due date.", "جدول الدفعات الجزئية بالنسبة وتاريخ الاستحقاق.")}</InfoTip></Label>
                 <Button type="button" size="sm" variant="outline" onClick={() => setField("paymentInstallments", [...(form.paymentInstallments || []), { label: "", percent: 0, amount: 0, dueDate: "" }])} data-testid="button-add-installment">
                   <Plus className="h-4 w-4 me-1" /> {t.addInstallment}
                 </Button>
@@ -649,6 +663,7 @@ export default function CateringContractsPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }
 
@@ -834,6 +849,8 @@ type CustomPh = { key: string; label: string; value: string };
 
 function TemplateEditor({ templates, t }: { templates: CateringContractTemplate[]; t: ReturnType<typeof useCateringT> }) {
   const { toast } = useToast();
+  const { isRTL } = useLanguage();
+  const tip = (en: string, ar: string) => (isRTL ? ar : en);
   const [selectedId, setSelectedId] = useState<string>("");
   const [name, setName] = useState("");
   const [content, setContent] = useState("");
@@ -1012,7 +1029,7 @@ function TemplateEditor({ templates, t }: { templates: CateringContractTemplate[
           </div>
 
           <div>
-            <Label>{t.placeholders}</Label>
+            <Label>{t.placeholders}<InfoTip>{tip("Click a placeholder to insert it into the template.", "انقر على عنصر نائب لإدراجه في النموذج.")}</InfoTip></Label>
             <div className="flex flex-wrap gap-1 mt-1">
               {PLACEHOLDERS.map((ph) => (
                 <Button key={ph} type="button" size="sm" variant="outline" onClick={() => insertPlaceholder(ph)} data-testid={`button-ph-${ph}`}>
@@ -1053,17 +1070,22 @@ function TemplateEditor({ templates, t }: { templates: CateringContractTemplate[
                       placeholder={t.placeholderValue}
                       data-testid={`input-custom-ph-value-${idx}`}
                     />
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      className="col-span-1"
-                      onClick={() => insertPlaceholder(cp.key)}
-                      disabled={!cp.key}
-                      data-testid={`button-insert-custom-ph-${idx}`}
-                    >
-                      <ListPlus className="h-3 w-3" />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          className="col-span-1"
+                          onClick={() => insertPlaceholder(cp.key)}
+                          disabled={!cp.key}
+                          data-testid={`button-insert-custom-ph-${idx}`}
+                        >
+                          <ListPlus className="h-3 w-3" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>{tip("Insert this placeholder into the template.", "إدراج هذا العنصر النائب في النموذج.")}</TooltipContent>
+                    </Tooltip>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button

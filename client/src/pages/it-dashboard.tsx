@@ -38,6 +38,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Tooltip as UITooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 interface ITAnalytics {
   totalOpen: number;
@@ -321,7 +323,10 @@ export default function ITDashboard() {
     new Set(activeTickets.map((t) => t.assignedTo).filter(Boolean))
   );
 
+  const isAr = language === 'Arabic';
+
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -359,6 +364,7 @@ export default function ITDashboard() {
                 <Label className="flex items-center gap-2">
                   <Languages className="h-4 w-4" />
                   {t.language || "Language"}
+                  <InfoTip>{isAr ? 'تغيير لغة الواجهة لحسابك فقط.' : 'Change the interface language for your account only.'}</InfoTip>
                 </Label>
                 <Select
                   value={language}
@@ -387,6 +393,7 @@ export default function ITDashboard() {
                 <Label className="flex items-center gap-2">
                   <Laptop className="h-4 w-4" />
                   {t.devicePreference || "Device Layout"}
+                  <InfoTip>{isAr ? 'يضبط التخطيط ليناسب جهازك (حاسوب/جهاز لوحي/جوال).' : 'Adjusts layout density to match your device type.'}</InfoTip>
                 </Label>
                 <div className="grid gap-2">
                   <div
@@ -471,6 +478,7 @@ export default function ITDashboard() {
                 <Label className="flex items-center gap-2">
                   {theme === "light" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                   {t.theme || "Theme"}
+                  <InfoTip>{isAr ? 'التبديل بين الوضع الفاتح والداكن.' : 'Toggle between light and dark appearance.'}</InfoTip>
                 </Label>
                 <div className="flex gap-2">
                   <Button
@@ -506,7 +514,7 @@ export default function ITDashboard() {
           <CardContent className={layout.cardPadding}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground mb-2">{t.totalOpen}</p>
+                <p className="text-sm text-muted-foreground mb-2">{t.totalOpen}<InfoTip>{isAr ? 'إجمالي التذاكر المفتوحة حالياً.' : 'Total tickets currently open.'}</InfoTip></p>
                 <p className={`${layout.text3Xl} font-bold font-mono`}>{analytics?.totalOpen || 0}</p>
                 {analytics && analytics.openTrend !== undefined && analytics.openTrend !== 0 && !isNaN(analytics.openTrend) && (
                   <div className="flex items-center gap-1 mt-2">
@@ -543,7 +551,7 @@ export default function ITDashboard() {
           <CardContent className={layout.cardPadding}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground mb-2">{t.urgentTickets}</p>
+                <p className="text-sm text-muted-foreground mb-2">{t.urgentTickets}<InfoTip>{isAr ? 'التذاكر ذات الأولوية العاجلة وتحتاج اهتمامًا فوريًا.' : 'Tickets marked Urgent needing immediate attention.'}</InfoTip></p>
                 <p
                   className={`${layout.text3Xl} font-bold font-mono ${
                     (analytics?.urgentTickets || 0) > 0 ? "text-destructive" : ""
@@ -568,7 +576,7 @@ export default function ITDashboard() {
           <CardContent className={layout.cardPadding}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground mb-2">{t.avgResponseTime}</p>
+                <p className="text-sm text-muted-foreground mb-2">{t.avgResponseTime}<InfoTip>{isAr ? 'متوسط وقت الاستجابة الأول للتذاكر بالساعات.' : 'Average first-response time for tickets, in hours.'}</InfoTip></p>
                 <p className={`${layout.text3Xl} font-bold font-mono`}>
                   {analytics?.avgResponseTime?.toFixed(1) || "0.0"}
                 </p>
@@ -585,7 +593,7 @@ export default function ITDashboard() {
           <CardContent className={layout.cardPadding}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <p className="text-sm text-muted-foreground mb-2">{t.ticketsClosedToday}</p>
+                <p className="text-sm text-muted-foreground mb-2">{t.ticketsClosedToday}<InfoTip>{isAr ? 'عدد التذاكر التي أغلقت اليوم.' : 'Number of tickets closed today.'}</InfoTip></p>
                 <p className={`${layout.text3Xl} font-bold font-mono`}>{analytics?.ticketsClosedToday || 0}</p>
                 <p className="text-xs text-muted-foreground mt-2">{t.completed}</p>
               </div>
@@ -981,5 +989,6 @@ export default function ITDashboard() {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }

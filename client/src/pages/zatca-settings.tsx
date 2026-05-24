@@ -16,7 +16,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Shield, AlertCircle, AlertTriangle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, RotateCcw, Clock, XCircle, Info, Eye, EyeOff, Copy, Download, Building2, ChevronDown, Upload } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 interface Restaurant {
   restaurantId: string;
@@ -545,6 +546,7 @@ export default function ZatcaSettingsPage() {
   const failedCount = invoiceStatuses?.filter(s => s.status === "rejected" || s.status === "failed").length || 0;
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`container mx-auto p-6 max-w-4xl ${isRTL ? "rtl" : ""}`} dir={isRTL ? "rtl" : "ltr"}>
       <div className="flex items-center gap-3 mb-6">
         <Shield className="h-8 w-8 text-primary" />
@@ -611,21 +613,26 @@ export default function ZatcaSettingsPage() {
             <span className="text-sm font-medium">{t.onboardingStatus || "Onboarding Status"}:</span>
             {getStatusBadge(settings?.onboardingStatus || "not_started")}
             {(settings?.onboardingStatus !== "not_started" && settings?.onboardingStatus !== "production_ready") && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  if (confirm("This will clear all ZATCA credentials and reset onboarding to Step 1. You will need to re-run the onboarding process. Continue?")) {
-                    resetOnboardingMutation.mutate();
-                  }
-                }}
-                disabled={resetOnboardingMutation.isPending}
-                data-testid="button-reset-onboarding"
-              >
-                {resetOnboardingMutation.isPending && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
-                <RotateCcw className="w-3 h-3 mr-1" />
-                Reset Onboarding
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      if (confirm("This will clear all ZATCA credentials and reset onboarding to Step 1. You will need to re-run the onboarding process. Continue?")) {
+                        resetOnboardingMutation.mutate();
+                      }
+                    }}
+                    disabled={resetOnboardingMutation.isPending}
+                    data-testid="button-reset-onboarding"
+                  >
+                    {resetOnboardingMutation.isPending && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+                    <RotateCcw className="w-3 h-3 mr-1" />
+                    Reset Onboarding
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>{isRTL ? "تحذير: يمسح جميع بيانات اعتماد ZATCA ويعيد التسجيل." : "Warning: clears all ZATCA credentials and restarts onboarding."}</TooltipContent>
+              </Tooltip>
             )}
           </div>
 
@@ -700,7 +707,7 @@ export default function ZatcaSettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="csrCommonName">{t.commonName || "Common Name"}</Label>
+                    <Label htmlFor="csrCommonName">{t.commonName || "Common Name"}<InfoTip>{isRTL ? "معرف فريد لجهاز نقطة البيع للشهادة." : "Unique identifier for this POS device on the certificate."}</InfoTip></Label>
                     <Input
                       id="csrCommonName"
                       value={formData.csrCommonName || ""}
@@ -722,7 +729,7 @@ export default function ZatcaSettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="csrOrganizationIdentifier">{t.vatNumber || "VAT Number"}</Label>
+                    <Label htmlFor="csrOrganizationIdentifier">{t.vatNumber || "VAT Number"}<InfoTip>{isRTL ? "رقم ضريبة القيمة المضافة السعودي المكون من 15 رقمًا، يبدأ وينتهي بالرقم 3." : "15-digit Saudi VAT number; must start and end with 3."}</InfoTip></Label>
                     <Input
                       id="csrOrganizationIdentifier"
                       value={formData.csrOrganizationIdentifier || ""}
@@ -749,7 +756,7 @@ export default function ZatcaSettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="csrOrganizationUnitName">{t.branchName || "Branch/Unit Name"}</Label>
+                    <Label htmlFor="csrOrganizationUnitName">{t.branchName || "Branch/Unit Name"}<InfoTip>{isRTL ? "اسم الفرع أو الوحدة المرتبطة بهذه الشهادة." : "Branch or unit associated with this certificate."}</InfoTip></Label>
                     <Input
                       id="csrOrganizationUnitName"
                       value={formData.csrOrganizationUnitName || ""}
@@ -760,7 +767,7 @@ export default function ZatcaSettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="csrSerialNumber">{t.deviceSerialNumber || "Device Serial Number"}</Label>
+                    <Label htmlFor="csrSerialNumber">{t.deviceSerialNumber || "Device Serial Number"}<InfoTip>{isRTL ? "معرف الجهاز بتنسيق ZATCA: 1-...|2-...|3-..." : "Device identifier in ZATCA format: 1-...|2-...|3-..."}</InfoTip></Label>
                     <Input
                       id="csrSerialNumber"
                       value={formData.csrSerialNumber || ""}
@@ -771,7 +778,7 @@ export default function ZatcaSettingsPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="crNumber">{t.commercialRegistration || "Commercial Registration"}</Label>
+                    <Label htmlFor="crNumber">{t.commercialRegistration || "Commercial Registration"}<InfoTip>{isRTL ? "رقم السجل التجاري للمنشأة." : "Your business commercial registration number."}</InfoTip></Label>
                     <Input
                       id="crNumber"
                       value={formData.crNumber || ""}
@@ -832,7 +839,7 @@ export default function ZatcaSettingsPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="postalZone">{t.postalCode || "Postal Code"}</Label>
+                      <Label htmlFor="postalZone">{t.postalCode || "Postal Code"}<InfoTip>{isRTL ? "الرمز البريدي المكون من 5 أرقام للعنوان." : "5-digit postal code for the address."}</InfoTip></Label>
                       <Input
                         id="postalZone"
                         value={formData.postalZone || ""}
@@ -1350,19 +1357,19 @@ export default function ZatcaSettingsPage() {
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-2xl font-bold text-yellow-500" data-testid="text-pending-count">{pendingCount}</div>
-                    <p className="text-sm text-muted-foreground">{t.pending || "Pending"}</p>
+                    <p className="text-sm text-muted-foreground">{t.pending || "Pending"}<InfoTip>{isRTL ? "فواتير في انتظار الإرسال إلى ZATCA." : "Invoices waiting to be submitted to ZATCA."}</InfoTip></p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-2xl font-bold text-green-500" data-testid="text-cleared-count">{clearedCount}</div>
-                    <p className="text-sm text-muted-foreground">{t.cleared || "Cleared/Reported"}</p>
+                    <p className="text-sm text-muted-foreground">{t.cleared || "Cleared/Reported"}<InfoTip>{isRTL ? "فواتير قبلتها ZATCA بنجاح." : "Invoices successfully accepted by ZATCA."}</InfoTip></p>
                   </CardContent>
                 </Card>
                 <Card>
                   <CardContent className="pt-6">
                     <div className="text-2xl font-bold text-red-500" data-testid="text-failed-count">{failedCount}</div>
-                    <p className="text-sm text-muted-foreground">{t.failed || "Failed/Rejected"}</p>
+                    <p className="text-sm text-muted-foreground">{t.failed || "Failed/Rejected"}<InfoTip>{isRTL ? "فواتير رفضتها ZATCA أو فشل إرسالها." : "Invoices rejected by ZATCA or failed to submit."}</InfoTip></p>
                   </CardContent>
                 </Card>
               </div>
@@ -1407,5 +1414,6 @@ export default function ZatcaSettingsPage() {
         </>
       )}
     </div>
+    </TooltipProvider>
   );
 }

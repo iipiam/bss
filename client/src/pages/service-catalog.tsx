@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -538,6 +539,7 @@ export default function ServiceCatalog() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div
         className={`flex ${layout.isMobile ? "flex-col gap-3" : "items-center justify-between"}`}
@@ -674,7 +676,7 @@ export default function ServiceCatalog() {
                     name="pricingMethod"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.pricingMethod}</FormLabel>
+                        <FormLabel>{t.pricingMethod}<InfoTip>How this service is priced (per piece, hour, area, etc.).</InfoTip></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-pricing-method">
@@ -719,7 +721,7 @@ export default function ServiceCatalog() {
                     name="unit"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.unit}</FormLabel>
+                        <FormLabel>{t.unit}<InfoTip>Measurement unit used with the price (e.g. meter, hour).</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-service-unit"
@@ -736,7 +738,7 @@ export default function ServiceCatalog() {
                     name="estimatedDuration"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.estimatedDuration}</FormLabel>
+                        <FormLabel>{t.estimatedDuration}<InfoTip>Typical time required to perform this service.</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-estimated-duration"
@@ -809,6 +811,7 @@ export default function ServiceCatalog() {
             <div className="flex items-center gap-2 mb-1">
               <Wrench className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.totalServices}</p>
+              <InfoTip>Total number of services in your catalog.</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-services">
               {services.length}
@@ -820,6 +823,7 @@ export default function ServiceCatalog() {
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.activeServices}</p>
+              <InfoTip>Services currently marked as active.</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-active-services">
               {activeServices.length}
@@ -831,6 +835,7 @@ export default function ServiceCatalog() {
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.avgPrice}</p>
+              <InfoTip>Average unit price across all services.</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-average-price">
               {avgPrice.toFixed(2)} SAR
@@ -842,6 +847,7 @@ export default function ServiceCatalog() {
             <div className="flex items-center gap-2 mb-1">
               <Layers className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.categories}</p>
+              <InfoTip>Number of distinct service categories.</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-categories">
               {totalCategories}
@@ -909,7 +915,7 @@ export default function ServiceCatalog() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>{t.delete}</TooltipContent>
+                    <TooltipContent>Delete this service permanently.</TooltipContent>
                   </Tooltip>
                 </div>
               </CardHeader>
@@ -1015,7 +1021,7 @@ export default function ServiceCatalog() {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>{t.delete}</TooltipContent>
+                        <TooltipContent>Delete this product permanently.</TooltipContent>
                       </Tooltip>
                     </div>
                   </CardHeader>
@@ -1119,7 +1125,7 @@ export default function ServiceCatalog() {
                         <div className="col-span-3"><Input type="number" placeholder={t.itemCost || "Cost (SAR)"} value={it.cost} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], cost: e.target.value }; setProductItems(a); }} data-testid={`input-item-cost-${idx}`} /></div>
                         <div className="col-span-2"><Input type="number" placeholder={(t as any).sellingPrice || "Sell (SAR)"} value={it.sellingPrice} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], sellingPrice: e.target.value }; setProductItems(a); }} data-testid={`input-item-selling-price-${idx}`} /></div>
                         <div className="col-span-2"><Input type="number" placeholder={t.itemPercentage || "% of Total"} value={it.percentage} onChange={(e) => { const a = [...productItems]; a[idx] = { ...a[idx], percentage: e.target.value }; setProductItems(a); }} /></div>
-                        <div className="col-span-1"><Button type="button" size="icon" variant="ghost" onClick={() => setProductItems(productItems.filter((_, i) => i !== idx))} data-testid={`button-remove-item-${idx}`}><X className="h-4 w-4" /></Button></div>
+                        <div className="col-span-1"><Tooltip><TooltipTrigger asChild><Button type="button" size="icon" variant="ghost" onClick={() => setProductItems(productItems.filter((_, i) => i !== idx))} data-testid={`button-remove-item-${idx}`}><X className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Remove this item.</TooltipContent></Tooltip></div>
                       </div>
                     ))}
                   </div>
@@ -1175,9 +1181,14 @@ export default function ServiceCatalog() {
                             <Input type="number" placeholder={t.quantity || "Qty"} value={s.quantity} onChange={(e) => { const a = [...productServices]; a[idx] = { ...a[idx], quantity: e.target.value }; setProductServices(a); }} data-testid={`input-service-qty-${idx}`} />
                           </div>
                           <div className="col-span-1">
-                            <Button type="button" size="icon" variant="ghost" onClick={() => setProductServices(productServices.filter((_, i) => i !== idx))} data-testid={`button-remove-service-${idx}`}>
-                              <X className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button type="button" size="icon" variant="ghost" onClick={() => setProductServices(productServices.filter((_, i) => i !== idx))} data-testid={`button-remove-service-${idx}`}>
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Remove this service.</TooltipContent>
+                            </Tooltip>
                           </div>
                         </div>
                       </div>
@@ -1199,7 +1210,7 @@ export default function ServiceCatalog() {
                       <div key={idx} className="grid grid-cols-12 gap-2 items-end" data-testid={`row-task-${idx}`}>
                         <div className="col-span-7"><Input placeholder={t.productName || "Task name"} value={tk.name} onChange={(e) => { const a = [...productTasks]; a[idx] = { ...a[idx], name: e.target.value }; setProductTasks(a); }} /></div>
                         <div className="col-span-4"><Input type="number" placeholder={`${t.taskDuration || "Duration"} (${t.durationDays || "days"})`} value={tk.duration} onChange={(e) => { const a = [...productTasks]; a[idx] = { ...a[idx], duration: e.target.value }; setProductTasks(a); }} /></div>
-                        <div className="col-span-1"><Button type="button" size="icon" variant="ghost" onClick={() => setProductTasks(productTasks.filter((_, i) => i !== idx))} data-testid={`button-remove-task-${idx}`}><X className="h-4 w-4" /></Button></div>
+                        <div className="col-span-1"><Tooltip><TooltipTrigger asChild><Button type="button" size="icon" variant="ghost" onClick={() => setProductTasks(productTasks.filter((_, i) => i !== idx))} data-testid={`button-remove-task-${idx}`}><X className="h-4 w-4" /></Button></TooltipTrigger><TooltipContent>Remove this task.</TooltipContent></Tooltip></div>
                       </div>
                     ))}
                   </div>
@@ -1436,5 +1447,6 @@ export default function ServiceCatalog() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

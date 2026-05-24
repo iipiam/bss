@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { Order } from "@shared/schema";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 const statusConfig: Record<string, { variant: "default" | "secondary" | "destructive" | "outline"; color: string }> = {
   "Pending": { variant: "secondary", color: "text-orange-600" },
@@ -21,7 +23,7 @@ const statusConfig: Record<string, { variant: "default" | "secondary" | "destruc
 export default function Orders() {
   const { toast } = useToast();
   const layout = useDeviceLayout();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   
   const getStatusLabel = (status: string) => {
     switch (status) {
@@ -72,6 +74,7 @@ export default function Orders() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div>
         <h1 className={`${layout.text3Xl} font-bold mb-2`}>{t.ordersTracking}</h1>
@@ -81,7 +84,10 @@ export default function Orders() {
       <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, tablet: 2, mobile: 1 })}`}>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">{t.pending}</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t.pending}
+              <InfoTip>{isRTL ? "طلبات جديدة بانتظار البدء بالتحضير." : "New orders awaiting preparation."}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{statusCounts.pending}</p>
@@ -89,7 +95,10 @@ export default function Orders() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">{t.preparing}</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t.preparing}
+              <InfoTip>{isRTL ? "طلبات قيد التحضير حالياً في المطبخ." : "Orders currently being prepared in the kitchen."}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{statusCounts.preparing}</p>
@@ -97,7 +106,10 @@ export default function Orders() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">{t.ready}</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t.ready}
+              <InfoTip>{isRTL ? "طلبات جاهزة للتسليم أو الاستلام." : "Orders ready for pickup or delivery."}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{statusCounts.ready}</p>
@@ -105,7 +117,10 @@ export default function Orders() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">{t.completedToday}</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t.completedToday}
+              <InfoTip>{isRTL ? "إجمالي الطلبات المكتملة أو المسلمة اليوم." : "Total orders completed or delivered today."}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{statusCounts.completed}</p>
@@ -214,5 +229,6 @@ export default function Orders() {
         ))}
       </div>
     </div>
+    </TooltipProvider>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
@@ -172,7 +173,7 @@ export default function ServiceProjects() {
   const [deletingProject, setDeletingProject] = useState<ServiceProject | null>(null);
   const [reportingProject, setReportingProject] = useState<ServiceProject | null>(null);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const layout = useDeviceLayout();
 
   const getStatusLabel = (status: string): string => {
@@ -433,6 +434,7 @@ export default function ServiceProjects() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       <div
         className={`flex ${layout.isMobile ? "flex-col gap-3" : "items-center justify-between"}`}
@@ -578,7 +580,7 @@ export default function ServiceProjects() {
                       name="clientCrNumber"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.clientCrNumber}</FormLabel>
+                          <FormLabel>{t.clientCrNumber}<InfoTip>{isRTL ? "رقم السجل التجاري للعميل." : "Client's Commercial Registration number."}</InfoTip></FormLabel>
                           <FormControl>
                             <Input
                               data-testid="input-client-cr-number"
@@ -595,7 +597,7 @@ export default function ServiceProjects() {
                       name="clientVatNumber"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.clientVatNumber}</FormLabel>
+                          <FormLabel>{t.clientVatNumber}<InfoTip>{isRTL ? "الرقم الضريبي المكون من 15 رقماً." : "Client's 15-digit VAT registration number."}</InfoTip></FormLabel>
                           <FormControl>
                             <Input
                               data-testid="input-client-vat-number"
@@ -614,7 +616,7 @@ export default function ServiceProjects() {
                       name="clientAddress"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.clientAddress}</FormLabel>
+                          <FormLabel>{t.clientAddress}<InfoTip>{isRTL ? "العنوان الوطني الكامل للعميل." : "Client's full national address."}</InfoTip></FormLabel>
                           <FormControl>
                             <Textarea
                               data-testid="input-client-address"
@@ -634,7 +636,7 @@ export default function ServiceProjects() {
                       name="clientLegalRepresentative"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>{t.clientLegalRepresentative}</FormLabel>
+                          <FormLabel>{t.clientLegalRepresentative}<InfoTip>{isRTL ? "اسم الشخص المخول قانونياً بتوقيع العقود." : "Person legally authorized to sign contracts."}</InfoTip></FormLabel>
                           <FormControl>
                             <Input
                               data-testid="input-client-legal-representative"
@@ -691,7 +693,7 @@ export default function ServiceProjects() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.status}</FormLabel>
+                        <FormLabel>{t.status}<InfoTip>{isRTL ? "الحالة الحالية لسير العمل في المشروع." : "Current workflow state of the project."}</InfoTip></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-project-status">
@@ -715,7 +717,7 @@ export default function ServiceProjects() {
                     name="priority"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.priority}</FormLabel>
+                        <FormLabel>{t.priority}<InfoTip>{isRTL ? "مستوى أهمية المشروع وعجلته." : "Importance and urgency of the project."}</InfoTip></FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
                             <SelectTrigger data-testid="select-project-priority">
@@ -741,7 +743,7 @@ export default function ServiceProjects() {
                     name="startDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.startDate}</FormLabel>
+                        <FormLabel>{t.startDate}<InfoTip>{isRTL ? "تاريخ بدء تنفيذ المشروع المخطط له." : "Planned project start date."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-start-date"
@@ -758,7 +760,7 @@ export default function ServiceProjects() {
                     name="endDate"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>{t.endDate}</FormLabel>
+                        <FormLabel>{t.endDate}<InfoTip>{isRTL ? "تاريخ انتهاء المشروع المتوقع." : "Expected project completion date."}</InfoTip></FormLabel>
                         <FormControl>
                           <Input
                             data-testid="input-end-date"
@@ -777,7 +779,7 @@ export default function ServiceProjects() {
                   name="estimatedBudget"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.estimatedBudget}</FormLabel>
+                      <FormLabel>{t.estimatedBudget}<InfoTip>{isRTL ? "الميزانية الإجمالية المقدرة بالريال السعودي." : "Estimated total budget in SAR."}</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           data-testid="input-estimated-budget"
@@ -855,6 +857,7 @@ export default function ServiceProjects() {
             <div className="flex items-center gap-2 mb-1">
               <FileText className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.totalProjects}</p>
+              <InfoTip>{isRTL ? "إجمالي عدد المشاريع المسجلة." : "Total number of registered projects."}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-projects">
               {projects.length}
@@ -866,6 +869,7 @@ export default function ServiceProjects() {
             <div className="flex items-center gap-2 mb-1">
               <Clock className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.activeProjects}</p>
+              <InfoTip>{isRTL ? "المشاريع قيد التنفيذ حالياً." : "Projects currently in progress."}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-active-projects">
               {activeProjects.length}
@@ -877,6 +881,7 @@ export default function ServiceProjects() {
             <div className="flex items-center gap-2 mb-1">
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.completedProjects}</p>
+              <InfoTip>{isRTL ? "المشاريع المنجزة بنجاح." : "Projects successfully completed."}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-completed-projects">
               {completedProjects.length}
@@ -888,6 +893,7 @@ export default function ServiceProjects() {
             <div className="flex items-center gap-2 mb-1">
               <DollarSign className="h-4 w-4 text-muted-foreground" />
               <p className="text-sm text-muted-foreground">{t.totalBudget}</p>
+              <InfoTip>{isRTL ? "إجمالي الميزانية المقدرة لجميع المشاريع." : "Sum of estimated budgets across all projects."}</InfoTip>
             </div>
             <p className="text-2xl font-bold" data-testid="text-total-budget">
               {totalEstimatedBudget.toLocaleString()} SAR
@@ -984,7 +990,7 @@ export default function ServiceProjects() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>{t.delete}</TooltipContent>
+                    <TooltipContent>{isRTL ? "حذف المشروع نهائياً — لا يمكن التراجع." : "Permanently delete this project — cannot be undone."}</TooltipContent>
                   </Tooltip>
                 </div>
               </CardHeader>
@@ -1143,6 +1149,7 @@ export default function ServiceProjects() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }
 

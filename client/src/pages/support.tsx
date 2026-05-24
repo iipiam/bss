@@ -31,6 +31,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -94,7 +96,7 @@ const getPriorityLabel = (priority: string, t: any) => {
 };
 
 export default function Support() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { user, accountType } = useAuth();
   const { toast } = useToast();
   const { lastNotification, isConnected } = useNotifications();
@@ -227,6 +229,7 @@ export default function Support() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
@@ -405,7 +408,10 @@ export default function Support() {
                 name="subject"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t.ticketSubject}</FormLabel>
+                    <FormLabel>
+                      {t.ticketSubject}
+                      <InfoTip>{isRTL ? "ملخص قصير لمشكلتك." : "A short summary of your issue."}</InfoTip>
+                    </FormLabel>
                     <FormControl>
                       <Input
                         placeholder={t.enterSubject}
@@ -423,7 +429,10 @@ export default function Support() {
                 name="category"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t.ticketCategory}</FormLabel>
+                    <FormLabel>
+                      {t.ticketCategory}
+                      <InfoTip>{isRTL ? "اختر الفئة التي تصف طلبك." : "Choose the category that best describes your request."}</InfoTip>
+                    </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-ticket-category">
@@ -449,7 +458,10 @@ export default function Support() {
                 name="priority"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t.ticketPriority}</FormLabel>
+                    <FormLabel>
+                      {t.ticketPriority}
+                      <InfoTip>{isRTL ? "حدد مدى إلحاح هذه المشكلة." : "Set how urgent this issue is."}</InfoTip>
+                    </FormLabel>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-ticket-priority">
@@ -473,7 +485,10 @@ export default function Support() {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t.ticketDescription}</FormLabel>
+                    <FormLabel>
+                      {t.ticketDescription}
+                      <InfoTip>{isRTL ? "صف المشكلة وخطوات إعادة إنتاجها." : "Describe the problem and how to reproduce it."}</InfoTip>
+                    </FormLabel>
                     <FormControl>
                       <Textarea
                         placeholder={t.enterDescription}
@@ -509,5 +524,6 @@ export default function Support() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

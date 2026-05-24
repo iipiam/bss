@@ -5,7 +5,8 @@ import { useAuth } from "@/lib/auth";
 import { useBranch } from "@/contexts/BranchContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -92,7 +93,7 @@ type Branch = {
 };
 
 export default function Chat() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { user } = useAuth();
   const { currentBranch } = useBranch();
   const { toast } = useToast();
@@ -331,6 +332,7 @@ export default function Chat() {
   const selectedConv = conversations?.find(c => c.id === selectedConversation);
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="flex h-[calc(100vh-4rem)] gap-4 p-4">
       {/* Left: Conversation List */}
       <Card className="w-80 flex flex-col">
@@ -352,7 +354,7 @@ export default function Chat() {
                   <Hash className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>New channel</TooltipContent>
+              <TooltipContent>{isRTL ? "قناة جديدة" : "New channel"}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -366,7 +368,7 @@ export default function Chat() {
                   <UserPlus className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>New direct message</TooltipContent>
+              <TooltipContent>{isRTL ? "رسالة مباشرة جديدة" : "New direct message"}</TooltipContent>
             </Tooltip>
           </div>
         </CardHeader>
@@ -544,7 +546,7 @@ export default function Chat() {
                         <Send className="h-4 w-4" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>{t.sendMessage}</TooltipContent>
+                    <TooltipContent>{isRTL ? "إرسال الرسالة" : "Send message"}</TooltipContent>
                   </Tooltip>
                 </div>
               </div>
@@ -576,7 +578,10 @@ export default function Chat() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{(t as any).channelName || "Channel Name"}</FormLabel>
+                    <FormLabel>
+                      {(t as any).channelName || "Channel Name"}
+                      <InfoTip>{isRTL ? "ابدأ بـ # وأحرف صغيرة وأرقام وشرطات فقط." : "Start with # and use lowercase letters, numbers, hyphens."}</InfoTip>
+                    </FormLabel>
                     <FormControl>
                       <Input {...field} placeholder="#general" data-testid="input-channel-name" />
                     </FormControl>
@@ -590,7 +595,10 @@ export default function Chat() {
                 name="scope"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{(t as any).scope || "Scope"}</FormLabel>
+                    <FormLabel>
+                      {(t as any).scope || "Scope"}
+                      <InfoTip>{isRTL ? "حدد ما إذا كانت القناة على مستوى المطعم أو فرع معين." : "Choose whether the channel is restaurant-wide or for a specific branch."}</InfoTip>
+                    </FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger data-testid="select-channel-scope">
@@ -688,5 +696,6 @@ export default function Chat() {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }

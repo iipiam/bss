@@ -17,11 +17,13 @@ import type { Transaction } from "@shared/schema";
 import { useState } from "react";
 import { exportToPDF, exportToExcel } from "@/lib/exportUtils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 export default function Sales() {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   
   const { data: transactions = [], isLoading } = useQuery<Transaction[]>({
     queryKey: ["/api/transactions"],
@@ -113,6 +115,7 @@ export default function Sales() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-8 space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div>
@@ -134,7 +137,10 @@ export default function Sales() {
       <div className="grid gap-6 md:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">{t.totalSales}</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t.totalSales}
+              <InfoTip>{isRTL ? "إجمالي إيرادات المبيعات عبر جميع المعاملات." : "Total sales revenue across all transactions."}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{todaysSales.toFixed(2)} SAR</p>
@@ -143,7 +149,10 @@ export default function Sales() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">{t.transactions}</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t.transactions}
+              <InfoTip>{isRTL ? "العدد الإجمالي للمعاملات المسجلة." : "Total number of recorded transactions."}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{transactions.length}</p>
@@ -152,7 +161,10 @@ export default function Sales() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-muted-foreground">{t.avgOrderValue}</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              {t.avgOrderValue}
+              <InfoTip>{isRTL ? "متوسط قيمة الطلب لكل معاملة." : "Average order value per transaction."}</InfoTip>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold font-mono">{avgOrderValue.toFixed(2)} SAR</p>
@@ -205,5 +217,6 @@ export default function Sales() {
         </Table>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }

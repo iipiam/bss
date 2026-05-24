@@ -36,6 +36,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
+import {
   Plus,
   Search,
   Edit,
@@ -205,7 +212,7 @@ function parseMealSelectionsMap(raw: unknown, mealTimes: string[]): MealSelectio
 }
 
 export default function MealSubscriptionsPage() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -614,6 +621,7 @@ export default function MealSubscriptionsPage() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="p-4 md:p-6 space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
@@ -632,7 +640,7 @@ export default function MealSubscriptionsPage() {
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t.activeSubscriptions}</p>
+              <p className="text-sm text-muted-foreground">{t.activeSubscriptions}<InfoTip>{isRTL ? 'عدد الاشتراكات النشطة حالياً.' : 'Number of currently active subscriptions.'}</InfoTip></p>
               <p className="text-2xl font-bold" data-testid="text-active-count">{activeCount}</p>
             </div>
           </CardContent>
@@ -643,7 +651,7 @@ export default function MealSubscriptionsPage() {
               <DollarSign className="h-5 w-5 text-green-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t.monthlyRevenue}</p>
+              <p className="text-sm text-muted-foreground">{t.monthlyRevenue}<InfoTip>{isRTL ? 'إجمالي إيرادات الاشتراكات النشطة.' : 'Total revenue from active subscriptions.'}</InfoTip></p>
               <p className="text-2xl font-bold" data-testid="text-monthly-revenue">{monthlyRev.toFixed(2)} SAR</p>
             </div>
           </CardContent>
@@ -654,7 +662,7 @@ export default function MealSubscriptionsPage() {
               <Wallet className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t.creditBalance || "Credit Balance"}</p>
+              <p className="text-sm text-muted-foreground">{t.creditBalance || "Credit Balance"}<InfoTip>{isRTL ? 'إجمالي الرصيد المتبقي عبر الاشتراكات النشطة.' : 'Total remaining credit across active subscriptions.'}</InfoTip></p>
               <p className="text-2xl font-bold" data-testid="text-total-credit">
                 {subscriptions
                   .filter((s) => s.status === "active")
@@ -670,7 +678,7 @@ export default function MealSubscriptionsPage() {
               <Truck className="h-5 w-5 text-orange-600" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t.todaysDeliveries}</p>
+              <p className="text-sm text-muted-foreground">{t.todaysDeliveries}<InfoTip>{isRTL ? 'الوجبات المستحقة للتوصيل اليوم.' : 'Meals scheduled for delivery today.'}</InfoTip></p>
               <p className="text-2xl font-bold" data-testid="text-today-deliveries">
                 {todaysDeliveryList.reduce((count, sub) => {
                   const mealTimes = sub.mealTime.split(",").map((mt) => mt.trim());
@@ -972,10 +980,15 @@ export default function MealSubscriptionsPage() {
                           {t.cancelSubscription}
                         </Button>
                       )}
-                      <Button size="sm" variant="destructive" onClick={() => setDeleteId(sub.id)} data-testid={`button-delete-${sub.id}`}>
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        {t.delete || "Delete"}
-                      </Button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button size="sm" variant="destructive" onClick={() => setDeleteId(sub.id)} data-testid={`button-delete-${sub.id}`}>
+                            <Trash2 className="h-3 w-3 mr-1" />
+                            {t.delete || "Delete"}
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>{isRTL ? 'تحذير: حذف الاشتراك نهائي.' : 'Warning: deleting this subscription is permanent.'}</TooltipContent>
+                      </Tooltip>
                     </div>
                   </CardContent>
                 </Card>
@@ -1039,7 +1052,7 @@ export default function MealSubscriptionsPage() {
                   name="deliveryAddress"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.deliveryAddress}</FormLabel>
+                      <FormLabel>{t.deliveryAddress}<InfoTip>{isRTL ? 'العنوان الذي تُسلَّم إليه الوجبات.' : 'Address where meals will be delivered.'}</InfoTip></FormLabel>
                       <FormControl>
                         <Input {...field} data-testid="input-delivery-address" />
                       </FormControl>
@@ -1055,7 +1068,7 @@ export default function MealSubscriptionsPage() {
                   name="planType"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.planType}</FormLabel>
+                      <FormLabel>{t.planType}<InfoTip>{isRTL ? 'وتيرة الاشتراك: يومي أو أسبوعي أو شهري.' : 'Subscription frequency: daily, weekly, or monthly.'}</InfoTip></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-plan-type">
@@ -1077,7 +1090,7 @@ export default function MealSubscriptionsPage() {
                   name="mealTime"
                   render={() => (
                     <FormItem>
-                      <FormLabel>{t.mealTime}</FormLabel>
+                      <FormLabel>{t.mealTime}<InfoTip>{isRTL ? 'اختر وجبة أو أكثر يومياً.' : 'Choose one or more meals per day.'}</InfoTip></FormLabel>
                       <div className="flex flex-wrap gap-2 mt-1">
                         {MEAL_TIMES.map((time) => {
                           const selected = (form.watch("mealTime") || []).includes(time);
@@ -1142,7 +1155,7 @@ export default function MealSubscriptionsPage() {
                   name="paymentStatus"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.paymentStatus}</FormLabel>
+                      <FormLabel>{t.paymentStatus}<InfoTip>{isRTL ? 'حالة دفع المشترك الحالية.' : 'Current payment state of the subscriber.'}</InfoTip></FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger data-testid="select-payment-status">
@@ -1162,7 +1175,7 @@ export default function MealSubscriptionsPage() {
               </div>
 
               <div>
-                <FormLabel>{t.scheduleDays}</FormLabel>
+                <FormLabel>{t.scheduleDays}<InfoTip>{isRTL ? 'اختر أيام الأسبوع للتوصيل.' : 'Pick the weekdays for delivery.'}</InfoTip></FormLabel>
                 <div className="grid grid-cols-7 gap-1 mt-2">
                   {DAY_KEYS.map((day) => {
                     const selected = (form.watch("scheduleDays") || []).includes(day);
@@ -1192,7 +1205,7 @@ export default function MealSubscriptionsPage() {
                   name="startDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.startDate}</FormLabel>
+                      <FormLabel>{t.startDate}<InfoTip>{isRTL ? 'تاريخ بدء الاشتراك.' : 'Date the subscription starts.'}</InfoTip></FormLabel>
                       <FormControl>
                         <Input type="date" {...field} data-testid="input-start-date" />
                       </FormControl>
@@ -1205,7 +1218,7 @@ export default function MealSubscriptionsPage() {
                   name="endDate"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.endDate}</FormLabel>
+                      <FormLabel>{t.endDate}<InfoTip>{isRTL ? 'تاريخ انتهاء الاشتراك (اختياري).' : 'Date the subscription ends (optional).'}</InfoTip></FormLabel>
                       <FormControl>
                         <Input type="date" {...field} data-testid="input-end-date" />
                       </FormControl>
@@ -1221,7 +1234,7 @@ export default function MealSubscriptionsPage() {
                   name="numberOfDays"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>{t.numberOfDays || "Number of Days"} | عدد الأيام</FormLabel>
+                      <FormLabel>{t.numberOfDays || "Number of Days"} | عدد الأيام<InfoTip>{isRTL ? 'إجمالي أيام التوصيل المغطاة بالاشتراك.' : 'Total delivery days covered by the subscription.'}</InfoTip></FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -1260,7 +1273,7 @@ export default function MealSubscriptionsPage() {
                     const hasCalc = mealsPerDay > 0 && numDays && numDays > 0;
                     return (
                       <FormItem>
-                        <FormLabel>{t.subscriptionAmount} (SAR)</FormLabel>
+                        <FormLabel>{t.subscriptionAmount} (SAR)<InfoTip>{isRTL ? 'إجمالي مبلغ الاشتراك بالريال السعودي.' : 'Total subscription amount in SAR.'}</InfoTip></FormLabel>
                         <FormControl>
                           <Input type="number" step="0.01" {...field} data-testid="input-amount" />
                         </FormControl>
@@ -1277,7 +1290,7 @@ export default function MealSubscriptionsPage() {
               </div>
 
               <div>
-                <FormLabel>{t.mealSelections}</FormLabel>
+                <FormLabel>{t.mealSelections}<InfoTip>{isRTL ? 'اختر أصناف القائمة المضمّنة في كل وجبة.' : 'Pick the menu items included for each meal.'}</InfoTip></FormLabel>
                 {(form.watch("mealTime") || []).map((mt) => {
                   const currentMap = (form.watch("mealSelections") || {}) as any as MealSelectionsMap;
                   const mtSelections = currentMap[mt] || [];
@@ -1311,14 +1324,19 @@ export default function MealSubscriptionsPage() {
                           {mtSelections.map((sel, idx) => (
                             <Badge key={idx} variant="secondary" className="gap-1" data-testid={`badge-selection-${mt}-${idx}`}>
                               {sel.name}
-                              <button
-                                type="button"
-                                className="ml-1 hover:text-destructive"
-                                onClick={() => removeSelectionFromMealTime(mt, idx)}
-                                data-testid={`button-remove-selection-${mt}-${idx}`}
-                              >
-                                <XCircle className="h-3 w-3" />
-                              </button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <button
+                                    type="button"
+                                    className="ml-1 hover:text-destructive"
+                                    onClick={() => removeSelectionFromMealTime(mt, idx)}
+                                    data-testid={`button-remove-selection-${mt}-${idx}`}
+                                  >
+                                    <XCircle className="h-3 w-3" />
+                                  </button>
+                                </TooltipTrigger>
+                                <TooltipContent>{isRTL ? 'إزالة هذا الصنف.' : 'Remove this item.'}</TooltipContent>
+                              </Tooltip>
                             </Badge>
                           ))}
                         </div>
@@ -1333,7 +1351,7 @@ export default function MealSubscriptionsPage() {
                 name="dietaryNotes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t.dietaryNotes}</FormLabel>
+                    <FormLabel>{t.dietaryNotes}<InfoTip>{isRTL ? 'الحساسيات أو التفضيلات الغذائية.' : 'Allergies or dietary preferences.'}</InfoTip></FormLabel>
                     <FormControl>
                       <Textarea {...field} rows={2} data-testid="input-dietary-notes" />
                     </FormControl>
@@ -1347,7 +1365,7 @@ export default function MealSubscriptionsPage() {
                 name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t.notes || "Notes"}</FormLabel>
+                    <FormLabel>{t.notes || "Notes"}<InfoTip>{isRTL ? 'ملاحظات داخلية حول الاشتراك.' : 'Internal notes about the subscription.'}</InfoTip></FormLabel>
                     <FormControl>
                       <Textarea {...field} rows={2} data-testid="input-notes" />
                     </FormControl>
@@ -1387,5 +1405,6 @@ export default function MealSubscriptionsPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </TooltipProvider>
   );
 }

@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { TrendingUp, Search, Calendar, Building2, Factory, Info } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -42,7 +43,8 @@ interface PerformanceData {
 }
 
 export default function Performance() {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isAr = language === 'Arabic';
   const layout = useDeviceLayout();
   const { user, accountType } = useAuth();
   const [, navigate] = useLocation();
@@ -99,6 +101,7 @@ export default function Performance() {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className={`${layout.padding} ${layout.spaceY}`}>
       {/* Header */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -125,6 +128,7 @@ export default function Performance() {
               <label className="text-sm font-medium flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
                 {(t as any).dateRange || "Date Range"}
+                <InfoTip>{isAr ? "حدد الفترة الزمنية لتحليل أداء المبيعات." : "Select the time window used to aggregate sales performance."}</InfoTip>
               </label>
               <Select value={dateRange} onValueChange={setDateRange}>
                 <SelectTrigger data-testid="select-date-range">
@@ -251,5 +255,6 @@ export default function Performance() {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }

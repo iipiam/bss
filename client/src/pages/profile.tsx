@@ -23,6 +23,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 type ProfileResponse = {
@@ -38,7 +40,7 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export default function Profile() {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -280,6 +282,7 @@ export default function Profile() {
   const isSubscriptionCancelled = restaurant?.subscriptionStatus === "cancelled" || restaurant?.subscriptionStatus === "expired";
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="container mx-auto p-6 max-w-4xl space-y-6">
       <div>
         <h1 className="text-3xl font-bold" data-testid="text-profile-title">{t.userProfile}</h1>
@@ -300,7 +303,10 @@ export default function Profile() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle className="text-xl">{t.profileInformation}</CardTitle>
+              <CardTitle className="text-xl">
+                {t.profileInformation}
+                <InfoTip>{isRTL ? "بيانات حسابك الشخصية وتفاصيل الاتصال." : "Your personal account and contact details."}</InfoTip>
+              </CardTitle>
               <CardDescription>{t.yourPersonalDetails}</CardDescription>
             </div>
             <User className="h-8 w-8 text-muted-foreground" />
@@ -422,7 +428,10 @@ export default function Profile() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle className="text-xl">{t.subscriptionDetails}</CardTitle>
+              <CardTitle className="text-xl">
+                {t.subscriptionDetails}
+                <InfoTip>{isRTL ? "خطة اشتراكك الحالية وحالتها وتواريخها." : "Your current subscription plan, status, and dates."}</InfoTip>
+              </CardTitle>
               <CardDescription>{t.subscriptionInformationDesc}</CardDescription>
             </div>
             <CreditCard className="h-8 w-8 text-muted-foreground" />
@@ -492,14 +501,19 @@ export default function Profile() {
 
             {restaurant?.subscriptionStatus === "active" && (
               <>
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  onClick={() => setCancelDialogOpen(true)}
-                  data-testid="button-cancel-subscription"
-                >
-                  {t.cancelSubscription}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      className="w-full"
+                      onClick={() => setCancelDialogOpen(true)}
+                      data-testid="button-cancel-subscription"
+                    >
+                      {t.cancelSubscription}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>{isRTL ? "تحذير: سيؤدي هذا إلى إنهاء اشتراكك." : "Warning: this will terminate your subscription."}</TooltipContent>
+                </Tooltip>
                 
                 <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
                   <DialogContent className="sm:max-w-md">
@@ -603,7 +617,10 @@ export default function Profile() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle className="text-xl">{t.subscriptionInvoices}</CardTitle>
+              <CardTitle className="text-xl">
+                {t.subscriptionInvoices}
+                <InfoTip>{isRTL ? "تنزيل فواتير الاشتراك السابقة." : "Download your past subscription invoices."}</InfoTip>
+              </CardTitle>
               <CardDescription>{t.viewAndDownload}</CardDescription>
             </div>
             <FileText className="h-8 w-8 text-muted-foreground" />
@@ -654,5 +671,6 @@ export default function Profile() {
         </Card>
       </div>
     </div>
+    </TooltipProvider>
   );
 }

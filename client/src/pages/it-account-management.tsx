@@ -46,7 +46,8 @@ import {
   Edit
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { InfoTip } from "@/components/ui/info-tip";
 
 interface Account {
   id: string;
@@ -146,7 +147,8 @@ interface PendingSignup {
 
 export default function ITAccountManagement() {
   const { user, accountType, isLoading: authLoading } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isAr = language === 'Arabic';
   const { device } = useDevice();
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -1148,6 +1150,7 @@ export default function ITAccountManagement() {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div 
       className={`${layout.padding} ${layout.spaceY}`}
       style={(isMobile || isTablet) ? { paddingTop: '1.5rem' } : undefined}
@@ -1218,7 +1221,10 @@ export default function ITAccountManagement() {
           <div className={`grid gap-4 ${layout.gridCols}`}>
             <Card data-testid="card-total-accounts">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">{t.totalAccounts || "Total Accounts"}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {t.totalAccounts || "Total Accounts"}
+                  <InfoTip>{isAr ? "إجمالي عدد حسابات العملاء في النظام." : "Total number of client accounts in the system."}</InfoTip>
+                </CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -1227,7 +1233,10 @@ export default function ITAccountManagement() {
             </Card>
             <Card data-testid="card-active-accounts">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">{t.activeAccounts || "Active Accounts"}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {t.activeAccounts || "Active Accounts"}
+                  <InfoTip>{isAr ? "الحسابات المفعلة حالياً ويمكنها تسجيل الدخول." : "Accounts that are currently enabled and can sign in."}</InfoTip>
+                </CardTitle>
                 <CheckCircle className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
@@ -1238,7 +1247,10 @@ export default function ITAccountManagement() {
             </Card>
             <Card data-testid="card-disabled-accounts">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">{t.disabledAccounts || "Disabled Accounts"}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {t.disabledAccounts || "Disabled Accounts"}
+                  <InfoTip>{isAr ? "حسابات معطلة ولا يمكنها تسجيل الدخول." : "Accounts that are disabled and cannot sign in."}</InfoTip>
+                </CardTitle>
                 <XCircle className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent>
@@ -1651,7 +1663,10 @@ export default function ITAccountManagement() {
           <div className={`grid gap-4 ${layout.gridCols}`}>
             <Card data-testid="card-total-pending">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">{t.totalPending || "Total Pending"}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {t.totalPending || "Total Pending"}
+                  <InfoTip>{isAr ? "إجمالي حسابات التسجيل في انتظار إكمال الدفع." : "Total signups awaiting payment completion."}</InfoTip>
+                </CardTitle>
                 <Clock className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -1660,7 +1675,10 @@ export default function ITAccountManagement() {
             </Card>
             <Card data-testid="card-expired-count">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">{t.expiredCount || "Expired"}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {t.expiredCount || "Expired"}
+                  <InfoTip>{isAr ? "عدد طلبات التسجيل المنتهية الصلاحية." : "Number of signups whose payment window expired."}</InfoTip>
+                </CardTitle>
                 <AlertCircle className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent>
@@ -1671,7 +1689,10 @@ export default function ITAccountManagement() {
             </Card>
             <Card data-testid="card-pending-amount">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">{t.pendingAmount || "Total Amount"}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {t.pendingAmount || "Total Amount"}
+                  <InfoTip>{isAr ? "إجمالي قيمة المدفوعات المعلقة." : "Total value of all pending payments."}</InfoTip>
+                </CardTitle>
                 <FileText className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
@@ -1909,41 +1930,56 @@ export default function ITAccountManagement() {
                               <TableCell className="text-right">
                                 <div className="flex items-center justify-end gap-1">
                                   {signup.status !== 'paid' && (
-                                    <Button
-                                      variant="default"
-                                      size="sm"
-                                      onClick={() => {
-                                        setPendingSignupToActivate(signup);
-                                        setActivatePendingDialogOpen(true);
-                                      }}
-                                      data-testid={`button-activate-pending-${signup.id}`}
-                                    >
-                                      <CheckCircle className="h-4 w-4" />
-                                    </Button>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button
+                                          variant="default"
+                                          size="sm"
+                                          onClick={() => {
+                                            setPendingSignupToActivate(signup);
+                                            setActivatePendingDialogOpen(true);
+                                          }}
+                                          data-testid={`button-activate-pending-${signup.id}`}
+                                        >
+                                          <CheckCircle className="h-4 w-4" />
+                                        </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent>{isAr ? "تفعيل الحساب" : "Activate account"}</TooltipContent>
+                                    </Tooltip>
                                   )}
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => {
-                                      setPendingSignupToChangeStatus(signup);
-                                      setNewPendingStatus(signup.status);
-                                      setStatusChangeDialogOpen(true);
-                                    }}
-                                    data-testid={`button-status-pending-${signup.id}`}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => {
-                                      setPendingSignupToDelete(signup);
-                                      setDeletePendingDialogOpen(true);
-                                    }}
-                                    data-testid={`button-delete-pending-${signup.id}`}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => {
+                                          setPendingSignupToChangeStatus(signup);
+                                          setNewPendingStatus(signup.status);
+                                          setStatusChangeDialogOpen(true);
+                                        }}
+                                        data-testid={`button-status-pending-${signup.id}`}
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{isAr ? "تغيير الحالة" : "Change status"}</TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => {
+                                          setPendingSignupToDelete(signup);
+                                          setDeletePendingDialogOpen(true);
+                                        }}
+                                        data-testid={`button-delete-pending-${signup.id}`}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{isAr ? "حذف نهائي لطلب التسجيل" : "Permanently delete this pending signup"}</TooltipContent>
+                                  </Tooltip>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -2173,7 +2209,10 @@ export default function ITAccountManagement() {
           <div className={`grid gap-4 ${layout.gridCols}`}>
             <Card data-testid="card-archived-total">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">{t.totalArchived || "Total Archived"}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {t.totalArchived || "Total Archived"}
+                  <InfoTip>{isAr ? "إجمالي عدد الحسابات المؤرشفة (الملغاة)." : "Total number of archived (cancelled) accounts."}</InfoTip>
+                </CardTitle>
                 <Archive className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -2182,7 +2221,10 @@ export default function ITAccountManagement() {
             </Card>
             <Card data-testid="card-cancelled-by-mistake">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">{t.mistakeSubscriptions || "Mistake Subscriptions"}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {t.mistakeSubscriptions || "Mistake Subscriptions"}
+                  <InfoTip>{isAr ? "اشتراكات تم إلغاؤها بسبب خطأ، بدون مبلغ مسترد." : "Subscriptions cancelled as a mistake, no refund issued."}</InfoTip>
+                </CardTitle>
                 <AlertCircle className="h-4 w-4 text-yellow-500" />
               </CardHeader>
               <CardContent>
@@ -2193,7 +2235,10 @@ export default function ITAccountManagement() {
             </Card>
             <Card data-testid="card-cancelled-by-request">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">{t.clientRequests || "Client Requests"}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {t.clientRequests || "Client Requests"}
+                  <InfoTip>{isAr ? "اشتراكات تم إلغاؤها بناءً على طلب العميل." : "Subscriptions cancelled at the client's request."}</InfoTip>
+                </CardTitle>
                 <FileText className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent>
@@ -2357,7 +2402,10 @@ export default function ITAccountManagement() {
           <div className={`grid gap-4 ${layout.gridCols}`}>
             <Card data-testid="card-it-total-accounts">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">{t.totalITAccounts || "Total IT Accounts"}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {t.totalITAccounts || "Total IT Accounts"}
+                  <InfoTip>{isAr ? "إجمالي عدد حسابات مديري النظام (IT)." : "Total number of IT administrator accounts."}</InfoTip>
+                </CardTitle>
                 <Shield className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -2366,7 +2414,10 @@ export default function ITAccountManagement() {
             </Card>
             <Card data-testid="card-it-active-accounts">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">{t.activeAccounts || "Active Accounts"}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {t.activeAccounts || "Active Accounts"}
+                  <InfoTip>{isAr ? "حسابات IT المفعلة حالياً." : "IT accounts that are currently enabled."}</InfoTip>
+                </CardTitle>
                 <CheckCircle className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
@@ -2377,7 +2428,10 @@ export default function ITAccountManagement() {
             </Card>
             <Card data-testid="card-it-disabled-accounts">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-                <CardTitle className="text-sm font-medium">{t.disabledAccounts || "Disabled Accounts"}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {t.disabledAccounts || "Disabled Accounts"}
+                  <InfoTip>{isAr ? "حسابات IT المعطلة." : "IT accounts that are currently disabled."}</InfoTip>
+                </CardTitle>
                 <XCircle className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent>
@@ -2719,17 +2773,22 @@ export default function ITAccountManagement() {
                             </Dialog>
                             
                             {account.id !== user?.id && (
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => {
-                                  setItAccountToDelete(account);
-                                  setDeleteITAccountDialogOpen(true);
-                                }}
-                                data-testid={`button-it-delete-${account.id}`}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => {
+                                      setItAccountToDelete(account);
+                                      setDeleteITAccountDialogOpen(true);
+                                    }}
+                                    data-testid={`button-it-delete-${account.id}`}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>{isAr ? "حذف حساب IT بشكل دائم" : "Permanently delete this IT account"}</TooltipContent>
+                              </Tooltip>
                             )}
                           </div>
                         </CardContent>
@@ -2901,17 +2960,22 @@ export default function ITAccountManagement() {
                                 </Dialog>
                                 
                                 {account.id !== user?.id && (
-                                  <Button
-                                    variant="destructive"
-                                    size="sm"
-                                    onClick={() => {
-                                      setItAccountToDelete(account);
-                                      setDeleteITAccountDialogOpen(true);
-                                    }}
-                                    data-testid={`button-it-delete-${account.id}`}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button
+                                        variant="destructive"
+                                        size="sm"
+                                        onClick={() => {
+                                          setItAccountToDelete(account);
+                                          setDeleteITAccountDialogOpen(true);
+                                        }}
+                                        data-testid={`button-it-delete-${account.id}`}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>{isAr ? "حذف حساب IT بشكل دائم" : "Permanently delete this IT account"}</TooltipContent>
+                                  </Tooltip>
                                 )}
                               </div>
                             </TableCell>
@@ -3230,5 +3294,6 @@ export default function ITAccountManagement() {
         </TabsContent>
       </Tabs>
     </div>
+    </TooltipProvider>
   );
 }

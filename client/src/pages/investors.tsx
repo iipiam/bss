@@ -1,4 +1,5 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useLanguage } from "@/contexts/LanguageContext";
 import InvestorsList from "@/pages/investors-list";
 import InvestmentAgreementTemplates from "@/pages/investment-agreement-templates";
@@ -13,25 +14,27 @@ export default function InvestorsHub() {
   };
 
   return (
-    <div dir={isRtl ? "rtl" : "ltr"} className="p-4">
-      <Tabs defaultValue="investors" className="w-full">
-        <TabsList>
-          <TabsTrigger value="investors" data-testid="tab-investors">
-            {labels.investors}
-          </TabsTrigger>
-          <TabsTrigger value="template" data-testid="tab-agreement-template">
-            {labels.template}
-          </TabsTrigger>
-        </TabsList>
+    <TooltipProvider delayDuration={150}>
+      <div dir={isRtl ? "rtl" : "ltr"} className="p-4">
+        <Tabs defaultValue="investors" className="w-full">
+          <TabsList>
+            <TabsTrigger value="investors" data-testid="tab-investors">
+              {labels.investors}
+            </TabsTrigger>
+            <TabsTrigger value="template" data-testid="tab-agreement-template">
+              {labels.template}
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="investors" className="mt-4">
-          <InvestorsList />
-        </TabsContent>
+          <TabsContent value="investors" className="mt-4">
+            <InvestorsList />
+          </TabsContent>
 
-        <TabsContent value="template" className="mt-4">
-          <InvestmentAgreementTemplates />
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="template" className="mt-4">
+            <InvestmentAgreementTemplates />
+          </TabsContent>
+        </Tabs>
+      </div>
+    </TooltipProvider>
   );
 }
