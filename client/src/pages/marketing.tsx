@@ -2801,13 +2801,20 @@ export default function Marketing() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <TooltipProvider delayDuration={150}>
               <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-3">
                 <div>
-                  <Label className="text-xs">{isRTL ? "اسم المستخدم" : "Username (@handle)"}</Label>
+                  <Label className="text-xs">
+                    {isRTL ? "اسم المستخدم" : "Username (@handle)"}
+                    <InfoTip>{isRTL ? "اسم المستخدم على المنصة بدون رابط، مثل @example. يُستخدم للحفظ والمراجعة لاحقًا." : "Public handle without URL, e.g. @example. Used for saving and lookup."}</InfoTip>
+                  </Label>
                   <Input value={fakeForm.username} onChange={(e) => setFakeForm({ ...fakeForm, username: e.target.value })} placeholder="@example" data-testid="input-fake-username" />
                 </div>
                 <div>
-                  <Label className="text-xs">{isRTL ? "المنصة" : "Platform"}</Label>
+                  <Label className="text-xs">
+                    {isRTL ? "المنصة" : "Platform"}
+                    <InfoTip>{isRTL ? "اختر المنصة التي يعمل عليها المؤثر. التفاعل يختلف كثيرًا بين Instagram و TikTok و YouTube." : "Pick the network the influencer is on. Engagement norms differ widely between Instagram, TikTok and YouTube."}</InfoTip>
+                  </Label>
                   <Select value={fakeForm.platform} onValueChange={(v) => setFakeForm({ ...fakeForm, platform: v })}>
                     <SelectTrigger data-testid="select-fake-platform"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -2819,51 +2826,81 @@ export default function Marketing() {
                     </SelectContent>
                   </Select>
                 </div>
-                {([
-                  ["followers", isRTL ? "المتابعون" : "Followers"],
-                  ["following", isRTL ? "يتابع" : "Following"],
-                  ["avgLikes", isRTL ? "متوسط الإعجابات/منشور" : "Avg Likes/Post"],
-                  ["avgComments", isRTL ? "متوسط التعليقات/منشور" : "Avg Comments/Post"],
-                  ["posts", isRTL ? "عدد المنشورات" : "Posts"],
-                  ["growth30d", isRTL ? "نمو 30 يوم" : "Growth (30d)"],
-                  ["genericCommentsPct", isRTL ? "% تعليقات عامة" : "% Generic Comments"],
-                ] as const).map(([k, label]) => (
-                  <div key={k}>
-                    <Label className="text-xs">{label}</Label>
-                    <Input
-                      type="number"
-                      value={(fakeForm as any)[k]}
-                      onChange={(e) => setFakeForm({ ...fakeForm, [k]: parseFloat(e.target.value) || 0 })}
-                      data-testid={`input-fake-${k}`}
-                    />
-                  </div>
-                ))}
+                {(() => {
+                  const fieldTips: Record<string, string> = {
+                    followers: isRTL ? "إجمالي عدد المتابعين الظاهر على الحساب." : "Total followers as shown on the account.",
+                    following: isRTL ? "عدد الحسابات التي يتابعها هذا المؤثر. نسبة عالية (متابعة > متابعين) إشارة بوت." : "How many accounts the influencer follows. A high follow-to-follower ratio (>1.5) is a bot red flag.",
+                    avgLikes: isRTL ? "متوسط الإعجابات على آخر 10-20 منشور — يحدد معدل التفاعل." : "Average likes across the last 10-20 posts — used to compute engagement rate.",
+                    avgComments: isRTL ? "متوسط التعليقات على آخر 10-20 منشور." : "Average comments across the last 10-20 posts.",
+                    posts: isRTL ? "العدد الإجمالي للمنشورات على الحساب." : "Total number of posts on the account.",
+                    growth30d: isRTL ? "نسبة نمو المتابعين خلال آخر 30 يومًا (%). قفزة > 15% بدون حملة = إشارة شراء متابعين." : "Follower growth % over the last 30 days. A spike >15% without a campaign suggests bought followers.",
+                    genericCommentsPct: isRTL ? "نسبة التعليقات السطحية مثل 'Nice 🔥' أو الإيموجي فقط. > 40% إشارة بوت." : "Share of shallow comments like 'Nice 🔥' or emoji-only replies. >40% is a bot indicator.",
+                  };
+                  return ([
+                    ["followers", isRTL ? "المتابعون" : "Followers"],
+                    ["following", isRTL ? "يتابع" : "Following"],
+                    ["avgLikes", isRTL ? "متوسط الإعجابات/منشور" : "Avg Likes/Post"],
+                    ["avgComments", isRTL ? "متوسط التعليقات/منشور" : "Avg Comments/Post"],
+                    ["posts", isRTL ? "عدد المنشورات" : "Posts"],
+                    ["growth30d", isRTL ? "نمو 30 يوم" : "Growth (30d)"],
+                    ["genericCommentsPct", isRTL ? "% تعليقات عامة" : "% Generic Comments"],
+                  ] as const).map(([k, label]) => (
+                    <div key={k}>
+                      <Label className="text-xs">
+                        {label}
+                        <InfoTip>{fieldTips[k]}</InfoTip>
+                      </Label>
+                      <Input
+                        type="number"
+                        value={(fakeForm as any)[k]}
+                        onChange={(e) => setFakeForm({ ...fakeForm, [k]: parseFloat(e.target.value) || 0 })}
+                        data-testid={`input-fake-${k}`}
+                      />
+                    </div>
+                  ));
+                })()}
                 <div className="md:col-span-3 lg:col-span-5">
-                  <Label className="text-xs">{isRTL ? "ملاحظات" : "Notes"}</Label>
+                  <Label className="text-xs">
+                    {isRTL ? "ملاحظات" : "Notes"}
+                    <InfoTip>{isRTL ? "ملاحظات خاصة بك (سعر مقترح، أسلوب المحتوى، تاريخ آخر تعاون...)." : "Your private notes (proposed rate, content style, last collaboration date...)."}</InfoTip>
+                  </Label>
                   <Input value={fakeForm.notes} onChange={(e) => setFakeForm({ ...fakeForm, notes: e.target.value })} data-testid="input-fake-notes" />
                 </div>
               </div>
 
               <div className="grid md:grid-cols-4 gap-3">
                 <div className="rounded-md border p-3">
-                  <div className="text-xs text-muted-foreground">{isRTL ? "معدل التفاعل" : "Engagement Rate"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {isRTL ? "معدل التفاعل" : "Engagement Rate"}
+                    <InfoTip>{isRTL ? "ER = (إعجابات + تعليقات) ÷ المتابعون × 100. أقل من 2% يضيف +30% إلى نسبة الوهمي." : "ER = (likes + comments) ÷ followers × 100. Below 2% adds +30% to fake score."}</InfoTip>
+                  </div>
                   <div className="text-xl font-bold" data-testid="stat-fake-er">{fakeResult.er.toFixed(2)}%</div>
                 </div>
                 <div className="rounded-md border p-3">
-                  <div className="text-xs text-muted-foreground">{isRTL ? "نسبة المتابعين الوهميين" : "Estimated Fake %"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {isRTL ? "نسبة المتابعين الوهميين" : "Estimated Fake %"}
+                    <InfoTip>{isRTL ? "تقدير مركّب: تفاعل منخفض +30، نسبة متابعة عالية +20، نمو مفاجئ +25، تعليقات عامة +15. حد أقصى 100." : "Composite: low ER +30, high follow ratio +20, sudden growth +25, generic comments +15. Capped at 100."}</InfoTip>
+                  </div>
                   <div className={`text-2xl font-bold ${fakeColor(fakeResult.fakePct)}`} data-testid="stat-fake-pct">{fakeResult.fakePct.toFixed(1)}%</div>
                 </div>
                 <div className="rounded-md border p-3">
-                  <div className="text-xs text-muted-foreground">{isRTL ? "جودة الجمهور (0-100)" : "Audience Quality"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {isRTL ? "جودة الجمهور (0-100)" : "Audience Quality"}
+                    <InfoTip>{isRTL ? "100 ناقص نسبة الوهمي. كلما ارتفع الرقم كان الجمهور أنقى." : "100 minus the fake %. Higher means a cleaner, more authentic audience."}</InfoTip>
+                  </div>
                   <div className="text-2xl font-bold" data-testid="stat-fake-quality">{fakeResult.qualityScore}</div>
                 </div>
                 <div className="rounded-md border p-3">
-                  <div className="text-xs text-muted-foreground">{isRTL ? "التوصية" : "Recommendation"}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {isRTL ? "التوصية" : "Recommendation"}
+                    <InfoTip>{isRTL ? "أخضر = اقبل (<15%)، أصفر = راجع يدويًا (15-30%)، أحمر = استبعد فورًا (>30%)." : "Green = Accept (<15%), Yellow = Review manually (15-30%), Red = Reject immediately (>30%)."}</InfoTip>
+                  </div>
                   <Badge className={`${fakeBg(fakeResult.status)} text-white mt-1`} data-testid="badge-fake-status">
                     {fakeResult.status === "good" ? (isRTL ? "ممتاز - اقبل" : "Accept") : fakeResult.status === "review" ? (isRTL ? "مقبول - راجع" : "Review") : (isRTL ? "مرتفع - استبعد" : "Reject")}
                   </Badge>
                 </div>
               </div>
+              </TooltipProvider>
 
               {fakeResult.flags.length > 0 && (
                 <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 p-3">
@@ -2921,16 +2958,32 @@ export default function Marketing() {
                 </div>
               </div>
 
+              <TooltipProvider delayDuration={150}>
               <div className="flex flex-wrap gap-2">
-                <Button onClick={() => saveInfluencer.mutate()} disabled={saveInfluencer.isPending || !fakeForm.username} data-testid="button-save-influencer">
-                  <Save className="h-4 w-4 me-2" />
-                  {isRTL ? "حفظ ملف المؤثر" : "Save Influencer Profile"}
-                </Button>
-                <Button variant="outline" onClick={() => setFakeForm(emptyFakeForm())} data-testid="button-clear-fake">
-                  <RotateCcw className="h-4 w-4 me-2" />
-                  {isRTL ? "مسح" : "Clear"}
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button onClick={() => saveInfluencer.mutate()} disabled={saveInfluencer.isPending || !fakeForm.username} data-testid="button-save-influencer">
+                      <Save className="h-4 w-4 me-2" />
+                      {isRTL ? "حفظ ملف المؤثر" : "Save Influencer Profile"}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    {isRTL ? "يحفظ النتائج الحالية في قائمة المؤثرين أدناه ليصبح بإمكانك المقارنة والتصدير لاحقًا." : "Saves the current result to the influencer list below so you can compare and export later."}
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="outline" onClick={() => setFakeForm(emptyFakeForm())} data-testid="button-clear-fake">
+                      <RotateCcw className="h-4 w-4 me-2" />
+                      {isRTL ? "مسح" : "Clear"}
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    {isRTL ? "يفرغ النموذج للبدء بفحص مؤثر جديد. لا يحذف الملفات المحفوظة." : "Resets the form to evaluate a new influencer. Does not delete saved profiles."}
+                  </TooltipContent>
+                </Tooltip>
               </div>
+              </TooltipProvider>
             </CardContent>
           </Card>
 
@@ -2940,18 +2993,41 @@ export default function Marketing() {
               <CardTitle className="text-base">{isRTL ? "القاعدة الذهبية" : "The Golden Rule"}</CardTitle>
             </CardHeader>
             <CardContent className="grid md:grid-cols-3 gap-3 text-sm">
-              <div className="rounded-md p-4 bg-gradient-to-br from-green-500 to-emerald-500 text-white">
-                <div className="font-semibold">{isRTL ? "أقل من 15% — ممتاز" : "< 15% — Excellent"}</div>
-                <div className="text-xs opacity-90 mt-1">{isRTL ? "اقبل المؤثر بثقة" : "Accept with confidence"}</div>
-              </div>
-              <div className="rounded-md p-4 bg-gradient-to-br from-yellow-500 to-amber-500 text-white">
-                <div className="font-semibold">{isRTL ? "15% - 30% — مقبول" : "15% - 30% — Acceptable"}</div>
-                <div className="text-xs opacity-90 mt-1">{isRTL ? "راجع البيانات يدوياً" : "Review manually"}</div>
-              </div>
-              <div className="rounded-md p-4 bg-gradient-to-br from-red-500 to-rose-500 text-white">
-                <div className="font-semibold">{isRTL ? "أكثر من 30% — استبعده" : "> 30% — Reject"}</div>
-                <div className="text-xs opacity-90 mt-1">{isRTL ? "خطر مرتفع" : "High risk"}</div>
-              </div>
+              <TooltipProvider delayDuration={150}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="rounded-md p-4 bg-gradient-to-br from-green-500 to-emerald-500 text-white cursor-help" data-testid="golden-rule-green">
+                    <div className="font-semibold">{isRTL ? "أقل من 15% — ممتاز" : "< 15% — Excellent"}</div>
+                    <div className="text-xs opacity-90 mt-1">{isRTL ? "اقبل المؤثر بثقة" : "Accept with confidence"}</div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-xs">
+                  {isRTL ? "جمهور حقيقي إلى حد كبير. آمن لإطلاق حملة مدفوعة بدون قلق." : "Audience is largely real. Safe to launch a paid campaign with confidence."}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="rounded-md p-4 bg-gradient-to-br from-yellow-500 to-amber-500 text-white cursor-help" data-testid="golden-rule-yellow">
+                    <div className="font-semibold">{isRTL ? "15% - 30% — مقبول" : "15% - 30% — Acceptable"}</div>
+                    <div className="text-xs opacity-90 mt-1">{isRTL ? "راجع البيانات يدوياً" : "Review manually"}</div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-xs">
+                  {isRTL ? "افحص جودة التعليقات والدول الأعلى تفاعلًا قبل الاتفاق، وتفاوض على السعر." : "Inspect comment quality and top audience countries before agreeing, and negotiate the rate."}
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="rounded-md p-4 bg-gradient-to-br from-red-500 to-rose-500 text-white cursor-help" data-testid="golden-rule-red">
+                    <div className="font-semibold">{isRTL ? "أكثر من 30% — استبعده" : "> 30% — Reject"}</div>
+                    <div className="text-xs opacity-90 mt-1">{isRTL ? "خطر مرتفع" : "High risk"}</div>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-xs">
+                  {isRTL ? "نسبة بوتات مرتفعة. الميزانية ستضيع على متابعين غير حقيقيين." : "High bot share. Budget will likely be wasted on inauthentic followers."}
+                </TooltipContent>
+              </Tooltip>
+              </TooltipProvider>
             </CardContent>
           </Card>
 
@@ -2964,16 +3040,32 @@ export default function Marketing() {
                   {isRTL ? `العدد: ${influencerProfiles.length} — متوسط النسبة الوهمية: ${avgFakeAll.toFixed(1)}%` : `${influencerProfiles.length} profile(s) — Avg Fake: ${avgFakeAll.toFixed(1)}%`}
                 </CardDescription>
               </div>
+              <TooltipProvider delayDuration={150}>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" variant="outline" onClick={exportInfluencerCsv} disabled={!influencerProfiles.length} data-testid="button-export-csv">
-                  <Download className="h-4 w-4 me-2" />CSV
-                </Button>
-                <Button size="sm" variant="outline" asChild>
-                  <a href="/api/marketing/influencer-profiles/pdf" target="_blank" rel="noopener" data-testid="button-export-pdf">
-                    <Download className="h-4 w-4 me-2" />PDF
-                  </a>
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant="outline" onClick={exportInfluencerCsv} disabled={!influencerProfiles.length} data-testid="button-export-csv">
+                      <Download className="h-4 w-4 me-2" />CSV
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    {isRTL ? "تصدير القائمة كملف CSV لفتحه في Excel/Sheets." : "Export the list as CSV to open in Excel/Sheets."}
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button size="sm" variant="outline" asChild>
+                      <a href="/api/marketing/influencer-profiles/pdf" target="_blank" rel="noopener" data-testid="button-export-pdf">
+                        <Download className="h-4 w-4 me-2" />PDF
+                      </a>
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    {isRTL ? "تنزيل تقرير PDF منسّق لجميع الملفات المحفوظة." : "Download a formatted PDF report of all saved profiles."}
+                  </TooltipContent>
+                </Tooltip>
               </div>
+              </TooltipProvider>
             </CardHeader>
             <CardContent>
               {influencerProfiles.length === 0 ? (
@@ -2981,17 +3073,18 @@ export default function Marketing() {
                   {isRTL ? "لا توجد ملفات بعد. احفظ مؤثرًا أعلاه." : "No profiles yet. Save an influencer above."}
                 </div>
               ) : (
+                <TooltipProvider delayDuration={150}>
                 <div className="overflow-x-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>{isRTL ? "اسم المستخدم" : "Username"}</TableHead>
-                        <TableHead>{isRTL ? "المنصة" : "Platform"}</TableHead>
-                        <TableHead className="text-right">{isRTL ? "المتابعون" : "Followers"}</TableHead>
-                        <TableHead className="text-right">{isRTL ? "% وهمي" : "Fake %"}</TableHead>
-                        <TableHead className="text-right">{isRTL ? "الجودة" : "Quality"}</TableHead>
-                        <TableHead>{isRTL ? "الحالة" : "Status"}</TableHead>
-                        <TableHead>{isRTL ? "ملاحظات" : "Notes"}</TableHead>
+                        <TableHead>{isRTL ? "اسم المستخدم" : "Username"}<InfoTip>{isRTL ? "اسم المستخدم على المنصة." : "Account handle on the platform."}</InfoTip></TableHead>
+                        <TableHead>{isRTL ? "المنصة" : "Platform"}<InfoTip>{isRTL ? "الشبكة الاجتماعية للمؤثر." : "Social network of the influencer."}</InfoTip></TableHead>
+                        <TableHead className="text-right">{isRTL ? "المتابعون" : "Followers"}<InfoTip>{isRTL ? "إجمالي المتابعين وقت الحفظ." : "Total followers at the time of saving."}</InfoTip></TableHead>
+                        <TableHead className="text-right">{isRTL ? "% وهمي" : "Fake %"}<InfoTip>{isRTL ? "النسبة المقدّرة للمتابعين الوهميين. أخضر آمن، أصفر راجع، أحمر استبعد." : "Estimated share of fake followers. Green safe, yellow review, red reject."}</InfoTip></TableHead>
+                        <TableHead className="text-right">{isRTL ? "الجودة" : "Quality"}<InfoTip>{isRTL ? "100 ناقص نسبة الوهمي." : "100 minus the fake %."}</InfoTip></TableHead>
+                        <TableHead>{isRTL ? "الحالة" : "Status"}<InfoTip>{isRTL ? "التوصية النهائية: قبول / مراجعة / استبعاد." : "Final recommendation: accept / review / reject."}</InfoTip></TableHead>
+                        <TableHead>{isRTL ? "ملاحظات" : "Notes"}<InfoTip>{isRTL ? "ملاحظاتك الخاصة بالمؤثر." : "Your private notes about the influencer."}</InfoTip></TableHead>
                         <TableHead></TableHead>
                       </TableRow>
                     </TableHeader>
@@ -3010,15 +3103,21 @@ export default function Marketing() {
                           </TableCell>
                           <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{i.notes}</TableCell>
                           <TableCell>
-                            <Button size="icon" variant="ghost" onClick={() => deleteInfluencer.mutate(i.id)} data-testid={`button-delete-influencer-${i.id}`}>
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button size="icon" variant="ghost" onClick={() => deleteInfluencer.mutate(i.id)} data-testid={`button-delete-influencer-${i.id}`}>
+                                  <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent className="text-xs">{isRTL ? "حذف هذا الملف" : "Delete this profile"}</TooltipContent>
+                            </Tooltip>
                           </TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
                   </Table>
                 </div>
+                </TooltipProvider>
               )}
             </CardContent>
           </Card>
