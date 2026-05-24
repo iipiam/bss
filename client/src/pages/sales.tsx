@@ -88,7 +88,7 @@ export default function Sales() {
         [t.paymentLabel || "Payment"]: transaction.paymentMethod ?? "",
       }));
 
-      const result = exportToExcel(t.salesTrackingReport, exportData);
+      const result = exportToExcel(t.salesTrackingReport || "Sales Tracking Report", exportData);
 
       if (result.success) {
         toast({
