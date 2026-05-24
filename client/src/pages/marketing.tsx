@@ -3031,7 +3031,7 @@ export default function Marketing() {
                 {isRTL ? "كيفية قراءة النتائج + أفضل الأدوات (2026)" : "How to Read Results + Best Tools (2026)"}
               </CardTitle>
             </CardHeader>
-            <CardContent className="text-sm space-y-3" dir={isRTL ? "rtl" : "ltr"}>
+            <CardContent className="text-sm space-y-4" dir={isRTL ? "rtl" : "ltr"}>
               <div>
                 <div className="font-semibold mb-1">{isRTL ? "نظام التقييم" : "Scoring System"}</div>
                 <ul className="list-disc ps-5 space-y-1 text-muted-foreground">
@@ -3041,15 +3041,107 @@ export default function Marketing() {
                   <li>{isRTL ? "تعليقات عامة > 40% → +15%" : "Generic comments > 40% → +15%"}</li>
                 </ul>
               </div>
+
+              <div className="rounded-md border border-green-500/40 bg-green-500/10 p-3 text-xs">
+                {isRTL
+                  ? "✅ نسبة المتابعين الحقيقيين (Real Followers %) + كشف البوتات (Fake Followers) — معيار مهم جدًا في Scorecard التقييم. إذا تجاوزت نسبة المزيفين 25-30%، يُفضّل استبعاد المدوّن."
+                  : "✅ Real Followers % + Bot Detection (Fake Followers) is a critical Scorecard metric. If fake-follower share exceeds 25-30%, it's best to exclude the influencer."}
+              </div>
+
               <div>
-                <div className="font-semibold mb-1">{isRTL ? "أدوات مجانية موصى بها" : "Recommended Free Tools"}</div>
-                <ul className="list-disc ps-5 space-y-1 text-muted-foreground">
-                  <li>Modash — <a className="text-primary underline" href="https://modash.io/fake-follower-check" target="_blank" rel="noopener">modash.io/fake-follower-check</a></li>
-                  <li>HypeAuditor — <a className="text-primary underline" href="https://hypeauditor.com/free-tools" target="_blank" rel="noopener">hypeauditor.com/free-tools</a></li>
-                  <li>Upfluence — <a className="text-primary underline" href="https://upfluence.com/instagram-fake-follower-check" target="_blank" rel="noopener">upfluence.com</a></li>
-                  <li>Collabstr, StarNgage, Social Auditor, ViralMango</li>
+                <div className="font-semibold mb-1">
+                  {isRTL ? "أفضل الطرق والأدوات للكشف عن البوتات (محدّث 2026)" : "Best Tools & Methods to Detect Bots (Updated 2026)"}
+                </div>
+                <div className="font-medium text-foreground mb-1">
+                  {isRTL ? "1. أدوات مجانية سريعة (موصى بها للبداية)" : "1. Fast Free Tools (recommended to start)"}
+                </div>
+                <p className="text-muted-foreground mb-2">
+                  {isRTL ? "استخدم هذه الأدوات أولًا لفحص 50-100 حساب بسرعة:" : "Use these first to scan 50-100 accounts quickly:"}
+                </p>
+                <div className="overflow-x-auto rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{isRTL ? "الأداة" : "Tool"}</TableHead>
+                        <TableHead>{isRTL ? "المنصات" : "Platforms"}</TableHead>
+                        <TableHead>{isRTL ? "مجانية؟" : "Free?"}</TableHead>
+                        <TableHead>{isRTL ? "دقة تقريبية" : "Accuracy"}</TableHead>
+                        <TableHead>{isRTL ? "رابط مباشر" : "Direct Link"}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {[
+                        { tool: "Modash Fake Follower Check", platforms: isRTL ? "Instagram (الأفضل)" : "Instagram (best)", free: isRTL ? "مجاني تمامًا (بدون تسجيل)" : "Fully free (no signup)", acc: isRTL ? "عالية جدًا" : "Very high", url: "https://modash.io/fake-follower-check", host: "modash.io/fake-follower-check" },
+                        { tool: "HypeAuditor", platforms: "Instagram", free: isRTL ? "مجاني (محدود)" : "Free (limited)", acc: isRTL ? "ممتازة" : "Excellent", url: "https://hypeauditor.com/free-tools", host: "hypeauditor.com/free-tools" },
+                        { tool: "Upfluence", platforms: "Instagram", free: isRTL ? "مجاني بدون تسجيل" : "Free, no signup", acc: isRTL ? "جيدة" : "Good", url: "https://upfluence.com/instagram-fake-follower-check", host: "upfluence.com/instagram-fake-follower-check" },
+                        { tool: "Collabstr", platforms: "Instagram + TikTok", free: isRTL ? "مجاني" : "Free", acc: isRTL ? "جيدة" : "Good", url: "https://collabstr.com", host: "collabstr.com" },
+                        { tool: "StarNgage", platforms: "Instagram + TikTok", free: isRTL ? "مجاني" : "Free", acc: isRTL ? "جيدة" : "Good", url: "https://starngage.com", host: "starngage.com" },
+                        { tool: "Social Auditor", platforms: "Instagram + TikTok + YouTube", free: isRTL ? "مجاني محدود" : "Free, limited", acc: isRTL ? "جيدة" : "Good", url: "https://socialauditor.io", host: "socialauditor.io" },
+                        { tool: "ViralMango", platforms: isRTL ? "الثلاث منصات" : "All three platforms", free: isRTL ? "مجاني" : "Free", acc: isRTL ? "جيدة" : "Good", url: "https://analytics.viralmango.com", host: "analytics.viralmango.com" },
+                      ].map((r) => (
+                        <TableRow key={r.tool} data-testid={`row-fake-tool-${r.tool.toLowerCase().replace(/\s+/g, '-')}`}>
+                          <TableCell className="font-medium">{r.tool}</TableCell>
+                          <TableCell>{r.platforms}</TableCell>
+                          <TableCell>{r.free}</TableCell>
+                          <TableCell>{r.acc}</TableCell>
+                          <TableCell>
+                            <a className="text-primary underline" href={r.url} target="_blank" rel="noopener">{r.host}</a>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+
+              <div>
+                <div className="font-semibold mb-1">{isRTL ? "كيف تستخدمها (خطوة بخطوة)" : "How to Use Them (step by step)"}</div>
+                <ol className="list-decimal ps-5 space-y-1 text-muted-foreground">
+                  <li>{isRTL ? "افتح الأداة (مثل Modash)." : "Open the tool (e.g. Modash)."}</li>
+                  <li>{isRTL ? "أدخل اسم المستخدم (@username)." : "Enter the username (@username)."}</li>
+                  <li>{isRTL ? "انتظر 10-30 ثانية." : "Wait 10-30 seconds."}</li>
+                  <li>
+                    {isRTL ? "ستظهر لك:" : "You'll see:"}
+                    <ul className="list-disc ps-5 mt-1 space-y-0.5">
+                      <li>{isRTL ? "Fake Followers % (النسبة المزيفة)" : "Fake Followers % (fake share)"}</li>
+                      <li>Audience Quality Score</li>
+                      <li>{isRTL ? "Top Countries (مهم لمعرفة إذا كان الجمهور سعودي أم هندي/برازيلي)" : "Top Countries (so you know if the audience is Saudi vs. Indian/Brazilian)"}</li>
+                      <li>{isRTL ? "Suspicious Growth (ارتفاع مفاجئ في المتابعين)" : "Suspicious Growth (sudden follower spikes)"}</li>
+                    </ul>
+                  </li>
+                </ol>
+              </div>
+
+              <div>
+                <div className="font-semibold mb-1">{isRTL ? "القاعدة الذهبية" : "The Golden Rule"}</div>
+                <ul className="space-y-1">
+                  <li className="flex items-center gap-2">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-500" />
+                    <span>{isRTL ? "أقل من 15% مزيف → ممتاز" : "Less than 15% fake → Excellent"}</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-yellow-500" />
+                    <span>{isRTL ? "15-25% → مقبول (لكن راقب)" : "15-25% → Acceptable (monitor)"}</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="inline-block w-2.5 h-2.5 rounded-full bg-red-500" />
+                    <span>{isRTL ? "أكثر من 30% → استبعده فورًا" : "Over 30% → Exclude immediately"}</span>
+                  </li>
                 </ul>
               </div>
+
+              <div>
+                <div className="font-semibold mb-1">{isRTL ? "2. أدوات مدفوعة (للمستوى الاحترافي)" : "2. Paid Tools (pro tier)"}</div>
+                <p className="text-muted-foreground mb-1">
+                  {isRTL ? "عندما تكبر قائمتك إلى 50 مدوّن:" : "Once your list grows to 50+ influencers:"}
+                </p>
+                <ul className="list-disc ps-5 space-y-1 text-muted-foreground">
+                  <li><span className="font-medium text-foreground">HypeAuditor</span> — {isRTL ? "الأقوى في كشف البوتات المتطورة." : "strongest at detecting advanced bots."}</li>
+                  <li><span className="font-medium text-foreground">Modash</span> — {isRTL ? "ممتاز للبحث والفحص معًا." : "excellent for search + audit in one."}</li>
+                  <li><span className="font-medium text-foreground">Lessie AI</span> — {isRTL ? "مجاني/رخيص ويغطي TikTok جيدًا." : "free/cheap with solid TikTok coverage."}</li>
+                </ul>
+              </div>
+
               <div className="rounded-md border border-blue-500/40 bg-blue-500/10 p-3 text-xs">
                 {isRTL
                   ? "نصيحة: استخدم الأداة المجانية لفحص الحساب ثم أدخل الأرقام هنا للحصول على تقييم سريع وحفظ السجل لإدارة 10+ مؤثرين."
