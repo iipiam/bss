@@ -1633,7 +1633,7 @@ export default function ProjectDetail() {
               {t.cpmDiagramPreview || "CPM Diagram Preview"}
             </DialogTitle>
             <DialogDescription>
-              {t.cpmDiagramPreviewDesc || "Network diagram of tasks. Red nodes and arrows mark the critical path."}
+              {t.cpmDiagramPreviewDesc || "Network diagram of tasks. Red = critical path, Green = in progress."}
             </DialogDescription>
           </DialogHeader>
           {(() => {
@@ -1649,8 +1649,10 @@ export default function ProjectDetail() {
               return byName ?? null;
             };
             const maxFinish = Math.max(...cpmTasks.map(tk => tk.earlyFinish || 0), 1);
-            const NODE_W = 160, NODE_H = 80, COL_GAP = 40, ROW_GAP = 24, PAD = 24;
-            const scale = 6;
+            const NODE_W = 180, NODE_H = 96, COL_GAP = 40, ROW_GAP = 32, PAD = 28;
+            const ROW_H = NODE_H / 3;
+            const CELL_W = NODE_W / 3;
+            const scale = 7;
             const phases = Array.from(new Set(cpmTasks.map(tk => tk.phase ?? 1))).sort((a, b) => a - b);
             const rowOf = new Map<string, number>();
             phases.forEach((ph) => {
@@ -1695,22 +1697,87 @@ export default function ProjectDetail() {
                 edges.push({ from: fromPos, to: toPos, critical: fromTk.isCritical && tk.isCritical });
               });
             });
+            const downloadSvg = () => {
+              const svg = document.querySelector('[data-testid="svg-cpm-diagram"]') as SVGSVGElement | null;
+              if (!svg) return;
+              const clone = svg.cloneNode(true) as SVGSVGElement;
+              clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+              const xml = new XMLSerializer().serializeToString(clone);
+              const blob = new Blob(['<?xml version="1.0" encoding="UTF-8"?>\n', xml], { type: "image/svg+xml;charset=utf-8" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `cpm-diagram-${project?.name || "project"}.svg`;
+              a.click();
+              URL.revokeObjectURL(url);
+            };
+            const downloadPng = () => {
+              const svg = document.querySelector('[data-testid="svg-cpm-diagram"]') as SVGSVGElement | null;
+              if (!svg) return;
+              const clone = svg.cloneNode(true) as SVGSVGElement;
+              clone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
+              const xml = new XMLSerializer().serializeToString(clone);
+              const svg64 = btoa(unescape(encodeURIComponent(xml)));
+              const img = new Image();
+              img.onload = () => {
+                const canvas = document.createElement("canvas");
+                const dpr = 2;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                const ctx = canvas.getContext("2d");
+                if (!ctx) return;
+                ctx.fillStyle = "#0b0f1a";
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                ctx.drawImage(img, 0, 0, width, height);
+                canvas.toBlob((blob) => {
+                  if (!blob) return;
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = `cpm-diagram-${project?.name || "project"}.png`;
+                  a.click();
+                  URL.revokeObjectURL(url);
+                }, "image/png");
+              };
+              img.src = `data:image/svg+xml;base64,${svg64}`;
+            };
+            const isActiveStatus = (s?: string | null) => s === "in_progress" || s === "active";
             return (
               <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-red-500" /> {t.criticalPath || "Critical path"}</div>
-                  <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-primary" /> {t.regularTask || "Regular task"}</div>
-                  <div>{t.duration || "Duration"}: {maxFinish} {t.days || "days"}</div>
-                  <div>{cpmTasks.length} {(t.tasks || "tasks").toString().toLowerCase()}</div>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-red-500" /> {t.criticalPath || "Critical path"}</div>
+                    <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-emerald-500" /> {t.inProgress || "In progress"}</div>
+                    <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-primary" /> {t.regularTask || "Regular task"}</div>
+                    <div>{t.duration || "Duration"}: {maxFinish} {t.days || "days"}</div>
+                    <div>{cpmTasks.length} {(t.tasks || "tasks").toString().toLowerCase()}</div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="outline" onClick={downloadSvg} data-testid="button-cpm-download-svg">
+                      <Download className="h-4 w-4 mr-1.5" />SVG
+                    </Button>
+                    <Button size="sm" variant="default" onClick={downloadPng} data-testid="button-cpm-download-png">
+                      <Download className="h-4 w-4 mr-1.5" />PNG
+                    </Button>
+                  </div>
                 </div>
-                <div className="border rounded-md overflow-auto bg-card" style={{ maxHeight: "65vh" }}>
-                  <svg width={width} height={height} data-testid="svg-cpm-diagram">
+                <div className="border rounded-md overflow-auto" style={{ maxHeight: "65vh", background: "#0b0f1a" }}>
+                  <svg width={width} height={height} data-testid="svg-cpm-diagram" style={{ background: "#0b0f1a" }}>
                     <defs>
-                      <marker id="arrow-cpm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                        <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--muted-foreground))" />
+                      <linearGradient id="cpm-node-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#f59e0b" />
+                        <stop offset="50%" stopColor="#ec4899" />
+                        <stop offset="100%" stopColor="#a78bfa" />
+                      </linearGradient>
+                      <marker id="arrow-cpm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
                       </marker>
-                      <marker id="arrow-cpm-crit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                        <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(239 68 68)" />
+                      <marker id="arrow-cpm-crit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+                      </marker>
+                      <marker id="arrow-cpm-active" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981" />
                       </marker>
                     </defs>
                     {edges.map((e, i) => {
@@ -1718,40 +1785,66 @@ export default function ProjectDetail() {
                       const x2 = e.to.x, y2 = e.to.y + NODE_H / 2;
                       const mx = (x1 + x2) / 2;
                       const path = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+                      const activeEdge = isActiveStatus(e.to.tk.status) || isActiveStatus(e.from.tk.status);
+                      const color = e.critical ? "#ef4444" : activeEdge ? "#10b981" : "#94a3b8";
+                      const marker = e.critical ? "url(#arrow-cpm-crit)" : activeEdge ? "url(#arrow-cpm-active)" : "url(#arrow-cpm)";
                       return (
                         <path
                           key={`edge-${i}`}
                           d={path}
                           fill="none"
-                          stroke={e.critical ? "rgb(239 68 68)" : "hsl(var(--muted-foreground))"}
-                          strokeWidth={e.critical ? 2 : 1.25}
-                          markerEnd={e.critical ? "url(#arrow-cpm-crit)" : "url(#arrow-cpm)"}
+                          stroke={color}
+                          strokeWidth={e.critical || activeEdge ? 2 : 1.25}
+                          markerEnd={marker}
                         />
                       );
                     })}
-                    {Array.from(positions.values()).map(({ x, y, tk }) => (
-                      <g key={`node-${tk.id}`} data-testid={`cpm-node-${tk.id}`}>
-                        <rect
-                          x={x} y={y} width={NODE_W} height={NODE_H} rx={6} ry={6}
-                          fill="hsl(var(--card))"
-                          stroke={tk.isCritical ? "rgb(239 68 68)" : "hsl(var(--border))"}
-                          strokeWidth={tk.isCritical ? 2 : 1}
-                        />
-                        <text x={x + 8} y={y + 18} fontSize="12" fontWeight="600" fill="hsl(var(--foreground))">
-                          {tk.name.length > 22 ? tk.name.slice(0, 21) + "…" : tk.name}
+                    {Array.from(positions.values()).map(({ x, y, tk }) => {
+                      const active = isActiveStatus(tk.status);
+                      const borderColor = active ? "#10b981" : tk.isCritical ? "#ef4444" : "#475569";
+                      const borderWidth = active || tk.isCritical ? 2.5 : 1.25;
+                      const cell = (label: string | number | null, cx: number, cy: number) => (
+                        <text x={cx} y={cy} fontSize="12" fontWeight="600" fill="#e5e7eb" textAnchor="middle" dominantBaseline="middle">
+                          {label ?? "-"}
                         </text>
-                        <text x={x + 8} y={y + 36} fontSize="10" fill="hsl(var(--muted-foreground))">
-                          {t.duration || "Duration"}: {tk.duration} {t.days || "d"}
-                        </text>
-                        <text x={x + 8} y={y + 52} fontSize="10" fill="hsl(var(--muted-foreground))">
-                          ES {tk.earlyStart} · EF {tk.earlyFinish}
-                        </text>
-                        <text x={x + 8} y={y + 68} fontSize="10" fill="hsl(var(--muted-foreground))">
-                          LS {tk.lateStart} · LF {tk.lateFinish} · {t.slack || "Slack"} {tk.slack}
-                        </text>
-                      </g>
-                    ))}
+                      );
+                      const displayName = tk.name.length > 18 ? tk.name.slice(0, 17) + "…" : tk.name;
+                      return (
+                        <g key={`node-${tk.id}`} data-testid={`cpm-node-${tk.id}`}>
+                          {active && (
+                            <rect x={x - 4} y={y - 4} width={NODE_W + 8} height={NODE_H + 8} rx={10} ry={10}
+                              fill="none" stroke="#10b981" strokeWidth={1} opacity={0.4} />
+                          )}
+                          <rect x={x} y={y} width={NODE_W} height={NODE_H} rx={8} ry={8}
+                            fill="#111827" stroke={borderColor} strokeWidth={borderWidth} />
+                          {/* Top row: ES | Duration | EF */}
+                          <line x1={x} y1={y + ROW_H} x2={x + NODE_W} y2={y + ROW_H} stroke={borderColor} strokeWidth={0.75} opacity={0.6} />
+                          <line x1={x + CELL_W} y1={y} x2={x + CELL_W} y2={y + ROW_H} stroke={borderColor} strokeWidth={0.75} opacity={0.6} />
+                          <line x1={x + 2 * CELL_W} y1={y} x2={x + 2 * CELL_W} y2={y + ROW_H} stroke={borderColor} strokeWidth={0.75} opacity={0.6} />
+                          {cell(tk.earlyStart, x + CELL_W / 2, y + ROW_H / 2)}
+                          {cell(tk.duration, x + CELL_W + CELL_W / 2, y + ROW_H / 2)}
+                          {cell(tk.earlyFinish, x + 2 * CELL_W + CELL_W / 2, y + ROW_H / 2)}
+                          {/* Middle row: gradient + name */}
+                          <rect x={x + 1} y={y + ROW_H + 0.5} width={NODE_W - 2} height={ROW_H - 1} fill="url(#cpm-node-grad)" />
+                          <text x={x + NODE_W / 2} y={y + ROW_H + ROW_H / 2} fontSize="16" fontWeight="700" fill="#ffffff" textAnchor="middle" dominantBaseline="middle">
+                            {displayName}
+                          </text>
+                          {/* Bottom row: LS | Slack | LF */}
+                          <line x1={x} y1={y + 2 * ROW_H} x2={x + NODE_W} y2={y + 2 * ROW_H} stroke={borderColor} strokeWidth={0.75} opacity={0.6} />
+                          <line x1={x + CELL_W} y1={y + 2 * ROW_H} x2={x + CELL_W} y2={y + NODE_H} stroke={borderColor} strokeWidth={0.75} opacity={0.6} />
+                          <line x1={x + 2 * CELL_W} y1={y + 2 * ROW_H} x2={x + 2 * CELL_W} y2={y + NODE_H} stroke={borderColor} strokeWidth={0.75} opacity={0.6} />
+                          {cell(tk.lateStart, x + CELL_W / 2, y + 2 * ROW_H + ROW_H / 2)}
+                          {cell(tk.slack, x + CELL_W + CELL_W / 2, y + 2 * ROW_H + ROW_H / 2)}
+                          {cell(tk.lateFinish, x + 2 * CELL_W + CELL_W / 2, y + 2 * ROW_H + ROW_H / 2)}
+                        </g>
+                      );
+                    })}
                   </svg>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[11px] text-muted-foreground px-1">
+                  <span><b>{t.topRow || "Top row"}:</b> ES · {t.duration || "Duration"} · EF</span>
+                  <span><b>{t.middleRow || "Middle"}:</b> {t.taskName || "Task name"}</span>
+                  <span><b>{t.bottomRow || "Bottom row"}:</b> LS · {t.slack || "Slack"} · LF</span>
                 </div>
               </div>
             );
