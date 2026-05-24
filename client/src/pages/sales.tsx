@@ -32,28 +32,29 @@ export default function Sales() {
   const todaysSales = transactions.reduce((sum, t) => sum + parseFloat(t.total), 0);
   const avgOrderValue = transactions.length > 0 ? todaysSales / transactions.length : 0;
 
-  const filteredTransactions = transactions.filter(t =>
-    t.transactionId.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredTransactions = transactions.filter(tx =>
+    (tx.transactionId || "").toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleExportPDF = () => {
     try {
       const columns = [
-        { header: t.transactionId, accessor: "transactionId" },
-        { header: t.dateAndTime, accessor: (row: Transaction) => new Date(row.createdAt).toLocaleString() },
-        { header: t.itemsLabel, accessor: (row: Transaction) => row.itemCount.toString() },
-        { header: t.subtotalLabel, accessor: (row: Transaction) => `${parseFloat(row.subtotal).toFixed(2)} SAR` },
-        { header: t.taxLabel, accessor: (row: Transaction) => `${parseFloat(row.tax).toFixed(2)} SAR` },
-        { header: t.totalLabel, accessor: (row: Transaction) => `${parseFloat(row.total).toFixed(2)} SAR` },
-        { header: t.paymentLabel, accessor: "paymentMethod" },
+        { header: t.transactionId || "Transaction ID", accessor: "transactionId" },
+        { header: t.dateAndTime || "Date & Time", accessor: (row: Transaction) => row.createdAt ? new Date(row.createdAt).toLocaleString() : "" },
+        { header: t.itemsLabel || "Items", accessor: (row: Transaction) => String(row.itemCount ?? 0) },
+        { header: t.subtotalLabel || "Subtotal", accessor: (row: Transaction) => `${parseFloat(row.subtotal ?? "0").toFixed(2)} SAR` },
+        { header: t.taxLabel || "Tax (15%)", accessor: (row: Transaction) => `${parseFloat(row.tax ?? "0").toFixed(2)} SAR` },
+        { header: t.totalLabel || "Total", accessor: (row: Transaction) => `${parseFloat(row.total ?? "0").toFixed(2)} SAR` },
+        { header: t.paymentLabel || "Payment", accessor: "paymentMethod" },
       ];
 
-      const subtitle = t.salesReportSubtitle
+      const subtitleTpl = t.salesReportSubtitle || "Total sales: %s SAR — Transactions: %s — Avg order: %s SAR";
+      const subtitle = subtitleTpl
         .replace('%s', todaysSales.toFixed(2))
         .replace('%s', transactions.length.toString())
         .replace('%s', avgOrderValue.toFixed(2));
 
-      const result = exportToPDF(t.salesTrackingReport, filteredTransactions, columns, {
+      const result = exportToPDF(t.salesTrackingReport || "Sales Tracking Report", filteredTransactions, columns, {
         subtitle,
       });
 
@@ -76,14 +77,15 @@ export default function Sales() {
 
   const handleExportExcel = () => {
     try {
+      const taxLabel = (t.taxLabel || "Tax").replace(' (15%)', '');
       const exportData = filteredTransactions.map((transaction) => ({
-        [t.transactionId]: transaction.transactionId,
-        [t.dateAndTime]: new Date(transaction.createdAt).toLocaleString(),
-        [t.itemsLabel]: transaction.itemCount,
-        [`${t.subtotalLabel} (SAR)`]: parseFloat(transaction.subtotal).toFixed(2),
-        [`${t.taxLabel.replace(' (15%)', '')} (SAR)`]: parseFloat(transaction.tax).toFixed(2),
-        [`${t.totalLabel} (SAR)`]: parseFloat(transaction.total).toFixed(2),
-        [t.paymentLabel]: transaction.paymentMethod,
+        [t.transactionId || "Transaction ID"]: transaction.transactionId ?? "",
+        [t.dateAndTime || "Date & Time"]: transaction.createdAt ? new Date(transaction.createdAt).toLocaleString() : "",
+        [t.itemsLabel || "Items"]: transaction.itemCount ?? 0,
+        [`${t.subtotalLabel || "Subtotal"} (SAR)`]: parseFloat(transaction.subtotal ?? "0").toFixed(2),
+        [`${taxLabel} (SAR)`]: parseFloat(transaction.tax ?? "0").toFixed(2),
+        [`${t.totalLabel || "Total"} (SAR)`]: parseFloat(transaction.total ?? "0").toFixed(2),
+        [t.paymentLabel || "Payment"]: transaction.paymentMethod ?? "",
       }));
 
       const result = exportToExcel(t.salesTrackingReport, exportData);
