@@ -177,6 +177,20 @@ export default function ProjectDetail() {
   const projectId = params.id;
   const [, setLocation] = useLocation();
   const { t, language } = useLanguage();
+  const isAr = language === 'Arabic';
+  const tr = (en: string, ar: string) => (isAr ? ar : en);
+  const lifecycleLabel = (lc: string) => isAr
+    ? (({ not_started: 'لم يبدأ', in_progress: 'قيد التنفيذ', finished: 'منتهي', cancelled: 'ملغى' } as Record<string, string>)[lc] || lc)
+    : lc.replace('_', ' ');
+  const approvalLabel = (ap: string) => isAr
+    ? (({ pending: 'قيد المراجعة', approved: 'موافق عليه', declined: 'مرفوض' } as Record<string, string>)[ap] || ap)
+    : ap;
+  const priorityLabel = (p: string) => isAr
+    ? (({ low: 'منخفض', medium: 'متوسط', high: 'عالي', urgent: 'عاجل' } as Record<string, string>)[p] || p)
+    : p;
+  const statusLabel = (s: string) => isAr
+    ? (({ pending: 'قيد الانتظار', in_progress: 'قيد التنفيذ', completed: 'مكتمل', done: 'منتهي', cancelled: 'ملغى', scheduled: 'مجدول', held: 'منعقد', no_show: 'لم يحضر' } as Record<string, string>)[s] || s.replace('_', ' '))
+    : s.replace('_', ' ');
   const layout = useDeviceLayout();
   const pdfLang = (language === 'Arabic' || language === 'Urdu') ? 'ar' : 'en';
   const { toast } = useToast();
@@ -716,10 +730,10 @@ export default function ProjectDetail() {
             <div className="flex items-center gap-2 mt-1 flex-wrap">
               <Badge variant="outline" data-testid="badge-project-number">{project.projectNumber}</Badge>
               <Badge variant={statusBadge(project.status)} className={statusClass(project.status)} data-testid="badge-project-status">
-                {project.status.replace("_", " ")}
+                {statusLabel(project.status)}
               </Badge>
               <Badge variant={priorityBadge(project.priority)} className={priorityClass(project.priority)} data-testid="badge-project-priority">
-                {project.priority}
+                {priorityLabel(project.priority)}
               </Badge>
             </div>
           </div>
@@ -772,7 +786,7 @@ export default function ProjectDetail() {
             <FileText className="h-4 w-4 mr-2" />
             {generateQuotationMutation.isPending
               ? (t.generating || "Generating...")
-              : (t.generateQuotation || "Generate Quotation")}
+              : (t.generateQuotation || tr("Generate Quotation", "إنشاء عرض السعر"))}
           </Button>
           {canDownloadProjectPdf && (
           <Button
@@ -792,24 +806,24 @@ export default function ProjectDetail() {
           <CardHeader className="pb-3">
             <CardTitle className="text-lg flex items-center gap-2">
               <ShieldCheck className="h-5 w-5" />
-              {t.decisionCenter || "Decision Center"}
+              {t.decisionCenter || tr("Decision Center", "مركز القرارات")}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-sm text-muted-foreground">{t.approval || "Approval"}:</span>
+              <span className="text-sm text-muted-foreground">{t.approval || tr("Approval", "الموافقة")}:</span>
               {(() => {
                 const ap = project.approvalStatus || 'pending';
                 const variant = ap === 'approved' ? 'default' : ap === 'declined' ? 'destructive' : 'secondary';
                 const cls = ap === 'approved' ? 'bg-green-600 text-white' : '';
-                return <Badge variant={variant as any} className={cls} data-testid="badge-approval-status">{ap}</Badge>;
+                return <Badge variant={variant as any} className={cls} data-testid="badge-approval-status">{approvalLabel(ap)}</Badge>;
               })()}
-              <span className="text-sm text-muted-foreground ml-3">{t.lifecycle || "Lifecycle"}:</span>
+              <span className="text-sm text-muted-foreground ml-3">{t.lifecycle || tr("Lifecycle", "الحالة")}:</span>
               {(() => {
                 const lc = project.lifecycleStatus || 'not_started';
                 const variant = lc === 'finished' ? 'default' : lc === 'in_progress' ? 'default' : 'outline';
                 const cls = lc === 'finished' ? 'bg-green-600 text-white' : lc === 'in_progress' ? 'bg-blue-600 text-white' : '';
-                return <Badge variant={variant as any} className={cls} data-testid="badge-lifecycle-status">{lc.replace('_', ' ')}</Badge>;
+                return <Badge variant={variant as any} className={cls} data-testid="badge-lifecycle-status">{lifecycleLabel(lc)}</Badge>;
               })()}
               {project.declineReason && (
                 <span className="text-xs text-destructive" data-testid="text-decline-reason">
@@ -863,14 +877,14 @@ export default function ProjectDetail() {
               )}
               {project.approvalStatus === 'approved' && project.lifecycleStatus === 'finished' && (
                 <span className="text-sm text-muted-foreground" data-testid="text-project-finished">
-                  {t.projectFinishedMsg || "Project finished."}
+                  {t.projectFinishedMsg || tr("Project finished.", "تم إنهاء المشروع.")}
                 </span>
               )}
               {project.customerId && (
                 <Link href="/customers">
                   <Button variant="outline" size="sm" data-testid="button-view-linked-customer">
                     <User className="h-4 w-4 mr-2" />
-                    {t.viewLinkedCustomer || "View Linked Customer"}
+                    {t.viewLinkedCustomer || tr("View Linked Customer", "عرض العميل المرتبط")}
                   </Button>
                 </Link>
               )}
@@ -882,8 +896,8 @@ export default function ProjectDetail() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className={`${layout.isMobile ? "grid grid-cols-4 w-full" : "grid grid-cols-8 w-full"}`}>
           <TabsTrigger value="overview" data-testid="tab-overview">{t.overview || "Overview"}</TabsTrigger>
-          <TabsTrigger value="requirements" data-testid="tab-requirements">{t.clientRequirements || "Requirements"}</TabsTrigger>
-          <TabsTrigger value="meetings" data-testid="tab-meetings">{t.meetings || "Meetings"}</TabsTrigger>
+          <TabsTrigger value="requirements" data-testid="tab-requirements">{t.clientRequirements || tr("Requirements", "المتطلبات")}</TabsTrigger>
+          <TabsTrigger value="meetings" data-testid="tab-meetings">{t.meetings || tr("Meetings", "الاجتماعات")}</TabsTrigger>
           <TabsTrigger value="services" data-testid="tab-services">{t.services || "Services"}</TabsTrigger>
           <TabsTrigger value="bills" data-testid="tab-bills">{t.bills || "Bills"}</TabsTrigger>
           <TabsTrigger value="procurements" data-testid="tab-procurements">{t.procurements || "Procurements"}</TabsTrigger>
@@ -1186,7 +1200,7 @@ export default function ProjectDetail() {
             <h2 className="text-lg font-semibold">{t.tasks || "Tasks"}</h2>
             <div className="flex gap-2 flex-wrap">
               <Button variant="outline" onClick={() => cpmMut.mutate()} disabled={cpmMut.isPending || tasks.length === 0} data-testid="button-create-cpm">
-                <AlertTriangle className="h-4 w-4 mr-2" />{t.createCpmDiagram || "Create CPM Diagram"}
+                <AlertTriangle className="h-4 w-4 mr-2" />{t.createCpmDiagram || tr("Create CPM Diagram", "إنشاء مخطط المسار الحرج")}
               </Button>
               <Button
                 variant="outline"
@@ -1194,10 +1208,10 @@ export default function ProjectDetail() {
                 disabled={tasks.length === 0 || !tasks.some(tk => tk.earlyStart !== null)}
                 data-testid="button-preview-cpm"
               >
-                <GitBranch className="h-4 w-4 mr-2" />{t.previewCpmDiagram || "Preview CPM Diagram"}
+                <GitBranch className="h-4 w-4 mr-2" />{t.previewCpmDiagram || tr("Preview CPM Diagram", "معاينة مخطط المسار الحرج")}
               </Button>
               <Button variant="outline" onClick={() => setDecisionToolsOpen(true)} disabled={tasks.length === 0} data-testid="button-decision-tools">
-                <Lightbulb className="h-4 w-4 mr-2" />{t.decisionTools || "Decision Tools"}
+                <Lightbulb className="h-4 w-4 mr-2" />{t.decisionTools || tr("Decision Tools", "أدوات القرار")}
               </Button>
               <Button onClick={() => { setEditTask(null); taskForm.reset(); setTaskOpen(true); }} data-testid="button-add-task"><Plus className="h-4 w-4 mr-2" />{t.addTask || "Add Task"}</Button>
             </div>
@@ -1253,7 +1267,7 @@ export default function ProjectDetail() {
                         )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <Badge variant={statusBadge(tk.status)} className={statusClass(tk.status)}>{tk.status.replace("_", " ")}</Badge>
+                        <Badge variant={statusBadge(tk.status)} className={statusClass(tk.status)}>{statusLabel(tk.status)}</Badge>
                         {tk.status === "pending" && (
                           <Button
                             variant="outline"
@@ -1325,7 +1339,7 @@ export default function ProjectDetail() {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <ClipboardList className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-semibold">{t.clientRequirements || "Client Requirements"}</h2>
+              <h2 className="text-lg font-semibold">{t.clientRequirements || tr("Client Requirements", "متطلبات العميل")}</h2>
               <Badge variant="secondary">{requirements.length}</Badge>
             </div>
             <div className="flex items-center gap-2 flex-wrap">
@@ -1333,7 +1347,7 @@ export default function ProjectDetail() {
                 <Download className="h-4 w-4 mr-2" />{t.exportPdf || "Export PDF"}
               </Button>
               <Button size="sm" onClick={() => openReqDialog(null)} data-testid="button-add-requirement">
-                <Plus className="h-4 w-4 mr-2" />{t.addRequirement || "Add Requirement"}
+                <Plus className="h-4 w-4 mr-2" />{t.addRequirement || tr("Add Requirement", "إضافة متطلب")}
               </Button>
             </div>
           </div>
@@ -1351,8 +1365,8 @@ export default function ProjectDetail() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
                           <span className="font-semibold" data-testid={`text-req-title-${r.id}`}>{r.title}</span>
-                          <Badge variant={r.priority === "high" ? "destructive" : r.priority === "low" ? "secondary" : "default"}>{r.priority}</Badge>
-                          <Badge variant={r.status === "done" ? "default" : r.status === "in_progress" ? "secondary" : "outline"}>{r.status}</Badge>
+                          <Badge variant={r.priority === "high" ? "destructive" : r.priority === "low" ? "secondary" : "default"}>{priorityLabel(r.priority)}</Badge>
+                          <Badge variant={r.status === "done" ? "default" : r.status === "in_progress" ? "secondary" : "outline"}>{statusLabel(r.status)}</Badge>
                         </div>
                         {r.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{r.description}</p>}
                       </div>
@@ -1381,7 +1395,7 @@ export default function ProjectDetail() {
                 <Download className="h-4 w-4 mr-2" />{t.exportPdf || "Export PDF"}
               </Button>
               <Button size="sm" onClick={() => openMeetDialog(null)} data-testid="button-add-meeting">
-                <Plus className="h-4 w-4 mr-2" />{t.scheduleMeeting || "Schedule Meeting"}
+                <Plus className="h-4 w-4 mr-2" />{t.scheduleMeeting || tr("Schedule Meeting", "جدولة اجتماع")}
               </Button>
             </div>
           </div>
@@ -1406,7 +1420,7 @@ export default function ProjectDetail() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap mb-1">
                             <span className="font-semibold" data-testid={`text-meeting-title-${m.id}`}>{m.title}</span>
-                            <Badge variant={m.status === "completed" ? "default" : m.status === "cancelled" ? "destructive" : isUpcoming ? "secondary" : "outline"}>{m.status}</Badge>
+                            <Badge variant={m.status === "completed" ? "default" : m.status === "cancelled" ? "destructive" : isUpcoming ? "secondary" : "outline"}>{statusLabel(m.status)}</Badge>
                             {isUpcoming && <Badge variant="default">{t.upcoming || "Upcoming"}</Badge>}
                           </div>
                           <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mt-2">
@@ -1427,10 +1441,10 @@ export default function ProjectDetail() {
                         </div>
                       </div>
                       {m.agenda && (
-                        <div className="text-sm mt-2"><span className="font-medium">{t.agenda || "Agenda"}: </span><span className="whitespace-pre-wrap text-muted-foreground">{m.agenda}</span></div>
+                        <div className="text-sm mt-2"><span className="font-medium">{t.agenda || tr("Agenda", "جدول الأعمال")}: </span><span className="whitespace-pre-wrap text-muted-foreground">{m.agenda}</span></div>
                       )}
                       {m.summary && (
-                        <div className="text-sm mt-2"><span className="font-medium">{t.summary || "Summary"}: </span><span className="whitespace-pre-wrap text-muted-foreground">{m.summary}</span></div>
+                        <div className="text-sm mt-2"><span className="font-medium">{t.summary || tr("Summary", "الملخص")}: </span><span className="whitespace-pre-wrap text-muted-foreground">{m.summary}</span></div>
                       )}
                       {actionItems.length > 0 && (
                         <div className="mt-3 border-t pt-3">
@@ -1460,7 +1474,7 @@ export default function ProjectDetail() {
       <Dialog open={reqOpen} onOpenChange={(o) => { setReqOpen(o); if (!o) { setEditReq(null); setReqForm(emptyReq); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editReq ? (t.editRequirement || "Edit Requirement") : (t.addRequirement || "Add Requirement")}</DialogTitle>
+            <DialogTitle>{editReq ? (t.editRequirement || tr("Edit Requirement", "تعديل المتطلب")) : (t.addRequirement || tr("Add Requirement", "إضافة متطلب"))}</DialogTitle>
             <DialogDescription>{t.requirementDesc || "Capture what the client needs."}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -1511,8 +1525,8 @@ export default function ProjectDetail() {
       <Dialog open={meetOpen} onOpenChange={(o) => { setMeetOpen(o); if (!o) { setEditMeet(null); setMeetForm(emptyMeet); setMeetActions([]); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editMeet ? (t.editMeeting || "Edit Meeting") : (t.scheduleMeeting || "Schedule Meeting")}</DialogTitle>
-            <DialogDescription>{t.meetingDesc || "Plan the meeting, capture minutes, and assign follow-ups."}</DialogDescription>
+            <DialogTitle>{editMeet ? (t.editMeeting || tr("Edit Meeting", "تعديل الاجتماع")) : (t.scheduleMeeting || tr("Schedule Meeting", "جدولة اجتماع"))}</DialogTitle>
+            <DialogDescription>{t.meetingDesc || tr("Plan the meeting, capture minutes, and assign follow-ups.", "خطط للاجتماع وسجّل المحضر وحدّد المهام للمتابعة.")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div>
@@ -1521,17 +1535,17 @@ export default function ProjectDetail() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium">{t.dateTime || "Date & Time"}</label>
+                <label className="text-sm font-medium">{t.dateTime || tr("Date & Time", "التاريخ والوقت")}</label>
                 <Input type="datetime-local" value={meetForm.scheduledAt} onChange={(e) => setMeetForm({ ...meetForm, scheduledAt: e.target.value })} data-testid="input-meet-datetime" />
               </div>
               <div>
-                <label className="text-sm font-medium">{t.durationMin || "Duration (min)"}</label>
+                <label className="text-sm font-medium">{t.durationMin || tr("Duration (min)", "المدة (دقيقة)")}</label>
                 <Input type="number" min="5" value={meetForm.durationMinutes} onChange={(e) => setMeetForm({ ...meetForm, durationMinutes: e.target.value })} data-testid="input-meet-duration" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium">{t.attendees || "Attendees"}</label>
+                <label className="text-sm font-medium">{t.attendees || tr("Attendees", "الحضور")}</label>
                 <Input value={meetForm.attendees} onChange={(e) => setMeetForm({ ...meetForm, attendees: e.target.value })} placeholder="Ahmed, Sara, Client" data-testid="input-meet-attendees" />
               </div>
               <div>
@@ -1548,7 +1562,7 @@ export default function ProjectDetail() {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium">{t.meetingLink || "Meeting Link"}</label>
+                <label className="text-sm font-medium">{t.meetingLink || tr("Meeting Link", "رابط الاجتماع")}</label>
                 <Input value={meetForm.meetingLink} onChange={(e) => setMeetForm({ ...meetForm, meetingLink: e.target.value })} placeholder="https://..." data-testid="input-meet-link" />
               </div>
               <div>
@@ -1557,11 +1571,11 @@ export default function ProjectDetail() {
               </div>
             </div>
             <div>
-              <label className="text-sm font-medium">{t.reminderMinBefore || "Reminder (min before)"}</label>
+              <label className="text-sm font-medium">{t.reminderMinBefore || tr("Reminder (min before)", "تذكير (دقائق قبل)")}</label>
               <Input type="number" min="0" value={meetForm.reminderMinutesBefore} onChange={(e) => setMeetForm({ ...meetForm, reminderMinutesBefore: e.target.value })} data-testid="input-meet-reminder" />
             </div>
             <div>
-              <label className="text-sm font-medium">{t.agenda || "Agenda"}</label>
+              <label className="text-sm font-medium">{t.agenda || tr("Agenda", "جدول الأعمال")}</label>
               <Textarea value={meetForm.agenda} onChange={(e) => setMeetForm({ ...meetForm, agenda: e.target.value })} rows={3} data-testid="input-meet-agenda" />
             </div>
             <div>
@@ -1569,11 +1583,11 @@ export default function ProjectDetail() {
               <Textarea value={meetForm.notes} onChange={(e) => setMeetForm({ ...meetForm, notes: e.target.value })} rows={3} data-testid="input-meet-notes" />
             </div>
             <div>
-              <label className="text-sm font-medium">{t.summary || "Summary"}</label>
+              <label className="text-sm font-medium">{t.summary || tr("Summary", "الملخص")}</label>
               <Textarea value={meetForm.summary} onChange={(e) => setMeetForm({ ...meetForm, summary: e.target.value })} rows={2} data-testid="input-meet-summary" />
             </div>
             <div>
-              <label className="text-sm font-medium">{t.transcript || "Transcript"}</label>
+              <label className="text-sm font-medium">{t.transcript || tr("Transcript", "النص المكتوب")}</label>
               <Textarea value={meetForm.transcript} onChange={(e) => setMeetForm({ ...meetForm, transcript: e.target.value })} rows={3} placeholder={t.transcriptPlaceholder || "Paste full transcript here..."} data-testid="input-meet-transcript" />
             </div>
             <div className="border-t pt-3">
@@ -1639,7 +1653,7 @@ export default function ProjectDetail() {
           {(() => {
             const cpmTasks = tasks.filter(tk => tk.earlyStart !== null && tk.earlyFinish !== null);
             if (cpmTasks.length === 0) {
-              return <p className="text-sm text-muted-foreground py-8 text-center">{t.runCpmFirst || "Run Create CPM Diagram first to see the chart."}</p>;
+              return <p className="text-sm text-muted-foreground py-8 text-center">{t.runCpmFirst || tr("Run Create CPM Diagram first to see the chart.", "قم بإنشاء مخطط المسار الحرج أولاً لعرض الرسم البياني.")}</p>;
             }
             const idToTask = new Map(cpmTasks.map(tk => [tk.id, tk]));
             const nameToId = new Map(cpmTasks.map(tk => [tk.name.toLowerCase(), tk.id]));
@@ -1747,10 +1761,10 @@ export default function ProjectDetail() {
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-red-500" /> {t.criticalPath || "Critical path"}</div>
-                    <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-emerald-500" /> {t.inProgress || "In progress"}</div>
-                    <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-primary" /> {t.regularTask || "Regular task"}</div>
-                    <div>{t.duration || "Duration"}: {maxFinish} {t.days || "days"}</div>
+                    <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-red-500" /> {t.criticalPath || tr("Critical path", "المسار الحرج")}</div>
+                    <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-emerald-500" /> {t.inProgress || tr("In progress", "قيد التنفيذ")}</div>
+                    <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-primary" /> {t.regularTask || tr("Regular task", "مهمة عادية")}</div>
+                    <div>{t.duration || tr("Duration", "المدة")}: {maxFinish} {t.days || tr("days", "أيام")}</div>
                     <div>{cpmTasks.length} {(t.tasks || "tasks").toString().toLowerCase()}</div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1842,9 +1856,9 @@ export default function ProjectDetail() {
                   </svg>
                 </div>
                 <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-[11px] text-muted-foreground px-1">
-                  <span><b>{t.topRow || "Top row"}:</b> ES · {t.duration || "Duration"} · EF</span>
-                  <span><b>{t.middleRow || "Middle"}:</b> {t.taskName || "Task name"}</span>
-                  <span><b>{t.bottomRow || "Bottom row"}:</b> LS · {t.slack || "Slack"} · LF</span>
+                  <span><b>{t.topRow || tr("Top row", "الصف العلوي")}:</b> ES · {t.duration || tr("Duration", "المدة")} · EF</span>
+                  <span><b>{t.middleRow || tr("Middle", "الوسط")}:</b> {t.taskName || tr("Task name", "اسم المهمة")}</span>
+                  <span><b>{t.bottomRow || tr("Bottom row", "الصف السفلي")}:</b> LS · {t.slack || tr("Slack", "الفجوة")} · LF</span>
                 </div>
               </div>
             );
