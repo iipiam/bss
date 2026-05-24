@@ -15945,7 +15945,24 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const customer = await storage.getCustomer(req.params.id, restaurantId);
       if (!customer) return res.status(404).json({ error: "Customer not found" });
       const projects = await storage.getServiceProjectsForCustomer(restaurantId, req.params.id);
-      res.json(projects);
+      const enriched = await Promise.all(projects.map(async (p) => {
+        try {
+          const reqs = await (storage as any).getProjectClientRequirements?.(restaurantId, p.id) || [];
+          const meets = await (storage as any).getProjectMeetings?.(restaurantId, p.id) || [];
+          const upcoming = meets.filter((m: any) => m.scheduledAt && new Date(m.scheduledAt).getTime() > Date.now() && m.status !== 'cancelled').length;
+          return {
+            ...p,
+            requirementsCount: reqs.length,
+            requirementsOpen: reqs.filter((r: any) => r.status !== 'done').length,
+            meetingsCount: meets.length,
+            meetingsUpcoming: upcoming,
+          };
+        } catch (e: any) {
+          console.error('[customer-projects] failed to load counts for project', p.id, e?.message);
+          return { ...p, requirementsCount: 0, requirementsOpen: 0, meetingsCount: 0, meetingsUpcoming: 0 };
+        }
+      }));
+      res.json(enriched);
     } catch (error: any) {
       res.status(500).json({ error: error.message });
     }
@@ -17053,6 +17070,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const companyInfo = await storage.getCompanySettings(restaurantId);
       
       const items = Array.isArray(quotation.items) ? quotation.items : [];
+      const quoteReqsAndMeetingsHtml = (quotation as any).projectId
+        ? await buildRequirementsAndMeetingsHtml(restaurantId, (quotation as any).projectId)
+        : '';
       const phasesQ = Array.from(new Set(items.map((it: any) => Number(it.phase) || 1))).sort((a: number, b: number) => a - b);
       let qIdx = 0;
       const itemRows = phasesQ.length === 0
@@ -17159,6 +17179,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
           ${quotation.validUntil ? `<div class="validity">Valid Until / صالح حتى: ${new Date(quotation.validUntil).toLocaleDateString('en-GB')}</div>` : ''}
 
+          ${quoteReqsAndMeetingsHtml}
+
           ${quotation.notes ? `<div class="terms"><h3>Notes / ملاحظات</h3><p>${escapeHtml(quotation.notes)}</p></div>` : ''}
 
           <div class="footer">
@@ -17199,6 +17221,77 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Shared helper: builds HTML for Client Requirements + Meetings sections
+  // used inside Dossier, Agreement and (when linked) Quotation PDFs.
+  async function buildRequirementsAndMeetingsHtml(restaurantId: string, projectId: string): Promise<string> {
+    try {
+      const reqs = await (storage as any).getProjectClientRequirements?.(restaurantId, projectId) || [];
+      const meets = await (storage as any).getProjectMeetings?.(restaurantId, projectId) || [];
+      let html = '';
+      if (reqs.length > 0) {
+        const rows = reqs.map((r: any, i: number) => `
+          <tr>
+            <td style="text-align:center">${i + 1}</td>
+            <td><strong>${escapeHtml(r.title)}</strong>${r.description ? `<div style="color:#666;font-size:10px;margin-top:2px;">${escapeHtml(r.description)}</div>` : ''}</td>
+            <td style="text-align:center;text-transform:capitalize">${escapeHtml(r.priority || 'medium')}</td>
+            <td style="text-align:center;text-transform:capitalize">${escapeHtml((r.status || 'pending').replace('_', ' '))}</td>
+          </tr>`).join('');
+        html += `
+          <div class="section" style="margin:25px 0;page-break-inside:avoid;">
+            <h3 style="color:#1a365d;border-bottom:1px solid #e2e8f0;padding-bottom:5px;font-size:14px;">Client Requirements / متطلبات العميل</h3>
+            <table style="width:100%;border-collapse:collapse;margin:10px 0;font-size:10px;">
+              <thead><tr>
+                <th style="background:#1a365d;color:#fff;padding:8px;width:40px;">#</th>
+                <th style="background:#1a365d;color:#fff;padding:8px;text-align:left;">Requirement / المتطلب</th>
+                <th style="background:#1a365d;color:#fff;padding:8px;width:90px;">Priority / الأولوية</th>
+                <th style="background:#1a365d;color:#fff;padding:8px;width:100px;">Status / الحالة</th>
+              </tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>`;
+      }
+      if (meets.length > 0) {
+        const rows = meets.map((m: any, i: number) => {
+          const dt = m.scheduledAt ? new Date(m.scheduledAt) : null;
+          const actionItems = Array.isArray(m.actionItems) ? m.actionItems : [];
+          const aiHtml = actionItems.length > 0
+            ? `<ul style="margin:4px 0 0 16px;padding:0;color:#444;font-size:10px;">${actionItems.map((a: any) => `<li>${escapeHtml(a.text || a.task || a.description || '')}${a.assignee ? ` — <em>${escapeHtml(a.assignee)}</em>` : ''}${a.dueDate ? ` (${new Date(a.dueDate).toLocaleDateString('en-GB')})` : ''}</li>`).join('')}</ul>`
+            : '';
+          return `
+          <tr>
+            <td style="text-align:center">${i + 1}</td>
+            <td><strong>${escapeHtml(m.title)}</strong>
+              ${m.agenda ? `<div style="color:#666;font-size:10px;margin-top:2px;"><em>Agenda:</em> ${escapeHtml(m.agenda)}</div>` : ''}
+              ${m.summary ? `<div style="color:#444;font-size:10px;margin-top:2px;"><em>Summary:</em> ${escapeHtml(m.summary)}</div>` : ''}
+              ${aiHtml}
+            </td>
+            <td style="text-align:center">${dt ? dt.toLocaleDateString('en-GB') + '<br/>' + dt.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '-'}</td>
+            <td style="text-align:center">${m.durationMinutes || 0} min</td>
+            <td style="text-align:center;text-transform:capitalize">${escapeHtml(m.status || 'scheduled')}</td>
+          </tr>`;
+        }).join('');
+        html += `
+          <div class="section" style="margin:25px 0;page-break-inside:avoid;">
+            <h3 style="color:#1a365d;border-bottom:1px solid #e2e8f0;padding-bottom:5px;font-size:14px;">Meetings / الاجتماعات</h3>
+            <table style="width:100%;border-collapse:collapse;margin:10px 0;font-size:10px;">
+              <thead><tr>
+                <th style="background:#1a365d;color:#fff;padding:8px;width:40px;">#</th>
+                <th style="background:#1a365d;color:#fff;padding:8px;text-align:left;">Meeting / الاجتماع</th>
+                <th style="background:#1a365d;color:#fff;padding:8px;width:90px;">Date / التاريخ</th>
+                <th style="background:#1a365d;color:#fff;padding:8px;width:70px;">Duration</th>
+                <th style="background:#1a365d;color:#fff;padding:8px;width:90px;">Status</th>
+              </tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>`;
+      }
+      return html;
+    } catch (e) {
+      console.error('[buildRequirementsAndMeetingsHtml] error:', e);
+      return '';
+    }
+  }
+
   // Shared helper: builds the project Dossier PDF as a Buffer so both the
   // download route and the Decision Center approve flow can reuse it.
   async function buildProjectDossierPdf(
@@ -17225,6 +17318,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const totalProcurements = procurements.reduce((s, p) => s + parseFloat(p.totalPrice || '0'), 0);
     const totalPaid = schedules.filter(s => s.status === 'paid').reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
     const totalScheduled = schedules.reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
+    const reqsAndMeetingsHtml = await buildRequirementsAndMeetingsHtml(restaurantId, project.id);
 
     const svcPhases = Array.from(new Set(services.map(s => (s as any).phase ?? 1))).sort((a: number, b: number) => a - b);
     let svcIdx = 0;
@@ -17424,6 +17518,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             </table>
           </div>` : ''}
 
+          ${reqsAndMeetingsHtml}
+
           ${project.notes ? `<div class="section"><h3>Notes / ملاحظات</h3><p>${escapeHtml(project.notes)}</p></div>` : ''}
 
           <div class="footer">
@@ -17565,6 +17661,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         ? `<img src="${escapeHtml(company.companyLogo)}" alt="logo" class="logo" />`
         : '';
 
+      const reqsAndMeetingsHtml = await buildRequirementsAndMeetingsHtml(restaurantId, project.id);
+
       const htmlContent = `
         <!DOCTYPE html>
         <html lang="${lang}" dir="${dir}">
@@ -17692,6 +17790,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
               <tr class="grand"><td>Total</td><td class="val">${fmtMoney(totalWithVat)}</td></tr>
             </table>
           </div>
+
+          ${reqsAndMeetingsHtml}
 
           <div class="section-title">Agreement / الاتفاقية</div>
           <div class="agreement-body">${bodyHtml}</div>

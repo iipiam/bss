@@ -179,6 +179,20 @@ function CustomerExtras({ customerId }: { customerId: string }) {
                   </div>
                 </div>
                 <div className="text-xs text-muted-foreground truncate">{p.name}</div>
+                {((p as any).requirementsCount > 0 || (p as any).meetingsCount > 0) && (
+                  <div className="flex items-center gap-1 mt-1 flex-wrap">
+                    {(p as any).requirementsCount > 0 && (
+                      <Badge variant="secondary" className="text-[10px]" data-testid={`badge-reqs-${p.id}`}>
+                        {(p as any).requirementsCount} req{(p as any).requirementsOpen > 0 ? ` · ${(p as any).requirementsOpen} open` : ''}
+                      </Badge>
+                    )}
+                    {(p as any).meetingsCount > 0 && (
+                      <Badge variant="secondary" className="text-[10px]" data-testid={`badge-meets-${p.id}`}>
+                        {(p as any).meetingsCount} meet{(p as any).meetingsUpcoming > 0 ? ` · ${(p as any).meetingsUpcoming} upcoming` : ''}
+                      </Badge>
+                    )}
+                  </div>
+                )}
               </div>
             ))
           )}
