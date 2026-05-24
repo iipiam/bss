@@ -201,6 +201,7 @@ export default function ProjectDetail() {
   const [declineOpen, setDeclineOpen] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
   const [decisionToolsOpen, setDecisionToolsOpen] = useState(false);
+  const [cpmPreviewOpen, setCpmPreviewOpen] = useState(false);
   const [reqOpen, setReqOpen] = useState(false);
   const [editReq, setEditReq] = useState<ClientRequirementItem | null>(null);
   const emptyReq = { title: "", description: "", priority: "medium", status: "pending" };
@@ -1182,8 +1183,16 @@ export default function ProjectDetail() {
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <h2 className="text-lg font-semibold">{t.tasks || "Tasks"}</h2>
             <div className="flex gap-2 flex-wrap">
-              <Button variant="outline" onClick={() => cpmMut.mutate()} disabled={cpmMut.isPending} data-testid="button-calculate-cpm">
-                <AlertTriangle className="h-4 w-4 mr-2" />{t.calculateCriticalPath || "Calculate CPM"}
+              <Button variant="outline" onClick={() => cpmMut.mutate()} disabled={cpmMut.isPending || tasks.length === 0} data-testid="button-create-cpm">
+                <AlertTriangle className="h-4 w-4 mr-2" />{t.createCpmDiagram || "Create CPM Diagram"}
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setCpmPreviewOpen(true)}
+                disabled={tasks.length === 0 || !tasks.some(tk => tk.earlyStart !== null)}
+                data-testid="button-preview-cpm"
+              >
+                <GitBranch className="h-4 w-4 mr-2" />{t.previewCpmDiagram || "Preview CPM Diagram"}
               </Button>
               <Button variant="outline" onClick={() => setDecisionToolsOpen(true)} disabled={tasks.length === 0} data-testid="button-decision-tools">
                 <Lightbulb className="h-4 w-4 mr-2" />{t.decisionTools || "Decision Tools"}
@@ -1610,6 +1619,141 @@ export default function ProjectDetail() {
               }} disabled={meetMut.isPending} data-testid="button-save-meet">{meetMut.isPending ? (t.saving || "Saving...") : (t.save || "Save")}</Button>
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* CPM Diagram Preview Dialog */}
+      <Dialog open={cpmPreviewOpen} onOpenChange={setCpmPreviewOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <GitBranch className="h-5 w-5 text-primary" />
+              {t.cpmDiagramPreview || "CPM Diagram Preview"}
+            </DialogTitle>
+            <DialogDescription>
+              {t.cpmDiagramPreviewDesc || "Network diagram of tasks. Red nodes and arrows mark the critical path."}
+            </DialogDescription>
+          </DialogHeader>
+          {(() => {
+            const cpmTasks = tasks.filter(tk => tk.earlyStart !== null && tk.earlyFinish !== null);
+            if (cpmTasks.length === 0) {
+              return <p className="text-sm text-muted-foreground py-8 text-center">{t.runCpmFirst || "Run Create CPM Diagram first to see the chart."}</p>;
+            }
+            const idToTask = new Map(cpmTasks.map(tk => [tk.id, tk]));
+            const nameToId = new Map(cpmTasks.map(tk => [tk.name.toLowerCase(), tk.id]));
+            const resolveDep = (d: string): string | null => {
+              if (idToTask.has(d)) return d;
+              const byName = nameToId.get(d.toLowerCase());
+              return byName ?? null;
+            };
+            const maxFinish = Math.max(...cpmTasks.map(tk => tk.earlyFinish || 0), 1);
+            const NODE_W = 160, NODE_H = 80, COL_GAP = 40, ROW_GAP = 24, PAD = 24;
+            const scale = 6;
+            const phases = Array.from(new Set(cpmTasks.map(tk => tk.phase ?? 1))).sort((a, b) => a - b);
+            const rowOf = new Map<string, number>();
+            phases.forEach((ph) => {
+              const phTasks = cpmTasks.filter(tk => (tk.phase ?? 1) === ph).sort((a, b) => (a.earlyStart || 0) - (b.earlyStart || 0));
+              const lanes: number[] = [];
+              phTasks.forEach(tk => {
+                const start = tk.earlyStart || 0;
+                let lane = lanes.findIndex(end => end <= start);
+                if (lane === -1) { lane = lanes.length; lanes.push(0); }
+                lanes[lane] = (tk.earlyFinish || 0);
+                rowOf.set(tk.id, lane);
+              });
+            });
+            const phaseRowOffsets = new Map<number, number>();
+            let cur = 0;
+            phases.forEach(ph => {
+              phaseRowOffsets.set(ph, cur);
+              const lanesUsed = Math.max(1, ...cpmTasks.filter(tk => (tk.phase ?? 1) === ph).map(tk => (rowOf.get(tk.id) ?? 0) + 1));
+              cur += lanesUsed;
+            });
+            const totalRows = cur;
+            const width = PAD * 2 + maxFinish * scale + NODE_W;
+            const height = PAD * 2 + totalRows * (NODE_H + ROW_GAP);
+            type Pos = { x: number; y: number; tk: typeof cpmTasks[number] };
+            const positions = new Map<string, Pos>();
+            cpmTasks.forEach(tk => {
+              const x = PAD + (tk.earlyStart || 0) * scale;
+              const phOff = phaseRowOffsets.get(tk.phase ?? 1) ?? 0;
+              const y = PAD + (phOff + (rowOf.get(tk.id) ?? 0)) * (NODE_H + ROW_GAP);
+              positions.set(tk.id, { x, y, tk });
+            });
+            const edges: Array<{ from: Pos; to: Pos; critical: boolean }> = [];
+            cpmTasks.forEach(tk => {
+              const toPos = positions.get(tk.id);
+              if (!toPos) return;
+              (tk.dependencies ?? []).forEach(d => {
+                const fromId = resolveDep(d);
+                if (!fromId) return;
+                const fromPos = positions.get(fromId);
+                if (!fromPos) return;
+                const fromTk = idToTask.get(fromId)!;
+                edges.push({ from: fromPos, to: toPos, critical: fromTk.isCritical && tk.isCritical });
+              });
+            });
+            return (
+              <div className="space-y-3">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-red-500" /> {t.criticalPath || "Critical path"}</div>
+                  <div className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-sm bg-primary" /> {t.regularTask || "Regular task"}</div>
+                  <div>{t.duration || "Duration"}: {maxFinish} {t.days || "days"}</div>
+                  <div>{cpmTasks.length} {(t.tasks || "tasks").toString().toLowerCase()}</div>
+                </div>
+                <div className="border rounded-md overflow-auto bg-card" style={{ maxHeight: "65vh" }}>
+                  <svg width={width} height={height} data-testid="svg-cpm-diagram">
+                    <defs>
+                      <marker id="arrow-cpm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="hsl(var(--muted-foreground))" />
+                      </marker>
+                      <marker id="arrow-cpm-crit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="rgb(239 68 68)" />
+                      </marker>
+                    </defs>
+                    {edges.map((e, i) => {
+                      const x1 = e.from.x + NODE_W, y1 = e.from.y + NODE_H / 2;
+                      const x2 = e.to.x, y2 = e.to.y + NODE_H / 2;
+                      const mx = (x1 + x2) / 2;
+                      const path = `M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`;
+                      return (
+                        <path
+                          key={`edge-${i}`}
+                          d={path}
+                          fill="none"
+                          stroke={e.critical ? "rgb(239 68 68)" : "hsl(var(--muted-foreground))"}
+                          strokeWidth={e.critical ? 2 : 1.25}
+                          markerEnd={e.critical ? "url(#arrow-cpm-crit)" : "url(#arrow-cpm)"}
+                        />
+                      );
+                    })}
+                    {Array.from(positions.values()).map(({ x, y, tk }) => (
+                      <g key={`node-${tk.id}`} data-testid={`cpm-node-${tk.id}`}>
+                        <rect
+                          x={x} y={y} width={NODE_W} height={NODE_H} rx={6} ry={6}
+                          fill="hsl(var(--card))"
+                          stroke={tk.isCritical ? "rgb(239 68 68)" : "hsl(var(--border))"}
+                          strokeWidth={tk.isCritical ? 2 : 1}
+                        />
+                        <text x={x + 8} y={y + 18} fontSize="12" fontWeight="600" fill="hsl(var(--foreground))">
+                          {tk.name.length > 22 ? tk.name.slice(0, 21) + "…" : tk.name}
+                        </text>
+                        <text x={x + 8} y={y + 36} fontSize="10" fill="hsl(var(--muted-foreground))">
+                          {t.duration || "Duration"}: {tk.duration} {t.days || "d"}
+                        </text>
+                        <text x={x + 8} y={y + 52} fontSize="10" fill="hsl(var(--muted-foreground))">
+                          ES {tk.earlyStart} · EF {tk.earlyFinish}
+                        </text>
+                        <text x={x + 8} y={y + 68} fontSize="10" fill="hsl(var(--muted-foreground))">
+                          LS {tk.lateStart} · LF {tk.lateFinish} · {t.slack || "Slack"} {tk.slack}
+                        </text>
+                      </g>
+                    ))}
+                  </svg>
+                </div>
+              </div>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 
