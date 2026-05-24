@@ -19546,10 +19546,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       try {
         const page = await browser.newPage();
         await page.setContent(html, { waitUntil: 'networkidle0' });
-        const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '14mm', right: '12mm', bottom: '14mm', left: '12mm' } });
+        const pdfData = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '14mm', right: '12mm', bottom: '14mm', left: '12mm' } });
+        const pdfBuffer = Buffer.from(pdfData);
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', 'attachment; filename="influencer-analysis.pdf"');
-        res.send(pdf);
+        res.setHeader('Content-Length', String(pdfBuffer.length));
+        res.end(pdfBuffer);
       } finally { await browser.close(); }
     } catch (err: any) {
       console.error('[influencer-profiles/pdf]', err);
