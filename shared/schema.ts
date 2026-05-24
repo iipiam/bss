@@ -1899,6 +1899,69 @@ export const insertProjectTaskSchema = createInsertSchema(projectTasks).omit({ i
 export type InsertProjectTask = z.infer<typeof insertProjectTaskSchema>;
 export type ProjectTask = typeof projectTasks.$inferSelect;
 
+// Client Requirements (one project has many)
+export const projectClientRequirements = pgTable("project_client_requirements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  projectId: varchar("project_id").references(() => serviceProjects.id, { onDelete: "cascade" }).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  priority: text("priority").notNull().default("medium"),
+  status: text("status").notNull().default("pending"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertProjectClientRequirementSchema = createInsertSchema(projectClientRequirements).omit({ id: true, createdAt: true });
+export type InsertProjectClientRequirement = z.infer<typeof insertProjectClientRequirementSchema>;
+export type ProjectClientRequirement = typeof projectClientRequirements.$inferSelect;
+
+// Project Meetings (scheduling + notes + action items)
+export const projectMeetings = pgTable("project_meetings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  projectId: varchar("project_id").references(() => serviceProjects.id, { onDelete: "cascade" }).notNull(),
+  title: text("title").notNull(),
+  scheduledAt: timestamp("scheduled_at").notNull(),
+  durationMinutes: integer("duration_minutes").notNull().default(30),
+  attendees: text("attendees"),
+  meetingLink: text("meeting_link"),
+  location: text("location"),
+  reminderMinutesBefore: integer("reminder_minutes_before").notNull().default(15),
+  status: text("status").notNull().default("scheduled"),
+  agenda: text("agenda"),
+  notes: text("notes"),
+  summary: text("summary"),
+  transcript: text("transcript"),
+  actionItems: jsonb("action_items").$type<Array<{ text: string; assignee?: string; dueDate?: string; done?: boolean }>>().default([]),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertProjectMeetingSchema = createInsertSchema(projectMeetings).omit({ id: true, createdAt: true });
+export type InsertProjectMeeting = z.infer<typeof insertProjectMeetingSchema>;
+export type ProjectMeeting = typeof projectMeetings.$inferSelect;
+
+// Influencer profiles (Marketing > Fake Followers Detector)
+export const influencerProfiles = pgTable("influencer_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  username: text("username").notNull(),
+  platform: text("platform").notNull().default("Instagram"),
+  followers: integer("followers").notNull().default(0),
+  following: integer("following").notNull().default(0),
+  avgLikes: integer("avg_likes").notNull().default(0),
+  avgComments: integer("avg_comments").notNull().default(0),
+  posts: integer("posts").notNull().default(0),
+  growth30d: integer("growth_30d").notNull().default(0),
+  genericCommentsPct: decimal("generic_comments_pct", { precision: 5, scale: 2 }).notNull().default("0"),
+  fakePct: decimal("fake_pct", { precision: 5, scale: 2 }).notNull().default("0"),
+  qualityScore: integer("quality_score").notNull().default(0),
+  status: text("status").notNull().default("review"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertInfluencerProfileSchema = createInsertSchema(influencerProfiles).omit({ id: true, createdAt: true });
+export type InsertInfluencerProfile = z.infer<typeof insertInfluencerProfileSchema>;
+export type InfluencerProfile = typeof influencerProfiles.$inferSelect;
+
 // Service Products (bundles: items + services + tasks) - MULTI-TENANT
 export const serviceProducts = pgTable("service_products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

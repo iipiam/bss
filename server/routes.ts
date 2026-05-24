@@ -9,7 +9,7 @@ import { sanitizePatchBody } from "./utils";
 import { generateCompanyProfilePDF } from "./company-profile-pdf";
 import { generateBusinessCardPDF } from "./business-card-pdf";
 import { amountToWords, percentageToWords } from "./lib/numberToWords";
-import { insertCompanyProfileSchema } from "@shared/schema";
+import { insertCompanyProfileSchema, insertInfluencerProfileSchema } from "@shared/schema";
 import { logActivity } from "./activityLogger";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
 import { hasAnyPermission } from "@shared/permissions";
@@ -16591,6 +16591,232 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // ==================== CLIENT REQUIREMENTS ====================
+  app.get("/api/project-client-requirements", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const projectId = req.query.projectId as string;
+      if (!projectId) return res.status(400).json({ message: "projectId required" });
+      const rows = await storage.getProjectClientRequirements(restaurantId, projectId);
+      res.json(rows);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+  app.post("/api/project-client-requirements", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const row = await storage.createProjectClientRequirement({ ...req.body, restaurantId });
+      res.status(201).json(row);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+  app.patch("/api/project-client-requirements/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const row = await storage.updateProjectClientRequirement(req.params.id, restaurantId, req.body);
+      if (!row) return res.status(404).json({ message: "Not found" });
+      res.json(row);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+  app.delete("/api/project-client-requirements/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const ok = await storage.deleteProjectClientRequirement(req.params.id, restaurantId);
+      if (!ok) return res.status(404).json({ message: "Not found" });
+      res.json({ success: true });
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+
+  // ==================== PROJECT MEETINGS ====================
+  app.get("/api/project-meetings", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const projectId = req.query.projectId as string;
+      if (!projectId) return res.status(400).json({ message: "projectId required" });
+      const rows = await storage.getProjectMeetings(restaurantId, projectId);
+      res.json(rows);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+  app.post("/api/project-meetings", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data: any = { ...req.body, restaurantId };
+      if (data.scheduledAt) data.scheduledAt = new Date(data.scheduledAt);
+      const row = await storage.createProjectMeeting(data);
+      res.status(201).json(row);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+  app.patch("/api/project-meetings/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data: any = { ...req.body };
+      if (data.scheduledAt) data.scheduledAt = new Date(data.scheduledAt);
+      const row = await storage.updateProjectMeeting(req.params.id, restaurantId, data);
+      if (!row) return res.status(404).json({ message: "Not found" });
+      res.json(row);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+  app.delete("/api/project-meetings/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const ok = await storage.deleteProjectMeeting(req.params.id, restaurantId);
+      if (!ok) return res.status(404).json({ message: "Not found" });
+      res.json({ success: true });
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+
+  // ==================== PDF EXPORTS: requirements & meetings ====================
+  async function launchChromium() {
+    const puppeteer = await import("puppeteer");
+    const { execSync } = await import("child_process");
+    const { existsSync } = await import("fs");
+    let chromiumPath: string | undefined;
+    try {
+      chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+      if (!chromiumPath || !existsSync(chromiumPath)) chromiumPath = undefined;
+    } catch {}
+    return puppeteer.default.launch({
+      headless: true,
+      executablePath: chromiumPath,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'],
+    });
+  }
+  const esc = (s: any) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  const pdfShell = (title: string, body: string) => `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(title)}</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 28px; font-size: 12px; color: #1a202c; }
+      h1 { color: #1a365d; margin: 0 0 4px 0; font-size: 22px; }
+      h2 { color: #2d3748; font-size: 16px; margin: 18px 0 8px; }
+      .meta { color: #718096; font-size: 11px; margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; }
+      table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 11px; }
+      th, td { border: 1px solid #cbd5e0; padding: 6px 8px; text-align: left; vertical-align: top; }
+      th { background: #edf2f7; color: #1a365d; }
+      .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; background: #edf2f7; color: #1a365d; }
+      .b-high { background: #fed7d7; color: #822727; }
+      .b-medium { background: #feebc8; color: #7b341e; }
+      .b-low { background: #c6f6d5; color: #22543d; }
+      .b-done, .b-completed { background: #c6f6d5; color: #22543d; }
+      .b-in_progress, .b-active { background: #bee3f8; color: #2a4365; }
+      .b-pending, .b-scheduled { background: #e2e8f0; color: #2d3748; }
+      .b-cancelled { background: #fed7d7; color: #822727; }
+      .card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px; margin: 8px 0; }
+      .row { display: flex; gap: 16px; flex-wrap: wrap; margin: 4px 0; font-size: 11px; color: #4a5568; }
+      .row strong { color: #1a202c; }
+      .footer { margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 8px; color: #718096; font-size: 10px; text-align: center; }
+    </style></head><body>${body}<div class="footer">BlindSpot System (BSS) — ${new Date().toLocaleString('en-GB')}</div></body></html>`;
+
+  app.get("/api/projects/:projectId/client-requirements/pdf", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const project = await storage.getServiceProject(req.params.projectId, restaurantId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      const rows = await storage.getProjectClientRequirements(restaurantId, req.params.projectId);
+      const body = `
+        <h1>Client Requirements</h1>
+        <div class="meta">Project: <strong>${esc(project.name)}</strong> (${esc(project.projectNumber)}) — Client: ${esc(project.clientName)}</div>
+        ${rows.length === 0 ? '<p>No requirements recorded.</p>' : `
+        <table><thead><tr><th style="width:30px">#</th><th>Requirement</th><th>Details</th><th style="width:80px">Priority</th><th style="width:90px">Status</th></tr></thead><tbody>
+        ${rows.map((r, i) => `<tr>
+          <td>${i + 1}</td>
+          <td><strong>${esc(r.title)}</strong></td>
+          <td>${esc(r.description || '-')}</td>
+          <td><span class="badge b-${esc(r.priority)}">${esc(r.priority)}</span></td>
+          <td><span class="badge b-${esc(r.status)}">${esc(r.status)}</span></td>
+        </tr>`).join('')}
+        </tbody></table>`}
+      `;
+      const browser = await launchChromium();
+      const page = await browser.newPage();
+      await page.setContent(pdfShell(`Client Requirements - ${project.name}`, body), { waitUntil: 'networkidle0' });
+      const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' } });
+      await browser.close();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="client-requirements-${project.projectNumber}.pdf"`);
+      res.end(pdf);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+
+  function meetingHtml(m: any): string {
+    const dt = new Date(m.scheduledAt as any);
+    const action = Array.isArray(m.actionItems) ? m.actionItems : [];
+    return `<div class="card">
+      <h2 style="margin-top:0">${esc(m.title)}</h2>
+      <div class="row"><span><strong>When:</strong> ${dt.toLocaleString('en-GB')}</span>
+        <span><strong>Duration:</strong> ${esc(m.durationMinutes)} min</span>
+        <span><strong>Status:</strong> <span class="badge b-${esc(m.status)}">${esc(m.status)}</span></span>
+        <span><strong>Reminder:</strong> ${esc(m.reminderMinutesBefore)} min before</span></div>
+      ${m.attendees ? `<div class="row"><span><strong>Attendees:</strong> ${esc(m.attendees)}</span></div>` : ''}
+      ${m.meetingLink ? `<div class="row"><span><strong>Link:</strong> ${esc(m.meetingLink)}</span></div>` : ''}
+      ${m.location ? `<div class="row"><span><strong>Location:</strong> ${esc(m.location)}</span></div>` : ''}
+      ${m.agenda ? `<div style="margin-top:8px"><strong>Agenda</strong><div style="white-space:pre-wrap">${esc(m.agenda)}</div></div>` : ''}
+      ${m.summary ? `<div style="margin-top:8px"><strong>Summary</strong><div style="white-space:pre-wrap">${esc(m.summary)}</div></div>` : ''}
+      ${m.notes ? `<div style="margin-top:8px"><strong>Notes / Minutes</strong><div style="white-space:pre-wrap">${esc(m.notes)}</div></div>` : ''}
+      ${m.transcript ? `<div style="margin-top:8px"><strong>Transcript</strong><div style="white-space:pre-wrap; font-size:10px; color:#4a5568">${esc(m.transcript)}</div></div>` : ''}
+      ${action.length ? `<div style="margin-top:8px"><strong>Action Items</strong>
+        <table><thead><tr><th style="width:24px"></th><th>Item</th><th style="width:120px">Owner</th><th style="width:90px">Due</th></tr></thead><tbody>
+        ${action.map((a: any) => `<tr>
+          <td>${a.done ? '✓' : '☐'}</td>
+          <td>${esc(a.text || '')}</td>
+          <td>${esc(a.assignee || '-')}</td>
+          <td>${esc(a.dueDate ? new Date(a.dueDate).toLocaleDateString('en-GB') : '-')}</td>
+        </tr>`).join('')}
+        </tbody></table></div>` : ''}
+    </div>`;
+  }
+
+  app.get("/api/projects/:projectId/meetings/pdf", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const project = await storage.getServiceProject(req.params.projectId, restaurantId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      const rows = await storage.getProjectMeetings(restaurantId, req.params.projectId);
+      const body = `
+        <h1>Project Meetings</h1>
+        <div class="meta">Project: <strong>${esc(project.name)}</strong> (${esc(project.projectNumber)}) — ${rows.length} meeting(s)</div>
+        ${rows.length === 0 ? '<p>No meetings recorded.</p>' : rows.map(meetingHtml).join('')}
+      `;
+      const browser = await launchChromium();
+      const page = await browser.newPage();
+      await page.setContent(pdfShell(`Meetings - ${project.name}`, body), { waitUntil: 'networkidle0' });
+      const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' } });
+      await browser.close();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="meetings-${project.projectNumber}.pdf"`);
+      res.end(pdf);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+
+  app.get("/api/project-meetings/:id/pdf", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const m = await storage.getProjectMeeting(req.params.id, restaurantId);
+      if (!m) return res.status(404).json({ message: "Meeting not found" });
+      const project = await storage.getServiceProject(m.projectId, restaurantId);
+      const body = `
+        <h1>Meeting Minutes</h1>
+        <div class="meta">Project: <strong>${esc(project?.name || '')}</strong> (${esc(project?.projectNumber || '')})</div>
+        ${meetingHtml(m)}
+      `;
+      const browser = await launchChromium();
+      const page = await browser.newPage();
+      await page.setContent(pdfShell(`Meeting - ${m.title}`, body), { waitUntil: 'networkidle0' });
+      const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' } });
+      await browser.close();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="meeting-${m.id}.pdf"`);
+      res.end(pdf);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+
   // ==================== CPM ALGORITHM ====================
   app.post("/api/project-tasks/calculate-cpm", requireAuth, async (req, res) => {
     try {
@@ -19141,6 +19367,94 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const ok = await storage.deleteMarketingBroadcastTemplate(req.params.id, restaurantId);
     if (!ok) return res.status(404).json({ error: "Broadcast template not found" });
     res.status(204).send();
+  });
+
+  // Influencer Profiles (Fake Followers Detector)
+  app.get("/api/marketing/influencer-profiles", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
+    const items = await storage.getInfluencerProfiles(restaurantId);
+    res.json(items);
+  });
+  app.post("/api/marketing/influencer-profiles", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const data = insertInfluencerProfileSchema.parse({ ...req.body, restaurantId });
+      const created = await storage.createInfluencerProfile(data);
+      res.json(created);
+    } catch (err: any) {
+      res.status(400).json({ error: err?.message || "Invalid data" });
+    }
+  });
+  app.patch("/api/marketing/influencer-profiles/:id", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const data = insertInfluencerProfileSchema.partial().omit({ restaurantId: true } as any).parse(req.body);
+      const updated = await storage.updateInfluencerProfile(req.params.id, restaurantId, data);
+      if (!updated) return res.status(404).json({ error: "Not found" });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(400).json({ error: err?.message || "Invalid data" });
+    }
+  });
+  app.delete("/api/marketing/influencer-profiles/:id", requireAuth, requireRestaurant, requireAction('marketing', 'delete'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
+    const ok = await storage.deleteInfluencerProfile(req.params.id, restaurantId);
+    if (!ok) return res.status(404).json({ error: "Not found" });
+    res.status(204).send();
+  });
+  app.get("/api/marketing/influencer-profiles/pdf", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const items = await storage.getInfluencerProfiles(restaurantId);
+      const esc = (s: any) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" } as any)[c]);
+      const avgFake = items.length ? (items.reduce((s, i) => s + Number(i.fakePct || 0), 0) / items.length).toFixed(1) : "0.0";
+      const statusColor = (s: string) => s === 'good' ? '#16a34a' : s === 'reject' ? '#dc2626' : '#ca8a04';
+      const rows = items.map(i => `
+        <tr>
+          <td>${esc(i.username)}</td>
+          <td>${esc(i.platform)}</td>
+          <td style="text-align:right">${Number(i.followers).toLocaleString()}</td>
+          <td style="text-align:right;font-weight:bold;color:${Number(i.fakePct) > 30 ? '#dc2626' : Number(i.fakePct) >= 15 ? '#ca8a04' : '#16a34a'}">${Number(i.fakePct).toFixed(1)}%</td>
+          <td style="text-align:right">${i.qualityScore}</td>
+          <td><span style="background:${statusColor(i.status)};color:#fff;padding:2px 8px;border-radius:4px;font-size:11px">${esc(i.status).toUpperCase()}</span></td>
+          <td>${esc(i.notes || '')}</td>
+        </tr>`).join('');
+      const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+        body{font-family:Arial,sans-serif;padding:24px;color:#111}
+        h1{margin:0 0 4px}h2{margin:16px 0 8px;font-size:14px;color:#555}
+        table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+        th,td{border:1px solid #ddd;padding:6px 8px;text-align:left}
+        th{background:#f3f4f6}
+        .summary{display:flex;gap:16px;margin:12px 0;padding:12px;background:#f9fafb;border-radius:6px}
+        .stat{flex:1}.label{font-size:11px;color:#666}.value{font-size:18px;font-weight:bold}
+      </style></head><body>
+        <h1>Influencer Analysis Report</h1>
+        <h2>Generated ${new Date().toLocaleString()} — ${items.length} profile(s)</h2>
+        <div class="summary">
+          <div class="stat"><div class="label">Total Influencers</div><div class="value">${items.length}</div></div>
+          <div class="stat"><div class="label">Average Fake %</div><div class="value">${avgFake}%</div></div>
+          <div class="stat"><div class="label">Good</div><div class="value" style="color:#16a34a">${items.filter(i=>i.status==='good').length}</div></div>
+          <div class="stat"><div class="label">Review</div><div class="value" style="color:#ca8a04">${items.filter(i=>i.status==='review').length}</div></div>
+          <div class="stat"><div class="label">Reject</div><div class="value" style="color:#dc2626">${items.filter(i=>i.status==='reject').length}</div></div>
+        </div>
+        <table>
+          <thead><tr><th>Username</th><th>Platform</th><th>Followers</th><th>Fake %</th><th>Quality</th><th>Status</th><th>Notes</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="7" style="text-align:center;color:#888">No data</td></tr>'}</tbody>
+        </table>
+      </body></html>`;
+      const browser = await launchChromium();
+      try {
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '14mm', right: '12mm', bottom: '14mm', left: '12mm' } });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="influencer-analysis.pdf"');
+        res.send(pdf);
+      } finally { await browser.close(); }
+    } catch (err: any) {
+      console.error('[influencer-profiles/pdf]', err);
+      res.status(500).json({ error: err?.message || 'PDF failed' });
+    }
   });
 
   // Promo Poster PDF (A4) generated via Puppeteer

@@ -26,6 +26,7 @@ import type {
   MealSubscription,
   MarketingDiscountCode,
   MarketingBroadcastTemplate,
+  InfluencerProfile,
 } from "@shared/schema";
 import {
   Table,
@@ -75,7 +76,13 @@ import {
   Tooltip as RTooltip,
   ResponsiveContainer,
   Legend,
+  PieChart,
+  Pie,
+  Cell,
+  BarChart,
+  Bar,
 } from "recharts";
+import { AlertTriangle, Save, ShieldAlert, Search } from "lucide-react";
 import jsPDF from "jspdf";
 import { toCanvas as htiToCanvas } from "html-to-image";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -450,6 +457,83 @@ export default function Marketing() {
   // QR
   const [qrForm, setQrForm] = useState({ url: "", label: "", size: 512 });
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
+
+  // ===== Fake Followers Detector =====
+  const emptyFakeForm = () => ({
+    username: "",
+    platform: "Instagram",
+    followers: 10000,
+    following: 500,
+    avgLikes: 300,
+    avgComments: 20,
+    posts: 100,
+    growth30d: 500,
+    genericCommentsPct: 20,
+    notes: "",
+  });
+  const [fakeForm, setFakeForm] = useState(emptyFakeForm());
+  const { data: influencerProfiles = [] } = useQuery<InfluencerProfile[]>({
+    queryKey: ["/api/marketing/influencer-profiles"],
+  });
+  const computeFake = (f: typeof fakeForm) => {
+    const er = f.followers > 0 ? ((f.avgLikes + f.avgComments) / f.followers) * 100 : 0;
+    const followRatio = f.followers > 0 ? f.following / f.followers : 0;
+    const growthRate = f.followers > 0 ? (f.growth30d / f.followers) * 100 : 0;
+    const flags: string[] = [];
+    let fakePct = 0;
+    if (er < 2) { fakePct += 30; flags.push(isRTL ? "تفاعل منخفض (<2%)" : "Low engagement (<2%)"); }
+    if (followRatio > 1.5) { fakePct += 20; flags.push(isRTL ? "نسبة متابعة/متابعين عالية" : "High following/followers ratio"); }
+    if (growthRate > 15) { fakePct += 25; flags.push(isRTL ? "نمو مفاجئ (>15% / 30 يوم)" : "Sudden growth (>15% / 30d)"); }
+    if (f.genericCommentsPct > 40) { fakePct += 15; flags.push(isRTL ? "تعليقات عامة كثيرة" : "Many generic comments"); }
+    fakePct = Math.min(100, fakePct);
+    const qualityScore = Math.max(0, Math.round(100 - fakePct));
+    const status: "good" | "review" | "reject" = fakePct < 15 ? "good" : fakePct <= 30 ? "review" : "reject";
+    return { er, fakePct, qualityScore, status, flags };
+  };
+  const fakeResult = useMemo(() => computeFake(fakeForm), [fakeForm, isRTL]);
+  const fakeColor = (p: number) => p > 30 ? "text-red-600" : p >= 15 ? "text-yellow-600" : "text-green-600";
+  const fakeBg = (s: string) => s === "good" ? "bg-green-600" : s === "reject" ? "bg-red-600" : "bg-yellow-600";
+
+  const saveInfluencer = useMutation({
+    mutationFn: async () => {
+      const r = computeFake(fakeForm);
+      return apiRequest("POST", "/api/marketing/influencer-profiles", {
+        ...fakeForm,
+        genericCommentsPct: String(fakeForm.genericCommentsPct),
+        fakePct: String(r.fakePct.toFixed(2)),
+        qualityScore: r.qualityScore,
+        status: r.status,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/influencer-profiles"] });
+      toast({ title: isRTL ? "تم الحفظ" : "Saved" });
+      setFakeForm(emptyFakeForm());
+    },
+    onError: (e: any) => toast({ title: "Error", description: e?.message, variant: "destructive" }),
+  });
+  const deleteInfluencer = useMutation({
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/marketing/influencer-profiles/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/marketing/influencer-profiles"] }),
+  });
+
+  const avgFakeAll = influencerProfiles.length
+    ? influencerProfiles.reduce((s, i) => s + Number(i.fakePct || 0), 0) / influencerProfiles.length
+    : 0;
+
+  const exportInfluencerCsv = () => {
+    const headers = ["Username", "Platform", "Followers", "Following", "AvgLikes", "AvgComments", "Posts", "Growth30d", "GenericCommentsPct", "FakePct", "QualityScore", "Status", "Notes"];
+    const rows = influencerProfiles.map(i => [
+      i.username, i.platform, i.followers, i.following, i.avgLikes, i.avgComments, i.posts, i.growth30d,
+      i.genericCommentsPct, i.fakePct, i.qualityScore, i.status, (i.notes || "").replace(/[\r\n,]/g, " "),
+    ]);
+    const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = "influencers.csv"; a.click();
+    URL.revokeObjectURL(url);
+  };
   const generateQr = async () => {
     if (!/^https?:\/\//i.test(qrForm.url.trim())) {
       toast({ title: t.invalidUrl, variant: "destructive" });
@@ -1098,7 +1182,7 @@ export default function Marketing() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-8 h-auto">
+        <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 lg:grid-cols-9 h-auto">
           <TabsTrigger value="gtm" data-testid="tab-gtm" className="flex items-center gap-2 py-2">
             <Target className="h-4 w-4" />
             <span className="hidden sm:inline">{t.gtmStrategy}</span>
@@ -1134,6 +1218,11 @@ export default function Marketing() {
           <TabsTrigger value="qr" data-testid="tab-qr" className="flex items-center gap-2 py-2">
             <QrCode className="h-4 w-4" />
             <span>{t.qrCodes}</span>
+          </TabsTrigger>
+          <TabsTrigger value="fake-detector" data-testid="tab-fake-detector" className="flex items-center gap-2 py-2">
+            <ShieldAlert className="h-4 w-4" />
+            <span className="hidden sm:inline">{isRTL ? "كاشف المتابعين الوهميين" : "Fake Detector"}</span>
+            <span className="sm:hidden">Fake</span>
           </TabsTrigger>
         </TabsList>
 
@@ -2693,6 +2782,279 @@ export default function Marketing() {
                   {qrForm.label && <p className="text-sm font-medium text-black">{qrForm.label}</p>}
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ===================== Fake Followers Detector ===================== */}
+        <TabsContent value="fake-detector" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShieldAlert className="h-5 w-5 text-red-500" />
+                {isRTL ? "كاشف المتابعين الوهميين — محلل المؤثرين 2026" : "Fake Followers Detector — Influencer Analyzer 2026"}
+              </CardTitle>
+              <CardDescription>
+                {isRTL
+                  ? "أدخل بيانات الحساب لتقدير نسبة المتابعين الوهميين، جودة الجمهور، والإشارات الحمراء."
+                  : "Enter account metrics to estimate fake follower %, audience quality, and red flags."}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-3">
+                <div>
+                  <Label className="text-xs">{isRTL ? "اسم المستخدم" : "Username (@handle)"}</Label>
+                  <Input value={fakeForm.username} onChange={(e) => setFakeForm({ ...fakeForm, username: e.target.value })} placeholder="@example" data-testid="input-fake-username" />
+                </div>
+                <div>
+                  <Label className="text-xs">{isRTL ? "المنصة" : "Platform"}</Label>
+                  <Select value={fakeForm.platform} onValueChange={(v) => setFakeForm({ ...fakeForm, platform: v })}>
+                    <SelectTrigger data-testid="select-fake-platform"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Instagram">Instagram</SelectItem>
+                      <SelectItem value="TikTok">TikTok</SelectItem>
+                      <SelectItem value="YouTube">YouTube</SelectItem>
+                      <SelectItem value="Snapchat">Snapchat</SelectItem>
+                      <SelectItem value="X">X / Twitter</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {([
+                  ["followers", isRTL ? "المتابعون" : "Followers"],
+                  ["following", isRTL ? "يتابع" : "Following"],
+                  ["avgLikes", isRTL ? "متوسط الإعجابات/منشور" : "Avg Likes/Post"],
+                  ["avgComments", isRTL ? "متوسط التعليقات/منشور" : "Avg Comments/Post"],
+                  ["posts", isRTL ? "عدد المنشورات" : "Posts"],
+                  ["growth30d", isRTL ? "نمو 30 يوم" : "Growth (30d)"],
+                  ["genericCommentsPct", isRTL ? "% تعليقات عامة" : "% Generic Comments"],
+                ] as const).map(([k, label]) => (
+                  <div key={k}>
+                    <Label className="text-xs">{label}</Label>
+                    <Input
+                      type="number"
+                      value={(fakeForm as any)[k]}
+                      onChange={(e) => setFakeForm({ ...fakeForm, [k]: parseFloat(e.target.value) || 0 })}
+                      data-testid={`input-fake-${k}`}
+                    />
+                  </div>
+                ))}
+                <div className="md:col-span-3 lg:col-span-5">
+                  <Label className="text-xs">{isRTL ? "ملاحظات" : "Notes"}</Label>
+                  <Input value={fakeForm.notes} onChange={(e) => setFakeForm({ ...fakeForm, notes: e.target.value })} data-testid="input-fake-notes" />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-4 gap-3">
+                <div className="rounded-md border p-3">
+                  <div className="text-xs text-muted-foreground">{isRTL ? "معدل التفاعل" : "Engagement Rate"}</div>
+                  <div className="text-xl font-bold" data-testid="stat-fake-er">{fakeResult.er.toFixed(2)}%</div>
+                </div>
+                <div className="rounded-md border p-3">
+                  <div className="text-xs text-muted-foreground">{isRTL ? "نسبة المتابعين الوهميين" : "Estimated Fake %"}</div>
+                  <div className={`text-2xl font-bold ${fakeColor(fakeResult.fakePct)}`} data-testid="stat-fake-pct">{fakeResult.fakePct.toFixed(1)}%</div>
+                </div>
+                <div className="rounded-md border p-3">
+                  <div className="text-xs text-muted-foreground">{isRTL ? "جودة الجمهور (0-100)" : "Audience Quality"}</div>
+                  <div className="text-2xl font-bold" data-testid="stat-fake-quality">{fakeResult.qualityScore}</div>
+                </div>
+                <div className="rounded-md border p-3">
+                  <div className="text-xs text-muted-foreground">{isRTL ? "التوصية" : "Recommendation"}</div>
+                  <Badge className={`${fakeBg(fakeResult.status)} text-white mt-1`} data-testid="badge-fake-status">
+                    {fakeResult.status === "good" ? (isRTL ? "ممتاز - اقبل" : "Accept") : fakeResult.status === "review" ? (isRTL ? "مقبول - راجع" : "Review") : (isRTL ? "مرتفع - استبعد" : "Reject")}
+                  </Badge>
+                </div>
+              </div>
+
+              {fakeResult.flags.length > 0 && (
+                <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 p-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold mb-1">
+                    <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                    {isRTL ? "إشارات حمراء" : "Red Flags Detected"}
+                  </div>
+                  <ul className="text-sm list-disc ps-5 space-y-1" data-testid="list-fake-flags">
+                    {fakeResult.flags.map((f, i) => <li key={i}>{f}</li>)}
+                  </ul>
+                </div>
+              )}
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="h-64 rounded-md border p-3">
+                  <div className="text-sm font-semibold mb-2">{isRTL ? "حقيقي مقابل وهمي" : "Real vs Fake"}</div>
+                  <ResponsiveContainer width="100%" height="90%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: isRTL ? "حقيقي" : "Real", value: 100 - fakeResult.fakePct },
+                          { name: isRTL ? "وهمي" : "Fake", value: fakeResult.fakePct },
+                        ]}
+                        dataKey="value" nameKey="name" outerRadius={70} label
+                      >
+                        <Cell fill="#16a34a" />
+                        <Cell fill="#dc2626" />
+                      </Pie>
+                      <Legend />
+                      <RTooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="h-64 rounded-md border p-3">
+                  <div className="text-sm font-semibold mb-2">{isRTL ? "معايير قطاع الطعام (السعودية)" : "Food Niche Benchmarks (Saudi Arabia)"}</div>
+                  <ResponsiveContainer width="100%" height="90%">
+                    <BarChart data={[
+                      { label: isRTL ? "جيد" : "Good", value: 18 },
+                      { label: isRTL ? "متوسط" : "Average", value: 35 },
+                      { label: isRTL ? "سيء" : "Bad", value: 50 },
+                      { label: isRTL ? "هذا الحساب" : "This Account", value: fakeResult.fakePct },
+                    ]}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="label" />
+                      <YAxis />
+                      <RTooltip />
+                      <Bar dataKey="value">
+                        <Cell fill="#16a34a" />
+                        <Cell fill="#ca8a04" />
+                        <Cell fill="#dc2626" />
+                        <Cell fill="#2563eb" />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => saveInfluencer.mutate()} disabled={saveInfluencer.isPending || !fakeForm.username} data-testid="button-save-influencer">
+                  <Save className="h-4 w-4 me-2" />
+                  {isRTL ? "حفظ ملف المؤثر" : "Save Influencer Profile"}
+                </Button>
+                <Button variant="outline" onClick={() => setFakeForm(emptyFakeForm())} data-testid="button-clear-fake">
+                  <RotateCcw className="h-4 w-4 me-2" />
+                  {isRTL ? "مسح" : "Clear"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Benchmarks Card */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">{isRTL ? "القاعدة الذهبية" : "The Golden Rule"}</CardTitle>
+            </CardHeader>
+            <CardContent className="grid md:grid-cols-3 gap-3 text-sm">
+              <div className="rounded-md p-4 bg-gradient-to-br from-green-500 to-emerald-500 text-white">
+                <div className="font-semibold">{isRTL ? "أقل من 15% — ممتاز" : "< 15% — Excellent"}</div>
+                <div className="text-xs opacity-90 mt-1">{isRTL ? "اقبل المؤثر بثقة" : "Accept with confidence"}</div>
+              </div>
+              <div className="rounded-md p-4 bg-gradient-to-br from-yellow-500 to-amber-500 text-white">
+                <div className="font-semibold">{isRTL ? "15% - 30% — مقبول" : "15% - 30% — Acceptable"}</div>
+                <div className="text-xs opacity-90 mt-1">{isRTL ? "راجع البيانات يدوياً" : "Review manually"}</div>
+              </div>
+              <div className="rounded-md p-4 bg-gradient-to-br from-red-500 to-rose-500 text-white">
+                <div className="font-semibold">{isRTL ? "أكثر من 30% — استبعده" : "> 30% — Reject"}</div>
+                <div className="text-xs opacity-90 mt-1">{isRTL ? "خطر مرتفع" : "High risk"}</div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Multiple Influencers Table */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between flex-wrap gap-2">
+              <div>
+                <CardTitle className="text-base">{isRTL ? "ملفات المؤثرين المحفوظة" : "Saved Influencer Profiles"}</CardTitle>
+                <CardDescription>
+                  {isRTL ? `العدد: ${influencerProfiles.length} — متوسط النسبة الوهمية: ${avgFakeAll.toFixed(1)}%` : `${influencerProfiles.length} profile(s) — Avg Fake: ${avgFakeAll.toFixed(1)}%`}
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={exportInfluencerCsv} disabled={!influencerProfiles.length} data-testid="button-export-csv">
+                  <Download className="h-4 w-4 me-2" />CSV
+                </Button>
+                <Button size="sm" variant="outline" asChild>
+                  <a href="/api/marketing/influencer-profiles/pdf" target="_blank" rel="noopener" data-testid="button-export-pdf">
+                    <Download className="h-4 w-4 me-2" />PDF
+                  </a>
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {influencerProfiles.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-8">
+                  {isRTL ? "لا توجد ملفات بعد. احفظ مؤثرًا أعلاه." : "No profiles yet. Save an influencer above."}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{isRTL ? "اسم المستخدم" : "Username"}</TableHead>
+                        <TableHead>{isRTL ? "المنصة" : "Platform"}</TableHead>
+                        <TableHead className="text-right">{isRTL ? "المتابعون" : "Followers"}</TableHead>
+                        <TableHead className="text-right">{isRTL ? "% وهمي" : "Fake %"}</TableHead>
+                        <TableHead className="text-right">{isRTL ? "الجودة" : "Quality"}</TableHead>
+                        <TableHead>{isRTL ? "الحالة" : "Status"}</TableHead>
+                        <TableHead>{isRTL ? "ملاحظات" : "Notes"}</TableHead>
+                        <TableHead></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {influencerProfiles.map((i) => (
+                        <TableRow key={i.id} data-testid={`row-influencer-${i.id}`}>
+                          <TableCell className="font-medium">{i.username}</TableCell>
+                          <TableCell>{i.platform}</TableCell>
+                          <TableCell className="text-right">{i.followers.toLocaleString()}</TableCell>
+                          <TableCell className={`text-right font-semibold ${fakeColor(Number(i.fakePct))}`}>
+                            {Number(i.fakePct).toFixed(1)}%
+                          </TableCell>
+                          <TableCell className="text-right">{i.qualityScore}</TableCell>
+                          <TableCell>
+                            <Badge className={`${fakeBg(i.status)} text-white`}>{i.status.toUpperCase()}</Badge>
+                          </TableCell>
+                          <TableCell className="max-w-xs truncate text-xs text-muted-foreground">{i.notes}</TableCell>
+                          <TableCell>
+                            <Button size="icon" variant="ghost" onClick={() => deleteInfluencer.mutate(i.id)} data-testid={`button-delete-influencer-${i.id}`}>
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Instructions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Lightbulb className="h-5 w-5 text-yellow-500" />
+                {isRTL ? "كيفية قراءة النتائج + أفضل الأدوات (2026)" : "How to Read Results + Best Tools (2026)"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm space-y-3" dir={isRTL ? "rtl" : "ltr"}>
+              <div>
+                <div className="font-semibold mb-1">{isRTL ? "نظام التقييم" : "Scoring System"}</div>
+                <ul className="list-disc ps-5 space-y-1 text-muted-foreground">
+                  <li>{isRTL ? "تفاعل أقل من 2% → +30%" : "Engagement < 2% → +30%"}</li>
+                  <li>{isRTL ? "نسبة متابعة/متابعين > 1.5 → +20%" : "Following/Followers ratio > 1.5 → +20%"}</li>
+                  <li>{isRTL ? "نمو مفاجئ > 15% / 30 يوم → +25%" : "Sudden growth > 15% / 30d → +25%"}</li>
+                  <li>{isRTL ? "تعليقات عامة > 40% → +15%" : "Generic comments > 40% → +15%"}</li>
+                </ul>
+              </div>
+              <div>
+                <div className="font-semibold mb-1">{isRTL ? "أدوات مجانية موصى بها" : "Recommended Free Tools"}</div>
+                <ul className="list-disc ps-5 space-y-1 text-muted-foreground">
+                  <li>Modash — <a className="text-primary underline" href="https://modash.io/fake-follower-check" target="_blank" rel="noopener">modash.io/fake-follower-check</a></li>
+                  <li>HypeAuditor — <a className="text-primary underline" href="https://hypeauditor.com/free-tools" target="_blank" rel="noopener">hypeauditor.com/free-tools</a></li>
+                  <li>Upfluence — <a className="text-primary underline" href="https://upfluence.com/instagram-fake-follower-check" target="_blank" rel="noopener">upfluence.com</a></li>
+                  <li>Collabstr, StarNgage, Social Auditor, ViralMango</li>
+                </ul>
+              </div>
+              <div className="rounded-md border border-blue-500/40 bg-blue-500/10 p-3 text-xs">
+                {isRTL
+                  ? "نصيحة: استخدم الأداة المجانية لفحص الحساب ثم أدخل الأرقام هنا للحصول على تقييم سريع وحفظ السجل لإدارة 10+ مؤثرين."
+                  : "Tip: Use a free tool to scan the account, then enter the numbers here for a quick rating and save the record to manage 10+ influencers."}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -160,6 +160,15 @@ import {
   type ProjectTask,
   type InsertProjectTask,
   projectTasks,
+  type ProjectClientRequirement,
+  type InsertProjectClientRequirement,
+  projectClientRequirements,
+  type ProjectMeeting,
+  type InsertProjectMeeting,
+  projectMeetings,
+  type InfluencerProfile,
+  type InsertInfluencerProfile,
+  influencerProfiles,
   type QuotationDecision,
   type InsertQuotationDecision,
   quotationDecisions,
@@ -656,6 +665,25 @@ export interface IStorage {
   createProjectTask(task: InsertProjectTask): Promise<ProjectTask>;
   updateProjectTask(id: string, restaurantId: string, data: Partial<InsertProjectTask>): Promise<ProjectTask | undefined>;
   deleteProjectTask(id: string, restaurantId: string): Promise<boolean>;
+
+  // Project Client Requirements
+  getProjectClientRequirements(restaurantId: string, projectId: string): Promise<ProjectClientRequirement[]>;
+  createProjectClientRequirement(req: InsertProjectClientRequirement): Promise<ProjectClientRequirement>;
+  updateProjectClientRequirement(id: string, restaurantId: string, data: Partial<InsertProjectClientRequirement>): Promise<ProjectClientRequirement | undefined>;
+  deleteProjectClientRequirement(id: string, restaurantId: string): Promise<boolean>;
+
+  // Project Meetings
+  getProjectMeetings(restaurantId: string, projectId: string): Promise<ProjectMeeting[]>;
+  getProjectMeeting(id: string, restaurantId: string): Promise<ProjectMeeting | undefined>;
+  createProjectMeeting(meeting: InsertProjectMeeting): Promise<ProjectMeeting>;
+  updateProjectMeeting(id: string, restaurantId: string, data: Partial<InsertProjectMeeting>): Promise<ProjectMeeting | undefined>;
+  deleteProjectMeeting(id: string, restaurantId: string): Promise<boolean>;
+
+  // Influencer Profiles
+  getInfluencerProfiles(restaurantId: string): Promise<InfluencerProfile[]>;
+  createInfluencerProfile(p: InsertInfluencerProfile): Promise<InfluencerProfile>;
+  updateInfluencerProfile(id: string, restaurantId: string, data: Partial<InsertInfluencerProfile>): Promise<InfluencerProfile | undefined>;
+  deleteInfluencerProfile(id: string, restaurantId: string): Promise<boolean>;
 
   // Service Products (bundles)
   getServiceProducts(restaurantId: string): Promise<ServiceProduct[]>;
@@ -5809,6 +5837,75 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  // Project Client Requirements
+  async getProjectClientRequirements(restaurantId: string, projectId: string): Promise<ProjectClientRequirement[]> {
+    return db.select().from(projectClientRequirements)
+      .where(and(eq(projectClientRequirements.restaurantId, restaurantId), eq(projectClientRequirements.projectId, projectId)))
+      .orderBy(projectClientRequirements.sortOrder, projectClientRequirements.createdAt);
+  }
+  async createProjectClientRequirement(req: InsertProjectClientRequirement): Promise<ProjectClientRequirement> {
+    const [result] = await db.insert(projectClientRequirements).values(req).returning();
+    return result;
+  }
+  async updateProjectClientRequirement(id: string, restaurantId: string, data: Partial<InsertProjectClientRequirement>): Promise<ProjectClientRequirement | undefined> {
+    const [result] = await db.update(projectClientRequirements).set(data)
+      .where(and(eq(projectClientRequirements.id, id), eq(projectClientRequirements.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async deleteProjectClientRequirement(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(projectClientRequirements)
+      .where(and(eq(projectClientRequirements.id, id), eq(projectClientRequirements.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
+  // Project Meetings
+  async getProjectMeetings(restaurantId: string, projectId: string): Promise<ProjectMeeting[]> {
+    return db.select().from(projectMeetings)
+      .where(and(eq(projectMeetings.restaurantId, restaurantId), eq(projectMeetings.projectId, projectId)))
+      .orderBy(desc(projectMeetings.scheduledAt));
+  }
+  async getProjectMeeting(id: string, restaurantId: string): Promise<ProjectMeeting | undefined> {
+    const [result] = await db.select().from(projectMeetings)
+      .where(and(eq(projectMeetings.id, id), eq(projectMeetings.restaurantId, restaurantId)));
+    return result;
+  }
+  async createProjectMeeting(meeting: InsertProjectMeeting): Promise<ProjectMeeting> {
+    const [result] = await db.insert(projectMeetings).values(meeting).returning();
+    return result;
+  }
+  async updateProjectMeeting(id: string, restaurantId: string, data: Partial<InsertProjectMeeting>): Promise<ProjectMeeting | undefined> {
+    const [result] = await db.update(projectMeetings).set(data)
+      .where(and(eq(projectMeetings.id, id), eq(projectMeetings.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async deleteProjectMeeting(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(projectMeetings)
+      .where(and(eq(projectMeetings.id, id), eq(projectMeetings.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
+  // Influencer Profiles
+  async getInfluencerProfiles(restaurantId: string): Promise<InfluencerProfile[]> {
+    return db.select().from(influencerProfiles)
+      .where(eq(influencerProfiles.restaurantId, restaurantId))
+      .orderBy(desc(influencerProfiles.createdAt));
+  }
+  async createInfluencerProfile(p: InsertInfluencerProfile): Promise<InfluencerProfile> {
+    const [result] = await db.insert(influencerProfiles).values(p).returning();
+    return result;
+  }
+  async updateInfluencerProfile(id: string, restaurantId: string, data: Partial<InsertInfluencerProfile>): Promise<InfluencerProfile | undefined> {
+    const { restaurantId: _r, ...safe } = data as any;
+    const [result] = await db.update(influencerProfiles).set(safe)
+      .where(and(eq(influencerProfiles.id, id), eq(influencerProfiles.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async deleteInfluencerProfile(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(influencerProfiles)
+      .where(and(eq(influencerProfiles.id, id), eq(influencerProfiles.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
   // Service Products (bundles)
   async getServiceProducts(restaurantId: string): Promise<ServiceProduct[]> {
     return db.select().from(serviceProducts).where(eq(serviceProducts.restaurantId, restaurantId)).orderBy(desc(serviceProducts.createdAt));
@@ -6860,6 +6957,66 @@ export const storage = new DatabaseStorage();
     await pool.query(`ALTER TABLE product_service_links ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     await pool.query(`ALTER TABLE product_tasks ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     console.log('[Migration] phase column verified/added: project_items, project_services, project_tasks, product_items, product_service_links, product_tasks');
+
+    // BizFlow Manager: Client Requirements + Meetings
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS project_client_requirements (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        project_id VARCHAR(255) NOT NULL REFERENCES service_projects(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        description TEXT,
+        priority TEXT NOT NULL DEFAULT 'medium',
+        status TEXT NOT NULL DEFAULT 'pending',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS project_meetings (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        project_id VARCHAR(255) NOT NULL REFERENCES service_projects(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        scheduled_at TIMESTAMP NOT NULL,
+        duration_minutes INTEGER NOT NULL DEFAULT 30,
+        attendees TEXT,
+        meeting_link TEXT,
+        location TEXT,
+        reminder_minutes_before INTEGER NOT NULL DEFAULT 15,
+        status TEXT NOT NULL DEFAULT 'scheduled',
+        agenda TEXT,
+        notes TEXT,
+        summary TEXT,
+        transcript TEXT,
+        action_items JSONB DEFAULT '[]',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Tables verified/created: project_client_requirements, project_meetings');
+
+    // Marketing - Influencer Profiles (Fake Followers Detector)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS influencer_profiles (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        username TEXT NOT NULL,
+        platform TEXT NOT NULL DEFAULT 'Instagram',
+        followers INTEGER NOT NULL DEFAULT 0,
+        following INTEGER NOT NULL DEFAULT 0,
+        avg_likes INTEGER NOT NULL DEFAULT 0,
+        avg_comments INTEGER NOT NULL DEFAULT 0,
+        posts INTEGER NOT NULL DEFAULT 0,
+        growth_30d INTEGER NOT NULL DEFAULT 0,
+        generic_comments_pct DECIMAL(5,2) NOT NULL DEFAULT 0,
+        fake_pct DECIMAL(5,2) NOT NULL DEFAULT 0,
+        quality_score INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'review',
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Table verified/created: influencer_profiles');
 
     // Company Profiles: marketing-ready profile per restaurant
     await pool.query(`
