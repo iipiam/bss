@@ -17,6 +17,9 @@ export default function DeliveryAppProfitability() {
 
   const { data, isLoading } = useQuery<any>({
     queryKey: ["/api/delivery-apps/analytics/profitability"],
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+    staleTime: 5000,
   });
 
   const handleSync = async () => {

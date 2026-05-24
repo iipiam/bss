@@ -416,6 +416,28 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             });
             console.log('[Notifications] Salaries updated - refreshing Fixed Costs and BEP data');
           }
+          // Live profitability: any data change that affects revenue or cost
+          // re-invalidates every profitability page so dashboards stay real-time.
+          if ([
+            'order:created', 'order:statusUpdated', 'sales:updated', 'bills:updated',
+            'salaries:updated', 'inventory:updated', 'recipe:costUpdated', 'menu:updated',
+            'projects:updated', 'payment-schedules:updated', 'procurement:updated',
+          ].includes(notification.type)) {
+            const profKeys = [
+              '/api/analytics/menu-profitability',
+              '/api/delivery-apps/analytics/profitability',
+              '/api/delivery-profitability',
+              '/api/payment-schedules',
+              '/api/service-projects',
+              'service-profitability-aggregates',
+            ];
+            queryClient.invalidateQueries({
+              predicate: (query) => query.queryKey.some(seg =>
+                typeof seg === 'string' && profKeys.some(k => seg.startsWith(k))
+              ),
+              refetchType: 'all',
+            });
+          }
         } catch (err) {
           console.error('[Notifications] Failed to parse message:', err);
         }

@@ -82,20 +82,25 @@ export default function ServiceProfitability() {
   const [totalAssets, setTotalAssets] = useState<string>("0");
   const [equity, setEquity] = useState<string>("0");
 
+  const liveOpts = { refetchInterval: 15000, refetchOnWindowFocus: true, staleTime: 5000 } as const;
   const { data: paymentSchedules = [] } = useQuery<PaymentSchedule[]>({
     queryKey: ["/api/payment-schedules"],
+    ...liveOpts,
   });
   const { data: shopBills = [] } = useQuery<ShopBill[]>({
     queryKey: ["/api/shop/bills"],
+    ...liveOpts,
   });
   const { data: projects = [] } = useQuery<ServiceProject[]>({
     queryKey: ["/api/service-projects"],
+    ...liveOpts,
   });
 
   // Fetch project items + services for COGS aggregation across all projects
   const { data: projectAggregates } = useQuery<{ items: ProjectItemRow[]; services: ProjectServiceRow[] }>({
     queryKey: ["service-profitability-aggregates", projects.map((p) => p.id).join(",")],
     enabled: projects.length > 0,
+    ...liveOpts,
     queryFn: async () => {
       const results = await Promise.all(
         projects.map(async (p) => {

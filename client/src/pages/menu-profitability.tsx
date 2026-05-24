@@ -59,7 +59,9 @@ export default function MenuProfitability() {
 
   const { data, isLoading, isError, refetch } = useQuery<MenuProfitabilityData>({
     queryKey: ["/api/analytics/menu-profitability"],
-    staleTime: 30000,
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+    staleTime: 5000,
   });
 
   const handleRefresh = () => {
