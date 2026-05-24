@@ -527,11 +527,12 @@ export default function Marketing() {
       i.username, i.platform, i.followers, i.following, i.avgLikes, i.avgComments, i.posts, i.growth30d,
       i.genericCommentsPct, i.fakePct, i.qualityScore, i.status, (i.notes || "").replace(/[\r\n,]/g, " "),
     ]);
-    const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const csv = [headers, ...rows].map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = "influencers.csv"; a.click();
+    a.href = url; a.download = `influencers_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
   };
   const generateQr = async () => {
@@ -765,13 +766,13 @@ export default function Marketing() {
       erRating(r.er, ratingLabels).label,
     ]);
     const csv =
-      [headers, ...rows].map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      [headers, ...rows].map((row) => row.map((c) => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\r\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `influencers_${Date.now()}.csv`;
-    a.click();
+    document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
   };
 

@@ -75,27 +75,28 @@ export default function MenuProfitability() {
   const handleExport = () => {
     if (!data) return;
     
+    const esc = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const csvContent = [
-      [(t as any).menuItemLabel || "Menu Item", t.category, (t as any).sellingPrice || "Selling Price", (t as any).cost || "Cost", (t as any).profitMarginLabel || "Profit Margin", (t as any).marginPercent || "Margin %", t.status, (t as any).costSource || "Cost Source", (t as any).linkedTo || "Linked To"].join(","),
+      [(t as any).menuItemLabel || "Menu Item", t.category, (t as any).sellingPrice || "Selling Price", (t as any).cost || "Cost", (t as any).profitMarginLabel || "Profit Margin", (t as any).marginPercent || "Margin %", t.status, (t as any).costSource || "Cost Source", (t as any).linkedTo || "Linked To"].map(esc).join(","),
       ...data.allItems.map(item => [
-        `"${item.menuItemName}"`,
-        `"${item.category || ((t as any).uncategorized || 'Uncategorized')}"`,
-        item.sellingPrice.toFixed(2),
-        item.actualCost.toFixed(2),
-        item.profitMargin.toFixed(2),
-        item.profitMarginPercent.toFixed(1) + "%",
-        item.status,
-        item.costSource,
-        `"${item.linkedTo}"`
+        esc(item.menuItemName),
+        esc(item.category || ((t as any).uncategorized || 'Uncategorized')),
+        esc(item.sellingPrice.toFixed(2)),
+        esc(item.actualCost.toFixed(2)),
+        esc(item.profitMargin.toFixed(2)),
+        esc(item.profitMarginPercent.toFixed(1) + "%"),
+        esc(item.status),
+        esc(item.costSource),
+        esc(item.linkedTo),
       ].join(","))
-    ].join("\n");
+    ].join("\r\n");
     
-    const blob = new Blob([csvContent], { type: "text/csv" });
+    const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `menu-profitability-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
+    document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
     
     toast({
