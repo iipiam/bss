@@ -1,0 +1,119 @@
+[PM2] Saving current process list...
+[PM2] Successfully saved in /home/Kinzhal/.pm2/dump.pm2
+[PM2] Init System found: systemd
+[PM2] To setup the Startup Script, copy/paste the following command:
+sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u Kinzhal --hp /home/Kinzhal
+[TAILING] Tailing last 50 lines for [BSS] process (change the value with --lines option)
+/home/Kinzhal/.pm2/logs/BSS-error.log last 50 lines:
+1|BSS      |     at emitErrorNT (node:net:1944:8)
+1|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+1|BSS      |   code: 'EADDRINUSE',
+1|BSS      |   errno: -98,
+1|BSS      |   syscall: 'listen',
+1|BSS      |   address: '0.0.0.0',
+1|BSS      |   port: 3000
+1|BSS      | }
+1|BSS      |
+1|BSS      | Node.js v20.20.0
+1|BSS      | node:events:502
+1|BSS      |       throw er; // Unhandled 'error' event
+1|BSS      |       ^
+1|BSS      |
+1|BSS      | Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+1|BSS      |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS      |     at listenInCluster (node:net:1965:12)
+1|BSS      |     at doListen (node:net:2139:7)
+1|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+1|BSS      | Emitted 'error' event on Server instance at:
+1|BSS      |     at emitErrorNT (node:net:1944:8)
+1|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+1|BSS      |   code: 'EADDRINUSE',
+1|BSS      |   errno: -98,
+1|BSS      |   syscall: 'listen',
+1|BSS      |   address: '0.0.0.0',
+1|BSS      |   port: 3000
+1|BSS      | }
+1|BSS      |
+1|BSS      | Node.js v20.20.0
+1|BSS      | node:events:502
+1|BSS      |       throw er; // Unhandled 'error' event
+1|BSS      |       ^
+1|BSS      |
+1|BSS      | Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+1|BSS      |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+1|BSS      |     at listenInCluster (node:net:1965:12)
+1|BSS      |     at doListen (node:net:2139:7)
+1|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21)
+1|BSS      | Emitted 'error' event on Server instance at:
+1|BSS      |     at emitErrorNT (node:net:1944:8)
+1|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:82:21) {
+1|BSS      |   code: 'EADDRINUSE',
+1|BSS      |   errno: -98,
+1|BSS      |   syscall: 'listen',
+1|BSS      |   address: '0.0.0.0',
+1|BSS      |   port: 3000
+1|BSS      | }
+1|BSS      |
+1|BSS      | Node.js v20.20.0
+
+/home/Kinzhal/.pm2/logs/BSS-out.log last 50 lines:
+1|BSS      | [ZATCA] SDK available: false
+1|BSS      |
+1|BSS      | > rest-express@1.0.0 start
+1|BSS      | > NODE_ENV=production node dist/index.js
+1|BSS      |
+1|BSS      | [ZATCA] SDK available: false
+1|BSS      |
+1|BSS      | > rest-express@1.0.0 start
+1|BSS      | > NODE_ENV=production node dist/index.js
+1|BSS      |
+1|BSS      | [ZATCA] SDK available: false
+1|BSS      |
+1|BSS      | > rest-express@1.0.0 start
+1|BSS      | > NODE_ENV=production node dist/index.js
+1|BSS      |
+1|BSS      | [ZATCA] SDK available: false
+1|BSS      |
+1|BSS      | > rest-express@1.0.0 start
+1|BSS      | > NODE_ENV=production node dist/index.js
+1|BSS      |
+1|BSS      | [ZATCA] SDK available: false
+1|BSS      |
+1|BSS      | > rest-express@1.0.0 start
+1|BSS      | > NODE_ENV=production node dist/index.js
+1|BSS      |
+1|BSS      | [ZATCA] SDK available: false
+1|BSS      |
+1|BSS      | > rest-express@1.0.0 start
+1|BSS      | > NODE_ENV=production node dist/index.js
+1|BSS      |
+1|BSS      | [ZATCA] SDK available: false
+1|BSS      |
+1|BSS      | > rest-express@1.0.0 start
+1|BSS      | > NODE_ENV=production node dist/index.js
+1|BSS      |
+1|BSS      | [ZATCA] SDK available: false
+1|BSS      |
+1|BSS      | > rest-express@1.0.0 start
+1|BSS      | > NODE_ENV=production node dist/index.js
+1|BSS      |
+1|BSS      | [ZATCA] SDK available: false
+1|BSS      |
+1|BSS      | > rest-express@1.0.0 start
+1|BSS      | > NODE_ENV=production node dist/index.js
+1|BSS      |
+1|BSS      | [ZATCA] SDK available: false
+1|BSS      |
+1|BSS      | > rest-express@1.0.0 start
+1|BSS      | > NODE_ENV=production node dist/index.js
+1|BSS      |
+
+1|BSS  | [FATAL] DATABASE_URL is not set.
+1|BSS  |   Set it in the canonical .env file on the server (see DEPLOYMENT.md)
+1|BSS  |   and restart with: pm2 restart BSS --update-env
+1|BSS  | Error: DATABASE_URL must be set. Did you forget to provision a database?
+1|BSS  |     at server/db.ts (file:///home/BSS/dist/index.js:2211:13)
+1|BSS  |     at __init (file:///home/BSS/dist/index.js:10:56)
+1|BSS  |     at file:///home/BSS/dist/index.js:9145:1
+1|BSS  |     at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+1|BSS  |     at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
