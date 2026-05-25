@@ -1360,13 +1360,20 @@ export default function ProjectDetail() {
                             size="sm"
                             onClick={async () => {
                               try {
-                                const { openWhatsAppWithMessage } = await import("@/lib/whatsapp");
+                                const { openWhatsAppWithMessage, createPhaseReportAttachmentMessage } = await import("@/lib/whatsapp");
                                 window.open(`/api/service-projects/${projectId}/phases/${ph}/pdf?lang=${encodeURIComponent(pdfLangFull)}`, "_blank");
                                 const completed = allPhaseTasks.filter(tk => tk.status === "completed").length;
                                 const planned = allPhaseTasks.length;
                                 const leadName = lead ? assigneeLabel(lead.type, lead.id) : "-";
-                                const tt = t as any;
-                                const message = `*${project.name}*\n${tt.phaseReport || "Phase Report"} — ${tt.phase || "Phase"} ${ph}\n\n${tt.project || "Project"}: ${project.projectNumber}\n${tt.phaseLead || tt.lead || "Phase Lead"}: ${leadName}\n${tt.plannedVsCompleted || "Planned vs Completed"}: ${planned} / ${completed}`;
+                                const message = createPhaseReportAttachmentMessage({
+                                  projectName: project.name,
+                                  projectNumber: project.projectNumber,
+                                  phaseNumber: ph,
+                                  phaseName: phMeta.name,
+                                  phaseLeadName: leadName,
+                                  plannedTasks: planned,
+                                  completedTasks: completed,
+                                });
                                 openWhatsAppWithMessage(project.clientPhone!, message);
                               } catch (e: any) {
                                 toast({ title: t.error || "Error", description: e.message, variant: "destructive" });

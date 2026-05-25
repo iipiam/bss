@@ -37,6 +37,44 @@ export function formatPhoneForWhatsApp(phone: string): string {
 }
 
 /**
+ * Creates bilingual WhatsApp message for per-phase project report.
+ * Always emits English + Arabic in the same body, matching existing
+ * bilingual patterns used for invoices and attachments.
+ */
+export function createPhaseReportAttachmentMessage(params: {
+  projectName: string;
+  projectNumber: string;
+  phaseNumber: number;
+  phaseName?: string;
+  phaseLeadName?: string;
+  plannedTasks: number;
+  completedTasks: number;
+}): string {
+  const { projectName, projectNumber, phaseNumber, phaseName, phaseLeadName = '-', plannedTasks, completedTasks } = params;
+  const phaseTitle = phaseName && phaseName.trim().length > 0
+    ? `Phase ${phaseNumber}: ${phaseName} | المرحلة ${phaseNumber}: ${phaseName}`
+    : `Phase ${phaseNumber} | المرحلة ${phaseNumber}`;
+  return `
+*${projectName}*
+Phase Report | تقرير المرحلة
+
+${phaseTitle}
+
+*Project | المشروع:*
+${projectNumber}
+
+*Phase Lead | قائد المرحلة:*
+${phaseLeadName}
+
+*Tasks Planned / Completed | المهام مخططة / مكتملة:*
+${plannedTasks} / ${completedTasks}
+
+Please find the phase report PDF attached.
+يرجى الاطلاع على تقرير المرحلة المرفق.
+`.trim();
+}
+
+/**
  * Creates bilingual WhatsApp message for invoice delivery (with URL)
  */
 export function createWhatsAppInvoiceMessage(params: {
