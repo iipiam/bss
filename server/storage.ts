@@ -673,6 +673,7 @@ export interface IStorage {
   getAllProjectTasks(restaurantId: string): Promise<ProjectTask[]>;
   createProjectTask(task: InsertProjectTask): Promise<ProjectTask>;
   updateProjectTask(id: string, restaurantId: string, data: Partial<InsertProjectTask>): Promise<ProjectTask | undefined>;
+  getMyAssignedTasks(restaurantId: string, assigneeType: 'employee' | 'contractor', assigneeId: string): Promise<Array<ProjectTask & { projectName: string; projectNumber: string }>>;
   deleteProjectTask(id: string, restaurantId: string): Promise<boolean>;
 
   // Project Client Requirements
@@ -5863,6 +5864,22 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  async getMyAssignedTasks(restaurantId: string, assigneeType: 'employee' | 'contractor', assigneeId: string): Promise<Array<ProjectTask & { projectName: string; projectNumber: string }>> {
+    const rows = await db.select({
+      task: projectTasks,
+      projectName: serviceProjects.name,
+      projectNumber: serviceProjects.projectNumber,
+    }).from(projectTasks)
+      .innerJoin(serviceProjects, eq(projectTasks.projectId, serviceProjects.id))
+      .where(and(
+        eq(projectTasks.restaurantId, restaurantId),
+        eq(projectTasks.assigneeType, assigneeType),
+        eq(projectTasks.assigneeId, assigneeId),
+      ))
+      .orderBy(projectTasks.createdAt);
+    return rows.map(r => ({ ...r.task, projectName: r.projectName, projectNumber: r.projectNumber }));
+  }
+
   // Project Client Requirements
   async getProjectClientRequirements(restaurantId: string, projectId: string): Promise<ProjectClientRequirement[]> {
     return db.select().from(projectClientRequirements)
@@ -7079,6 +7096,10 @@ export const storage = new DatabaseStorage();
     await pool.query(`ALTER TABLE project_items ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     await pool.query(`ALTER TABLE project_services ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     await pool.query(`ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
+    await pool.query(`ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS assignee_type TEXT`);
+    await pool.query(`ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS assignee_id VARCHAR(255)`);
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS phase_leads JSONB DEFAULT '{}'::jsonb`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_project_tasks_assignee ON project_tasks(restaurant_id, assignee_type, assignee_id)`);
     await pool.query(`ALTER TABLE product_items ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     await pool.query(`ALTER TABLE product_service_links ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     await pool.query(`ALTER TABLE product_tasks ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);

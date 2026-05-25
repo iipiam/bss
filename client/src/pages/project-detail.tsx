@@ -40,6 +40,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { Link, useParams, useLocation } from "wouter";
 import { format } from "date-fns";
 
+type AssigneeRef = { type: 'employee' | 'contractor'; id: string };
 interface ServiceProject {
   id: string; restaurantId: string; projectNumber: string; name: string;
   clientName: string; clientPhone: string | null; clientEmail: string | null;
@@ -52,7 +53,10 @@ interface ServiceProject {
   approvedBy?: string | null;
   declineReason?: string | null;
   customerId?: string | null;
+  phaseLeads?: Record<string, AssigneeRef> | null;
 }
+interface EmployeeRef { id: string; fullName?: string | null; username?: string | null }
+interface ContractorRef { id: string; name: string }
 interface ProjectServiceItem {
   id: string; projectId: string; serviceCatalogId: string | null; name: string;
   description: string | null; pricingMethod: string; unitPrice: string; quantity: string;
@@ -80,6 +84,8 @@ interface ProjectTaskItem {
   earlyStart: number | null; earlyFinish: number | null; lateStart: number | null;
   lateFinish: number | null; slack: number | null; sortOrder: number;
   phase?: number;
+  assigneeType?: 'employee' | 'contractor' | null;
+  assigneeId?: string | null;
 }
 interface CatalogItem {
   id: string; name: string; description: string | null; pricingMethod: string;
@@ -131,6 +137,8 @@ const taskSchema = z.object({
   duration: z.string().min(1), dependencies: z.string().optional().default(""),
   status: z.string().min(1),
   phase: z.string().optional().default("1"),
+  assigneeType: z.string().optional().default(""),
+  assigneeId: z.string().optional().default(""),
 });
 
 type ServiceFormValues = z.infer<typeof serviceSchema>;
@@ -340,7 +348,36 @@ export default function ProjectDetail() {
   const billForm = useForm<BillFormValues>({ resolver: zodResolver(billSchema), defaultValues: { description: "", amount: "", category: "", vendor: "", billDate: new Date().toISOString().split("T")[0], dueDate: "", status: "pending", paidDate: "", notes: "" } });
   const procForm = useForm<ProcurementFormValues>({ resolver: zodResolver(procurementSchema), defaultValues: { itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "" } });
   const payForm = useForm<PaymentFormValues>({ resolver: zodResolver(paymentSchema), defaultValues: { milestoneName: "", amount: "", dueDate: "", status: "pending", paidDate: "", notes: "" } });
-  const taskForm = useForm<TaskFormValues>({ resolver: zodResolver(taskSchema), defaultValues: { name: "", description: "", duration: "1", dependencies: "", status: "pending", phase: "1" } });
+  const taskForm = useForm<TaskFormValues>({ resolver: zodResolver(taskSchema), defaultValues: { name: "", description: "", duration: "1", dependencies: "", status: "pending", phase: "1", assigneeType: "", assigneeId: "" } });
+  const [assigneeFilter, setAssigneeFilter] = useState<string>("__all");
+  const [phaseLeadDialog, setPhaseLeadDialog] = useState<{ phase: number } | null>(null);
+  const [phaseLeadDraft, setPhaseLeadDraft] = useState<{ type: string; id: string }>({ type: "", id: "" });
+
+  const { data: employees = [] } = useQuery<EmployeeRef[]>({ queryKey: ["/api/users"] });
+  const { data: contractors = [] } = useQuery<ContractorRef[]>({ queryKey: ["/api/contractors"] });
+  const employeeMap = new Map(employees.map(e => [e.id, e.fullName || e.username || e.id]));
+  const contractorMap = new Map(contractors.map(c => [c.id, c.name]));
+  const assigneeLabel = (type?: string | null, id?: string | null) => {
+    if (!type || !id) return "";
+    if (type === 'employee') return employeeMap.get(id) || id;
+    if (type === 'contractor') return contractorMap.get(id) || id;
+    return id;
+  };
+  const phaseLeads = (project?.phaseLeads || {}) as Record<string, AssigneeRef>;
+  const phaseLeadMut = useMutation({
+    mutationFn: async (payload: { phase: number; type: string; id: string }) => {
+      const current = { ...phaseLeads };
+      if (!payload.type || !payload.id) delete current[String(payload.phase)];
+      else current[String(payload.phase)] = { type: payload.type as any, id: payload.id };
+      return await apiRequest("PATCH", `/api/service-projects/${projectId}`, { phaseLeads: current });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/service-projects", projectId] });
+      setPhaseLeadDialog(null);
+      toast({ title: (t as any).phaseLeadUpdated || "Phase Lead updated" });
+    },
+    onError: (e: any) => toast({ title: t.error, description: e.message, variant: "destructive" }),
+  });
 
   function makeMutation(endpoint: string, qk: string[], method: "POST" | "PATCH" | "DELETE", closeFn: () => void) {
     return useMutation({
@@ -667,7 +704,7 @@ export default function ProjectDetail() {
   }
   function openEditTask(tk: ProjectTaskItem) {
     setEditTask(tk);
-    taskForm.reset({ name: tk.name, description: tk.description || "", duration: String(tk.duration), dependencies: (tk.dependencies || []).join(","), status: tk.status, phase: String(tk.phase ?? 1) });
+    taskForm.reset({ name: tk.name, description: tk.description || "", duration: String(tk.duration), dependencies: (tk.dependencies || []).join(","), status: tk.status, phase: String(tk.phase ?? 1), assigneeType: tk.assigneeType || "", assigneeId: tk.assigneeId || "" });
     setTaskOpen(true);
   }
 
@@ -695,7 +732,10 @@ export default function ProjectDetail() {
   function submitTask(data: TaskFormValues) {
     const deps = data.dependencies ? data.dependencies.split(",").map(d => d.trim()).filter(Boolean) : [];
     const phaseNum = Math.max(1, parseInt(data.phase || "1") || 1);
-    const body: any = { name: data.name, description: data.description || null, duration: parseInt(data.duration), dependencies: deps.length ? deps : null, status: data.status, projectId, phase: phaseNum };
+    const cleanType = (data.assigneeType || "").trim();
+    const aType = cleanType && data.assigneeId ? cleanType : null;
+    const aId = cleanType && data.assigneeId ? data.assigneeId : null;
+    const body: any = { name: data.name, description: data.description || null, duration: parseInt(data.duration), dependencies: deps.length ? deps : null, status: data.status, projectId, phase: phaseNum, assigneeType: aType, assigneeId: aId };
     if (editTask) body._editId = editTask.id;
     taskMut.mutate(body);
   }
@@ -1215,13 +1255,33 @@ export default function ProjectDetail() {
               <Button variant="outline" onClick={() => setDecisionToolsOpen(true)} disabled={tasks.length === 0} data-testid="button-decision-tools">
                 <Lightbulb className="h-4 w-4 mr-2" />{t.decisionTools || tr("Decision Tools", "أدوات القرار")}
               </Button>
+              <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
+                <SelectTrigger className="w-56" data-testid="select-assignee-filter"><SelectValue placeholder={(t as any).filterByAssignee || "Filter by assignee"} /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">{(t as any).allAssignees || "All assignees"}</SelectItem>
+                  <SelectItem value="__none">{(t as any).unassigned || "Unassigned"}</SelectItem>
+                  {employees.length > 0 && <SelectItem value="__group_emp" disabled>— {(t as any).employees || "Employees"} —</SelectItem>}
+                  {employees.map(e => <SelectItem key={`emp-${e.id}`} value={`employee:${e.id}`}>{e.fullName || e.username || e.id}</SelectItem>)}
+                  {contractors.length > 0 && <SelectItem value="__group_con" disabled>— {(t as any).contractors || "Contractors"} —</SelectItem>}
+                  {contractors.map(c => <SelectItem key={`con-${c.id}`} value={`contractor:${c.id}`}>{c.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
               <Button onClick={() => { setEditTask(null); taskForm.reset(); setTaskOpen(true); }} data-testid="button-add-task"><Plus className="h-4 w-4 mr-2" />{t.addTask || "Add Task"}</Button>
             </div>
           </div>
           {tasks.length === 0 ? <p className="text-muted-foreground text-center py-8">{t.noTasks || "No tasks added yet"}</p> : (
             <div className="space-y-4">
               {Array.from(new Set(tasks.map(tk => tk.phase ?? 1))).sort((a, b) => a - b).map(ph => {
-                const phaseTasks = tasks.filter(tk => (tk.phase ?? 1) === ph);
+                const allPhaseTasks = tasks.filter(tk => (tk.phase ?? 1) === ph);
+                const matchesFilter = (tk: ProjectTaskItem) => {
+                  if (assigneeFilter === "__all") return true;
+                  if (assigneeFilter === "__none") return !tk.assigneeType || !tk.assigneeId;
+                  const [type, id] = assigneeFilter.split(":");
+                  return tk.assigneeType === type && tk.assigneeId === id;
+                };
+                const phaseTasks = allPhaseTasks.filter(matchesFilter);
+                if (phaseTasks.length === 0 && assigneeFilter !== "__all") return null;
+                const lead = phaseLeads[String(ph)];
                 const phaseDur = phaseTasks.reduce((m, tk) => Math.max(m, (tk.earlyFinish ?? 0)), 0)
                   - phaseTasks.reduce((m, tk) => Math.min(m, (tk.earlyStart ?? Infinity)), Infinity);
                 const sumDur = phaseTasks.reduce((s, tk) => s + (tk.duration || 0), 0);
@@ -1229,7 +1289,17 @@ export default function ProjectDetail() {
                 return (
                   <div key={`task-phase-${ph}`} className="space-y-2" data-testid={`group-task-phase-${ph}`}>
                     <div className="flex items-center justify-between gap-2 flex-wrap px-1 py-1 border-b">
-                      <p className="font-semibold text-sm">{(t as any).phase || "Phase"} {ph}</p>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-sm">{(t as any).phase || "Phase"} {ph}</p>
+                        {lead ? (
+                          <Badge variant="secondary" className="gap-1" data-testid={`badge-phase-lead-${ph}`}>
+                            <User className="h-3 w-3" />{(t as any).lead || "Lead"}: {assigneeLabel(lead.type, lead.id)}
+                          </Badge>
+                        ) : null}
+                        <Button variant="ghost" size="sm" onClick={() => { setPhaseLeadDraft({ type: lead?.type || "", id: lead?.id || "" }); setPhaseLeadDialog({ phase: ph }); }} data-testid={`button-set-phase-lead-${ph}`}>
+                          <User className="h-4 w-4 mr-1" />{lead ? ((t as any).changeLead || "Change Lead") : ((t as any).setLead || "Set Phase Lead")}
+                        </Button>
+                      </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span>{phaseTasks.length} {(t.tasks || "tasks").toString().toLowerCase()}</span>
                         <span className="font-semibold text-foreground">
@@ -1248,6 +1318,12 @@ export default function ProjectDetail() {
                           {tk.isCritical && <Badge variant="destructive">{t.critical || "Critical"}</Badge>}
                         </div>
                         <p className="text-sm text-muted-foreground">{t.duration || "Duration"}: {tk.duration} {t.days || "days"}</p>
+                        {tk.assigneeType && tk.assigneeId ? (
+                          <Badge variant="outline" className="mt-1 gap-1" data-testid={`badge-task-assignee-${tk.id}`}>
+                            <User className="h-3 w-3" />
+                            {tk.assigneeType === 'employee' ? ((t as any).employee || 'Employee') : ((t as any).contractor || 'Contractor')}: {assigneeLabel(tk.assigneeType, tk.assigneeId)}
+                          </Badge>
+                        ) : null}
                         {(tk.earlyStart !== null) && (
                           <div className="flex gap-4 text-xs text-muted-foreground mt-1 flex-wrap">
                             <span>ES: {tk.earlyStart}</span><span>EF: {tk.earlyFinish}</span>
@@ -2379,12 +2455,82 @@ export default function ProjectDetail() {
                     <FormMessage /></FormItem>
                 )} />
               )}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={taskForm.control} name="assigneeType" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).assigneeType || "Assignee Type"}</FormLabel>
+                    <Select onValueChange={(v) => { field.onChange(v); taskForm.setValue("assigneeId", ""); }} value={field.value || ""}>
+                      <FormControl><SelectTrigger data-testid="select-task-assignee-type"><SelectValue placeholder={(t as any).unassigned || "Unassigned"} /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value=" ">{(t as any).unassigned || "Unassigned"}</SelectItem>
+                        <SelectItem value="employee">{(t as any).employee || "Employee"}</SelectItem>
+                        <SelectItem value="contractor">{(t as any).contractor || "Contractor"}</SelectItem>
+                      </SelectContent>
+                    </Select><FormMessage /></FormItem>
+                )} />
+                <FormField control={taskForm.control} name="assigneeId" render={({ field }) => {
+                  const type = taskForm.watch("assigneeType");
+                  const options = type === "employee" ? employees.map(e => ({ id: e.id, label: e.fullName || e.username || e.id }))
+                                : type === "contractor" ? contractors.map(c => ({ id: c.id, label: c.name }))
+                                : [];
+                  return (
+                    <FormItem><FormLabel>{(t as any).assignee || "Assignee"}</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ""} disabled={!type || type === " "}>
+                        <FormControl><SelectTrigger data-testid="select-task-assignee-id"><SelectValue placeholder={(t as any).selectAssignee || "Select..."} /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          {options.length === 0 ? <SelectItem value="__none" disabled>{(t as any).noOptions || "No options"}</SelectItem>
+                          : options.map(o => <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select><FormMessage /></FormItem>
+                  );
+                }} />
+              </div>
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => { setTaskOpen(false); setEditTask(null); }} data-testid="button-cancel-task">{t.cancel}</Button>
                 <Button type="submit" disabled={taskMut.isPending} data-testid="button-submit-task">{editTask ? t.save : t.add}</Button>
               </div>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Phase Lead Dialog */}
+      <Dialog open={!!phaseLeadDialog} onOpenChange={(o) => { if (!o) setPhaseLeadDialog(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{(t as any).setLead || "Set Phase Lead"} — {(t as any).phase || "Phase"} {phaseLeadDialog?.phase}</DialogTitle>
+            <DialogDescription>{(t as any).phaseLeadDesc || "Assign an employee or contractor as the lead for this phase."}</DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium">{(t as any).assigneeType || "Assignee Type"}</label>
+              <Select value={phaseLeadDraft.type || " "} onValueChange={(v) => setPhaseLeadDraft({ type: v.trim(), id: "" })}>
+                <SelectTrigger data-testid="select-phase-lead-type"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value=" ">{(t as any).unassigned || "Unassigned"}</SelectItem>
+                  <SelectItem value="employee">{(t as any).employee || "Employee"}</SelectItem>
+                  <SelectItem value="contractor">{(t as any).contractor || "Contractor"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium">{(t as any).assignee || "Assignee"}</label>
+              <Select value={phaseLeadDraft.id} onValueChange={(v) => setPhaseLeadDraft(d => ({ ...d, id: v }))} disabled={!phaseLeadDraft.type}>
+                <SelectTrigger data-testid="select-phase-lead-id"><SelectValue placeholder={(t as any).selectAssignee || "Select..."} /></SelectTrigger>
+                <SelectContent>
+                  {(phaseLeadDraft.type === "employee" ? employees.map(e => ({ id: e.id, label: e.fullName || e.username || e.id }))
+                    : phaseLeadDraft.type === "contractor" ? contractors.map(c => ({ id: c.id, label: c.name }))
+                    : []).map(o => <SelectItem key={o.id} value={o.id}>{o.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" onClick={() => setPhaseLeadDialog(null)} data-testid="button-cancel-phase-lead">{t.cancel}</Button>
+            {phaseLeads[String(phaseLeadDialog?.phase)] ? (
+              <Button variant="destructive" onClick={() => phaseLeadDialog && phaseLeadMut.mutate({ phase: phaseLeadDialog.phase, type: "", id: "" })} disabled={phaseLeadMut.isPending} data-testid="button-clear-phase-lead">{(t as any).clearLead || "Clear Lead"}</Button>
+            ) : null}
+            <Button onClick={() => phaseLeadDialog && phaseLeadMut.mutate({ phase: phaseLeadDialog.phase, type: phaseLeadDraft.type, id: phaseLeadDraft.id })} disabled={phaseLeadMut.isPending || !phaseLeadDraft.type || !phaseLeadDraft.id} data-testid="button-save-phase-lead">{t.save}</Button>
+          </div>
         </DialogContent>
       </Dialog>
 

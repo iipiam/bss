@@ -548,6 +548,12 @@ export default function Dashboard() {
     staleTime: 0,
   });
 
+  const { data: myAssignedTasks = [] } = useQuery<any[]>({
+    queryKey: ["/api/my-assigned-tasks"],
+    enabled: isServiceBusiness,
+    staleTime: 0,
+  });
+
   const projectById = new Map<string, any>(serviceProjectsList.map((p: any) => [p.id, p]));
   const activeProjectIds = new Set(
     serviceProjectsList
@@ -591,6 +597,7 @@ export default function Dashboard() {
       apiRequest("PATCH", `/api/project-tasks/${id}`, { status }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-assigned-tasks"] });
     },
   });
 
@@ -1309,6 +1316,66 @@ export default function Dashboard() {
                 {recentProjects.length === 0 && (
                   <p className="text-sm text-muted-foreground text-center py-4">
                     {(t as any).noRecentProjects || "No recent projects"}
+                  </p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {isServiceBusiness && (
+          <Card data-testid="card-my-assigned-tasks">
+            <CardHeader className={layout.cardHeaderPadding}>
+              <CardTitle className={layout.isMobile ? "text-base" : ""}>
+                {(t as any).myAssignedTasks || "My Assigned Tasks"}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {(t as any).myAssignedTasksDesc || "Tasks assigned to you across projects"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className={layout.cardPadding}>
+              <div className={layout.isMobile ? "space-y-2" : "space-y-3"}>
+                {myAssignedTasks.filter((tk: any) => tk.status !== 'completed').slice(0, 8).map((tk: any) => (
+                  <div
+                    key={tk.id}
+                    className={`flex items-center justify-between gap-2 hover-elevate ${layout.isMobile ? "p-2" : "p-3"} rounded-md`}
+                    data-testid={`my-task-${tk.id}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Badge variant={tk.status === 'in_progress' ? 'default' : 'secondary'} className={tk.status === 'in_progress' ? 'bg-blue-600 text-white shrink-0' : 'shrink-0'}>
+                          {tk.status === 'in_progress' ? ((t as any).inProgress || 'In Progress') : ((t as any).pending || 'Pending')}
+                        </Badge>
+                        <p className={`font-medium truncate ${layout.isMobile ? "text-sm" : ""}`}>{tk.name}</p>
+                      </div>
+                      {tk.projectId && (
+                        <Link
+                          href={`/service-projects/${tk.projectId}`}
+                          className="text-xs text-muted-foreground hover:underline truncate block mt-1"
+                          data-testid={`link-my-task-project-${tk.id}`}
+                        >
+                          {tk.projectNumber ? `#${tk.projectNumber} • ` : ''}{tk.projectName || ''}
+                        </Link>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => taskStatusMut.mutate({ id: tk.id, status: tk.status === 'in_progress' ? 'completed' : 'in_progress' })}
+                      disabled={taskStatusMut.isPending}
+                      data-testid={`button-my-task-action-${tk.id}`}
+                    >
+                      {tk.status === 'in_progress' ? (
+                        <><CheckSquare className="h-4 w-4 mr-1" />{(t as any).complete || 'Complete'}</>
+                      ) : (
+                        <><PlayCircle className="h-4 w-4 mr-1" />{(t as any).start || 'Start'}</>
+                      )}
+                    </Button>
+                  </div>
+                ))}
+                {myAssignedTasks.filter((tk: any) => tk.status !== 'completed').length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4" data-testid="text-no-my-tasks">
+                    {(t as any).noMyAssignedTasks || "No tasks assigned to you"}
                   </p>
                 )}
               </div>

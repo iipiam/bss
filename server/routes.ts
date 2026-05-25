@@ -16608,6 +16608,19 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Returns tasks assigned to the current authenticated user (employee assignee).
+  // Locked to session identity to prevent reading other users' assignments.
+  app.get("/api/my-assigned-tasks", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId;
+      if (!restaurantId) return res.json([]);
+      const tasks = await storage.getMyAssignedTasks(restaurantId, 'employee', req.session.user!.id);
+      res.json(tasks);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // ==================== CLIENT REQUIREMENTS ====================
   app.get("/api/project-client-requirements", requireAuth, async (req, res) => {
     try {
@@ -17522,12 +17535,25 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           <td style="text-align:right">${parseFloat(p.totalPrice || '0').toFixed(2)} SAR</td>
           <td>${escapeHtml(p.status)}</td>
         </tr>`).join('');
+    const employees = await storage.getUsers(restaurantId);
+    const contractors = await storage.getContractors(restaurantId);
+    const empMap = new Map(employees.map(e => [e.id, e.fullName || e.username || e.id]));
+    const contractorMap = new Map(contractors.map(c => [c.id, c.name || c.id]));
+    const resolveAssignee = (type?: string | null, id?: string | null): string => {
+      if (!type || !id) return '-';
+      if (type === 'employee') return empMap.get(id) || id;
+      if (type === 'contractor') return contractorMap.get(id) || id;
+      return id;
+    };
+    const phaseLeads: Record<string, { type: string; id: string }> = (project as any).phaseLeads || {};
     const taskPhases = Array.from(new Set(tasks.map(t => (t as any).phase ?? 1))).sort((a: number, b: number) => a - b);
     let tIdx = 0;
     const taskRows = taskPhases.map((ph: number) => {
       const phaseTks = tasks.filter(t => ((t as any).phase ?? 1) === ph);
       const sumDur = phaseTks.reduce((s, tk) => s + (tk.duration || 0), 0);
-      const header = `<tr><td colspan="5" style="background:#eef2f7;color:#1a365d;font-weight:700;padding:7px 8px;">Phase ${ph} / المرحلة ${ph} — ${phaseTks.length} task(s) — ${sumDur} days</td></tr>`;
+      const lead = phaseLeads[String(ph)];
+      const leadLabel = lead ? ` — Lead: ${escapeHtml(resolveAssignee(lead.type, lead.id))}` : '';
+      const header = `<tr><td colspan="6" style="background:#eef2f7;color:#1a365d;font-weight:700;padding:7px 8px;">Phase ${ph} / المرحلة ${ph} — ${phaseTks.length} task(s) — ${sumDur} days${leadLabel}</td></tr>`;
       const rows = phaseTks.map(tk => {
         tIdx += 1;
         return `
@@ -17537,6 +17563,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           <td style="text-align:center">${tk.duration} days</td>
           <td>${escapeHtml(tk.status)}</td>
           <td style="text-align:center">${tk.slack ?? '-'}</td>
+          <td>${escapeHtml(resolveAssignee((tk as any).assigneeType, (tk as any).assigneeId))}</td>
         </tr>`;
       }).join('');
       return header + rows;
@@ -17667,7 +17694,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           <div class="section">
             <h3>Tasks / المهام</h3>
             <table>
-              <thead><tr><th>#</th><th>Task</th><th>Duration</th><th>Status</th><th>Slack</th></tr></thead>
+              <thead><tr><th>#</th><th>Task</th><th>Duration</th><th>Status</th><th>Slack</th><th>Assignee / المسؤول</th></tr></thead>
               <tbody>${taskRows}</tbody>
             </table>
           </div>` : ''}
