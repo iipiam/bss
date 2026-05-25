@@ -174,7 +174,7 @@ export default function Recipes() {
   const [steps, setSteps] = useState([""]);
   const [addToInventory, setAddToInventory] = useState(false);
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
   
   // Calculate total cost using useMemo to avoid infinite loops
   const cost = useMemo(() => {
