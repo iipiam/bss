@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuth } from "@/lib/auth";
 import QRCode from "qrcode";
 import type {
   MenuItem,
@@ -296,10 +297,15 @@ export default function Marketing() {
     affiliateRevenue: 500,
   });
 
+  // Tenant-scoped localStorage key so different accounts on the same browser
+  // never see each other's marketing data.
+  const { user: _mktUser } = useAuth();
+  const mktLsKey = `${LS_KEY}__${_mktUser?.restaurantId || _mktUser?.id || 'anon'}`;
+
   // Load from localStorage on mount
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(LS_KEY);
+      const raw = localStorage.getItem(mktLsKey);
       if (raw) {
         const s = JSON.parse(raw);
         if (Array.isArray(s.products) && s.products.length) setProducts(s.products);
@@ -320,7 +326,7 @@ export default function Marketing() {
   useEffect(() => {
     try {
       localStorage.setItem(
-        LS_KEY,
+        mktLsKey,
         JSON.stringify({
           products, swot, canvas, influencers, bloggerFiles,
           calcCurrency, calcCpm, calcSponsorFollowers, calcSponsorEr, roiInputs, earningsInputs,
