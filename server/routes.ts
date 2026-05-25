@@ -16835,7 +16835,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // ==================== PRODUCT CLIENT REQUIREMENTS ====================
-  app.get("/api/product-client-requirements", requireAuth, async (req, res) => {
+  app.get("/api/product-client-requirements", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16845,7 +16845,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.json(rows);
     } catch (error: any) { res.status(500).json({ message: error.message }); }
   });
-  app.post("/api/product-client-requirements", requireAuth, async (req, res) => {
+  app.post("/api/product-client-requirements", requireAuth, requireRestaurant, requireAction('projects', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16856,7 +16856,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.status(201).json(row);
     } catch (error: any) { res.status(500).json({ message: error.message }); }
   });
-  app.patch("/api/product-client-requirements/:id", requireAuth, async (req, res) => {
+  app.patch("/api/product-client-requirements/:id", requireAuth, requireRestaurant, requireAction('projects', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16865,7 +16865,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.json(row);
     } catch (error: any) { res.status(500).json({ message: error.message }); }
   });
-  app.delete("/api/product-client-requirements/:id", requireAuth, async (req, res) => {
+  app.delete("/api/product-client-requirements/:id", requireAuth, requireRestaurant, requireAction('projects', 'delete'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16876,7 +16876,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // ==================== PRODUCT MEETINGS ====================
-  app.get("/api/product-meetings", requireAuth, async (req, res) => {
+  app.get("/api/product-meetings", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16886,7 +16886,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.json(rows);
     } catch (error: any) { res.status(500).json({ message: error.message }); }
   });
-  app.post("/api/product-meetings", requireAuth, async (req, res) => {
+  app.post("/api/product-meetings", requireAuth, requireRestaurant, requireAction('projects', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16899,7 +16899,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.status(201).json(row);
     } catch (error: any) { res.status(500).json({ message: error.message }); }
   });
-  app.patch("/api/product-meetings/:id", requireAuth, async (req, res) => {
+  app.patch("/api/product-meetings/:id", requireAuth, requireRestaurant, requireAction('projects', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16910,7 +16910,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       res.json(row);
     } catch (error: any) { res.status(500).json({ message: error.message }); }
   });
-  app.delete("/api/product-meetings/:id", requireAuth, async (req, res) => {
+  app.delete("/api/product-meetings/:id", requireAuth, requireRestaurant, requireAction('projects', 'delete'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16921,7 +16921,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // ==================== PRODUCT PDF EXPORTS: requirements & meetings ====================
-  app.get("/api/products/:productId/client-requirements/pdf", requireAuth, async (req, res) => {
+  app.get("/api/products/:productId/client-requirements/pdf", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16953,7 +16953,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error: any) { res.status(500).json({ message: error.message }); }
   });
 
-  app.get("/api/products/:productId/meetings/pdf", requireAuth, async (req, res) => {
+  app.get("/api/products/:productId/meetings/pdf", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
@@ -16976,7 +16976,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error: any) { res.status(500).json({ message: error.message }); }
   });
 
-  app.get("/api/product-meetings/:id/pdf", requireAuth, async (req, res) => {
+  app.get("/api/product-meetings/:id/pdf", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
