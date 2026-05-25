@@ -54,7 +54,9 @@ import {
   Building,
   Award,
   Wrench,
+  ListTodo,
 } from "lucide-react";
+import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -132,6 +134,18 @@ export default function ContractorsPage() {
   const [open, setOpen] = useState(false);
   const [editingContractor, setEditingContractor] = useState<Contractor | null>(null);
   const [deletingContractor, setDeletingContractor] = useState<Contractor | null>(null);
+  const [tasksContractor, setTasksContractor] = useState<Contractor | null>(null);
+
+  const { data: contractorTasks = [], isLoading: tasksLoading } = useQuery<any[]>({
+    queryKey: ["/api/contractors", tasksContractor?.id, "assigned-tasks"],
+    queryFn: async () => {
+      if (!tasksContractor) return [];
+      const r = await fetch(`/api/contractors/${tasksContractor.id}/assigned-tasks`, { credentials: 'include' });
+      if (!r.ok) throw new Error('Failed to load tasks');
+      return r.json();
+    },
+    enabled: !!tasksContractor,
+  });
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
   const layout = useDeviceLayout();
@@ -678,6 +692,20 @@ export default function ContractorsPage() {
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label={(t as any).viewAssignedTasks || "View assigned tasks"}
+                        onClick={() => setTasksContractor(contractor)}
+                        data-testid={`button-view-tasks-${contractor.id}`}
+                      >
+                        <ListTodo className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{(t as any).viewAssignedTasks || "View assigned tasks"}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
                         aria-label={t.edit}
                         onClick={() => handleEdit(contractor)}
                         data-testid={`button-edit-${contractor.id}`}
@@ -766,6 +794,41 @@ export default function ContractorsPage() {
           ))}
         </div>
       )}
+
+      <Dialog open={!!tasksContractor} onOpenChange={(o) => { if (!o) setTasksContractor(null); }}>
+        <DialogContent className="max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{(t as any).assignedTasks || "Assigned Tasks"} — {tasksContractor?.name}</DialogTitle>
+            <DialogDescription>{(t as any).contractorAssignedTasksDesc || "Open project tasks assigned to this contractor."}</DialogDescription>
+          </DialogHeader>
+          {tasksLoading ? (
+            <p className="text-sm text-muted-foreground text-center py-6">{t.loading || "Loading..."}</p>
+          ) : contractorTasks.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6" data-testid="text-no-contractor-tasks">{(t as any).noAssignedTasks || "No open tasks assigned"}</p>
+          ) : (
+            <div className="space-y-2">
+              {contractorTasks.map((tk: any) => (
+                <div key={tk.id} className="flex items-center justify-between gap-2 p-3 rounded-md border" data-testid={`contractor-task-${tk.id}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <Badge variant={tk.status === 'in_progress' ? 'default' : 'secondary'} className={tk.status === 'in_progress' ? 'bg-blue-600 text-white shrink-0' : 'shrink-0'}>
+                        {tk.status === 'in_progress' ? ((t as any).inProgress || 'In Progress') : ((t as any).pending || 'Pending')}
+                      </Badge>
+                      <p className="font-medium truncate">{tk.name}</p>
+                    </div>
+                    {tk.projectId && (
+                      <Link href={`/service-projects/${tk.projectId}`} className="text-xs text-muted-foreground hover:underline truncate block mt-1" data-testid={`link-contractor-task-project-${tk.id}`}>
+                        {tk.projectNumber ? `#${tk.projectNumber} • ` : ''}{tk.projectName || ''}
+                      </Link>
+                    )}
+                  </div>
+                  <span className="text-xs text-muted-foreground shrink-0">{tk.duration} {(t as any).days || 'days'}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog
         open={!!deletingContractor}

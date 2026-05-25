@@ -16608,13 +16608,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  // Returns tasks assigned to the current authenticated user (employee assignee).
+  // Returns OPEN tasks assigned to the current authenticated user (employee assignee).
   // Locked to session identity to prevent reading other users' assignments.
-  app.get("/api/my-assigned-tasks", requireAuth, async (req, res) => {
+  app.get("/api/my-assigned-tasks", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId;
-      if (!restaurantId) return res.json([]);
+      const restaurantId = req.session.user!.restaurantId!;
       const tasks = await storage.getMyAssignedTasks(restaurantId, 'employee', req.session.user!.id);
+      res.json(tasks);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Returns OPEN tasks assigned to a specific contractor (for contractors detail/list view).
+  app.get("/api/contractors/:id/assigned-tasks", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const tasks = await storage.getMyAssignedTasks(restaurantId, 'contractor', req.params.id);
       res.json(tasks);
     } catch (error: any) {
       res.status(500).json({ message: error.message });

@@ -1323,7 +1323,7 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {isServiceBusiness && (
+        {isServiceBusiness && myAssignedTasks.length > 0 && (
           <Card data-testid="card-my-assigned-tasks">
             <CardHeader className={layout.cardHeaderPadding}>
               <CardTitle className={layout.isMobile ? "text-base" : ""}>
@@ -1335,7 +1335,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent className={layout.cardPadding}>
               <div className={layout.isMobile ? "space-y-2" : "space-y-3"}>
-                {myAssignedTasks.filter((tk: any) => tk.status !== 'completed').slice(0, 8).map((tk: any) => (
+                {myAssignedTasks.slice(0, 8).map((tk: any) => (
                   <div
                     key={tk.id}
                     className={`flex items-center justify-between gap-2 hover-elevate ${layout.isMobile ? "p-2" : "p-3"} rounded-md`}
@@ -1373,11 +1373,6 @@ export default function Dashboard() {
                     </Button>
                   </div>
                 ))}
-                {myAssignedTasks.filter((tk: any) => tk.status !== 'completed').length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4" data-testid="text-no-my-tasks">
-                    {(t as any).noMyAssignedTasks || "No tasks assigned to you"}
-                  </p>
-                )}
               </div>
             </CardContent>
           </Card>

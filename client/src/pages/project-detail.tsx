@@ -390,6 +390,10 @@ export default function ProjectDetail() {
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: qk });
+        if (qk[0] === "/api/project-tasks") {
+          queryClient.invalidateQueries({ queryKey: ["/api/my-assigned-tasks"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/contractors"], predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[2] === "assigned-tasks" });
+        }
         closeFn();
         toast({ title: t.saved || "Saved", description: t.changesSaved || "Changes saved successfully" });
       },
@@ -466,6 +470,8 @@ export default function ProjectDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/project-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-assigned-tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/contractors"], predicate: (q) => Array.isArray(q.queryKey) && q.queryKey[2] === "assigned-tasks" });
       toast({ title: t.saved || "Saved", description: t.taskStatusUpdated || "Task status updated" });
     },
     onError: (e: any) => { toast({ title: t.error, description: e.message, variant: "destructive" }); },

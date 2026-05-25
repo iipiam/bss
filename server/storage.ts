@@ -5873,8 +5873,10 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(serviceProjects, eq(projectTasks.projectId, serviceProjects.id))
       .where(and(
         eq(projectTasks.restaurantId, restaurantId),
+        eq(serviceProjects.restaurantId, restaurantId),
         eq(projectTasks.assigneeType, assigneeType),
         eq(projectTasks.assigneeId, assigneeId),
+        ne(projectTasks.status, 'completed'),
       ))
       .orderBy(projectTasks.createdAt);
     return rows.map(r => ({ ...r.task, projectName: r.projectName, projectNumber: r.projectNumber }));
