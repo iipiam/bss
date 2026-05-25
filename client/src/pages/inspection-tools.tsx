@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Activity, Database, Server, Network, RefreshCw, CheckCircle2,
   XCircle, AlertTriangle, Cpu, HardDrive, Clock, Search, Play, FileWarning,
+  Calculator,
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
@@ -31,6 +32,15 @@ interface SchemaResp { tables: SchemaTable[]; totalTables: number }
 interface SessionsResp { total: number; active: number; expired: number }
 interface RoutesResp { total: number; routes: { path: string; methods: string[] }[] }
 interface TestResp { status: number; ok: boolean; latencyMs: number; bodyPreview?: string; contentType?: string; error?: string }
+interface ParityScenario {
+  name: string;
+  input: { gross: number; subsidy: number; commissionPercent: number; bankingFeesPercent: number; posFees: number };
+  expected: { gross: number; subsidy: number; subsidizedPrice: number; commission: number; banking: number; vat: number; posFees: number; net: number };
+  got: { gross: number; subsidy: number; subsidizedPrice: number; commission: number; banking: number; vat: number; posFees: number; net: number };
+  passed: boolean;
+  mismatches: string[];
+}
+interface ParityResp { total: number; passed: number; failed: number; allPassed: boolean; results: ParityScenario[] }
 
 function formatUptime(seconds: number) {
   const d = Math.floor(seconds / 86400);
@@ -56,6 +66,9 @@ export default function InspectionTools() {
     useQuery<SessionsResp>({ queryKey: ["/api/it/inspection/sessions"], refetchInterval: 10000 });
   const { data: routes } =
     useQuery<RoutesResp>({ queryKey: ["/api/it/inspection/routes"] });
+
+  const { data: parity, isFetching: parityLoading, refetch: refetchParity } =
+    useQuery<ParityResp>({ queryKey: ["/api/it/inspection/delivery-parity"], enabled: false });
 
   const testMutation = useMutation({
     mutationFn: async () => {
@@ -116,6 +129,7 @@ export default function InspectionTools() {
           <TabsTrigger value="database" data-testid="tab-database"><Database className="h-4 w-4 mr-2" />Database</TabsTrigger>
           <TabsTrigger value="api" data-testid="tab-api"><Network className="h-4 w-4 mr-2" />API Tester</TabsTrigger>
           <TabsTrigger value="errors" data-testid="tab-errors"><FileWarning className="h-4 w-4 mr-2" />Browser Errors</TabsTrigger>
+          <TabsTrigger value="parity" data-testid="tab-parity"><Calculator className="h-4 w-4 mr-2" />Delivery Parity</TabsTrigger>
         </TabsList>
 
         {/* OVERVIEW */}
@@ -312,6 +326,92 @@ export default function InspectionTools() {
                   </div>
                 </ScrollArea>
               </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* DELIVERY PARITY */}
+        <TabsContent value="parity" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Calculator className="h-5 w-5" />Delivery Calc Parity
+              </CardTitle>
+              <CardDescription>
+                Runs the shared delivery-fee formula against 6 fixed scenarios and verifies POS and Profitability produce identical numbers down to the halala.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3 flex-wrap">
+                <Button onClick={() => refetchParity()} disabled={parityLoading} data-testid="button-run-parity">
+                  <Play className={`h-4 w-4 mr-2 ${parityLoading ? "animate-spin" : ""}`} />
+                  {parityLoading ? "Running..." : "Run parity check"}
+                </Button>
+                {parity && (
+                  <Badge
+                    variant={parity.allPassed ? "default" : "destructive"}
+                    data-testid="badge-parity-summary"
+                  >
+                    {parity.allPassed ? (
+                      <CheckCircle2 className="h-3 w-3 mr-1" />
+                    ) : (
+                      <XCircle className="h-3 w-3 mr-1" />
+                    )}
+                    {parity.passed}/{parity.total} passed
+                  </Badge>
+                )}
+              </div>
+
+              {parity && (
+                <div className="space-y-2">
+                  {parity.results.map((r, i) => (
+                    <div
+                      key={i}
+                      className="border rounded-md p-3 space-y-2"
+                      data-testid={`row-parity-${i}`}
+                    >
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <div className="font-medium text-sm">{r.name}</div>
+                        <Badge variant={r.passed ? "default" : "destructive"}>
+                          {r.passed ? (
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                          ) : (
+                            <XCircle className="h-3 w-3 mr-1" />
+                          )}
+                          {r.passed ? "PASS" : "FAIL"}
+                        </Badge>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                        {(["gross", "subsidy", "commission", "banking", "vat", "posFees", "net"] as const).map((k) => {
+                          const exp = r.expected[k];
+                          const got = r.got[k];
+                          const mismatched = r.mismatches.includes(k);
+                          return (
+                            <div
+                              key={k}
+                              className={`p-2 rounded ${mismatched ? "bg-destructive/10" : "bg-muted/40"}`}
+                            >
+                              <div className="text-muted-foreground capitalize">{k}</div>
+                              <div className="font-mono">{got.toFixed(2)}</div>
+                              {mismatched && (
+                                <div className="font-mono text-destructive text-[10px]">
+                                  exp {exp.toFixed(2)}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {!parity && (
+                <div className="text-sm text-muted-foreground p-4 border rounded-md">
+                  Click "Run parity check" to execute the canonical delivery scenarios server-side.
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

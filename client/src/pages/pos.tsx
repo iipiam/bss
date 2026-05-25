@@ -44,6 +44,9 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
 import { useBusinessType } from "@/hooks/useBusinessType";
 import type { MenuItem, DeliveryApp, Addon } from "@shared/schema";
+import { calcDeliveryBreakdown } from "@shared/deliveryCalc";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calculator } from "lucide-react";
 
 interface CartItemAddon {
   id: string;
@@ -70,6 +73,65 @@ interface Customer {
   id: string;
   name: string;
   phone: string;
+}
+
+function DeliveryBreakdownPopover({
+  breakdown,
+  sarLabel,
+  testId,
+}: {
+  breakdown: ReturnType<typeof calcDeliveryBreakdown>;
+  sarLabel: string;
+  testId: string;
+}) {
+  const { t } = useLanguage();
+  const rows: Array<{ label: string; value: number; negative?: boolean; isTotal?: boolean }> = [
+    { label: t.breakdownGross, value: breakdown.gross },
+    { label: t.breakdownSubsidy, value: breakdown.subsidy, negative: true },
+    { label: t.breakdownCommission, value: breakdown.commission, negative: true },
+    { label: t.breakdownBankingFee, value: breakdown.banking, negative: true },
+    { label: t.breakdownPosFee, value: breakdown.posFees, negative: true },
+    { label: t.breakdownVat, value: breakdown.vat, negative: true },
+    { label: t.breakdownNet, value: breakdown.net, isTotal: true },
+  ];
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6"
+          aria-label={t.calcBreakdown}
+          data-testid={testId}
+        >
+          <Calculator className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 p-3" align="end">
+        <div className="text-sm font-semibold mb-2">
+          {t.calcBreakdown}
+        </div>
+        <div className="space-y-1">
+          {rows.map((r, i) => (
+            <div
+              key={i}
+              className={`flex justify-between text-xs ${
+                r.isTotal ? "border-t pt-1 mt-1 font-bold text-sm" : "text-muted-foreground"
+              }`}
+              data-testid={`row-breakdown-${i}`}
+            >
+              <span>{r.label}</span>
+              <span className="font-mono">
+                {r.negative ? "-" : ""}
+                {r.value.toFixed(2)} {sarLabel}
+              </span>
+            </div>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export default function POS() {
@@ -547,41 +609,29 @@ export default function POS() {
     return tier ? Number(tier.subsidy) || 0 : 0;
   })();
 
-  // Delivery app fee formula (matches server/storage.ts getDeliveryAppProfitability):
-  //   subsidizedPrice = gross - subsidy
-  //   commission      = subsidizedPrice * commission%
-  //   banking         = gross * banking%
-  //   vat             = (commission + subsidy + banking) * 15%
-  //   net (POS total) = gross - commission - subsidy - banking - vat - posFees
-  const subsidizedPrice = deliveryGross - deliverySubsidy;
+  // Delivery app fee formula — single source of truth in shared/deliveryCalc.ts.
+  // Same helper is used by server/storage.ts getDeliveryAppProfitability so the
+  // POS Cart total and the profitability "Restaurant Net" produce identical
+  // numbers down to the halala for any (gross, app, tier subsidy) input.
+  const deliveryBreakdown = selectedDeliveryApp
+    ? calcDeliveryBreakdown({
+        gross: deliveryGross,
+        subsidy: deliverySubsidy,
+        commissionPercent: parseFloat(selectedDeliveryApp.commission),
+        bankingFeesPercent: parseFloat(selectedDeliveryApp.bankingFees || "0"),
+        posFees: parseFloat(selectedDeliveryApp.posFees || "0"),
+      })
+    : null;
 
-  const deliveryCommission = selectedDeliveryApp
-    ? subsidizedPrice * (parseFloat(selectedDeliveryApp.commission) / 100)
-    : 0;
-
-  const deliveryBankingFees = selectedDeliveryApp
-    ? deliveryGross * (parseFloat(selectedDeliveryApp.bankingFees || "0") / 100)
-    : 0;
-
-  const deliveryPosFees = selectedDeliveryApp
-    ? parseFloat(selectedDeliveryApp.posFees || "0")
-    : 0;
-
-  const deliveryVat = selectedDeliveryApp
-    ? (deliveryCommission + deliverySubsidy + deliveryBankingFees) * 0.15
-    : 0;
+  const deliveryCommission = deliveryBreakdown?.commission ?? 0;
+  const deliveryBankingFees = deliveryBreakdown?.banking ?? 0;
+  const deliveryPosFees = deliveryBreakdown?.posFees ?? 0;
+  const deliveryVat = deliveryBreakdown?.vat ?? 0;
 
   // When a delivery app is selected, "subtotal" and "total" represent the
   // restaurant's NET earnings (delivery gross minus all delivery costs).
   // Standalone (dine-in) orders keep the original behaviour: subtotal + 15% VAT.
-  const subtotal = selectedDeliveryApp
-    ? deliveryGross -
-      deliveryCommission -
-      deliverySubsidy -
-      deliveryBankingFees -
-      deliveryVat -
-      deliveryPosFees
-    : baseSubtotal;
+  const subtotal = deliveryBreakdown ? deliveryBreakdown.net : baseSubtotal;
 
   // Tax line: only applies for non-delivery orders. For delivery orders, VAT
   // is already part of the deductions above (deliveryVat).
@@ -1100,7 +1150,16 @@ export default function POS() {
                 )}
                 <Separator />
                 <div className="flex justify-between text-lg font-bold">
-                  <span>{t.total}</span>
+                  <span className="flex items-center gap-2">
+                    {t.total}
+                    {deliveryBreakdown && (
+                      <DeliveryBreakdownPopover
+                        breakdown={deliveryBreakdown}
+                        sarLabel={t.sar}
+                        testId="popover-breakdown-mobile"
+                      />
+                    )}
+                  </span>
                   <span className="font-mono">
                     {total.toFixed(2)} {t.sar}
                   </span>
@@ -1805,7 +1864,16 @@ export default function POS() {
             )}
             <Separator />
             <div className="flex justify-between text-xl font-bold">
-              <span>{t.total}</span>
+              <span className="flex items-center gap-2">
+                {t.total}
+                {deliveryBreakdown && (
+                  <DeliveryBreakdownPopover
+                    breakdown={deliveryBreakdown}
+                    sarLabel={t.sar}
+                    testId="popover-breakdown-desktop"
+                  />
+                )}
+              </span>
               <span className="font-mono">
                 {total.toFixed(2)} {t.sar}
               </span>

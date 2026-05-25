@@ -225,6 +225,7 @@ import { db, pool } from "./db";
 import { eq, ne, and, gte, lte, lt, sql, or, isNull, isNotNull, desc, inArray } from "drizzle-orm";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import { calcDeliveryBreakdown, resolveSubsidy } from "@shared/deliveryCalc";
 
 export interface IStorage {
   // Restaurants (Multi-tenant isolation)
@@ -3212,48 +3213,48 @@ export class DatabaseStorage implements IStorage {
       let totalVat = 0;
       let totalItemCosts = 0;
       
+      const markUpPercent = parseFloat(app.markUp || "0");
+
       appOrders.forEach(order => {
-        const orderTotal = parseFloat(order.total);
-        totalGrossRevenue += orderTotal;
-        
-        // Calculate fees using the new formula
-        const commissionPercent = parseFloat(app.commission);
-        const bankingFeesPercent = parseFloat(app.bankingFees);
-        const posFees = parseFloat(app.posFees);
-        
+        // Reconstruct the delivery "gross" (VAT-inclusive customer price) the
+        // same way client/src/pages/pos.tsx does:
+        //   baseSubtotal = sum(items: (price + addons) * qty)   // VAT-exclusive
+        //   gross        = baseSubtotal * (1 + markUp%) * 1.15
+        // We CANNOT use order.total as gross — POS stores total = net for
+        // delivery orders, so doing so would double-apply the deductions and
+        // break parity with the cart total.
+        const orderItems = Array.isArray(order.items) ? order.items : [];
+        const baseSubtotal = orderItems.reduce((sum: number, item: any) => {
+          const addonSum = Array.isArray(item.addons)
+            ? item.addons.reduce((s: number, a: any) => s + Number(a.price || 0), 0)
+            : 0;
+          return sum + (Number(item.price || 0) + addonSum) * Number(item.quantity || 0);
+        }, 0);
+        const gross = baseSubtotal * (1 + markUpPercent / 100) * 1.15;
+        totalGrossRevenue += gross;
+
         // Find applicable subsidy tier (safely handle null/undefined tiers)
         const tiers = Array.isArray(app.subsidyTiers) ? app.subsidyTiers : [];
-        const applicableTier = tiers.find(tier => {
-          const isAboveMin = orderTotal >= tier.minAmount;
-          const isBelowMax = tier.maxAmount === null || orderTotal <= tier.maxAmount;
-          return isAboveMin && isBelowMax;
+        const subsidy = resolveSubsidy(gross, tiers);
+
+        // Canonical formula — single source of truth in shared/deliveryCalc.ts.
+        // Same helper is used by client/src/pages/pos.tsx so POS Cart total and
+        // this row's net match down to the halala.
+        const breakdown = calcDeliveryBreakdown({
+          gross,
+          subsidy,
+          commissionPercent: parseFloat(app.commission),
+          bankingFeesPercent: parseFloat(app.bankingFees),
+          posFees: parseFloat(app.posFees),
         });
-        const subsidy = applicableTier ? applicableTier.subsidy : 0;
+
+        totalCommissionCost += breakdown.commission;
+        totalBankingFeesCost += breakdown.banking;
+        totalSubsidy += breakdown.subsidy;
+        totalPosFees += breakdown.posFees;
+        totalVat += breakdown.vat;
         
-        // Final formula per user requirements:
-        // Commission = (Item Price - Subsidy) × Commission%
-        // Banking Fees = Item Price × Banking%
-        // VAT = (Commission + Subsidy + Banking Fees) × 0.15
-        // Total Cost = Commission + Subsidy + Banking Fees + VAT + POS Fees
-        // Net Income = Item Price - Total Cost
-        
-        const subsidizedPrice = orderTotal - subsidy;
-        const commissionAmount = subsidizedPrice * (commissionPercent / 100);
-        const bankingFeesAmount = orderTotal * (bankingFeesPercent / 100);
-        
-        // Calculate VAT as 15% of (Commission + Subsidy + Banking Fees)
-        const vatBase = commissionAmount + subsidy + bankingFeesAmount;
-        const vatAmount = vatBase * 0.15;
-        
-        // Track totals (Commission, Banking, Subsidy are base amounts; VAT is tracked separately)
-        totalCommissionCost += commissionAmount;
-        totalBankingFeesCost += bankingFeesAmount;
-        totalSubsidy += subsidy;
-        totalPosFees += posFees; // POS fees have no VAT
-        totalVat += vatAmount; // VAT calculated on Commission + Subsidy + Banking Fees
-        
-        // Calculate item costs (safely handle null/empty items)
-        const orderItems = Array.isArray(order.items) ? order.items : [];
+        // Calculate item costs (reuse orderItems from above)
         orderItems.forEach((item: any) => {
           const itemCost = itemCostMap.get(item.id) || 0;
           totalItemCosts += itemCost * item.quantity;

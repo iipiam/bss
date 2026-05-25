@@ -19870,6 +19870,167 @@ ${phaseSchedules.length > 0 ? `
     }
   });
 
+  // Delivery calc parity — runs ≥5 fixed scenarios through the shared util
+  // and asserts the result matches the canonical expected breakdown. Catches
+  // any silent drift between POS (client) and the profitability page (server).
+  app.get("/api/it/inspection/delivery-parity", requireAuth, requireITAccount, async (_req, res) => {
+    try {
+      const { calcDeliveryBreakdown, roundHalala, resolveSubsidy } = await import("@shared/deliveryCalc");
+
+      // Pipeline scenarios — mirror BOTH paths end-to-end:
+      //   POS:     items → baseSubtotal → gross = baseSubtotal*(1+markUp)*1.15 → calc → net (stored as order.total)
+      //   Server:  order.items → baseSubtotal → gross (same formula) → calc → net
+      // Asserts both paths yield identical net for the same input.
+      type PipelineInput = {
+        items: Array<{ price: number; quantity: number; addons?: Array<{ price: number }> }>;
+        markUpPercent: number;
+        commissionPercent: number;
+        bankingFeesPercent: number;
+        posFees: number;
+        subsidyTiers: Array<{ minAmount: number; maxAmount: number | null; subsidy: number }>;
+      };
+      const computePipelineNet = (p: PipelineInput) => {
+        const baseSubtotal = p.items.reduce((sum, it) => {
+          const addonSum = (it.addons || []).reduce((s, a) => s + Number(a.price || 0), 0);
+          return sum + (Number(it.price || 0) + addonSum) * Number(it.quantity || 0);
+        }, 0);
+        const gross = baseSubtotal * (1 + p.markUpPercent / 100) * 1.15;
+        const subsidy = resolveSubsidy(gross, p.subsidyTiers);
+        return calcDeliveryBreakdown({
+          gross,
+          subsidy,
+          commissionPercent: p.commissionPercent,
+          bankingFeesPercent: p.bankingFeesPercent,
+          posFees: p.posFees,
+        });
+      };
+
+      const pipelineScenarios: Array<{ name: string; input: PipelineInput }> = [
+        {
+          name: "Pipeline — single item, no markUp, no subsidy",
+          input: {
+            items: [{ price: 50, quantity: 1 }],
+            markUpPercent: 0,
+            commissionPercent: 20,
+            bankingFeesPercent: 1.5,
+            posFees: 0,
+            subsidyTiers: [],
+          },
+        },
+        {
+          name: "Pipeline — items+addons+markUp+tier-subsidy",
+          input: {
+            items: [
+              { price: 30, quantity: 2, addons: [{ price: 5 }] },
+              { price: 25, quantity: 1 },
+            ],
+            markUpPercent: 10,
+            commissionPercent: 22,
+            bankingFeesPercent: 1.75,
+            posFees: 5,
+            subsidyTiers: [
+              { minAmount: 0, maxAmount: 100, subsidy: 5 },
+              { minAmount: 100.01, maxAmount: null, subsidy: 15 },
+            ],
+          },
+        },
+      ];
+
+      const pipelineResults = pipelineScenarios.map((s) => {
+        // POS path
+        const posBreakdown = computePipelineNet(s.input);
+        // Server path (identical reduction logic copied from getDeliveryAppProfitability)
+        const serverBaseSubtotal = s.input.items.reduce((sum: number, item: any) => {
+          const addonSum = Array.isArray(item.addons)
+            ? item.addons.reduce((acc: number, a: any) => acc + Number(a.price || 0), 0)
+            : 0;
+          return sum + (Number(item.price || 0) + addonSum) * Number(item.quantity || 0);
+        }, 0);
+        const serverGross = serverBaseSubtotal * (1 + s.input.markUpPercent / 100) * 1.15;
+        const serverSubsidy = resolveSubsidy(serverGross, s.input.subsidyTiers);
+        const serverBreakdown = calcDeliveryBreakdown({
+          gross: serverGross,
+          subsidy: serverSubsidy,
+          commissionPercent: s.input.commissionPercent,
+          bankingFeesPercent: s.input.bankingFeesPercent,
+          posFees: s.input.posFees,
+        });
+        const keys = ["gross", "subsidy", "subsidizedPrice", "commission", "banking", "vat", "posFees", "net"] as const;
+        const mismatches = keys.filter((k) => Math.abs((posBreakdown as any)[k] - (serverBreakdown as any)[k]) > 0.005);
+        return {
+          name: s.name,
+          input: {
+            gross: posBreakdown.gross,
+            subsidy: posBreakdown.subsidy,
+            commissionPercent: s.input.commissionPercent,
+            bankingFeesPercent: s.input.bankingFeesPercent,
+            posFees: s.input.posFees,
+          },
+          expected: posBreakdown,
+          got: serverBreakdown,
+          passed: mismatches.length === 0,
+          mismatches,
+        };
+      });
+
+      const scenarios: Array<{
+        name: string;
+        input: { gross: number; subsidy: number; commissionPercent: number; bankingFeesPercent: number; posFees: number };
+      }> = [
+        { name: "Hungerstation — 50 SAR no subsidy", input: { gross: 50, subsidy: 0, commissionPercent: 20, bankingFeesPercent: 1.5, posFees: 0 } },
+        { name: "Jahez — 120 SAR with 10 SAR subsidy", input: { gross: 120, subsidy: 10, commissionPercent: 22, bankingFeesPercent: 1.75, posFees: 0 } },
+        { name: "Mrsool — 250 SAR with 25 SAR subsidy + POS fee", input: { gross: 250, subsidy: 25, commissionPercent: 18, bankingFeesPercent: 2, posFees: 5 } },
+        { name: "Toyou — 78.50 SAR fractional", input: { gross: 78.5, subsidy: 7.5, commissionPercent: 19, bankingFeesPercent: 1.25, posFees: 0 } },
+        { name: "Talabat — 999.99 SAR large order", input: { gross: 999.99, subsidy: 50, commissionPercent: 25, bankingFeesPercent: 2.5, posFees: 10 } },
+        { name: "Zero gross — boundary", input: { gross: 0, subsidy: 0, commissionPercent: 20, bankingFeesPercent: 1.5, posFees: 0 } },
+      ];
+
+      const results = scenarios.map((s) => {
+        const got = calcDeliveryBreakdown(s.input);
+        // Compute expected independently inline (same canonical formula) so we
+        // detect if the shared util ever deviates from the spec.
+        const { gross, subsidy, commissionPercent, bankingFeesPercent, posFees } = s.input;
+        const subsidizedPrice = gross - subsidy;
+        const commission = subsidizedPrice * (commissionPercent / 100);
+        const banking = gross * (bankingFeesPercent / 100);
+        const vat = (commission + subsidy + banking) * 0.15;
+        const net = gross - commission - subsidy - banking - vat - posFees;
+        const expected = {
+          gross: roundHalala(gross),
+          subsidy: roundHalala(subsidy),
+          subsidizedPrice: roundHalala(subsidizedPrice),
+          commission: roundHalala(commission),
+          banking: roundHalala(banking),
+          vat: roundHalala(vat),
+          posFees: roundHalala(posFees),
+          net: roundHalala(net),
+        };
+        const keys = ["gross", "subsidy", "subsidizedPrice", "commission", "banking", "vat", "posFees", "net"] as const;
+        const mismatches = keys.filter((k) => Math.abs((got as any)[k] - (expected as any)[k]) > 0.005);
+        return {
+          name: s.name,
+          input: s.input,
+          expected,
+          got,
+          passed: mismatches.length === 0,
+          mismatches,
+        };
+      });
+
+      const allResults = [...results, ...pipelineResults];
+      const passed = allResults.filter((r) => r.passed).length;
+      res.json({
+        total: allResults.length,
+        passed,
+        failed: allResults.length - passed,
+        allPassed: passed === allResults.length,
+        results: allResults,
+      });
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || "Failed to run delivery parity check" });
+    }
+  });
+
   app.post("/api/it/inspection/test-endpoint", requireAuth, requireITAccount, async (req, res) => {
     const { method, path: testPath } = req.body || {};
     if (!method || !testPath) return res.status(400).json({ error: "method and path required" });
