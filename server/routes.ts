@@ -9,7 +9,7 @@ import { sanitizePatchBody } from "./utils";
 import { generateCompanyProfilePDF } from "./company-profile-pdf";
 import { generateBusinessCardPDF } from "./business-card-pdf";
 import { amountToWords, percentageToWords } from "./lib/numberToWords";
-import { insertCompanyProfileSchema, insertInfluencerProfileSchema } from "@shared/schema";
+import { insertCompanyProfileSchema, insertInfluencerProfileSchema, insertBloggerProfileSchema } from "@shared/schema";
 import { logActivity } from "./activityLogger";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
 import { hasAnyPermission } from "@shared/permissions";
@@ -19499,6 +19499,40 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   app.delete("/api/marketing/influencer-profiles/:id", requireAuth, requireRestaurant, requireAction('marketing', 'delete'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const ok = await storage.deleteInfluencerProfile(req.params.id, restaurantId);
+    if (!ok) return res.status(404).json({ error: "Not found" });
+    res.status(204).send();
+  });
+
+  // Blogger Profiles (Marketing > Bloggers tab)
+  app.get("/api/marketing/blogger-profiles", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
+    const items = await storage.getBloggerProfiles(restaurantId);
+    res.json(items);
+  });
+  app.post("/api/marketing/blogger-profiles", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const data = insertBloggerProfileSchema.parse({ ...req.body, restaurantId });
+      const created = await storage.createBloggerProfile(data);
+      res.json(created);
+    } catch (err: any) {
+      res.status(400).json({ error: err?.message || "Invalid data" });
+    }
+  });
+  app.patch("/api/marketing/blogger-profiles/:id", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const data = insertBloggerProfileSchema.partial().omit({ restaurantId: true } as any).parse(req.body);
+      const updated = await storage.updateBloggerProfile(req.params.id, restaurantId, data);
+      if (!updated) return res.status(404).json({ error: "Not found" });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(400).json({ error: err?.message || "Invalid data" });
+    }
+  });
+  app.delete("/api/marketing/blogger-profiles/:id", requireAuth, requireRestaurant, requireAction('marketing', 'delete'), async (req, res) => {
+    const restaurantId = req.session.user!.restaurantId!;
+    const ok = await storage.deleteBloggerProfile(req.params.id, restaurantId);
     if (!ok) return res.status(404).json({ error: "Not found" });
     res.status(204).send();
   });

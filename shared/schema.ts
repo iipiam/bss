@@ -1962,6 +1962,29 @@ export const insertInfluencerProfileSchema = createInsertSchema(influencerProfil
 export type InsertInfluencerProfile = z.infer<typeof insertInfluencerProfileSchema>;
 export type InfluencerProfile = typeof influencerProfiles.$inferSelect;
 
+// Blogger Profiles (Marketing > Bloggers tab) - MULTI-TENANT
+export const bloggerProfiles = pgTable("blogger_profiles", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  name: text("name").notNull(),
+  handle: text("handle").notNull().default(""),
+  niche: text("niche").notNull().default("Food"),
+  platform: text("platform").notNull().default("Instagram"),
+  contactEmail: text("contact_email").notNull().default(""),
+  contactPhone: text("contact_phone").notNull().default(""),
+  city: text("city").notNull().default(""),
+  notes: text("notes").notNull().default(""),
+  followers: integer("followers").notNull().default(0),
+  likes: integer("likes").notNull().default(0),
+  comments: integer("comments").notNull().default(0),
+  shares: integer("shares").notNull().default(0),
+  saves: integer("saves").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertBloggerProfileSchema = createInsertSchema(bloggerProfiles).omit({ id: true, createdAt: true });
+export type InsertBloggerProfile = z.infer<typeof insertBloggerProfileSchema>;
+export type BloggerProfile = typeof bloggerProfiles.$inferSelect;
+
 // Service Products (bundles: items + services + tasks) - MULTI-TENANT
 export const serviceProducts = pgTable("service_products", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

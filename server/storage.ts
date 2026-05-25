@@ -168,6 +168,9 @@ import {
   projectMeetings,
   type InfluencerProfile,
   type InsertInfluencerProfile,
+  bloggerProfiles,
+  type BloggerProfile,
+  type InsertBloggerProfile,
   influencerProfiles,
   type QuotationDecision,
   type InsertQuotationDecision,
@@ -684,6 +687,10 @@ export interface IStorage {
   createInfluencerProfile(p: InsertInfluencerProfile): Promise<InfluencerProfile>;
   updateInfluencerProfile(id: string, restaurantId: string, data: Partial<InsertInfluencerProfile>): Promise<InfluencerProfile | undefined>;
   deleteInfluencerProfile(id: string, restaurantId: string): Promise<boolean>;
+  getBloggerProfiles(restaurantId: string): Promise<BloggerProfile[]>;
+  createBloggerProfile(p: InsertBloggerProfile): Promise<BloggerProfile>;
+  updateBloggerProfile(id: string, restaurantId: string, data: Partial<InsertBloggerProfile>): Promise<BloggerProfile | undefined>;
+  deleteBloggerProfile(id: string, restaurantId: string): Promise<boolean>;
 
   // Service Products (bundles)
   getServiceProducts(restaurantId: string): Promise<ServiceProduct[]>;
@@ -5906,6 +5913,28 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  // Blogger Profiles
+  async getBloggerProfiles(restaurantId: string): Promise<BloggerProfile[]> {
+    return db.select().from(bloggerProfiles)
+      .where(eq(bloggerProfiles.restaurantId, restaurantId))
+      .orderBy(desc(bloggerProfiles.createdAt));
+  }
+  async createBloggerProfile(p: InsertBloggerProfile): Promise<BloggerProfile> {
+    const [result] = await db.insert(bloggerProfiles).values(p).returning();
+    return result;
+  }
+  async updateBloggerProfile(id: string, restaurantId: string, data: Partial<InsertBloggerProfile>): Promise<BloggerProfile | undefined> {
+    const { restaurantId: _r, ...safe } = data as any;
+    const [result] = await db.update(bloggerProfiles).set(safe)
+      .where(and(eq(bloggerProfiles.id, id), eq(bloggerProfiles.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async deleteBloggerProfile(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(bloggerProfiles)
+      .where(and(eq(bloggerProfiles.id, id), eq(bloggerProfiles.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
   // Service Products (bundles)
   async getServiceProducts(restaurantId: string): Promise<ServiceProduct[]> {
     return db.select().from(serviceProducts).where(eq(serviceProducts.restaurantId, restaurantId)).orderBy(desc(serviceProducts.createdAt));
@@ -7017,6 +7046,29 @@ export const storage = new DatabaseStorage();
       )
     `);
     console.log('[Migration] Table verified/created: influencer_profiles');
+
+    // Marketing - Blogger Profiles (Bloggers tab in Marketing)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS blogger_profiles (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        name TEXT NOT NULL,
+        handle TEXT NOT NULL DEFAULT '',
+        niche TEXT NOT NULL DEFAULT 'Food',
+        platform TEXT NOT NULL DEFAULT 'Instagram',
+        contact_email TEXT NOT NULL DEFAULT '',
+        contact_phone TEXT NOT NULL DEFAULT '',
+        city TEXT NOT NULL DEFAULT '',
+        notes TEXT NOT NULL DEFAULT '',
+        followers INTEGER NOT NULL DEFAULT 0,
+        likes INTEGER NOT NULL DEFAULT 0,
+        comments INTEGER NOT NULL DEFAULT 0,
+        shares INTEGER NOT NULL DEFAULT 0,
+        saves INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Table verified/created: blogger_profiles');
 
     // Company Profiles: marketing-ready profile per restaurant
     await pool.query(`

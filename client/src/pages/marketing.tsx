@@ -737,7 +737,74 @@ export default function Marketing() {
   const updateInfluencer = (id: string, patch: Partial<Influencer>) =>
     setInfluencers((arr) => arr.map((i) => (i.id === id ? { ...i, ...patch } : i)));
 
-  // ---- Blogger Files ----
+  // ---- Blogger Files (DB-backed, tenant-isolated) ----
+  const { data: dbBloggers = [] } = useQuery<BloggerFile[]>({
+    queryKey: ["/api/marketing/blogger-profiles"],
+  });
+  useEffect(() => {
+    if (Array.isArray(dbBloggers)) {
+      setBloggerFiles(
+        dbBloggers.map((b: any) => ({
+          id: b.id,
+          createdAt: b.createdAt || new Date().toISOString(),
+          name: b.name || "",
+          handle: b.handle || "",
+          niche: b.niche || "Food",
+          platform: b.platform || "Instagram",
+          contactEmail: b.contactEmail || "",
+          contactPhone: b.contactPhone || "",
+          city: b.city || "",
+          notes: b.notes || "",
+          followers: Number(b.followers) || 0,
+          likes: Number(b.likes) || 0,
+          comments: Number(b.comments) || 0,
+          shares: Number(b.shares) || 0,
+          saves: Number(b.saves) || 0,
+        })),
+      );
+    }
+  }, [dbBloggers]);
+
+  const saveBloggerMutation = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/marketing/blogger-profiles", {
+        name: bloggerForm.name,
+        handle: bloggerForm.handle || "",
+        niche: bloggerForm.niche || "Food",
+        platform: bloggerForm.platform || "Instagram",
+        contactEmail: bloggerForm.contactEmail || "",
+        contactPhone: bloggerForm.contactPhone || "",
+        city: bloggerForm.city || "",
+        notes: bloggerForm.notes || "",
+        followers: Math.round(Number(bloggerForm.followers) || 0),
+        likes: Math.round(Number(bloggerForm.likes) || 0),
+        comments: Math.round(Number(bloggerForm.comments) || 0),
+        shares: Math.round(Number(bloggerForm.shares) || 0),
+        saves: Math.round(Number(bloggerForm.saves) || 0),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/blogger-profiles"] });
+      setBloggerForm(emptyBlogger());
+      toast({ title: t.bloggerSaved });
+    },
+    onError: (e: any) => {
+      toast({ title: t.error, description: e?.message || "Failed to save", variant: "destructive" });
+    },
+  });
+
+  const deleteBloggerMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/marketing/blogger-profiles/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/blogger-profiles"] });
+    },
+    onError: (e: any) => {
+      toast({ title: t.error, description: e?.message || "Failed to delete", variant: "destructive" });
+    },
+  });
+
   const addBloggerFile = () => {
     if (!bloggerForm.name.trim()) {
       toast({
@@ -747,16 +814,10 @@ export default function Marketing() {
       });
       return;
     }
-    setBloggerFiles((arr) => [
-      { ...bloggerForm, id: crypto.randomUUID(), createdAt: new Date().toISOString() },
-      ...arr,
-    ]);
-    setBloggerForm(emptyBlogger());
-    toast({ title: t.bloggerSaved });
+    saveBloggerMutation.mutate();
   };
 
-  const deleteBloggerFile = (id: string) =>
-    setBloggerFiles((arr) => arr.filter((b) => b.id !== id));
+  const deleteBloggerFile = (id: string) => deleteBloggerMutation.mutate(id);
 
   // ---- CSV / PDF Export ----
   const downloadCSV = () => {
