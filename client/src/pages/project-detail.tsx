@@ -24,7 +24,7 @@ import { InfoTip } from "@/components/ui/info-tip";
 import {
   ArrowLeft, Plus, Edit, Trash2, DollarSign, Calendar, Phone, Mail,
   User, MapPin, Clock, FileText, CheckCircle, Layers, Receipt,
-  ShoppingCart, CreditCard, ListTodo, Zap, AlertTriangle, Download,
+  ShoppingCart, CreditCard, ListTodo, Zap, AlertTriangle, Download, RefreshCw,
   FileSignature, MessageCircle, ShieldCheck, ShieldX, PlayCircle, CheckSquare, PackageCheck,
   Lightbulb, Target, GitBranch, Activity, ClipboardList, Video, Users, Link2,
 } from "lucide-react";
@@ -244,9 +244,10 @@ export default function ProjectDetail() {
   };
   const [meetForm, setMeetForm] = useState(emptyMeet);
   const [meetActions, setMeetActions] = useState<MeetingActionItem[]>([]);
-  const { canEdit, canView } = usePermissions();
+  const { canEdit, canView, canAdd } = usePermissions();
   const canDecide = canEdit('projects');
   const canDownloadProjectPdf = canView('projects');
+  const canRefreshDossierSnapshot = canAdd('projects');
 
   const { data: project, isLoading } = useQuery<ServiceProject>({
     queryKey: ["/api/service-projects", projectId],
@@ -622,6 +623,15 @@ export default function ProjectDetail() {
     },
   });
 
+  const refreshDossierSnapshotMutation = useMutation({
+    mutationFn: async () => apiRequest("POST", `/api/service-projects/${projectId}/dossier-pdf/snapshot`, { lang: pdfLang }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/customers"] });
+      toast({ title: t.dossierRefreshed || "Dossier snapshot refreshed" });
+    },
+    onError: (e: any) => toast({ title: t.error, description: e.message, variant: "destructive" }),
+  });
+
   const approveMutation = useMutation({
     mutationFn: async () => apiRequest("POST", `/api/service-projects/${projectId}/approve`, { lang: pdfLang }),
     onSuccess: () => {
@@ -875,6 +885,19 @@ export default function ProjectDetail() {
           >
             <Download className="h-4 w-4 mr-2" />
             {t.downloadDossier || "Download Dossier"}
+          </Button>
+          )}
+          {canRefreshDossierSnapshot && project?.approvalStatus === 'approved' && (
+          <Button
+            variant="outline"
+            onClick={() => refreshDossierSnapshotMutation.mutate()}
+            disabled={refreshDossierSnapshotMutation.isPending}
+            data-testid="button-refresh-dossier-snapshot"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${refreshDossierSnapshotMutation.isPending ? 'animate-spin' : ''}`} />
+            {refreshDossierSnapshotMutation.isPending
+              ? (t.refreshingSnapshot || "Refreshing...")
+              : (t.refreshDossierSnapshot || "Refresh dossier snapshot")}
           </Button>
           )}
         </div>

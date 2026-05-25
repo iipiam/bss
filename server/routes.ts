@@ -15899,8 +15899,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
               message: "Dossier PDF could not be generated. Project was NOT approved — please retry.",
             });
           }
+          const approvalDate = new Date().toISOString().slice(0, 10);
           pdfAttachment = {
-            fileName: `project-dossier-${existing.projectNumber}.pdf`,
+            fileName: `project-dossier-approval-snapshot-${existing.projectNumber}-${approvalDate}.pdf`,
             mimeType: 'application/pdf',
             contentBase64: pdf.buffer.toString('base64'),
             kind: 'agreement',
@@ -17746,6 +17747,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           <div class="footer">
             <p>${escapeHtml(companyInfo?.companyName) || 'Company'} - Project Dossier - ${escapeHtml(project.projectNumber)}</p>
             <p>Generated on ${new Date().toLocaleDateString('en-GB')} at ${new Date().toLocaleTimeString('en-GB')}</p>
+            <p>Last refreshed / آخر تحديث: ${new Date().toISOString().replace('T', ' ').slice(0, 19)} UTC</p>
           </div>
         </body>
         </html>`;
@@ -18013,10 +18015,44 @@ ${phaseSchedules.length > 0 ? `
       const result = await buildProjectDossierPdf(req.params.id, restaurantId, lang);
       if (!result) return res.status(404).json({ message: "Project not found" });
       res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
       res.setHeader('Content-Disposition', `attachment; filename="project-dossier-${result.project.projectNumber}.pdf"`);
       res.send(result.buffer);
     } catch (error: any) {
       console.error("Project dossier PDF error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Regenerate the dossier and replace the latest "Manual refresh" snapshot
+  // document attached to the project's customer. The approval snapshot is
+  // preserved (kind='agreement'); only the manual refresh snapshot
+  // (kind='dossier_snapshot') is replaced.
+  app.post("/api/service-projects/:id/dossier-pdf/snapshot", requireAuth, requireRestaurant, requireAction('projects', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const lang = req.body?.lang === 'ar' ? 'ar' : 'en';
+      const project = await storage.getServiceProject(req.params.id, restaurantId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      if (project.approvalStatus !== 'approved') {
+        return res.status(400).json({ message: "Only approved projects can refresh the dossier snapshot." });
+      }
+      if (!project.customerId) {
+        return res.status(400).json({ message: "Project has no linked customer — approve the project before refreshing the dossier snapshot." });
+      }
+      const pdf = await buildProjectDossierPdf(req.params.id, restaurantId, lang);
+      if (!pdf) return res.status(502).json({ message: "Dossier PDF could not be generated." });
+      const date = new Date().toISOString().slice(0, 10);
+      const document = await storage.replaceProjectDossierSnapshot(restaurantId, req.params.id, {
+        fileName: `project-dossier-manual-refresh-${project.projectNumber}-${date}.pdf`,
+        mimeType: 'application/pdf',
+        contentBase64: pdf.buffer.toString('base64'),
+      });
+      if (!document) return res.status(500).json({ message: "Failed to store dossier snapshot." });
+      res.json({ document });
+    } catch (error: any) {
+      console.error("Dossier snapshot error:", error);
       res.status(500).json({ message: error.message });
     }
   });

@@ -635,6 +635,11 @@ export interface IStorage {
   getCustomerDocuments(restaurantId: string, customerId: string): Promise<CustomerDocument[]>;
   getCustomerDocument(id: string, restaurantId: string): Promise<CustomerDocument | undefined>;
   createCustomerDocument(doc: InsertCustomerDocument): Promise<CustomerDocument>;
+  replaceProjectDossierSnapshot(
+    restaurantId: string,
+    projectId: string,
+    pdfAttachment: { fileName: string; mimeType: string; contentBase64: string },
+  ): Promise<CustomerDocument | null>;
 
   // Quotations (MULTI-TENANT: requires restaurantId for all operations)
   getQuotations(restaurantId: string): Promise<Quotation[]>;
@@ -5703,6 +5708,33 @@ export class DatabaseStorage implements IStorage {
   async createCustomerDocument(doc: InsertCustomerDocument): Promise<CustomerDocument> {
     const [created] = await db.insert(customerDocuments).values(doc).returning();
     return created;
+  }
+
+  async replaceProjectDossierSnapshot(
+    restaurantId: string,
+    projectId: string,
+    pdfAttachment: { fileName: string; mimeType: string; contentBase64: string },
+  ): Promise<CustomerDocument | null> {
+    return await db.transaction(async (tx) => {
+      const [project] = await tx.select().from(serviceProjects)
+        .where(and(eq(serviceProjects.id, projectId), eq(serviceProjects.restaurantId, restaurantId)));
+      if (!project || !project.customerId) return null;
+      await tx.delete(customerDocuments).where(and(
+        eq(customerDocuments.restaurantId, restaurantId),
+        eq(customerDocuments.projectId, projectId),
+        eq(customerDocuments.kind, 'dossier_snapshot'),
+      ));
+      const [created] = await tx.insert(customerDocuments).values({
+        restaurantId,
+        customerId: project.customerId,
+        projectId,
+        kind: 'dossier_snapshot',
+        fileName: pdfAttachment.fileName,
+        mimeType: pdfAttachment.mimeType,
+        contentBase64: pdfAttachment.contentBase64,
+      }).returning();
+      return created;
+    });
   }
 
   async getServiceProjectsForCustomer(restaurantId: string, customerId: string): Promise<ServiceProject[]> {
