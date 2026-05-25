@@ -15819,6 +15819,29 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (data.startDate) data.startDate = new Date(data.startDate);
       if (data.endDate) data.endDate = new Date(data.endDate);
       const project = await storage.createServiceProject(data);
+      // Initial phase-lead ledger: emit 'assigned' rows for any phase leads
+      // present on the freshly-created project so the History tab shows them.
+      try {
+        const leads: any = (project as any).phaseLeads || {};
+        for (const phaseKey of Object.keys(leads)) {
+          const lead = leads[phaseKey];
+          if (lead && lead.assigneeId && lead.assigneeType) {
+            await storage.recordAssignmentHistory({
+              restaurantId,
+              assigneeType: lead.assigneeType,
+              assigneeId: lead.assigneeId,
+              projectId: project.id,
+              taskId: null,
+              phase: Number(phaseKey) || 1,
+              role: 'phase_lead',
+              action: 'assigned',
+              taskName: null,
+            });
+          }
+        }
+      } catch (e) {
+        console.error('[assignment-history] create-project hook failed', e);
+      }
       res.status(201).json(project);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -16633,6 +16656,38 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (data.startDate) data.startDate = new Date(data.startDate);
       if (data.endDate) data.endDate = new Date(data.endDate);
       const task = await storage.createProjectTask(data);
+      // Initial-assignment ledger: if the task was created with an assignee,
+      // record an 'assigned' entry so the History tab shows creation events.
+      try {
+        if ((task as any).assigneeId && (task as any).assigneeType) {
+          await storage.recordAssignmentHistory({
+            restaurantId,
+            assigneeType: (task as any).assigneeType,
+            assigneeId: (task as any).assigneeId,
+            projectId: task.projectId,
+            taskId: task.id,
+            phase: (task as any).phase ?? 1,
+            role: 'task_assignee',
+            action: 'assigned',
+            taskName: task.name,
+          });
+          if (task.status === 'completed') {
+            await storage.recordAssignmentHistory({
+              restaurantId,
+              assigneeType: (task as any).assigneeType,
+              assigneeId: (task as any).assigneeId,
+              projectId: task.projectId,
+              taskId: task.id,
+              phase: (task as any).phase ?? 1,
+              role: 'task_assignee',
+              action: 'completed',
+              taskName: task.name,
+            });
+          }
+        }
+      } catch (e) {
+        console.error('[assignment-history] create-task hook failed', e);
+      }
       res.status(201).json(task);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -16677,8 +16732,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             });
           }
         }
-        // Status transition to completed (only if assignee unchanged + present)
-        if (prev && prev.status !== 'completed' && task.status === 'completed' && nextId && nextType && prevId === nextId && prevType === nextType) {
+        // Status transition to completed: log against whoever is currently
+        // assigned, even if the assignee was changed in the same PATCH.
+        if (prev && prev.status !== 'completed' && task.status === 'completed' && nextId && nextType) {
           await storage.recordAssignmentHistory({
             restaurantId, assigneeType: nextType, assigneeId: nextId,
             projectId: task.projectId, taskId: task.id, phase, role: 'task_assignee',

@@ -69,6 +69,11 @@ export default function AssigneeHistoryDialog({
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [projectId, setProjectId] = useState<string>("");
   const [notes, setNotes] = useState("");
+  const [histProjectFilter, setHistProjectFilter] = useState<string>("all");
+  const [settProjectFilter, setSettProjectFilter] = useState<string>("all");
+  const [histPage, setHistPage] = useState(1);
+  const [settPage, setSettPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   const enabled = !!assigneeId && open;
 
@@ -189,26 +194,65 @@ Please confirm receipt | يرجى تأكيد الاستلام.`;
               <p className="text-sm text-muted-foreground text-center py-6" data-testid="text-no-history">
                 {t.noAssignmentHistory || "No assignment history yet."}
               </p>
-            ) : (
-              history.map((h) => (
-                <div key={h.id} className="flex items-center justify-between gap-2 p-3 rounded-md border" data-testid={`history-row-${h.id}`}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {actionBadge(h.action)}
-                      <Badge variant="outline">{h.role === "phase_lead" ? (t.phaseLead || "Phase Lead") : (t.taskAssignee || "Task")}</Badge>
-                      <Badge variant="secondary">Phase {h.phase}</Badge>
-                      <span className="font-medium truncate">{h.taskName || "-"}</span>
-                    </div>
-                    {h.projectId && (
-                      <Link href={`/service-projects/${h.projectId}`} className="text-xs text-muted-foreground hover:underline block mt-1">
-                        {h.projectNumber ? `#${h.projectNumber} • ` : ""}{h.projectName || ""}
-                      </Link>
-                    )}
+            ) : (() => {
+              const filtered = histProjectFilter === "all"
+                ? history
+                : history.filter(h => h.projectId === histProjectFilter);
+              const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+              const page = Math.min(histPage, totalPages);
+              const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+              const projOpts = Array.from(new Map(history.filter(h => h.projectId).map(h => [h.projectId, { id: h.projectId, name: h.projectName || "", number: h.projectNumber || "" }])).values());
+              return (
+                <>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <Select value={histProjectFilter} onValueChange={(v) => { setHistProjectFilter(v); setHistPage(1); }}>
+                      <SelectTrigger className="w-[260px]" data-testid="select-history-project-filter"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">{t.allProjects || "All Projects"}</SelectItem>
+                        {projOpts.map(p => (
+                          <SelectItem key={p.id} value={p.id}>#{p.number} — {p.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <span className="text-xs text-muted-foreground">{filtered.length} {t.entries || "entries"}</span>
                   </div>
-                  <span className="text-xs text-muted-foreground shrink-0">{new Date(h.createdAt).toLocaleDateString()}</span>
-                </div>
-              ))
-            )}
+                  {paged.map((h) => (
+                    <div key={h.id} className="flex items-center justify-between gap-2 p-3 rounded-md border" data-testid={`history-row-${h.id}`}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {actionBadge(h.action)}
+                          <Badge variant="outline">{h.role === "phase_lead" ? (t.phaseLead || "Phase Lead") : (t.taskAssignee || "Task")}</Badge>
+                          <Badge variant="secondary">Phase {h.phase}</Badge>
+                          <span className="font-medium truncate">{h.taskName || "-"}</span>
+                        </div>
+                        {h.projectId && (
+                          <Link href={`/service-projects/${h.projectId}`} className="text-xs text-muted-foreground hover:underline block mt-1">
+                            {h.projectNumber ? `#${h.projectNumber} • ` : ""}{h.projectName || ""}
+                          </Link>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs text-muted-foreground">{new Date(h.createdAt).toLocaleDateString()}</span>
+                        {h.projectId && (
+                          <Button size="sm" variant="outline"
+                            onClick={() => { setProjectId(h.projectId); setTab("new"); }}
+                            data-testid={`button-create-settlement-from-${h.id}`}>
+                            <Plus className="h-3 w-3 mr-1" /> {t.settle || "Settle"}
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {totalPages > 1 && (
+                    <div className="flex items-center justify-center gap-2 pt-2">
+                      <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setHistPage(page - 1)} data-testid="button-history-prev">{t.previous || "Previous"}</Button>
+                      <span className="text-xs">{page} / {totalPages}</span>
+                      <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setHistPage(page + 1)} data-testid="button-history-next">{t.next || "Next"}</Button>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </TabsContent>
 
           <TabsContent value="settlements" className="space-y-2 mt-4">
@@ -218,8 +262,35 @@ Please confirm receipt | يرجى تأكيد الاستلام.`;
               <p className="text-sm text-muted-foreground text-center py-6" data-testid="text-no-settlements">
                 {t.noSettlements || "No settlements yet."}
               </p>
-            ) : (
-              settlements.map((s) => {
+            ) : null}
+            {settlements.length > 0 && (
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <Select value={settProjectFilter} onValueChange={(v) => { setSettProjectFilter(v); setSettPage(1); }}>
+                  <SelectTrigger className="w-[260px]" data-testid="select-settlement-project-filter"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{t.allProjects || "All Projects"}</SelectItem>
+                    <SelectItem value="none">{t.noProject || "No Project"}</SelectItem>
+                    {projects.map(p => (
+                      <SelectItem key={p.id} value={p.id}>#{p.projectNumber} — {p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="text-xs text-muted-foreground">
+                  {(settProjectFilter === "all" ? settlements : settProjectFilter === "none" ? settlements.filter(s => !s.projectId) : settlements.filter(s => s.projectId === settProjectFilter)).length} {t.entries || "entries"}
+                </span>
+              </div>
+            )}
+            {settlements.length > 0 && (() => {
+              const filtered = settProjectFilter === "all"
+                ? settlements
+                : settProjectFilter === "none"
+                ? settlements.filter(s => !s.projectId)
+                : settlements.filter(s => s.projectId === settProjectFilter);
+              const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+              const page = Math.min(settPage, totalPages);
+              const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+              return (<>
+                {paged.map((s) => {
                 const proj = projects.find(p => p.id === s.projectId);
                 return (
                   <div key={s.id} className="p-3 rounded-md border space-y-2" data-testid={`settlement-row-${s.id}`}>
@@ -258,8 +329,16 @@ Please confirm receipt | يرجى تأكيد الاستلام.`;
                     </div>
                   </div>
                 );
-              })
-            )}
+              })}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-2">
+                  <Button size="sm" variant="outline" disabled={page <= 1} onClick={() => setSettPage(page - 1)} data-testid="button-settlements-prev">{t.previous || "Previous"}</Button>
+                  <span className="text-xs">{page} / {totalPages}</span>
+                  <Button size="sm" variant="outline" disabled={page >= totalPages} onClick={() => setSettPage(page + 1)} data-testid="button-settlements-next">{t.next || "Next"}</Button>
+                </div>
+              )}
+              </>);
+            })()}
           </TabsContent>
 
           <TabsContent value="new" className="space-y-4 mt-4">
