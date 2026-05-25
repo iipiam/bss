@@ -54,6 +54,7 @@ interface ServiceProject {
   declineReason?: string | null;
   customerId?: string | null;
   phaseLeads?: Record<string, AssigneeRef> | null;
+  phaseMetadata?: Record<string, { name?: string; status?: string }> | null;
 }
 interface EmployeeRef { id: string; fullName?: string | null; username?: string | null }
 interface ContractorRef { id: string; name: string }
@@ -77,6 +78,7 @@ interface PaymentScheduleItem {
   id: string; projectId: string; milestoneName: string; amount: string;
   dueDate: string | null; status: string; paidDate: string | null; notes: string | null;
   invoiceId: string | null; transactionId: string | null;
+  phase?: number;
 }
 interface ProjectTaskItem {
   id: string; projectId: string; name: string; description: string | null;
@@ -131,6 +133,7 @@ const paymentSchema = z.object({
   milestoneName: z.string().min(1), amount: z.string().min(1),
   dueDate: z.string().optional().default(""), status: z.string().min(1),
   paidDate: z.string().optional().default(""), notes: z.string().optional().default(""),
+  phase: z.string().optional().default("1"),
 });
 const taskSchema = z.object({
   name: z.string().min(1), description: z.string().optional().default(""),
@@ -201,6 +204,8 @@ export default function ProjectDetail() {
     : s.replace('_', ' ');
   const layout = useDeviceLayout();
   const pdfLang = (language === 'Arabic' || language === 'Urdu') ? 'ar' : 'en';
+  // Full language name used by routes that support all 10 languages (e.g. phase PDF).
+  const pdfLangFull = language;
   const { toast } = useToast();
   const pricingLabels = getPricingLabels(t);
 
@@ -347,7 +352,7 @@ export default function ProjectDetail() {
   const svcForm = useForm<ServiceFormValues>({ resolver: zodResolver(serviceSchema), defaultValues: { serviceCatalogId: "", name: "", description: "", pricingMethod: "lump_sum", unitPrice: "0", quantity: "1", unit: "", totalPrice: "0", status: "pending", notes: "", phase: "1" } });
   const billForm = useForm<BillFormValues>({ resolver: zodResolver(billSchema), defaultValues: { description: "", amount: "", category: "", vendor: "", billDate: new Date().toISOString().split("T")[0], dueDate: "", status: "pending", paidDate: "", notes: "" } });
   const procForm = useForm<ProcurementFormValues>({ resolver: zodResolver(procurementSchema), defaultValues: { itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "" } });
-  const payForm = useForm<PaymentFormValues>({ resolver: zodResolver(paymentSchema), defaultValues: { milestoneName: "", amount: "", dueDate: "", status: "pending", paidDate: "", notes: "" } });
+  const payForm = useForm<PaymentFormValues>({ resolver: zodResolver(paymentSchema), defaultValues: { milestoneName: "", amount: "", dueDate: "", status: "pending", paidDate: "", notes: "", phase: "1" } });
   const taskForm = useForm<TaskFormValues>({ resolver: zodResolver(taskSchema), defaultValues: { name: "", description: "", duration: "1", dependencies: "", status: "pending", phase: "1", assigneeType: "", assigneeId: "" } });
   const [assigneeFilter, setAssigneeFilter] = useState<string>("__all");
   const [phaseLeadDialog, setPhaseLeadDialog] = useState<{ phase: number } | null>(null);
@@ -364,6 +369,13 @@ export default function ProjectDetail() {
     return id;
   };
   const phaseLeads = (project?.phaseLeads || {}) as Record<string, AssigneeRef>;
+  const phaseMetadata = (project?.phaseMetadata || {}) as Record<string, { name?: string; status?: string }>;
+  const derivePhaseStatus = (phaseTks: ProjectTaskItem[]): string => {
+    if (phaseTks.length === 0) return "pending";
+    if (phaseTks.every(tk => tk.status === "completed")) return "completed";
+    if (phaseTks.some(tk => tk.status === "in_progress" || tk.status === "completed")) return "in_progress";
+    return "pending";
+  };
   const phaseLeadMut = useMutation({
     mutationFn: async (payload: { phase: number; type: string; id: string }) => {
       const current = { ...phaseLeads };
@@ -373,11 +385,29 @@ export default function ProjectDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/service-projects", projectId] });
-      setPhaseLeadDialog(null);
       toast({ title: (t as any).phaseLeadUpdated || "Phase Lead updated" });
     },
     onError: (e: any) => toast({ title: t.error, description: e.message, variant: "destructive" }),
   });
+  const phaseMetaMut = useMutation({
+    mutationFn: async (payload: { phase: number; name?: string; status?: string }) => {
+      const current = { ...phaseMetadata };
+      const key = String(payload.phase);
+      const entry = { ...(current[key] || {}) };
+      if (payload.name !== undefined) entry.name = payload.name || undefined;
+      if (payload.status !== undefined) entry.status = payload.status || undefined;
+      if (!entry.name && !entry.status) delete current[key];
+      else current[key] = entry;
+      return await apiRequest("PATCH", `/api/service-projects/${projectId}`, { phaseMetadata: current });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/service-projects", projectId] });
+      setPhaseLeadDialog(null);
+      toast({ title: (t as any).phaseUpdated || "Phase updated" });
+    },
+    onError: (e: any) => toast({ title: t.error, description: e.message, variant: "destructive" }),
+  });
+  const [phaseMetaDraft, setPhaseMetaDraft] = useState<{ name: string; status: string }>({ name: "", status: "" });
 
   function makeMutation(endpoint: string, qk: string[], method: "POST" | "PATCH" | "DELETE", closeFn: () => void) {
     return useMutation({
@@ -705,7 +735,7 @@ export default function ProjectDetail() {
 
   function openEditPay(p: PaymentScheduleItem) {
     setEditPay(p);
-    payForm.reset({ milestoneName: p.milestoneName, amount: p.amount, dueDate: p.dueDate?.split("T")[0] || "", status: p.status, paidDate: p.paidDate?.split("T")[0] || "", notes: p.notes || "" });
+    payForm.reset({ milestoneName: p.milestoneName, amount: p.amount, dueDate: p.dueDate?.split("T")[0] || "", status: p.status, paidDate: p.paidDate?.split("T")[0] || "", notes: p.notes || "", phase: String(p.phase ?? 1) });
     setPayOpen(true);
   }
   function openEditTask(tk: ProjectTaskItem) {
@@ -731,7 +761,8 @@ export default function ProjectDetail() {
     procMut.mutate(body);
   }
   function submitPay(data: PaymentFormValues) {
-    const body: any = { ...data, projectId, dueDate: data.dueDate || null, paidDate: data.paidDate || null, notes: data.notes || null };
+    const phaseNum = Math.max(1, parseInt(data.phase || "1") || 1);
+    const body: any = { ...data, projectId, dueDate: data.dueDate || null, paidDate: data.paidDate || null, notes: data.notes || null, phase: phaseNum };
     if (editPay) body._editId = editPay.id;
     payMut.mutate(body);
   }
@@ -1185,7 +1216,10 @@ export default function ProjectDetail() {
                     <div className="flex items-center justify-between gap-2 flex-wrap">
                       <div className="min-w-0">
                         <p className="font-semibold truncate">{p.milestoneName}</p>
-                        <p className="text-sm text-muted-foreground">{t.dueDate || "Due"}: {fmtDate(p.dueDate)}</p>
+                        <p className="text-sm text-muted-foreground">
+                          <span className="inline-flex items-center gap-1 mr-2"><Layers className="h-3 w-3" />{(t as any).phase || "Phase"} {p.phase ?? 1}</span>
+                          {t.dueDate || "Due"}: {fmtDate(p.dueDate)}
+                        </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0 flex-wrap">
                         <Badge variant={statusBadge(p.status)} className={statusClass(p.status)}>{p.status}</Badge>
@@ -1288,6 +1322,8 @@ export default function ProjectDetail() {
                 const phaseTasks = allPhaseTasks.filter(matchesFilter);
                 if (phaseTasks.length === 0 && assigneeFilter !== "__all") return null;
                 const lead = phaseLeads[String(ph)];
+                const phMeta = phaseMetadata[String(ph)] || {};
+                const phStatus = phMeta.status || derivePhaseStatus(allPhaseTasks);
                 const phaseDur = phaseTasks.reduce((m, tk) => Math.max(m, (tk.earlyFinish ?? 0)), 0)
                   - phaseTasks.reduce((m, tk) => Math.min(m, (tk.earlyStart ?? Infinity)), Infinity);
                 const sumDur = phaseTasks.reduce((s, tk) => s + (tk.duration || 0), 0);
@@ -1296,20 +1332,23 @@ export default function ProjectDetail() {
                   <div key={`task-phase-${ph}`} className="space-y-2" data-testid={`group-task-phase-${ph}`}>
                     <div className="flex items-center justify-between gap-2 flex-wrap px-1 py-1 border-b">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-semibold text-sm">{(t as any).phase || "Phase"} {ph}</p>
+                        <p className="font-semibold text-sm">{(t as any).phase || "Phase"} {ph}{phMeta.name ? `: ${phMeta.name}` : ""}</p>
+                        <Badge variant={statusBadge(phStatus)} className={statusClass(phStatus)} data-testid={`badge-phase-status-${ph}`}>
+                          {phStatus === "completed" ? (t.completed || "Completed") : phStatus === "in_progress" ? ((t as any).inProgress || "In Progress") : (t.pending || "Pending")}
+                        </Badge>
                         {lead ? (
                           <Badge variant="secondary" className="gap-1" data-testid={`badge-phase-lead-${ph}`}>
                             <User className="h-3 w-3" />{(t as any).lead || "Lead"}: {assigneeLabel(lead.type, lead.id)}
                           </Badge>
                         ) : null}
-                        <Button variant="ghost" size="sm" onClick={() => { setPhaseLeadDraft({ type: lead?.type || "", id: lead?.id || "" }); setPhaseLeadDialog({ phase: ph }); }} data-testid={`button-set-phase-lead-${ph}`}>
+                        <Button variant="ghost" size="sm" onClick={() => { setPhaseLeadDraft({ type: lead?.type || "", id: lead?.id || "" }); setPhaseMetaDraft({ name: phMeta.name || "", status: phMeta.status || "" }); setPhaseLeadDialog({ phase: ph }); }} data-testid={`button-set-phase-lead-${ph}`}>
                           <User className="h-4 w-4 mr-1" />{lead ? ((t as any).changeLead || "Change Lead") : ((t as any).setLead || "Set Phase Lead")}
                         </Button>
                         {canDownloadProjectPdf && (
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => window.open(`/api/service-projects/${projectId}/phases/${ph}/pdf?lang=${pdfLang}`, "_blank")}
+                            onClick={() => window.open(`/api/service-projects/${projectId}/phases/${ph}/pdf?lang=${encodeURIComponent(pdfLangFull)}`, "_blank")}
                             data-testid={`button-download-phase-pdf-${ph}`}
                           >
                             <Download className="h-4 w-4 mr-1" />{(t as any).downloadPhasePdf || tr("Download Phase PDF", "تحميل تقرير المرحلة")}
@@ -1322,11 +1361,12 @@ export default function ProjectDetail() {
                             onClick={async () => {
                               try {
                                 const { openWhatsAppWithMessage } = await import("@/lib/whatsapp");
-                                window.open(`/api/service-projects/${projectId}/phases/${ph}/pdf?lang=${pdfLang}`, "_blank");
+                                window.open(`/api/service-projects/${projectId}/phases/${ph}/pdf?lang=${encodeURIComponent(pdfLangFull)}`, "_blank");
                                 const completed = allPhaseTasks.filter(tk => tk.status === "completed").length;
                                 const planned = allPhaseTasks.length;
                                 const leadName = lead ? assigneeLabel(lead.type, lead.id) : "-";
-                                const message = `*${project.name}*\n${tr("Phase Report", "تقرير المرحلة")} — ${tr("Phase", "المرحلة")} ${ph}\n\n${tr("Project", "المشروع")}: ${project.projectNumber}\n${tr("Phase Lead", "قائد المرحلة")}: ${leadName}\n${tr("Tasks (Planned / Completed)", "المهام (مخططة / مكتملة)")}: ${planned} / ${completed}\n\n${tr("Please find the phase report PDF attached.", "يرجى الاطلاع على تقرير المرحلة المرفق.")}`;
+                                const tt = t as any;
+                                const message = `*${project.name}*\n${tt.phaseReport || "Phase Report"} — ${tt.phase || "Phase"} ${ph}\n\n${tt.project || "Project"}: ${project.projectNumber}\n${tt.phaseLead || tt.lead || "Phase Lead"}: ${leadName}\n${tt.plannedVsCompleted || "Planned vs Completed"}: ${planned} / ${completed}`;
                                 openWhatsAppWithMessage(project.clientPhone!, message);
                               } catch (e: any) {
                                 toast({ title: t.error || "Error", description: e.message, variant: "destructive" });
@@ -2440,6 +2480,9 @@ export default function ProjectDetail() {
                   <FormItem><FormLabel>{t.paidDate || "Paid Date"}</FormLabel><FormControl><Input data-testid="input-payment-paid-date" type="date" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
+              <FormField control={payForm.control} name="phase" render={({ field }) => (
+                <FormItem><FormLabel>{(t as any).phase || "Phase"}</FormLabel><FormControl><Input data-testid="input-payment-phase" type="number" min="1" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
               <FormField control={payForm.control} name="notes" render={({ field }) => (
                 <FormItem><FormLabel>{t.notes}</FormLabel><FormControl><Textarea data-testid="input-payment-notes" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
@@ -2535,9 +2578,30 @@ export default function ProjectDetail() {
       <Dialog open={!!phaseLeadDialog} onOpenChange={(o) => { if (!o) setPhaseLeadDialog(null); }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{(t as any).setLead || "Set Phase Lead"} — {(t as any).phase || "Phase"} {phaseLeadDialog?.phase}</DialogTitle>
+            <DialogTitle>{(t as any).phase || "Phase"} {phaseLeadDialog?.phase}</DialogTitle>
             <DialogDescription>{(t as any).phaseLeadDesc || "Assign an employee or contractor as the lead for this phase."}</DialogDescription>
           </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 pb-2">
+            <div>
+              <label className="text-sm font-medium">{(t as any).phaseName || "Phase Name"}</label>
+              <Input value={phaseMetaDraft.name} onChange={(e) => setPhaseMetaDraft(d => ({ ...d, name: e.target.value }))} placeholder={(t as any).phaseName || "Phase Name"} data-testid="input-phase-name" />
+            </div>
+            <div>
+              <label className="text-sm font-medium">{(t as any).phaseStatus || "Phase Status"}</label>
+              <Select value={phaseMetaDraft.status || "__auto"} onValueChange={(v) => setPhaseMetaDraft(d => ({ ...d, status: v === "__auto" ? "" : v }))}>
+                <SelectTrigger data-testid="select-phase-status"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__auto">{(t as any).autoDerived || "Auto (from tasks)"}</SelectItem>
+                  <SelectItem value="pending">{t.pending}</SelectItem>
+                  <SelectItem value="in_progress">{(t as any).inProgress || "In Progress"}</SelectItem>
+                  <SelectItem value="completed">{t.completed}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end pb-2">
+            <Button size="sm" variant="outline" onClick={() => phaseLeadDialog && phaseMetaMut.mutate({ phase: phaseLeadDialog.phase, name: phaseMetaDraft.name, status: phaseMetaDraft.status })} disabled={phaseMetaMut.isPending} data-testid="button-save-phase-meta">{(t as any).savePhaseDetails || "Save Phase Details"}</Button>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-medium">{(t as any).assigneeType || "Assignee Type"}</label>

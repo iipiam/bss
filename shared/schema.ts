@@ -1751,6 +1751,7 @@ export const serviceProjects = pgTable("service_projects", {
   actualCost: decimal("actual_cost", { precision: 12, scale: 2 }),
   contractorId: varchar("contractor_id").references(() => contractors.id),
   phaseLeads: jsonb("phase_leads").$type<Record<string, { type: 'employee' | 'contractor'; id: string }>>().default({}),
+  phaseMetadata: jsonb("phase_metadata").$type<Record<string, { name?: string; status?: string }>>().default({}),
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
@@ -1798,6 +1799,7 @@ export const paymentSchedules = pgTable("payment_schedules", {
   notes: text("notes"),
   invoiceId: varchar("invoice_id"),
   transactionId: varchar("transaction_id"),
+  phase: integer("phase").notNull().default(1),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 })
 

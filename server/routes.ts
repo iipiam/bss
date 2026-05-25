@@ -15837,6 +15837,19 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       delete (data as any).approvedBy;
       delete (data as any).declineReason;
       delete (data as any).customerId;
+      // Validate phaseMetadata shape if provided (record keyed by phase number).
+      if (data.phaseMetadata !== undefined) {
+        const PhaseMetaSchema = z.record(
+          z.string().regex(/^\d+$/),
+          z.object({
+            name: z.string().max(200).optional(),
+            status: z.enum(['pending','in_progress','completed']).optional(),
+          }).strict()
+        );
+        const parsed = PhaseMetaSchema.safeParse(data.phaseMetadata);
+        if (!parsed.success) return res.status(400).json({ message: "Invalid phaseMetadata", errors: parsed.error.errors });
+        data.phaseMetadata = parsed.data;
+      }
       if (data.startDate) data.startDate = new Date(data.startDate);
       if (data.endDate) data.endDate = new Date(data.endDate);
       const project = await storage.updateServiceProject(req.params.id, restaurantId, data);
@@ -16168,6 +16181,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
       const data = { ...req.body, restaurantId };
+      if (data.phase !== undefined) {
+        const p = z.coerce.number().int().min(1).max(1000).safeParse(data.phase);
+        if (!p.success) return res.status(400).json({ message: "Invalid phase", errors: p.error.errors });
+        data.phase = p.data;
+      }
       if (data.dueDate) data.dueDate = new Date(data.dueDate);
       if (data.paidDate) data.paidDate = new Date(data.paidDate);
       const schedule = await storage.createPaymentSchedule(data);
@@ -16182,6 +16200,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
       const data = { ...req.body };
+      if (data.phase !== undefined) {
+        const p = z.coerce.number().int().min(1).max(1000).safeParse(data.phase);
+        if (!p.success) return res.status(400).json({ message: "Invalid phase", errors: p.error.errors });
+        data.phase = p.data;
+      }
       if (data.dueDate) data.dueDate = new Date(data.dueDate);
       if (data.paidDate) data.paidDate = new Date(data.paidDate);
       const existing = await storage.getPaymentSchedule(req.params.id, restaurantId);
@@ -17754,11 +17777,32 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
       const phase = Math.max(1, parseInt(req.params.phase) || 1);
-      const lang = req.query.lang === 'ar' ? 'ar' : 'en';
-      const isAr = lang === 'ar';
-      const dir = isAr ? 'rtl' : 'ltr';
-      const align = isAr ? 'right' : 'left';
-      const L = (en: string, ar: string) => isAr ? ar : en;
+      // 10-language support: lang query may be language code (en/ar) or full Language name.
+      const langRaw = String(req.query.lang || 'en');
+      const codeFromName: Record<string, string> = {
+        English: 'en', Arabic: 'ar', German: 'de', Chinese: 'zh', Bengali: 'bn',
+        Italian: 'it', Hindi: 'hi', Urdu: 'ur', Spanish: 'es', Tagalog: 'tl',
+      };
+      const lang = codeFromName[langRaw] || (['en','ar','de','zh','bn','it','hi','ur','es','tl'].includes(langRaw) ? langRaw : 'en');
+      const rtl = lang === 'ar' || lang === 'ur';
+      const dir = rtl ? 'rtl' : 'ltr';
+      const align = rtl ? 'right' : 'left';
+      const isAr = lang === 'ar'; // kept for font selection
+      // Per-language label table for phase report.
+      const PHASE_PDF_I18N: Record<string, Record<string, string>> = {
+        en: { phaseReport:'Phase Report', phase:'Phase', phaseName:'Phase Name', phaseStatus:'Phase Status', client:'Client', phaseLead:'Phase Lead', projectStatus:'Project Status', priority:'Priority', phaseStart:'Phase Start', phaseEnd:'Phase End', projectStart:'Project Start', projectEnd:'Project End', tasksPlannedCompleted:'Tasks (Planned / Completed)', durationPlannedCompleted:'Duration (Planned / Completed)', billsPlannedPaid:'Bills (Planned / Paid)', tasks:'Tasks', task:'Task', duration:'Duration', status:'Status', assignee:'Assignee', noTasks:'No tasks for this phase.', milestoneBills:'Milestone Bills', milestone:'Milestone', amount:'Amount', dueDate:'Due Date', total:'Total', paid:'Paid', generatedOn:'Generated on', days:'days', completed:'Completed', inProgress:'In Progress', pending:'Pending' },
+        ar: { phaseReport:'تقرير المرحلة', phase:'المرحلة', phaseName:'اسم المرحلة', phaseStatus:'حالة المرحلة', client:'العميل', phaseLead:'قائد المرحلة', projectStatus:'حالة المشروع', priority:'الأولوية', phaseStart:'بداية المرحلة', phaseEnd:'نهاية المرحلة', projectStart:'بداية المشروع', projectEnd:'نهاية المشروع', tasksPlannedCompleted:'المهام (مخططة / مكتملة)', durationPlannedCompleted:'المدة (مخططة / مكتملة)', billsPlannedPaid:'الفواتير (مخططة / مدفوعة)', tasks:'المهام', task:'المهمة', duration:'المدة', status:'الحالة', assignee:'المسؤول', noTasks:'لا توجد مهام لهذه المرحلة.', milestoneBills:'فواتير المراحل', milestone:'المرحلة', amount:'المبلغ', dueDate:'تاريخ الاستحقاق', total:'الإجمالي', paid:'مدفوع', generatedOn:'تم إنشاؤه في', days:'يوم', completed:'مكتملة', inProgress:'قيد التنفيذ', pending:'معلقة' },
+        de: { phaseReport:'Phasenbericht', phase:'Phase', phaseName:'Phasenname', phaseStatus:'Phasenstatus', client:'Kunde', phaseLead:'Phasenleiter', projectStatus:'Projektstatus', priority:'Priorität', phaseStart:'Phasenbeginn', phaseEnd:'Phasenende', projectStart:'Projektbeginn', projectEnd:'Projektende', tasksPlannedCompleted:'Aufgaben (Geplant / Abgeschlossen)', durationPlannedCompleted:'Dauer (Geplant / Abgeschlossen)', billsPlannedPaid:'Rechnungen (Geplant / Bezahlt)', tasks:'Aufgaben', task:'Aufgabe', duration:'Dauer', status:'Status', assignee:'Zugewiesen an', noTasks:'Keine Aufgaben für diese Phase.', milestoneBills:'Meilenstein-Rechnungen', milestone:'Meilenstein', amount:'Betrag', dueDate:'Fälligkeitsdatum', total:'Gesamt', paid:'Bezahlt', generatedOn:'Erstellt am', days:'Tage', completed:'Abgeschlossen', inProgress:'In Bearbeitung', pending:'Ausstehend' },
+        zh: { phaseReport:'阶段报告', phase:'阶段', phaseName:'阶段名称', phaseStatus:'阶段状态', client:'客户', phaseLead:'阶段负责人', projectStatus:'项目状态', priority:'优先级', phaseStart:'阶段开始', phaseEnd:'阶段结束', projectStart:'项目开始', projectEnd:'项目结束', tasksPlannedCompleted:'任务（计划 / 已完成）', durationPlannedCompleted:'时长（计划 / 已完成）', billsPlannedPaid:'账单（计划 / 已付）', tasks:'任务', task:'任务', duration:'时长', status:'状态', assignee:'负责人', noTasks:'此阶段没有任务。', milestoneBills:'里程碑账单', milestone:'里程碑', amount:'金额', dueDate:'到期日', total:'总计', paid:'已付', generatedOn:'生成于', days:'天', completed:'已完成', inProgress:'进行中', pending:'待处理' },
+        bn: { phaseReport:'ফেজ রিপোর্ট', phase:'ফেজ', phaseName:'ফেজের নাম', phaseStatus:'ফেজের স্ট্যাটাস', client:'ক্লায়েন্ট', phaseLead:'ফেজ লিড', projectStatus:'প্রকল্প স্ট্যাটাস', priority:'অগ্রাধিকার', phaseStart:'ফেজ শুরু', phaseEnd:'ফেজ শেষ', projectStart:'প্রকল্প শুরু', projectEnd:'প্রকল্প শেষ', tasksPlannedCompleted:'কাজ (পরিকল্পিত / সম্পন্ন)', durationPlannedCompleted:'সময়কাল (পরিকল্পিত / সম্পন্ন)', billsPlannedPaid:'বিল (পরিকল্পিত / পরিশোধিত)', tasks:'কাজ', task:'কাজ', duration:'সময়কাল', status:'স্ট্যাটাস', assignee:'দায়িত্বপ্রাপ্ত', noTasks:'এই ফেজের জন্য কোন কাজ নেই।', milestoneBills:'মাইলস্টোন বিল', milestone:'মাইলস্টোন', amount:'পরিমাণ', dueDate:'নির্ধারিত তারিখ', total:'মোট', paid:'পরিশোধিত', generatedOn:'তৈরি হয়েছে', days:'দিন', completed:'সম্পন্ন', inProgress:'চলমান', pending:'মুলতুবি' },
+        it: { phaseReport:'Rapporto di fase', phase:'Fase', phaseName:'Nome della fase', phaseStatus:'Stato della fase', client:'Cliente', phaseLead:'Responsabile della fase', projectStatus:'Stato del progetto', priority:'Priorità', phaseStart:'Inizio fase', phaseEnd:'Fine fase', projectStart:'Inizio progetto', projectEnd:'Fine progetto', tasksPlannedCompleted:'Attività (Pianificate / Completate)', durationPlannedCompleted:'Durata (Pianificata / Completata)', billsPlannedPaid:'Fatture (Pianificate / Pagate)', tasks:'Attività', task:'Attività', duration:'Durata', status:'Stato', assignee:'Assegnatario', noTasks:'Nessuna attività per questa fase.', milestoneBills:'Fatture delle milestone', milestone:'Milestone', amount:'Importo', dueDate:'Data di scadenza', total:'Totale', paid:'Pagato', generatedOn:'Generato il', days:'giorni', completed:'Completata', inProgress:'In corso', pending:'In sospeso' },
+        hi: { phaseReport:'चरण रिपोर्ट', phase:'चरण', phaseName:'चरण का नाम', phaseStatus:'चरण की स्थिति', client:'ग्राहक', phaseLead:'चरण प्रमुख', projectStatus:'परियोजना स्थिति', priority:'प्राथमिकता', phaseStart:'चरण प्रारंभ', phaseEnd:'चरण समाप्त', projectStart:'परियोजना प्रारंभ', projectEnd:'परियोजना समाप्त', tasksPlannedCompleted:'कार्य (योजना / पूर्ण)', durationPlannedCompleted:'अवधि (योजना / पूर्ण)', billsPlannedPaid:'बिल (योजना / भुगतान)', tasks:'कार्य', task:'कार्य', duration:'अवधि', status:'स्थिति', assignee:'सौंपा गया', noTasks:'इस चरण के लिए कोई कार्य नहीं।', milestoneBills:'मील का पत्थर बिल', milestone:'मील का पत्थर', amount:'राशि', dueDate:'देय तिथि', total:'कुल', paid:'भुगतान किया', generatedOn:'पर बनाया गया', days:'दिन', completed:'पूर्ण', inProgress:'प्रगति पर', pending:'लंबित' },
+        ur: { phaseReport:'مرحلہ رپورٹ', phase:'مرحلہ', phaseName:'مرحلے کا نام', phaseStatus:'مرحلے کی حالت', client:'کلائنٹ', phaseLead:'مرحلہ لیڈ', projectStatus:'پروجیکٹ کی حالت', priority:'ترجیح', phaseStart:'مرحلے کا آغاز', phaseEnd:'مرحلے کا اختتام', projectStart:'پروجیکٹ کا آغاز', projectEnd:'پروجیکٹ کا اختتام', tasksPlannedCompleted:'کام (منصوبہ بند / مکمل)', durationPlannedCompleted:'دورانیہ (منصوبہ بند / مکمل)', billsPlannedPaid:'بل (منصوبہ بند / ادا شدہ)', tasks:'کام', task:'کام', duration:'دورانیہ', status:'حالت', assignee:'ذمہ دار', noTasks:'اس مرحلے کے لئے کوئی کام نہیں۔', milestoneBills:'سنگ میل بل', milestone:'سنگ میل', amount:'رقم', dueDate:'مقررہ تاریخ', total:'کل', paid:'ادا شدہ', generatedOn:'تخلیق ہوا', days:'دن', completed:'مکمل', inProgress:'جاری ہے', pending:'زیر التواء' },
+        es: { phaseReport:'Informe de fase', phase:'Fase', phaseName:'Nombre de la fase', phaseStatus:'Estado de la fase', client:'Cliente', phaseLead:'Líder de fase', projectStatus:'Estado del proyecto', priority:'Prioridad', phaseStart:'Inicio de fase', phaseEnd:'Fin de fase', projectStart:'Inicio del proyecto', projectEnd:'Fin del proyecto', tasksPlannedCompleted:'Tareas (Planificadas / Completadas)', durationPlannedCompleted:'Duración (Planificada / Completada)', billsPlannedPaid:'Facturas (Planificadas / Pagadas)', tasks:'Tareas', task:'Tarea', duration:'Duración', status:'Estado', assignee:'Asignado', noTasks:'No hay tareas para esta fase.', milestoneBills:'Facturas de hitos', milestone:'Hito', amount:'Monto', dueDate:'Fecha de vencimiento', total:'Total', paid:'Pagado', generatedOn:'Generado el', days:'días', completed:'Completada', inProgress:'En progreso', pending:'Pendiente' },
+        tl: { phaseReport:'Ulat ng Phase', phase:'Phase', phaseName:'Pangalan ng Phase', phaseStatus:'Katayuan ng Phase', client:'Kliyente', phaseLead:'Lider ng Phase', projectStatus:'Katayuan ng Proyekto', priority:'Priyoridad', phaseStart:'Simula ng Phase', phaseEnd:'Katapusan ng Phase', projectStart:'Simula ng Proyekto', projectEnd:'Katapusan ng Proyekto', tasksPlannedCompleted:'Mga Gawain (Nakaplano / Natapos)', durationPlannedCompleted:'Tagal (Nakaplano / Natapos)', billsPlannedPaid:'Mga Bill (Nakaplano / Nabayaran)', tasks:'Mga Gawain', task:'Gawain', duration:'Tagal', status:'Katayuan', assignee:'Itinalaga', noTasks:'Walang mga gawain para sa phase na ito.', milestoneBills:'Mga Bill ng Milestone', milestone:'Milestone', amount:'Halaga', dueDate:'Takdang Petsa', total:'Kabuuan', paid:'Bayad', generatedOn:'Nilikha noong', days:'araw', completed:'Natapos', inProgress:'Isinasagawa', pending:'Nakabinbin' },
+      };
+      const T = PHASE_PDF_I18N[lang] || PHASE_PDF_I18N.en;
+      const L = (en: string, _ar: string) => en; // kept for legacy compatibility
 
       const project = await storage.getServiceProject(req.params.id, restaurantId);
       if (!project) return res.status(404).json({ message: "Project not found" });
@@ -17777,12 +17821,40 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       };
 
       const phaseTasks = allTasks.filter(t => ((t as any).phase ?? 1) === phase);
-      const phaseRegex = new RegExp(`(?:phase|المرحلة)\\s*${phase}(?!\\d)`, 'i');
-      const phaseSchedules = allSchedules.filter(s => phaseRegex.test(s.milestoneName || ''));
+      // Phase column is the source of truth. Legacy regex fallback is applied ONLY when
+      // the project has no explicit phase assignments (i.e. every schedule still defaults
+      // to phase=1). This guarantees each row maps to exactly one phase and prevents
+      // double-counting of legacy "Phase N" rows that also have phase=1.
+      const hasExplicitPhases = allSchedules.some(s => {
+        const p = (s as any).phase;
+        return typeof p === 'number' && p > 1;
+      });
+      const phaseRegexN = (n: number) => new RegExp(`(?:phase|المرحلة)\\s*${n}(?!\\d)`, 'i');
+      const anyPhaseRegex = /(?:phase|المرحلة)\s*\d+/i;
+      const phaseSchedules = allSchedules.filter(s => {
+        if (hasExplicitPhases) {
+          return (((s as any).phase ?? 1) === phase);
+        }
+        // Legacy mode: bucket by regex; rows that don't mention any phase fall into phase 1.
+        const name = s.milestoneName || '';
+        if (phaseRegexN(phase).test(name)) return true;
+        if (phase === 1 && !anyPhaseRegex.test(name)) return true;
+        return false;
+      });
 
       const phaseLeads: Record<string, { type: string; id: string }> = (project as any).phaseLeads || {};
+      const phaseMetadata: Record<string, { name?: string; status?: string }> = (project as any).phaseMetadata || {};
+      const phMeta = phaseMetadata[String(phase)] || {};
       const lead = phaseLeads[String(phase)];
       const leadLabel = lead ? resolveAssignee(lead.type, lead.id) : '-';
+      const derivedStatus = phaseTasks.length === 0 ? 'pending'
+        : phaseTasks.every(tk => tk.status === 'completed') ? 'completed'
+        : phaseTasks.some(tk => tk.status === 'in_progress' || tk.status === 'completed') ? 'in_progress'
+        : 'pending';
+      const phaseStatus = phMeta.status || derivedStatus;
+      const phaseDisplayName = phMeta.name || '';
+      const statusLabel = (s: string) => s === 'completed' ? T.completed
+        : s === 'in_progress' ? T.inProgress : T.pending;
 
       const plannedTaskCount = phaseTasks.length;
       const completedTaskCount = phaseTasks.filter(tk => tk.status === 'completed').length;
@@ -17807,7 +17879,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         <tr style="${tk.isCritical ? 'background:#fef2f2;' : ''}">
           <td>${i + 1}</td>
           <td>${escapeHtml(tk.name)}${tk.isCritical ? ' !' : ''}</td>
-          <td style="text-align:center">${tk.duration} ${L('days', 'يوم')}</td>
+          <td style="text-align:center">${tk.duration} ${T.days}</td>
           <td style="text-align:center">${escapeHtml((tk.status || '').replace('_', ' '))}</td>
           <td>${escapeHtml(resolveAssignee((tk as any).assigneeType, (tk as any).assigneeId))}</td>
         </tr>`).join('');
@@ -17855,7 +17927,7 @@ tr:nth-child(even) { background: #f8fafc; }
     ${companyInfo?.companyEmail ? `<p>Email: ${escapeHtml(companyInfo.companyEmail)}</p>` : ''}
   </div>
   <div class="title">
-    <h2>${L('Phase Report', 'تقرير المرحلة')} — ${L('Phase', 'المرحلة')} ${phase}</h2>
+    <h2>${T.phaseReport} — ${T.phase} ${phase}${phaseDisplayName ? `: ${escapeHtml(phaseDisplayName)}` : ''}</h2>
     <p>${escapeHtml(project.projectNumber)}</p>
     <p>${new Date().toLocaleDateString('en-GB')}</p>
   </div>
@@ -17863,44 +17935,46 @@ tr:nth-child(even) { background: #f8fafc; }
 <div class="project-info">
   <h3 style="color:#1a365d;margin:0 0 8px;">${escapeHtml(project.name)}</h3>
   <div class="info-grid">
-    <div class="info-item"><span>${L('Client', 'العميل')}:</span> ${escapeHtml(project.clientName)}</div>
-    <div class="info-item"><span>${L('Phase Lead', 'قائد المرحلة')}:</span> ${escapeHtml(leadLabel)}</div>
-    <div class="info-item"><span>${L('Project Status', 'حالة المشروع')}:</span> ${escapeHtml(project.status)}</div>
-    <div class="info-item"><span>${L('Priority', 'الأولوية')}:</span> ${escapeHtml(project.priority)}</div>
-    <div class="info-item"><span>${L('Phase Start', 'بداية المرحلة')}:</span> ${dayToDate(phaseStartDay)}</div>
-    <div class="info-item"><span>${L('Phase End', 'نهاية المرحلة')}:</span> ${dayToDate(phaseEndDay)}</div>
-    <div class="info-item"><span>${L('Project Start', 'بداية المشروع')}:</span> ${project.startDate ? new Date(project.startDate).toLocaleDateString('en-GB') : '-'}</div>
-    <div class="info-item"><span>${L('Project End', 'نهاية المشروع')}:</span> ${project.endDate ? new Date(project.endDate).toLocaleDateString('en-GB') : '-'}</div>
+    <div class="info-item"><span>${T.phaseName}:</span> ${escapeHtml(phaseDisplayName || `${T.phase} ${phase}`)}</div>
+    <div class="info-item"><span>${T.phaseStatus}:</span> ${escapeHtml(statusLabel(phaseStatus))}</div>
+    <div class="info-item"><span>${T.client}:</span> ${escapeHtml(project.clientName)}</div>
+    <div class="info-item"><span>${T.phaseLead}:</span> ${escapeHtml(leadLabel)}</div>
+    <div class="info-item"><span>${T.projectStatus}:</span> ${escapeHtml(project.status)}</div>
+    <div class="info-item"><span>${T.priority}:</span> ${escapeHtml(project.priority)}</div>
+    <div class="info-item"><span>${T.phaseStart}:</span> ${dayToDate(phaseStartDay)}</div>
+    <div class="info-item"><span>${T.phaseEnd}:</span> ${dayToDate(phaseEndDay)}</div>
+    <div class="info-item"><span>${T.projectStart}:</span> ${project.startDate ? new Date(project.startDate).toLocaleDateString('en-GB') : '-'}</div>
+    <div class="info-item"><span>${T.projectEnd}:</span> ${project.endDate ? new Date(project.endDate).toLocaleDateString('en-GB') : '-'}</div>
   </div>
 </div>
 <div class="summary-box">
   <div class="summary-grid">
-    <div class="summary-item"><div class="label">${L('Tasks (Planned / Completed)', 'المهام (مخططة / مكتملة)')}</div><div class="value">${plannedTaskCount} / ${completedTaskCount}</div></div>
-    <div class="summary-item"><div class="label">${L('Duration (Planned / Completed)', 'المدة (مخططة / مكتملة)')}</div><div class="value">${plannedDuration} / ${completedDuration} ${L('days', 'يوم')}</div></div>
-    <div class="summary-item"><div class="label">${L('Bills (Planned / Paid)', 'الفواتير (مخططة / مدفوعة)')}</div><div class="value">${plannedBills.toFixed(2)} / ${paidBills.toFixed(2)} SAR</div></div>
+    <div class="summary-item"><div class="label">${T.tasksPlannedCompleted}</div><div class="value">${plannedTaskCount} / ${completedTaskCount}</div></div>
+    <div class="summary-item"><div class="label">${T.durationPlannedCompleted}</div><div class="value">${plannedDuration} / ${completedDuration} ${T.days}</div></div>
+    <div class="summary-item"><div class="label">${T.billsPlannedPaid}</div><div class="value">${plannedBills.toFixed(2)} / ${paidBills.toFixed(2)} SAR</div></div>
   </div>
 </div>
 ${phaseTasks.length > 0 ? `
 <div class="section">
-  <h3>${L('Tasks', 'المهام')}</h3>
+  <h3>${T.tasks}</h3>
   <table>
-    <thead><tr><th>#</th><th>${L('Task', 'المهمة')}</th><th>${L('Duration', 'المدة')}</th><th>${L('Status', 'الحالة')}</th><th>${L('Assignee', 'المسؤول')}</th></tr></thead>
+    <thead><tr><th>#</th><th>${T.task}</th><th>${T.duration}</th><th>${T.status}</th><th>${T.assignee}</th></tr></thead>
     <tbody>${taskRows}</tbody>
   </table>
-</div>` : `<div class="section"><p style="color:#666;">${L('No tasks for this phase.', 'لا توجد مهام لهذه المرحلة.')}</p></div>`}
+</div>` : `<div class="section"><p style="color:#666;">${T.noTasks}</p></div>`}
 ${phaseSchedules.length > 0 ? `
 <div class="section">
-  <h3>${L('Milestone Bills', 'فواتير المراحل')}</h3>
+  <h3>${T.milestoneBills}</h3>
   <table>
-    <thead><tr><th>#</th><th>${L('Milestone', 'المرحلة')}</th><th>${L('Amount', 'المبلغ')}</th><th>${L('Due Date', 'تاريخ الاستحقاق')}</th><th>${L('Status', 'الحالة')}</th></tr></thead>
+    <thead><tr><th>#</th><th>${T.milestone}</th><th>${T.amount}</th><th>${T.dueDate}</th><th>${T.status}</th></tr></thead>
     <tbody>${scheduleRows}
-      <tr style="font-weight:bold;background:#f0f4f8;"><td></td><td style="text-align:${isAr ? 'left' : 'right'}">${L('Total', 'الإجمالي')}:</td><td style="text-align:right">${plannedBills.toFixed(2)} SAR</td><td></td><td>${L('Paid', 'مدفوع')}: ${paidBills.toFixed(2)} SAR</td></tr>
+      <tr style="font-weight:bold;background:#f0f4f8;"><td></td><td style="text-align:${rtl ? 'left' : 'right'}">${T.total}:</td><td style="text-align:right">${plannedBills.toFixed(2)} SAR</td><td></td><td>${T.paid}: ${paidBills.toFixed(2)} SAR</td></tr>
     </tbody>
   </table>
 </div>` : ''}
 <div class="footer">
-  <p>${escapeHtml(companyInfo?.companyName) || 'Company'} — ${L('Phase Report', 'تقرير المرحلة')} — ${escapeHtml(project.projectNumber)} — ${L('Phase', 'المرحلة')} ${phase}</p>
-  <p>${L('Generated on', 'تم إنشاؤه في')} ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB')}</p>
+  <p>${escapeHtml(companyInfo?.companyName) || 'Company'} — ${T.phaseReport} — ${escapeHtml(project.projectNumber)} — ${T.phase} ${phase}</p>
+  <p>${T.generatedOn} ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB')}</p>
 </div>
 </body></html>`;
 
