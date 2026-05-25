@@ -38,6 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import AssigneeHistoryDialog from "@/components/AssigneeHistoryDialog";
 import { Badge } from "@/components/ui/badge";
 import {
   Plus,
@@ -135,17 +136,6 @@ export default function ContractorsPage() {
   const [editingContractor, setEditingContractor] = useState<Contractor | null>(null);
   const [deletingContractor, setDeletingContractor] = useState<Contractor | null>(null);
   const [tasksContractor, setTasksContractor] = useState<Contractor | null>(null);
-
-  const { data: contractorTasks = [], isLoading: tasksLoading } = useQuery<any[]>({
-    queryKey: ["/api/contractors", tasksContractor?.id, "assigned-tasks"],
-    queryFn: async () => {
-      if (!tasksContractor) return [];
-      const r = await fetch(`/api/contractors/${tasksContractor.id}/assigned-tasks`, { credentials: 'include' });
-      if (!r.ok) throw new Error('Failed to load tasks');
-      return r.json();
-    },
-    enabled: !!tasksContractor,
-  });
   const { toast } = useToast();
   const { t, isRTL } = useLanguage();
   const layout = useDeviceLayout();
@@ -795,40 +785,14 @@ export default function ContractorsPage() {
         </div>
       )}
 
-      <Dialog open={!!tasksContractor} onOpenChange={(o) => { if (!o) setTasksContractor(null); }}>
-        <DialogContent className="max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{(t as any).assignedTasks || "Assigned Tasks"} — {tasksContractor?.name}</DialogTitle>
-            <DialogDescription>{(t as any).contractorAssignedTasksDesc || "Open project tasks assigned to this contractor."}</DialogDescription>
-          </DialogHeader>
-          {tasksLoading ? (
-            <p className="text-sm text-muted-foreground text-center py-6">{t.loading || "Loading..."}</p>
-          ) : contractorTasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground text-center py-6" data-testid="text-no-contractor-tasks">{(t as any).noAssignedTasks || "No open tasks assigned"}</p>
-          ) : (
-            <div className="space-y-2">
-              {contractorTasks.map((tk: any) => (
-                <div key={tk.id} className="flex items-center justify-between gap-2 p-3 rounded-md border" data-testid={`contractor-task-${tk.id}`}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <Badge variant={tk.status === 'in_progress' ? 'default' : 'secondary'} className={tk.status === 'in_progress' ? 'bg-blue-600 text-white shrink-0' : 'shrink-0'}>
-                        {tk.status === 'in_progress' ? ((t as any).inProgress || 'In Progress') : ((t as any).pending || 'Pending')}
-                      </Badge>
-                      <p className="font-medium truncate">{tk.name}</p>
-                    </div>
-                    {tk.projectId && (
-                      <Link href={`/service-projects/${tk.projectId}`} className="text-xs text-muted-foreground hover:underline truncate block mt-1" data-testid={`link-contractor-task-project-${tk.id}`}>
-                        {tk.projectNumber ? `#${tk.projectNumber} • ` : ''}{tk.projectName || ''}
-                      </Link>
-                    )}
-                  </div>
-                  <span className="text-xs text-muted-foreground shrink-0">{tk.duration} {(t as any).days || 'days'}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      <AssigneeHistoryDialog
+        open={!!tasksContractor}
+        onOpenChange={(o) => { if (!o) setTasksContractor(null); }}
+        assigneeType="contractor"
+        assigneeId={tasksContractor?.id || null}
+        assigneeName={tasksContractor?.name || ""}
+        assigneePhone={tasksContractor?.phone || null}
+      />
 
       <AlertDialog
         open={!!deletingContractor}

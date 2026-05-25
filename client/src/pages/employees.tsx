@@ -13,7 +13,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, UserCheck, UserX, Calendar, FileText, Plane, Award, Shield, Briefcase, Clock, Info, Key, LogIn, Trash2, CalendarDays } from "lucide-react";
+import { Plus, Edit, UserCheck, UserX, Calendar, FileText, Plane, Award, Shield, Briefcase, Clock, Info, Key, LogIn, Trash2, CalendarDays, ListTodo } from "lucide-react";
+import AssigneeHistoryDialog from "@/components/AssigneeHistoryDialog";
 import type { User } from "@shared/schema";
 import { 
   DEFAULT_EMPLOYEE_PERMISSIONS, 
@@ -170,6 +171,7 @@ export default function Employees() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [historyUser, setHistoryUser] = useState<User | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState<any>({
     username: "",
@@ -1155,6 +1157,19 @@ export default function Employees() {
                       <Button
                         variant="outline"
                         className="h-[44px]"
+                        onClick={() => setHistoryUser(user)}
+                        data-testid={`button-history-${user.id}`}
+                      >
+                        <ListTodo className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>{(t as any).assignmentFile || "Assignment file"}</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="h-[44px]"
                         onClick={() => setUserToDelete(user)}
                         data-testid={`button-delete-${user.id}`}
                       >
@@ -1647,6 +1662,15 @@ export default function Employees() {
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
+      <AssigneeHistoryDialog
+        open={!!historyUser}
+        onOpenChange={(o) => { if (!o) setHistoryUser(null); }}
+        assigneeType="employee"
+        assigneeId={historyUser?.id || null}
+        assigneeName={historyUser?.fullName || ""}
+        assigneePhone={(historyUser as any)?.phone || null}
+      />
+
       <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

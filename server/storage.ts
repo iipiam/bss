@@ -160,6 +160,12 @@ import {
   type ProjectTask,
   type InsertProjectTask,
   projectTasks,
+  type AssignmentHistory,
+  type InsertAssignmentHistory,
+  assignmentHistory,
+  type ContractorSettlement,
+  type InsertContractorSettlement,
+  contractorSettlements,
   type ProjectClientRequirement,
   type InsertProjectClientRequirement,
   projectClientRequirements,
@@ -681,6 +687,17 @@ export interface IStorage {
   updateProjectTask(id: string, restaurantId: string, data: Partial<InsertProjectTask>): Promise<ProjectTask | undefined>;
   getMyAssignedTasks(restaurantId: string, assigneeType: 'employee' | 'contractor', assigneeId: string): Promise<Array<ProjectTask & { projectName: string; projectNumber: string }>>;
   deleteProjectTask(id: string, restaurantId: string): Promise<boolean>;
+
+  // Assignment History (auto-ledger of assignment changes)
+  recordAssignmentHistory(entry: InsertAssignmentHistory): Promise<AssignmentHistory>;
+  getAssignmentHistory(restaurantId: string, assigneeType: 'employee' | 'contractor', assigneeId: string): Promise<Array<AssignmentHistory & { projectName: string; projectNumber: string }>>;
+
+  // Contractor / Employee Settlements
+  getContractorSettlements(restaurantId: string, assigneeType: 'employee' | 'contractor', assigneeId: string): Promise<ContractorSettlement[]>;
+  getContractorSettlement(id: string, restaurantId: string): Promise<ContractorSettlement | undefined>;
+  createContractorSettlement(s: InsertContractorSettlement): Promise<ContractorSettlement>;
+  updateContractorSettlement(id: string, restaurantId: string, data: Partial<InsertContractorSettlement> & { sentAt?: Date | null }): Promise<ContractorSettlement | undefined>;
+  deleteContractorSettlement(id: string, restaurantId: string): Promise<boolean>;
 
   // Project Client Requirements
   getProjectClientRequirements(restaurantId: string, projectId: string): Promise<ProjectClientRequirement[]>;
@@ -5897,6 +5914,68 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  // ===== Assignment History =====
+  async recordAssignmentHistory(entry: InsertAssignmentHistory): Promise<AssignmentHistory> {
+    const [row] = await db.insert(assignmentHistory).values(entry).returning();
+    return row;
+  }
+  async getAssignmentHistory(restaurantId: string, assigneeType: 'employee' | 'contractor', assigneeId: string): Promise<Array<AssignmentHistory & { projectName: string; projectNumber: string }>> {
+    const rows = await db.select({
+      h: assignmentHistory,
+      projectName: serviceProjects.name,
+      projectNumber: serviceProjects.projectNumber,
+    }).from(assignmentHistory)
+      .leftJoin(serviceProjects, eq(assignmentHistory.projectId, serviceProjects.id))
+      .where(and(
+        eq(assignmentHistory.restaurantId, restaurantId),
+        eq(assignmentHistory.assigneeType, assigneeType),
+        eq(assignmentHistory.assigneeId, assigneeId),
+      ))
+      .orderBy(desc(assignmentHistory.createdAt));
+    return rows.map(r => ({ ...r.h, projectName: r.projectName || '', projectNumber: r.projectNumber || '' }));
+  }
+
+  // ===== Contractor / Employee Settlements =====
+  async getContractorSettlements(restaurantId: string, assigneeType: 'employee' | 'contractor', assigneeId: string): Promise<ContractorSettlement[]> {
+    return db.select().from(contractorSettlements)
+      .where(and(
+        eq(contractorSettlements.restaurantId, restaurantId),
+        eq(contractorSettlements.assigneeType, assigneeType),
+        eq(contractorSettlements.assigneeId, assigneeId),
+      ))
+      .orderBy(desc(contractorSettlements.createdAt));
+  }
+  async getContractorSettlement(id: string, restaurantId: string): Promise<ContractorSettlement | undefined> {
+    const [row] = await db.select().from(contractorSettlements)
+      .where(and(eq(contractorSettlements.id, id), eq(contractorSettlements.restaurantId, restaurantId)));
+    return row;
+  }
+  async createContractorSettlement(s: InsertContractorSettlement): Promise<ContractorSettlement> {
+    const [row] = await db.insert(contractorSettlements).values(s).returning();
+    return row;
+  }
+  async updateContractorSettlement(id: string, restaurantId: string, data: Partial<InsertContractorSettlement> & { sentAt?: Date | null }): Promise<ContractorSettlement | undefined> {
+    const sanitized: any = { ...data };
+    delete sanitized.restaurantId;
+    delete sanitized.assigneeType;
+    delete sanitized.assigneeId;
+    // Allow marking a draft as sent (sanitized.status==='sent'), but block any other
+    // mutation on already-sent rows by including status!='sent' in the WHERE clause
+    // unless this update IS the draft->sent transition.
+    const isMarkingSent = sanitized.status === 'sent';
+    const whereClause = isMarkingSent
+      ? and(eq(contractorSettlements.id, id), eq(contractorSettlements.restaurantId, restaurantId))
+      : and(eq(contractorSettlements.id, id), eq(contractorSettlements.restaurantId, restaurantId), ne(contractorSettlements.status, 'sent'));
+    const [row] = await db.update(contractorSettlements).set(sanitized)
+      .where(whereClause).returning();
+    return row;
+  }
+  async deleteContractorSettlement(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(contractorSettlements)
+      .where(and(eq(contractorSettlements.id, id), eq(contractorSettlements.restaurantId, restaurantId), ne(contractorSettlements.status, 'sent'))).returning();
+    return result.length > 0;
+  }
+
   async getMyAssignedTasks(restaurantId: string, assigneeType: 'employee' | 'contractor', assigneeId: string): Promise<Array<ProjectTask & { projectName: string; projectNumber: string }>> {
     const rows = await db.select({
       task: projectTasks,
@@ -7137,6 +7216,44 @@ export const storage = new DatabaseStorage();
     await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS phase_metadata JSONB DEFAULT '{}'::jsonb`);
     await pool.query(`ALTER TABLE payment_schedules ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_project_tasks_assignee ON project_tasks(restaurant_id, assignee_type, assignee_id)`);
+
+    // Assignment History ledger + Contractor/Employee Settlements
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS assignment_history (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        assignee_type TEXT NOT NULL,
+        assignee_id VARCHAR(255) NOT NULL,
+        project_id VARCHAR(255) NOT NULL REFERENCES service_projects(id) ON DELETE CASCADE,
+        task_id VARCHAR(255),
+        phase INTEGER NOT NULL DEFAULT 1,
+        role TEXT NOT NULL,
+        action TEXT NOT NULL,
+        task_name TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_assignment_history_assignee ON assignment_history(restaurant_id, assignee_type, assignee_id, created_at DESC)`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS contractor_settlements (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        assignee_type TEXT NOT NULL,
+        assignee_id VARCHAR(255) NOT NULL,
+        project_id VARCHAR(255) REFERENCES service_projects(id) ON DELETE SET NULL,
+        fee NUMERIC(12,2) NOT NULL,
+        vat_included BOOLEAN NOT NULL DEFAULT FALSE,
+        vat_amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+        total_amount NUMERIC(12,2) NOT NULL,
+        payment_method TEXT NOT NULL DEFAULT 'cash',
+        notes TEXT,
+        status TEXT NOT NULL DEFAULT 'draft',
+        sent_at TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_contractor_settlements_assignee ON contractor_settlements(restaurant_id, assignee_type, assignee_id, created_at DESC)`);
+    console.log('[Migration] Tables verified/created: assignment_history, contractor_settlements');
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_payment_schedules_phase ON payment_schedules(restaurant_id, project_id, phase)`);
     await pool.query(`ALTER TABLE product_items ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     await pool.query(`ALTER TABLE product_service_links ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);

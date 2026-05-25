@@ -15852,8 +15852,44 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       if (data.startDate) data.startDate = new Date(data.startDate);
       if (data.endDate) data.endDate = new Date(data.endDate);
+      // Snapshot prev phaseLeads for ledger comparison.
+      let prevLeads: Record<string, { type: string; id: string }> = {};
+      if (data.phaseLeads !== undefined) {
+        const prevProj = await storage.getServiceProject(req.params.id, restaurantId);
+        prevLeads = ((prevProj as any)?.phaseLeads || {}) as Record<string, { type: string; id: string }>;
+      }
       const project = await storage.updateServiceProject(req.params.id, restaurantId, data);
       if (!project) return res.status(404).json({ message: "Project not found" });
+      // Phase-lead transitions ledger
+      if (data.phaseLeads !== undefined) {
+        try {
+          const nextLeads = ((project as any).phaseLeads || {}) as Record<string, { type: string; id: string }>;
+          const phases = new Set<string>([...Object.keys(prevLeads), ...Object.keys(nextLeads)]);
+          for (const ph of phases) {
+            const prev = prevLeads[ph];
+            const next = nextLeads[ph];
+            const same = prev && next && prev.type === next.type && prev.id === next.id;
+            if (same) continue;
+            const phaseNum = parseInt(ph) || 1;
+            if (prev?.id && prev?.type) {
+              await storage.recordAssignmentHistory({
+                restaurantId, assigneeType: prev.type, assigneeId: prev.id,
+                projectId: project.id, taskId: null as any, phase: phaseNum,
+                role: 'phase_lead', action: 'unassigned', taskName: `Phase ${phaseNum} Lead`,
+              });
+            }
+            if (next?.id && next?.type) {
+              await storage.recordAssignmentHistory({
+                restaurantId, assigneeType: next.type, assigneeId: next.id,
+                projectId: project.id, taskId: null as any, phase: phaseNum,
+                role: 'phase_lead', action: 'assigned', taskName: `Phase ${phaseNum} Lead`,
+              });
+            }
+          }
+        } catch (e) {
+          console.error('[assignment-history] phase-lead hook failed', e);
+        }
+      }
       res.json(project);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -16609,8 +16645,49 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const data = { ...req.body };
       if (data.startDate) data.startDate = new Date(data.startDate);
       if (data.endDate) data.endDate = new Date(data.endDate);
+      // Snapshot the task BEFORE update so we can compute assignment-ledger transitions.
+      let prev: any = null;
+      try {
+        const all = await storage.getAllProjectTasks(restaurantId);
+        prev = all.find(t => t.id === req.params.id) || null;
+      } catch {}
       const task = await storage.updateProjectTask(req.params.id, restaurantId, data);
       if (!task) return res.status(404).json({ message: "Project task not found" });
+      // Record assignment-ledger transitions for this task.
+      try {
+        const prevType = prev?.assigneeType || null;
+        const prevId = prev?.assigneeId || null;
+        const nextType = (task as any).assigneeType || null;
+        const nextId = (task as any).assigneeId || null;
+        const phase = (task as any).phase ?? 1;
+        // Assignee change
+        if (prevId !== nextId || prevType !== nextType) {
+          if (prevId && prevType) {
+            await storage.recordAssignmentHistory({
+              restaurantId, assigneeType: prevType, assigneeId: prevId,
+              projectId: task.projectId, taskId: task.id, phase, role: 'task_assignee',
+              action: 'unassigned', taskName: task.name,
+            });
+          }
+          if (nextId && nextType) {
+            await storage.recordAssignmentHistory({
+              restaurantId, assigneeType: nextType, assigneeId: nextId,
+              projectId: task.projectId, taskId: task.id, phase, role: 'task_assignee',
+              action: 'assigned', taskName: task.name,
+            });
+          }
+        }
+        // Status transition to completed (only if assignee unchanged + present)
+        if (prev && prev.status !== 'completed' && task.status === 'completed' && nextId && nextType && prevId === nextId && prevType === nextType) {
+          await storage.recordAssignmentHistory({
+            restaurantId, assigneeType: nextType, assigneeId: nextId,
+            projectId: task.projectId, taskId: task.id, phase, role: 'task_assignee',
+            action: 'completed', taskName: task.name,
+          });
+        }
+      } catch (e) {
+        console.error('[assignment-history] failed for task', req.params.id, e);
+      }
       res.json(task);
     } catch (error: any) {
       res.status(500).json({ message: error.message });
@@ -16647,6 +16724,273 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const tasks = await storage.getMyAssignedTasks(restaurantId, 'contractor', req.params.id);
       res.json(tasks);
     } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== ASSIGNMENT HISTORY ====================
+  app.get("/api/assignment-history/:assigneeType/:assigneeId", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const type = req.params.assigneeType;
+      if (type !== 'employee' && type !== 'contractor') return res.status(400).json({ message: "Invalid assigneeType" });
+      const rows = await storage.getAssignmentHistory(restaurantId, type, req.params.assigneeId);
+      res.json(rows);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // ==================== CONTRACTOR / EMPLOYEE SETTLEMENTS ====================
+  // List by assignee uses /assignee/ prefix to avoid collision with /:id/pdf route below.
+  app.get("/api/contractor-settlements/assignee/:assigneeType/:assigneeId", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const type = req.params.assigneeType;
+      if (type !== 'employee' && type !== 'contractor') return res.status(400).json({ message: "Invalid assigneeType" });
+      const rows = await storage.getContractorSettlements(restaurantId, type, req.params.assigneeId);
+      res.json(rows);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/contractor-settlements", requireAuth, requireRestaurant, requireAction('projects', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const body = req.body || {};
+      if (!body.assigneeType || !body.assigneeId || body.fee == null) {
+        return res.status(400).json({ message: "assigneeType, assigneeId and fee are required" });
+      }
+      if (body.assigneeType !== 'employee' && body.assigneeType !== 'contractor') {
+        return res.status(400).json({ message: "Invalid assigneeType" });
+      }
+      // Validate the assignee belongs to this tenant.
+      if (body.assigneeType === 'contractor') {
+        const c = await storage.getContractor(String(body.assigneeId), restaurantId);
+        if (!c) return res.status(400).json({ message: "Contractor not found in this tenant" });
+      } else {
+        const users = await storage.getUsers(restaurantId);
+        if (!users.find(u => u.id === String(body.assigneeId))) {
+          return res.status(400).json({ message: "Employee not found in this tenant" });
+        }
+      }
+      // Validate the project (if any) belongs to this tenant.
+      if (body.projectId) {
+        const proj = await storage.getServiceProject(String(body.projectId), restaurantId);
+        if (!proj) return res.status(400).json({ message: "Project not found in this tenant" });
+      }
+      const fee = Math.max(0, parseFloat(String(body.fee)) || 0);
+      const vatIncluded = !!body.vatIncluded;
+      const vatAmount = vatIncluded ? +(fee * 0.15).toFixed(2) : 0;
+      const totalAmount = +(fee + vatAmount).toFixed(2);
+      const row = await storage.createContractorSettlement({
+        restaurantId,
+        assigneeType: body.assigneeType,
+        assigneeId: String(body.assigneeId),
+        projectId: body.projectId || null,
+        fee: fee.toFixed(2),
+        vatIncluded,
+        vatAmount: vatAmount.toFixed(2),
+        totalAmount: totalAmount.toFixed(2),
+        paymentMethod: body.paymentMethod || 'cash',
+        notes: body.notes || null,
+        status: 'draft',
+      } as any);
+      res.status(201).json(row);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/contractor-settlements/:id", requireAuth, requireRestaurant, requireAction('projects', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const existing = await storage.getContractorSettlement(req.params.id, restaurantId);
+      if (!existing) return res.status(404).json({ message: "Not found" });
+      if (existing.status === 'sent') return res.status(400).json({ message: "Settlements marked as Sent are read-only" });
+      const body = req.body || {};
+      const patch: any = {};
+      if (body.fee != null) {
+        const fee = Math.max(0, parseFloat(String(body.fee)) || 0);
+        const vatIncluded = body.vatIncluded != null ? !!body.vatIncluded : existing.vatIncluded;
+        const vatAmount = vatIncluded ? +(fee * 0.15).toFixed(2) : 0;
+        patch.fee = fee.toFixed(2);
+        patch.vatIncluded = vatIncluded;
+        patch.vatAmount = vatAmount.toFixed(2);
+        patch.totalAmount = (fee + vatAmount).toFixed(2);
+      } else if (body.vatIncluded != null) {
+        const fee = parseFloat(existing.fee) || 0;
+        const vatIncluded = !!body.vatIncluded;
+        const vatAmount = vatIncluded ? +(fee * 0.15).toFixed(2) : 0;
+        patch.vatIncluded = vatIncluded;
+        patch.vatAmount = vatAmount.toFixed(2);
+        patch.totalAmount = (fee + vatAmount).toFixed(2);
+      }
+      if (body.paymentMethod) patch.paymentMethod = body.paymentMethod;
+      if (body.notes !== undefined) patch.notes = body.notes || null;
+      if (body.status === 'sent') { patch.status = 'sent'; patch.sentAt = new Date(); }
+      const row = await storage.updateContractorSettlement(req.params.id, restaurantId, patch);
+      res.json(row);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/contractor-settlements/:id", requireAuth, requireRestaurant, requireAction('projects', 'delete'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const existing = await storage.getContractorSettlement(req.params.id, restaurantId);
+      if (!existing) return res.status(404).json({ message: "Not found" });
+      if (existing.status === 'sent') return res.status(400).json({ message: "Cannot delete a sent settlement" });
+      const ok = await storage.deleteContractorSettlement(req.params.id, restaurantId);
+      res.json({ success: ok });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Bilingual EN+AR settlement voucher PDF.
+  app.get("/api/contractor-settlements/:id/pdf", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const s = await storage.getContractorSettlement(req.params.id, restaurantId);
+      if (!s) return res.status(404).json({ message: "Not found" });
+      const company = await storage.getCompanySettings(restaurantId);
+      const project = s.projectId ? await storage.getServiceProject(s.projectId, restaurantId) : undefined;
+      // Resolve assignee name + phone
+      let assigneeName = s.assigneeId;
+      let assigneePhone: string | null = null;
+      let assigneeRoleLabel = 'Employee / موظف';
+      if (s.assigneeType === 'contractor') {
+        const c = await storage.getContractor(s.assigneeId, restaurantId);
+        if (c) { assigneeName = c.name; assigneePhone = c.phone || null; }
+        assigneeRoleLabel = 'Contractor / مقاول';
+      } else {
+        const users = await storage.getUsers(restaurantId);
+        const u = users.find(x => x.id === s.assigneeId);
+        if (u) { assigneeName = u.fullName || u.username; assigneePhone = (u as any).phone || null; }
+      }
+      // Pull related history rows for this assignee + project to summarise contributions.
+      let contributions: Array<{ taskName: string; phase: number; role: string; action: string; createdAt: any }> = [];
+      try {
+        const hist = await storage.getAssignmentHistory(restaurantId, s.assigneeType as any, s.assigneeId);
+        contributions = hist.filter(h => !s.projectId || h.projectId === s.projectId)
+          .map(h => ({ taskName: h.taskName || '-', phase: h.phase, role: h.role, action: h.action, createdAt: h.createdAt }));
+      } catch {}
+      const esc = (v: any) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]!));
+      const sar = (n: any) => (parseFloat(String(n)) || 0).toFixed(2);
+      const created = new Date(s.createdAt).toLocaleDateString('en-GB');
+      const payMethodLabel = (m: string) => ({
+        cash: 'Cash / نقدًا', bank_transfer: 'Bank Transfer / تحويل بنكي', other: 'Other / أخرى',
+      } as any)[m] || m;
+      const contribRows = contributions.map(c => `
+        <tr>
+          <td>${esc(c.taskName)}</td>
+          <td style="text-align:center">${c.phase}</td>
+          <td>${c.role === 'phase_lead' ? 'Phase Lead / قائد المرحلة' : 'Task Assignee / مكلف بالمهمة'}</td>
+          <td>${c.action}</td>
+          <td>${new Date(c.createdAt).toLocaleDateString('en-GB')}</td>
+        </tr>`).join('');
+      const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+        body { font-family: Arial, sans-serif; padding: 28px; font-size: 12px; color: #1a202c; }
+        h1 { color: #1a365d; margin: 0; font-size: 22px; }
+        h2 { color: #1a365d; font-size: 16px; margin: 18px 0 8px; }
+        .header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom: 3px solid #1a365d; padding-bottom: 12px; margin-bottom: 16px; }
+        .meta { color: #4a5568; font-size: 11px; }
+        table { width: 100%; border-collapse: collapse; margin: 8px 0 14px; font-size: 11px; }
+        th, td { border: 1px solid #cbd5e0; padding: 6px 8px; text-align: left; }
+        th { background: #1a365d; color: #fff; }
+        .totals { width: 50%; margin-left: auto; }
+        .totals td { font-weight: 600; }
+        .total-row { background: #e6fffa; color: #1a365d; font-size: 14px; }
+        .sig { margin-top: 36px; display:flex; justify-content:space-between; gap:24px; }
+        .sig div { flex:1; border-top:1px solid #cbd5e0; padding-top: 8px; text-align:center; font-size: 11px; color:#4a5568; }
+        .ar { direction: rtl; }
+        .footer { text-align:center; margin-top: 24px; color: #718096; font-size: 10px; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+      </style></head><body>
+        <div class="header">
+          <div>
+            <h1>${esc(company?.companyName || 'Company')}</h1>
+            ${company?.companyAddress ? `<div class="meta">${esc(company.companyAddress)}</div>` : ''}
+            ${company?.companyPhone ? `<div class="meta">Tel: ${esc(company.companyPhone)}</div>` : ''}
+            ${company?.companyEmail ? `<div class="meta">Email: ${esc(company.companyEmail)}</div>` : ''}
+            ${company?.companyVatNumber ? `<div class="meta">VAT: ${esc(company.companyVatNumber)}</div>` : ''}
+          </div>
+          <div style="text-align:right">
+            <h1>Settlement Voucher</h1>
+            <div class="ar" style="font-size: 16px; color:#1a365d;">سند تسوية</div>
+            <div class="meta">No / رقم: ${esc(s.id.slice(0,8).toUpperCase())}</div>
+            <div class="meta">Date / التاريخ: ${created}</div>
+            <div class="meta">Status: <strong>${esc(s.status)}</strong></div>
+          </div>
+        </div>
+
+        <h2>Payee / المستفيد</h2>
+        <table>
+          <tr><th style="width:30%">Name / الاسم</th><td>${esc(assigneeName)}</td></tr>
+          <tr><th>Type / النوع</th><td>${assigneeRoleLabel}</td></tr>
+          ${assigneePhone ? `<tr><th>Phone / الهاتف</th><td>${esc(assigneePhone)}</td></tr>` : ''}
+        </table>
+
+        ${project ? `
+        <h2>Project / المشروع</h2>
+        <table>
+          <tr><th style="width:30%">Project No / رقم المشروع</th><td>${esc(project.projectNumber)}</td></tr>
+          <tr><th>Name / الاسم</th><td>${esc(project.name)}</td></tr>
+          <tr><th>Client / العميل</th><td>${esc(project.clientName)}</td></tr>
+          <tr><th>Status</th><td>${esc(project.status)}</td></tr>
+        </table>` : ''}
+
+        ${contribRows ? `
+        <h2>Contributions / المساهمات</h2>
+        <table>
+          <thead><tr><th>Task / المهمة</th><th>Phase / المرحلة</th><th>Role / الدور</th><th>Action</th><th>Date</th></tr></thead>
+          <tbody>${contribRows}</tbody>
+        </table>` : ''}
+
+        <h2>Settlement / التسوية</h2>
+        <table class="totals">
+          <tr><td>Fee / الأتعاب</td><td style="text-align:right">${sar(s.fee)} SAR</td></tr>
+          <tr><td>VAT (15%) / ضريبة القيمة المضافة</td><td style="text-align:right">${sar(s.vatAmount)} SAR</td></tr>
+          <tr class="total-row"><td>Total / الإجمالي</td><td style="text-align:right">${sar(s.totalAmount)} SAR</td></tr>
+          <tr><td>Payment Method / طريقة الدفع</td><td style="text-align:right">${payMethodLabel(s.paymentMethod)}</td></tr>
+        </table>
+
+        ${s.notes ? `<h2>Notes / ملاحظات</h2><div style="white-space:pre-wrap; padding: 8px 0;">${esc(s.notes)}</div>` : ''}
+
+        <div class="sig">
+          <div>Payee Signature<br/>توقيع المستفيد</div>
+          <div>Authorized Signature<br/>التوقيع المعتمد</div>
+        </div>
+
+        <div class="footer">
+          ${esc(company?.companyName || 'Company')} — Settlement Voucher / سند تسوية — Generated ${new Date().toLocaleString('en-GB')}
+        </div>
+      </body></html>`;
+
+      const puppeteer = await import("puppeteer");
+      const { execSync } = await import("child_process");
+      const { existsSync } = await import("fs");
+      let chromiumPath: string | undefined = undefined;
+      try {
+        chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+        if (!chromiumPath || !existsSync(chromiumPath)) chromiumPath = undefined;
+      } catch {}
+      const browser = await puppeteer.default.launch({
+        headless: true,
+        executablePath: chromiumPath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'],
+      });
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      const pdf = await page.pdf({ format: 'A4', margin: { top: '15mm', right: '12mm', bottom: '15mm', left: '12mm' }, printBackground: true });
+      await browser.close();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="settlement-${s.id.slice(0,8)}.pdf"`);
+      res.send(Buffer.from(pdf));
+    } catch (error: any) {
+      console.error('[settlement-pdf]', error);
       res.status(500).json({ message: error.message });
     }
   });

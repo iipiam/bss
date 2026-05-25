@@ -1904,6 +1904,47 @@ export const insertProjectTaskSchema = createInsertSchema(projectTasks).omit({ i
 export type InsertProjectTask = z.infer<typeof insertProjectTaskSchema>;
 export type ProjectTask = typeof projectTasks.$inferSelect;
 
+// Assignment History (immutable ledger of who was assigned to what, when).
+// Written automatically whenever a project task's assignee changes, a project's
+// phase lead changes, or a task with an assignee moves to "completed".
+export const assignmentHistory = pgTable("assignment_history", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  assigneeType: text("assignee_type").notNull(), // 'employee' | 'contractor'
+  assigneeId: varchar("assignee_id").notNull(),
+  projectId: varchar("project_id").references(() => serviceProjects.id, { onDelete: "cascade" }).notNull(),
+  taskId: varchar("task_id"), // null for phase-lead rows
+  phase: integer("phase").notNull().default(1),
+  role: text("role").notNull(), // 'task_assignee' | 'phase_lead'
+  action: text("action").notNull(), // 'assigned' | 'unassigned' | 'completed'
+  taskName: text("task_name"), // snapshot for display
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertAssignmentHistorySchema = createInsertSchema(assignmentHistory).omit({ id: true, createdAt: true });
+export type InsertAssignmentHistory = z.infer<typeof insertAssignmentHistorySchema>;
+export type AssignmentHistory = typeof assignmentHistory.$inferSelect;
+
+// Contractor / employee settlement vouchers. Polymorphic via assigneeType.
+export const contractorSettlements = pgTable("contractor_settlements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  assigneeType: text("assignee_type").notNull(), // 'employee' | 'contractor'
+  assigneeId: varchar("assignee_id").notNull(),
+  projectId: varchar("project_id").references(() => serviceProjects.id, { onDelete: "set null" }),
+  fee: decimal("fee", { precision: 12, scale: 2 }).notNull(),
+  vatIncluded: boolean("vat_included").notNull().default(false),
+  vatAmount: decimal("vat_amount", { precision: 12, scale: 2 }).notNull().default("0"),
+  totalAmount: decimal("total_amount", { precision: 12, scale: 2 }).notNull(),
+  paymentMethod: text("payment_method").notNull().default("cash"), // cash | bank_transfer | other
+  notes: text("notes"),
+  status: text("status").notNull().default("draft"), // draft | sent
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertContractorSettlementSchema = createInsertSchema(contractorSettlements).omit({ id: true, createdAt: true, sentAt: true });
+export type InsertContractorSettlement = z.infer<typeof insertContractorSettlementSchema>;
+export type ContractorSettlement = typeof contractorSettlements.$inferSelect;
+
 // Client Requirements (one project has many)
 export const projectClientRequirements = pgTable("project_client_requirements", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
