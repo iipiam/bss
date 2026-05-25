@@ -2047,6 +2047,46 @@ export const insertProductTaskSchema = createInsertSchema(productTasks).omit({ i
 export type InsertProductTask = z.infer<typeof insertProductTaskSchema>;
 export type ProductTask = typeof productTasks.$inferSelect;
 
+// Product-level Client Requirements (mirror of project-level, scoped to a product)
+export const productClientRequirements = pgTable("product_client_requirements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  productId: varchar("product_id").references(() => serviceProducts.id, { onDelete: "cascade" }).notNull(),
+  title: text("title").notNull(),
+  description: text("description"),
+  priority: text("priority").notNull().default("medium"),
+  status: text("status").notNull().default("pending"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertProductClientRequirementSchema = createInsertSchema(productClientRequirements).omit({ id: true, createdAt: true });
+export type InsertProductClientRequirement = z.infer<typeof insertProductClientRequirementSchema>;
+export type ProductClientRequirement = typeof productClientRequirements.$inferSelect;
+
+// Product-level Meetings (mirror of project-level, scoped to a product)
+export const productMeetings = pgTable("product_meetings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  productId: varchar("product_id").references(() => serviceProducts.id, { onDelete: "cascade" }).notNull(),
+  title: text("title").notNull(),
+  scheduledAt: timestamp("scheduled_at").notNull(),
+  durationMinutes: integer("duration_minutes").notNull().default(30),
+  attendees: text("attendees"),
+  meetingLink: text("meeting_link"),
+  location: text("location"),
+  reminderMinutesBefore: integer("reminder_minutes_before").notNull().default(15),
+  status: text("status").notNull().default("scheduled"),
+  agenda: text("agenda"),
+  notes: text("notes"),
+  summary: text("summary"),
+  transcript: text("transcript"),
+  actionItems: jsonb("action_items").$type<Array<{ text: string; assignee?: string; dueDate?: string; done?: boolean }>>().default([]),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertProductMeetingSchema = createInsertSchema(productMeetings).omit({ id: true, createdAt: true });
+export type InsertProductMeeting = z.infer<typeof insertProductMeetingSchema>;
+export type ProductMeeting = typeof productMeetings.$inferSelect;
+
 // Project Items: cost-line items copied from an applied product
 export const projectItems = pgTable("project_items", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

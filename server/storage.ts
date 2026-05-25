@@ -214,6 +214,12 @@ import {
   type ProjectItem,
   type InsertProjectItem,
   projectItems,
+  type ProductClientRequirement,
+  type InsertProductClientRequirement,
+  productClientRequirements,
+  type ProductMeeting,
+  type InsertProductMeeting,
+  productMeetings,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, ne, and, gte, lte, lt, sql, or, isNull, isNotNull, desc, inArray } from "drizzle-orm";
@@ -681,6 +687,19 @@ export interface IStorage {
   createProjectMeeting(meeting: InsertProjectMeeting): Promise<ProjectMeeting>;
   updateProjectMeeting(id: string, restaurantId: string, data: Partial<InsertProjectMeeting>): Promise<ProjectMeeting | undefined>;
   deleteProjectMeeting(id: string, restaurantId: string): Promise<boolean>;
+
+  // Product Client Requirements
+  getProductClientRequirements(restaurantId: string, productId: string): Promise<ProductClientRequirement[]>;
+  createProductClientRequirement(req: InsertProductClientRequirement): Promise<ProductClientRequirement>;
+  updateProductClientRequirement(id: string, restaurantId: string, data: Partial<InsertProductClientRequirement>): Promise<ProductClientRequirement | undefined>;
+  deleteProductClientRequirement(id: string, restaurantId: string): Promise<boolean>;
+
+  // Product Meetings
+  getProductMeetings(restaurantId: string, productId: string): Promise<ProductMeeting[]>;
+  getProductMeeting(id: string, restaurantId: string): Promise<ProductMeeting | undefined>;
+  createProductMeeting(meeting: InsertProductMeeting): Promise<ProductMeeting>;
+  updateProductMeeting(id: string, restaurantId: string, data: Partial<InsertProductMeeting>): Promise<ProductMeeting | undefined>;
+  deleteProductMeeting(id: string, restaurantId: string): Promise<boolean>;
 
   // Influencer Profiles
   getInfluencerProfiles(restaurantId: string): Promise<InfluencerProfile[]>;
@@ -5891,6 +5910,55 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  // Product Client Requirements
+  async getProductClientRequirements(restaurantId: string, productId: string): Promise<ProductClientRequirement[]> {
+    return db.select().from(productClientRequirements)
+      .where(and(eq(productClientRequirements.restaurantId, restaurantId), eq(productClientRequirements.productId, productId)))
+      .orderBy(productClientRequirements.sortOrder, productClientRequirements.createdAt);
+  }
+  async createProductClientRequirement(req: InsertProductClientRequirement): Promise<ProductClientRequirement> {
+    const [result] = await db.insert(productClientRequirements).values(req).returning();
+    return result;
+  }
+  async updateProductClientRequirement(id: string, restaurantId: string, data: Partial<InsertProductClientRequirement>): Promise<ProductClientRequirement | undefined> {
+    const { restaurantId: _r, ...safe } = data as any;
+    const [result] = await db.update(productClientRequirements).set(safe)
+      .where(and(eq(productClientRequirements.id, id), eq(productClientRequirements.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async deleteProductClientRequirement(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(productClientRequirements)
+      .where(and(eq(productClientRequirements.id, id), eq(productClientRequirements.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
+  // Product Meetings
+  async getProductMeetings(restaurantId: string, productId: string): Promise<ProductMeeting[]> {
+    return db.select().from(productMeetings)
+      .where(and(eq(productMeetings.restaurantId, restaurantId), eq(productMeetings.productId, productId)))
+      .orderBy(desc(productMeetings.scheduledAt));
+  }
+  async getProductMeeting(id: string, restaurantId: string): Promise<ProductMeeting | undefined> {
+    const [result] = await db.select().from(productMeetings)
+      .where(and(eq(productMeetings.id, id), eq(productMeetings.restaurantId, restaurantId)));
+    return result;
+  }
+  async createProductMeeting(meeting: InsertProductMeeting): Promise<ProductMeeting> {
+    const [result] = await db.insert(productMeetings).values(meeting).returning();
+    return result;
+  }
+  async updateProductMeeting(id: string, restaurantId: string, data: Partial<InsertProductMeeting>): Promise<ProductMeeting | undefined> {
+    const { restaurantId: _r, ...safe } = data as any;
+    const [result] = await db.update(productMeetings).set(safe)
+      .where(and(eq(productMeetings.id, id), eq(productMeetings.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async deleteProductMeeting(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(productMeetings)
+      .where(and(eq(productMeetings.id, id), eq(productMeetings.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
   // Influencer Profiles
   async getInfluencerProfiles(restaurantId: string): Promise<InfluencerProfile[]> {
     return db.select().from(influencerProfiles)
@@ -6073,6 +6141,35 @@ export class DatabaseStorage implements IStorage {
           sourceProductId: productId,
           phase: (tk as any).phase ?? 1,
         }))).returning();
+      }
+
+      // Copy product-level Client Requirements into project-level
+      const pReqs = await tx.select().from(productClientRequirements)
+        .where(and(eq(productClientRequirements.productId, productId), eq(productClientRequirements.restaurantId, restaurantId)))
+        .orderBy(productClientRequirements.sortOrder, productClientRequirements.createdAt);
+      if (pReqs.length > 0) {
+        await tx.insert(projectClientRequirements).values(pReqs.map((r) => ({
+          restaurantId, projectId,
+          title: r.title, description: r.description,
+          priority: r.priority, status: r.status, sortOrder: r.sortOrder,
+        })));
+      }
+
+      // Copy product-level Meetings into project-level (reset status to scheduled)
+      const pMeets = await tx.select().from(productMeetings)
+        .where(and(eq(productMeetings.productId, productId), eq(productMeetings.restaurantId, restaurantId)))
+        .orderBy(desc(productMeetings.scheduledAt));
+      if (pMeets.length > 0) {
+        await tx.insert(projectMeetings).values(pMeets.map((m) => ({
+          restaurantId, projectId,
+          title: m.title, scheduledAt: m.scheduledAt,
+          durationMinutes: m.durationMinutes, attendees: m.attendees,
+          meetingLink: m.meetingLink, location: m.location,
+          reminderMinutesBefore: m.reminderMinutesBefore,
+          status: "scheduled", agenda: m.agenda, notes: m.notes,
+          summary: m.summary, transcript: m.transcript,
+          actionItems: m.actionItems ?? [],
+        })));
       }
 
       const allItems = await tx.select().from(projectItems).where(and(eq(projectItems.projectId, projectId), eq(projectItems.restaurantId, restaurantId)));
@@ -7023,6 +7120,43 @@ export const storage = new DatabaseStorage();
       )
     `);
     console.log('[Migration] Tables verified/created: project_client_requirements, project_meetings');
+
+    // BizFlow Manager: Product-level Client Requirements + Meetings
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS product_client_requirements (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        product_id VARCHAR(255) NOT NULL REFERENCES service_products(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        description TEXT,
+        priority TEXT NOT NULL DEFAULT 'medium',
+        status TEXT NOT NULL DEFAULT 'pending',
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS product_meetings (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        product_id VARCHAR(255) NOT NULL REFERENCES service_products(id) ON DELETE CASCADE,
+        title TEXT NOT NULL,
+        scheduled_at TIMESTAMP NOT NULL,
+        duration_minutes INTEGER NOT NULL DEFAULT 30,
+        attendees TEXT,
+        meeting_link TEXT,
+        location TEXT,
+        reminder_minutes_before INTEGER NOT NULL DEFAULT 15,
+        status TEXT NOT NULL DEFAULT 'scheduled',
+        agenda TEXT,
+        notes TEXT,
+        summary TEXT,
+        transcript TEXT,
+        action_items JSONB DEFAULT '[]',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    console.log('[Migration] Tables verified/created: product_client_requirements, product_meetings');
 
     // Marketing - Influencer Profiles (Fake Followers Detector)
     await pool.query(`

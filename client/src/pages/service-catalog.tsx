@@ -56,6 +56,14 @@ import {
   X,
   ListChecks,
   TrendingUp,
+  ClipboardList,
+  Video,
+  Calendar,
+  Users,
+  MapPin,
+  Link2,
+  CheckSquare,
+  Download,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -129,6 +137,25 @@ interface ServiceProductDetail extends ServiceProduct {
   tasks: Array<{ id: string; name: string; description: string | null; duration: number; sortOrder: number; phase?: number }>;
 }
 
+interface ProductRequirement {
+  id: string; productId: string; title: string; description: string | null;
+  priority: string; status: string; sortOrder: number; createdAt: string;
+}
+interface ProductActionItem { text: string; assignee?: string; dueDate?: string; done?: boolean }
+interface ProductMeetingRow {
+  id: string; productId: string; title: string; scheduledAt: string;
+  durationMinutes: number; attendees: string | null; meetingLink: string | null;
+  location: string | null; reminderMinutesBefore: number; status: string;
+  agenda: string | null; notes: string | null; summary: string | null;
+  transcript: string | null; actionItems: ProductActionItem[] | null; createdAt: string;
+}
+const emptyReq = { title: "", description: "", priority: "medium", status: "pending" };
+const emptyMeet = {
+  title: "", scheduledAt: "", durationMinutes: "30", attendees: "",
+  meetingLink: "", location: "", reminderMinutesBefore: "15",
+  status: "scheduled", agenda: "", notes: "", summary: "", transcript: "",
+};
+
 const getPricingMethodLabel = (method: string, t: any): string => {
   const labels: Record<string, string> = {
     per_piece: t.perPiece,
@@ -170,6 +197,16 @@ export default function ServiceCatalog() {
   const [productServices, setProductServices] = useState<ProductServiceDraft[]>([]);
   const [productTasks, setProductTasks] = useState<ProductTaskDraft[]>([]);
   const [productPhases, setProductPhases] = useState<number[]>([1]);
+  const [productEditorTab, setProductEditorTab] = useState<string>("details");
+  const [reqOpen, setReqOpen] = useState(false);
+  const [editReq, setEditReq] = useState<ProductRequirement | null>(null);
+  const [reqForm, setReqForm] = useState({ ...emptyReq });
+  const [meetOpen, setMeetOpen] = useState(false);
+  const [editMeet, setEditMeet] = useState<ProductMeetingRow | null>(null);
+  const [meetForm, setMeetForm] = useState({ ...emptyMeet });
+  const [meetActions, setMeetActions] = useState<ProductActionItem[]>([]);
+  const [delReqId, setDelReqId] = useState<string | null>(null);
+  const [delMeetId, setDelMeetId] = useState<string | null>(null);
   const { toast } = useToast();
   const { t } = useLanguage();
   const layout = useDeviceLayout();
@@ -201,6 +238,100 @@ export default function ServiceCatalog() {
     enabled: !!editingProductId,
   });
 
+  const { data: productRequirements = [] } = useQuery<ProductRequirement[]>({
+    queryKey: ["/api/product-client-requirements", editingProductId],
+    queryFn: async () => {
+      const res = await fetch(`/api/product-client-requirements?productId=${editingProductId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load requirements");
+      return res.json();
+    },
+    enabled: !!editingProductId,
+  });
+
+  const { data: productMeetingsList = [] } = useQuery<ProductMeetingRow[]>({
+    queryKey: ["/api/product-meetings", editingProductId],
+    queryFn: async () => {
+      const res = await fetch(`/api/product-meetings?productId=${editingProductId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to load meetings");
+      return res.json();
+    },
+    enabled: !!editingProductId,
+  });
+
+  const reqMut = useMutation({
+    mutationFn: async (payload: any) => {
+      const { _editId, ...rest } = payload;
+      if (_editId) return apiRequest("PATCH", `/api/product-client-requirements/${_editId}`, rest);
+      return apiRequest("POST", `/api/product-client-requirements`, rest);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/product-client-requirements", editingProductId] });
+      setReqOpen(false); setEditReq(null); setReqForm({ ...emptyReq });
+      toast({ title: t.saved || "Saved" });
+    },
+    onError: (e: any) => toast({ title: t.error || "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const delReqMut = useMutation({
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/product-client-requirements/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/product-client-requirements", editingProductId] });
+      setDelReqId(null);
+    },
+  });
+
+  const meetMut = useMutation({
+    mutationFn: async (payload: any) => {
+      const { _editId, ...rest } = payload;
+      if (_editId) return apiRequest("PATCH", `/api/product-meetings/${_editId}`, rest);
+      return apiRequest("POST", `/api/product-meetings`, rest);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/product-meetings", editingProductId] });
+      setMeetOpen(false); setEditMeet(null); setMeetForm({ ...emptyMeet }); setMeetActions([]);
+      toast({ title: t.saved || "Saved" });
+    },
+    onError: (e: any) => toast({ title: t.error || "Error", description: e.message, variant: "destructive" }),
+  });
+
+  const delMeetMut = useMutation({
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/product-meetings/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/product-meetings", editingProductId] });
+      setDelMeetId(null);
+    },
+  });
+
+  function openReqDialog(r: ProductRequirement | null) {
+    setEditReq(r);
+    setReqForm(r ? { title: r.title, description: r.description || "", priority: r.priority, status: r.status } : { ...emptyReq });
+    setReqOpen(true);
+  }
+  function openMeetDialog(m: ProductMeetingRow | null) {
+    setEditMeet(m);
+    if (m) {
+      const dt = new Date(m.scheduledAt);
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const local = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+      setMeetForm({
+        title: m.title, scheduledAt: local, durationMinutes: String(m.durationMinutes),
+        attendees: m.attendees || "", meetingLink: m.meetingLink || "", location: m.location || "",
+        reminderMinutesBefore: String(m.reminderMinutesBefore), status: m.status,
+        agenda: m.agenda || "", notes: m.notes || "", summary: m.summary || "", transcript: m.transcript || "",
+      });
+      setMeetActions(Array.isArray(m.actionItems) ? m.actionItems : []);
+    } else {
+      setMeetForm({ ...emptyMeet }); setMeetActions([]);
+    }
+    setMeetOpen(true);
+  }
+  const tr = (en: string, ar: string) => en;
+  const priorityLabel = (p: string) => (p === "high" ? (t.high || "High") : p === "low" ? (t.low || "Low") : (t.medium || "Medium"));
+  const statusLabel = (s: string) => ({
+    pending: t.pending || "Pending", in_progress: t.inProgress || "In Progress", done: t.done || "Done",
+    scheduled: t.scheduled || "Scheduled", completed: t.completed || "Completed", cancelled: t.cancelled || "Cancelled",
+  } as any)[s] || s;
+
   const resetProductForm = () => {
     setProductName("");
     setProductDescription("");
@@ -211,6 +342,9 @@ export default function ServiceCatalog() {
     setProductTasks([]);
     setProductPhases([1]);
     setEditingProductId(null);
+    setProductEditorTab("details");
+    setReqOpen(false); setEditReq(null); setReqForm({ ...emptyReq });
+    setMeetOpen(false); setEditMeet(null); setMeetForm({ ...emptyMeet }); setMeetActions([]);
   };
 
   const loadProductIntoForm = (p: ServiceProductDetail) => {
@@ -1060,7 +1194,22 @@ export default function ServiceCatalog() {
             <DialogTitle>{editingProductId ? (t.editProduct || "Edit Product") : (t.addProduct || "Add Product")}</DialogTitle>
             <DialogDescription>{t.serviceProductsDescription || "Bundle items, services, and tasks into reusable products."}</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <Tabs value={productEditorTab} onValueChange={setProductEditorTab} className="space-y-4">
+            <TabsList className="flex flex-wrap">
+              <TabsTrigger value="details" data-testid="tab-product-details">
+                <Package className="h-4 w-4 mr-2" />{t.details || "Details"}
+              </TabsTrigger>
+              <TabsTrigger value="requirements" data-testid="tab-product-requirements" disabled={!editingProductId}>
+                <ClipboardList className="h-4 w-4 mr-2" />{t.productRequirements || "Client Requirements"}
+                {editingProductId && productRequirements.length > 0 && <Badge variant="secondary" className="ml-2">{productRequirements.length}</Badge>}
+              </TabsTrigger>
+              <TabsTrigger value="meetings" data-testid="tab-product-meetings" disabled={!editingProductId}>
+                <Video className="h-4 w-4 mr-2" />{t.productMeetings || "Meetings"}
+                {editingProductId && productMeetingsList.length > 0 && <Badge variant="secondary" className="ml-2">{productMeetingsList.length}</Badge>}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="details" className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>{t.productName || "Product Name"}</Label>
@@ -1259,9 +1408,355 @@ export default function ServiceCatalog() {
                 {editingProductId ? t.save : t.add}
               </Button>
             </div>
+            </TabsContent>
+
+            {/* ============ REQUIREMENTS TAB ============ */}
+            <TabsContent value="requirements" className="space-y-4">
+              {!editingProductId ? (
+                <Card><CardContent className="py-8 text-center text-muted-foreground">
+                  <p>{t.saveProductFirst || "Save the product first to add client requirements."}</p>
+                </CardContent></Card>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <ClipboardList className="h-5 w-5 text-primary" />
+                      <h3 className="text-base font-semibold">{t.clientRequirements || "Client Requirements"}</h3>
+                      <Badge variant="secondary">{productRequirements.length}</Badge>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button variant="outline" size="sm" onClick={() => window.open(`/api/products/${editingProductId}/client-requirements/pdf`, "_blank")} data-testid="button-product-requirements-pdf">
+                        <Download className="h-4 w-4 mr-2" />{t.exportPdf || "Export PDF"}
+                      </Button>
+                      <Button size="sm" onClick={() => openReqDialog(null)} data-testid="button-add-product-requirement">
+                        <Plus className="h-4 w-4 mr-2" />{t.addRequirement || "Add Requirement"}
+                      </Button>
+                    </div>
+                  </div>
+                  {productRequirements.length === 0 ? (
+                    <Card><CardContent className="py-12 text-center text-muted-foreground">
+                      <ClipboardList className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                      <p>{t.noRequirements || "No client requirements recorded yet."}</p>
+                    </CardContent></Card>
+                  ) : (
+                    <div className="grid gap-3">
+                      {productRequirements.map((r) => (
+                        <Card key={r.id} data-testid={`card-product-requirement-${r.id}`}>
+                          <CardContent className="pt-4">
+                            <div className="flex items-start justify-between gap-3 flex-wrap">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap mb-1">
+                                  <span className="font-semibold" data-testid={`text-product-req-title-${r.id}`}>{r.title}</span>
+                                  <Badge variant={r.priority === "high" ? "destructive" : r.priority === "low" ? "secondary" : "default"}>{priorityLabel(r.priority)}</Badge>
+                                  <Badge variant={r.status === "done" ? "default" : r.status === "in_progress" ? "secondary" : "outline"}>{statusLabel(r.status)}</Badge>
+                                </div>
+                                {r.description && <p className="text-sm text-muted-foreground whitespace-pre-wrap">{r.description}</p>}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Button size="icon" variant="ghost" onClick={() => openReqDialog(r)} data-testid={`button-edit-product-req-${r.id}`}><Edit className="h-4 w-4" /></Button>
+                                <Button size="icon" variant="ghost" onClick={() => setDelReqId(r.id)} data-testid={`button-delete-product-req-${r.id}`}><Trash2 className="h-4 w-4" /></Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </TabsContent>
+
+            {/* ============ MEETINGS TAB ============ */}
+            <TabsContent value="meetings" className="space-y-4">
+              {!editingProductId ? (
+                <Card><CardContent className="py-8 text-center text-muted-foreground">
+                  <p>{t.saveProductFirst || "Save the product first to schedule meetings."}</p>
+                </CardContent></Card>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <Video className="h-5 w-5 text-primary" />
+                      <h3 className="text-base font-semibold">{t.meetings || "Meetings"}</h3>
+                      <Badge variant="secondary">{productMeetingsList.length}</Badge>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Button variant="outline" size="sm" onClick={() => window.open(`/api/products/${editingProductId}/meetings/pdf`, "_blank")} data-testid="button-product-meetings-pdf">
+                        <Download className="h-4 w-4 mr-2" />{t.exportPdf || "Export PDF"}
+                      </Button>
+                      <Button size="sm" onClick={() => openMeetDialog(null)} data-testid="button-add-product-meeting">
+                        <Plus className="h-4 w-4 mr-2" />{t.scheduleMeeting || "Schedule Meeting"}
+                      </Button>
+                    </div>
+                  </div>
+                  {productMeetingsList.length === 0 ? (
+                    <Card><CardContent className="py-12 text-center text-muted-foreground">
+                      <Video className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                      <p>{t.noMeetings || "No meetings scheduled yet."}</p>
+                    </CardContent></Card>
+                  ) : (
+                    <div className="grid gap-3">
+                      {productMeetingsList.map((m) => {
+                        const dt = new Date(m.scheduledAt);
+                        const now = new Date();
+                        const isPast = dt.getTime() < now.getTime();
+                        const isUpcoming = !isPast && dt.getTime() - now.getTime() < 24 * 3600 * 1000;
+                        const remindAt = new Date(dt.getTime() - m.reminderMinutesBefore * 60000);
+                        const actionItems = Array.isArray(m.actionItems) ? m.actionItems : [];
+                        return (
+                          <Card key={m.id} data-testid={`card-product-meeting-${m.id}`}>
+                            <CardContent className="pt-4">
+                              <div className="flex items-start justify-between gap-3 flex-wrap mb-3">
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                                    <span className="font-semibold" data-testid={`text-product-meeting-title-${m.id}`}>{m.title}</span>
+                                    <Badge variant={m.status === "completed" ? "default" : m.status === "cancelled" ? "destructive" : isUpcoming ? "secondary" : "outline"}>{statusLabel(m.status)}</Badge>
+                                    {isUpcoming && <Badge variant="default">{t.upcoming || "Upcoming"}</Badge>}
+                                  </div>
+                                  <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mt-2">
+                                    <span className="flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />{format(dt, "PPp")}</span>
+                                    <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{m.durationMinutes} min</span>
+                                    {m.attendees && <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{m.attendees}</span>}
+                                    {m.meetingLink && <a href={m.meetingLink} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary hover:underline"><Link2 className="h-3.5 w-3.5" />{t.join || "Join"}</a>}
+                                    {m.location && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" />{m.location}</span>}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    {t.reminder || "Reminder"}: {format(remindAt, "PPp")} ({m.reminderMinutesBefore} {t.minBefore || "min before"})
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Button size="icon" variant="ghost" onClick={() => window.open(`/api/product-meetings/${m.id}/pdf`, "_blank")} data-testid={`button-product-meeting-pdf-${m.id}`}><Download className="h-4 w-4" /></Button>
+                                  <Button size="icon" variant="ghost" onClick={() => openMeetDialog(m)} data-testid={`button-edit-product-meeting-${m.id}`}><Edit className="h-4 w-4" /></Button>
+                                  <Button size="icon" variant="ghost" onClick={() => setDelMeetId(m.id)} data-testid={`button-delete-product-meeting-${m.id}`}><Trash2 className="h-4 w-4" /></Button>
+                                </div>
+                              </div>
+                              {m.agenda && (
+                                <div className="text-sm mt-2"><span className="font-medium">{t.agenda || "Agenda"}: </span><span className="whitespace-pre-wrap text-muted-foreground">{m.agenda}</span></div>
+                              )}
+                              {m.summary && (
+                                <div className="text-sm mt-2"><span className="font-medium">{t.summary || "Summary"}: </span><span className="whitespace-pre-wrap text-muted-foreground">{m.summary}</span></div>
+                              )}
+                              {actionItems.length > 0 && (
+                                <div className="mt-3 border-t pt-3">
+                                  <div className="text-sm font-medium mb-2">{t.actionItems || "Action Items"} ({actionItems.filter(a => a.done).length}/{actionItems.length})</div>
+                                  <div className="space-y-1">
+                                    {actionItems.map((a, i) => (
+                                      <div key={i} className="flex items-center gap-2 text-sm" data-testid={`product-action-${m.id}-${i}`}>
+                                        {a.done ? <CheckSquare className="h-3.5 w-3.5 text-primary" /> : <span className="inline-block w-3.5 h-3.5 border rounded-sm" />}
+                                        <span className={a.done ? "line-through text-muted-foreground" : ""}>{a.text}</span>
+                                        {a.assignee && <Badge variant="outline" className="text-xs">{a.assignee}</Badge>}
+                                        {a.dueDate && <span className="text-xs text-muted-foreground">{format(new Date(a.dueDate), "PP")}</span>}
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* ============ PRODUCT REQUIREMENT DIALOG ============ */}
+      <Dialog open={reqOpen} onOpenChange={(o) => { setReqOpen(o); if (!o) { setEditReq(null); setReqForm({ ...emptyReq }); } }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{editReq ? (t.editRequirement || "Edit Requirement") : (t.addRequirement || "Add Requirement")}</DialogTitle>
+            <DialogDescription>{t.requirementDesc || "Capture what the client needs."}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>{t.title || "Title"}</Label>
+              <Input value={reqForm.title} onChange={(e) => setReqForm({ ...reqForm, title: e.target.value })} data-testid="input-product-req-title" />
+            </div>
+            <div>
+              <Label>{t.description || "Description"}</Label>
+              <Textarea value={reqForm.description} onChange={(e) => setReqForm({ ...reqForm, description: e.target.value })} rows={3} data-testid="input-product-req-description" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t.priority || "Priority"}</Label>
+                <Select value={reqForm.priority} onValueChange={(v) => setReqForm({ ...reqForm, priority: v })}>
+                  <SelectTrigger data-testid="select-product-req-priority"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">{t.low || "Low"}</SelectItem>
+                    <SelectItem value="medium">{t.medium || "Medium"}</SelectItem>
+                    <SelectItem value="high">{t.high || "High"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>{t.status || "Status"}</Label>
+                <Select value={reqForm.status} onValueChange={(v) => setReqForm({ ...reqForm, status: v })}>
+                  <SelectTrigger data-testid="select-product-req-status"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">{t.pending || "Pending"}</SelectItem>
+                    <SelectItem value="in_progress">{t.inProgress || "In Progress"}</SelectItem>
+                    <SelectItem value="done">{t.done || "Done"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setReqOpen(false)} data-testid="button-cancel-product-req">{t.cancel || "Cancel"}</Button>
+              <Button onClick={() => {
+                if (!reqForm.title.trim()) { toast({ title: t.error || "Error", description: t.titleRequired || "Title is required", variant: "destructive" }); return; }
+                reqMut.mutate({ ...reqForm, productId: editingProductId, _editId: editReq?.id });
+              }} disabled={reqMut.isPending} data-testid="button-save-product-req">{reqMut.isPending ? (t.saving || "Saving...") : (t.save || "Save")}</Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ============ PRODUCT MEETING DIALOG ============ */}
+      <Dialog open={meetOpen} onOpenChange={(o) => { setMeetOpen(o); if (!o) { setEditMeet(null); setMeetForm({ ...emptyMeet }); setMeetActions([]); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editMeet ? (t.editMeeting || "Edit Meeting") : (t.scheduleMeeting || "Schedule Meeting")}</DialogTitle>
+            <DialogDescription>{t.meetingDesc || "Plan the meeting, capture minutes, and assign follow-ups."}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div>
+              <Label>{t.title || "Title"}</Label>
+              <Input value={meetForm.title} onChange={(e) => setMeetForm({ ...meetForm, title: e.target.value })} data-testid="input-product-meet-title" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t.dateTime || "Date & Time"}</Label>
+                <Input type="datetime-local" value={meetForm.scheduledAt} onChange={(e) => setMeetForm({ ...meetForm, scheduledAt: e.target.value })} data-testid="input-product-meet-datetime" />
+              </div>
+              <div>
+                <Label>{t.durationMin || "Duration (min)"}</Label>
+                <Input type="number" min="5" value={meetForm.durationMinutes} onChange={(e) => setMeetForm({ ...meetForm, durationMinutes: e.target.value })} data-testid="input-product-meet-duration" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t.attendees || "Attendees"}</Label>
+                <Input value={meetForm.attendees} onChange={(e) => setMeetForm({ ...meetForm, attendees: e.target.value })} placeholder="Ahmed, Sara, Client" data-testid="input-product-meet-attendees" />
+              </div>
+              <div>
+                <Label>{t.status || "Status"}</Label>
+                <Select value={meetForm.status} onValueChange={(v) => setMeetForm({ ...meetForm, status: v })}>
+                  <SelectTrigger data-testid="select-product-meet-status"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="scheduled">{t.scheduled || "Scheduled"}</SelectItem>
+                    <SelectItem value="completed">{t.completed || "Completed"}</SelectItem>
+                    <SelectItem value="cancelled">{t.cancelled || "Cancelled"}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>{t.meetingLink || "Meeting Link"}</Label>
+                <Input value={meetForm.meetingLink} onChange={(e) => setMeetForm({ ...meetForm, meetingLink: e.target.value })} placeholder="https://..." data-testid="input-product-meet-link" />
+              </div>
+              <div>
+                <Label>{t.location || "Location"}</Label>
+                <Input value={meetForm.location} onChange={(e) => setMeetForm({ ...meetForm, location: e.target.value })} data-testid="input-product-meet-location" />
+              </div>
+            </div>
+            <div>
+              <Label>{t.reminderMinBefore || "Reminder (min before)"}</Label>
+              <Input type="number" min="0" value={meetForm.reminderMinutesBefore} onChange={(e) => setMeetForm({ ...meetForm, reminderMinutesBefore: e.target.value })} data-testid="input-product-meet-reminder" />
+            </div>
+            <div>
+              <Label>{t.agenda || "Agenda"}</Label>
+              <Textarea value={meetForm.agenda} onChange={(e) => setMeetForm({ ...meetForm, agenda: e.target.value })} rows={3} data-testid="input-product-meet-agenda" />
+            </div>
+            <div>
+              <Label>{t.notes || "Notes / Minutes"}</Label>
+              <Textarea value={meetForm.notes} onChange={(e) => setMeetForm({ ...meetForm, notes: e.target.value })} rows={3} data-testid="input-product-meet-notes" />
+            </div>
+            <div>
+              <Label>{t.summary || "Summary"}</Label>
+              <Textarea value={meetForm.summary} onChange={(e) => setMeetForm({ ...meetForm, summary: e.target.value })} rows={2} data-testid="input-product-meet-summary" />
+            </div>
+            <div>
+              <Label>{t.transcript || "Transcript"}</Label>
+              <Textarea value={meetForm.transcript} onChange={(e) => setMeetForm({ ...meetForm, transcript: e.target.value })} rows={3} placeholder={t.transcriptPlaceholder || "Paste full transcript here..."} data-testid="input-product-meet-transcript" />
+            </div>
+            <div className="border-t pt-3">
+              <div className="flex items-center justify-between mb-2">
+                <Label>{t.actionItems || "Action Items"}</Label>
+                <Button size="sm" variant="outline" onClick={() => setMeetActions([...meetActions, { text: "", assignee: "", dueDate: "", done: false }])} data-testid="button-add-product-action">
+                  <Plus className="h-3.5 w-3.5 mr-1" />{t.addAction || "Add"}
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {meetActions.map((a, i) => (
+                  <div key={i} className="grid grid-cols-12 gap-2 items-center" data-testid={`row-product-action-${i}`}>
+                    <input type="checkbox" checked={!!a.done} onChange={(e) => { const n = [...meetActions]; n[i] = { ...a, done: e.target.checked }; setMeetActions(n); }} className="col-span-1" />
+                    <Input placeholder={t.actionItem || "Action item"} value={a.text} onChange={(e) => { const n = [...meetActions]; n[i] = { ...a, text: e.target.value }; setMeetActions(n); }} className="col-span-5" data-testid={`input-product-action-text-${i}`} />
+                    <Input placeholder={t.assignee || "Assignee"} value={a.assignee || ""} onChange={(e) => { const n = [...meetActions]; n[i] = { ...a, assignee: e.target.value }; setMeetActions(n); }} className="col-span-3" data-testid={`input-product-action-assignee-${i}`} />
+                    <Input type="date" value={a.dueDate || ""} onChange={(e) => { const n = [...meetActions]; n[i] = { ...a, dueDate: e.target.value }; setMeetActions(n); }} className="col-span-2" data-testid={`input-product-action-due-${i}`} />
+                    <Button size="icon" variant="ghost" onClick={() => setMeetActions(meetActions.filter((_, idx) => idx !== i))} className="col-span-1" data-testid={`button-remove-product-action-${i}`}><Trash2 className="h-4 w-4" /></Button>
+                  </div>
+                ))}
+                {meetActions.length === 0 && <p className="text-xs text-muted-foreground text-center py-2">{t.noActionItems || "No action items yet."}</p>}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setMeetOpen(false)} data-testid="button-cancel-product-meet">{t.cancel || "Cancel"}</Button>
+              <Button onClick={() => {
+                if (!meetForm.title.trim()) { toast({ title: t.error || "Error", description: t.titleRequired || "Title is required", variant: "destructive" }); return; }
+                if (!meetForm.scheduledAt) { toast({ title: t.error || "Error", description: t.dateRequired || "Date is required", variant: "destructive" }); return; }
+                meetMut.mutate({
+                  productId: editingProductId,
+                  title: meetForm.title,
+                  scheduledAt: new Date(meetForm.scheduledAt).toISOString(),
+                  durationMinutes: parseInt(meetForm.durationMinutes || "30", 10),
+                  attendees: meetForm.attendees || null,
+                  meetingLink: meetForm.meetingLink || null,
+                  location: meetForm.location || null,
+                  reminderMinutesBefore: parseInt(meetForm.reminderMinutesBefore || "15", 10),
+                  status: meetForm.status,
+                  agenda: meetForm.agenda || null,
+                  notes: meetForm.notes || null,
+                  summary: meetForm.summary || null,
+                  transcript: meetForm.transcript || null,
+                  actionItems: meetActions,
+                  _editId: editMeet?.id,
+                });
+              }} disabled={meetMut.isPending} data-testid="button-save-product-meet">{meetMut.isPending ? (t.saving || "Saving...") : (t.save || "Save")}</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!delReqId} onOpenChange={(o) => !o && setDelReqId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.confirmDelete || "Confirm delete"}</AlertDialogTitle>
+            <AlertDialogDescription>{t.confirmDeleteRequirement || "Delete this requirement?"}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete-product-req">{t.cancel || "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => delReqId && delReqMut.mutate(delReqId)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" data-testid="button-confirm-delete-product-req">{t.delete || "Delete"}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!delMeetId} onOpenChange={(o) => !o && setDelMeetId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t.confirmDelete || "Confirm delete"}</AlertDialogTitle>
+            <AlertDialogDescription>{t.confirmDeleteMeeting || "Delete this meeting?"}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete-product-meet">{t.cancel || "Cancel"}</AlertDialogCancel>
+            <AlertDialogAction onClick={() => delMeetId && delMeetMut.mutate(delMeetId)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90" data-testid="button-confirm-delete-product-meet">{t.delete || "Delete"}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog open={!!deletingProduct} onOpenChange={(o) => !o && setDeletingProduct(null)}>
         <AlertDialogContent>

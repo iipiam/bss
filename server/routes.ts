@@ -16834,6 +16834,171 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error: any) { res.status(500).json({ message: error.message }); }
   });
 
+  // ==================== PRODUCT CLIENT REQUIREMENTS ====================
+  app.get("/api/product-client-requirements", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const productId = req.query.productId as string;
+      if (!productId) return res.status(400).json({ message: "productId required" });
+      const rows = await storage.getProductClientRequirements(restaurantId, productId);
+      res.json(rows);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+  app.post("/api/product-client-requirements", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      if (!req.body?.productId) return res.status(400).json({ message: "productId required" });
+      const product = await storage.getServiceProduct(req.body.productId, restaurantId);
+      if (!product) return res.status(404).json({ message: "Product not found" });
+      const row = await storage.createProductClientRequirement({ ...req.body, restaurantId });
+      res.status(201).json(row);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+  app.patch("/api/product-client-requirements/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const row = await storage.updateProductClientRequirement(req.params.id, restaurantId, req.body);
+      if (!row) return res.status(404).json({ message: "Not found" });
+      res.json(row);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+  app.delete("/api/product-client-requirements/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const ok = await storage.deleteProductClientRequirement(req.params.id, restaurantId);
+      if (!ok) return res.status(404).json({ message: "Not found" });
+      res.json({ success: true });
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+
+  // ==================== PRODUCT MEETINGS ====================
+  app.get("/api/product-meetings", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const productId = req.query.productId as string;
+      if (!productId) return res.status(400).json({ message: "productId required" });
+      const rows = await storage.getProductMeetings(restaurantId, productId);
+      res.json(rows);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+  app.post("/api/product-meetings", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      if (!req.body?.productId) return res.status(400).json({ message: "productId required" });
+      const product = await storage.getServiceProduct(req.body.productId, restaurantId);
+      if (!product) return res.status(404).json({ message: "Product not found" });
+      const data: any = { ...req.body, restaurantId };
+      if (data.scheduledAt) data.scheduledAt = new Date(data.scheduledAt);
+      const row = await storage.createProductMeeting(data);
+      res.status(201).json(row);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+  app.patch("/api/product-meetings/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const data: any = { ...req.body };
+      if (data.scheduledAt) data.scheduledAt = new Date(data.scheduledAt);
+      const row = await storage.updateProductMeeting(req.params.id, restaurantId, data);
+      if (!row) return res.status(404).json({ message: "Not found" });
+      res.json(row);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+  app.delete("/api/product-meetings/:id", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const ok = await storage.deleteProductMeeting(req.params.id, restaurantId);
+      if (!ok) return res.status(404).json({ message: "Not found" });
+      res.json({ success: true });
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+
+  // ==================== PRODUCT PDF EXPORTS: requirements & meetings ====================
+  app.get("/api/products/:productId/client-requirements/pdf", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const product = await storage.getServiceProduct(req.params.productId, restaurantId);
+      if (!product) return res.status(404).json({ message: "Product not found" });
+      const rows = await storage.getProductClientRequirements(restaurantId, req.params.productId);
+      const body = `
+        <h1>Client Requirements</h1>
+        <div class="meta">Product: <strong>${esc(product.name)}</strong>${product.category ? ` — ${esc(product.category)}` : ''}</div>
+        ${rows.length === 0 ? '<p>No requirements recorded.</p>' : `
+        <table><thead><tr><th style="width:30px">#</th><th>Requirement</th><th>Details</th><th style="width:80px">Priority</th><th style="width:90px">Status</th></tr></thead><tbody>
+        ${rows.map((r, i) => `<tr>
+          <td>${i + 1}</td>
+          <td><strong>${esc(r.title)}</strong></td>
+          <td>${esc(r.description || '-')}</td>
+          <td><span class="badge b-${esc(r.priority)}">${esc(r.priority)}</span></td>
+          <td><span class="badge b-${esc(r.status)}">${esc(r.status)}</span></td>
+        </tr>`).join('')}
+        </tbody></table>`}
+      `;
+      const browser = await launchChromium();
+      const page = await browser.newPage();
+      await page.setContent(pdfShell(`Client Requirements - ${product.name}`, body), { waitUntil: 'networkidle0' });
+      const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' } });
+      await browser.close();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="product-requirements-${product.id}.pdf"`);
+      res.end(pdf);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+
+  app.get("/api/products/:productId/meetings/pdf", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const product = await storage.getServiceProduct(req.params.productId, restaurantId);
+      if (!product) return res.status(404).json({ message: "Product not found" });
+      const rows = await storage.getProductMeetings(restaurantId, req.params.productId);
+      const body = `
+        <h1>Product Meetings</h1>
+        <div class="meta">Product: <strong>${esc(product.name)}</strong>${product.category ? ` — ${esc(product.category)}` : ''} — ${rows.length} meeting(s)</div>
+        ${rows.length === 0 ? '<p>No meetings recorded.</p>' : rows.map(meetingHtml).join('')}
+      `;
+      const browser = await launchChromium();
+      const page = await browser.newPage();
+      await page.setContent(pdfShell(`Meetings - ${product.name}`, body), { waitUntil: 'networkidle0' });
+      const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' } });
+      await browser.close();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="product-meetings-${product.id}.pdf"`);
+      res.end(pdf);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+
+  app.get("/api/product-meetings/:id/pdf", requireAuth, async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const m = await storage.getProductMeeting(req.params.id, restaurantId);
+      if (!m) return res.status(404).json({ message: "Meeting not found" });
+      const product = await storage.getServiceProduct(m.productId, restaurantId);
+      const body = `
+        <h1>Meeting Minutes</h1>
+        <div class="meta">Product: <strong>${esc(product?.name || '')}</strong>${product?.category ? ` — ${esc(product.category)}` : ''}</div>
+        ${meetingHtml(m)}
+      `;
+      const browser = await launchChromium();
+      const page = await browser.newPage();
+      await page.setContent(pdfShell(`Meeting - ${m.title}`, body), { waitUntil: 'networkidle0' });
+      const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' } });
+      await browser.close();
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="product-meeting-${m.id}.pdf"`);
+      res.end(pdf);
+    } catch (error: any) { res.status(500).json({ message: error.message }); }
+  });
+
   // ==================== CPM ALGORITHM ====================
   app.post("/api/project-tasks/calculate-cpm", requireAuth, async (req, res) => {
     try {

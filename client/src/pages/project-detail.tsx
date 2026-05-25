@@ -325,6 +325,8 @@ export default function ProjectDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/project-services", projectId] });
       queryClient.invalidateQueries({ queryKey: ["/api/project-tasks", projectId] });
       queryClient.invalidateQueries({ queryKey: ["/api/service-projects", projectId, "items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-client-requirements", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-meetings", projectId] });
       setApplyProductOpen(false);
       setSelectedProductId("");
       toast({ title: t.productApplied || "Product applied", description: t.productAppliedDesc || "Services and tasks were added to the project." });
