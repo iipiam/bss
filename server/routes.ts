@@ -16553,10 +16553,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // ==================== PROJECT TASKS ====================
-  app.get("/api/project-tasks", requireAuth, async (req, res) => {
+  app.get("/api/project-tasks", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
       const projectId = req.query.projectId as string;
       const tasks = projectId
         ? await storage.getProjectTasks(restaurantId, projectId)
@@ -16567,10 +16566,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.post("/api/project-tasks", requireAuth, async (req, res) => {
+  app.post("/api/project-tasks", requireAuth, requireRestaurant, requireAction('projects', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
       const data = { ...req.body, restaurantId };
       if (data.startDate) data.startDate = new Date(data.startDate);
       if (data.endDate) data.endDate = new Date(data.endDate);
@@ -16581,10 +16579,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.patch("/api/project-tasks/:id", requireAuth, async (req, res) => {
+  app.patch("/api/project-tasks/:id", requireAuth, requireRestaurant, requireAction('projects', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
       const data = { ...req.body };
       if (data.startDate) data.startDate = new Date(data.startDate);
       if (data.endDate) data.endDate = new Date(data.endDate);
@@ -16596,10 +16593,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.delete("/api/project-tasks/:id", requireAuth, async (req, res) => {
+  app.delete("/api/project-tasks/:id", requireAuth, requireRestaurant, requireAction('projects', 'delete'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
-      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
       const deleted = await storage.deleteProjectTask(req.params.id, restaurantId);
       if (!deleted) return res.status(404).json({ message: "Project task not found" });
       res.json({ success: true });
@@ -17023,7 +17019,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // ==================== CPM ALGORITHM ====================
-  app.post("/api/project-tasks/calculate-cpm", requireAuth, async (req, res) => {
+  app.post("/api/project-tasks/calculate-cpm", requireAuth, requireRestaurant, requireAction('projects', 'edit'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
       if (!restaurantId) return res.status(403).json({ message: "Access denied" });
