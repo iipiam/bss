@@ -2315,3 +2315,256 @@ export const marketingBroadcastTemplates = pgTable("marketing_broadcast_template
 export const insertMarketingBroadcastTemplateSchema = createInsertSchema(marketingBroadcastTemplates).omit({ id: true, createdAt: true });
 export type InsertMarketingBroadcastTemplate = z.infer<typeof insertMarketingBroadcastTemplateSchema>;
 export type MarketingBroadcastTemplate = typeof marketingBroadcastTemplates.$inferSelect;
+
+// ============================================================================
+// PROPERTY MANAGEMENT (Real Estate Brokerage) - MULTI-TENANT
+// All money fields stored as integer halalas (SAR * 100) to avoid float errors.
+// ============================================================================
+
+export const properties = pgTable("properties", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // residential|commercial|industrial|land|villa|apartment|office|warehouse|mall|compound|hotel|showroom|clinic|other
+  address: text("address"),
+  city: text("city"),
+  district: text("district"),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  areaSqm: decimal("area_sqm", { precision: 12, scale: 2 }),
+  floors: integer("floors"),
+  yearBuilt: integer("year_built"),
+  purchasePrice: integer("purchase_price").default(0),
+  currentValue: integer("current_value").default(0),
+  status: text("status").notNull().default("available"), // available|rented|for_sale|under_maintenance|inactive
+  ownerName: text("owner_name"),
+  notes: text("notes"),
+  documents: jsonb("documents").default(sql`'[]'::jsonb`),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [index("idx_properties_restaurant").on(table.restaurantId)]);
+export const insertPropertySchema = createInsertSchema(properties).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertProperty = z.infer<typeof insertPropertySchema>;
+export type Property = typeof properties.$inferSelect;
+
+export const propertyUnits = pgTable("property_units", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  propertyId: varchar("property_id").references(() => properties.id).notNull(),
+  unitNumber: text("unit_number").notNull(),
+  type: text("type"),
+  floor: integer("floor"),
+  areaSqm: decimal("area_sqm", { precision: 12, scale: 2 }),
+  bedrooms: integer("bedrooms"),
+  bathrooms: integer("bathrooms"),
+  parkingSpaces: integer("parking_spaces"),
+  monthlyRent: integer("monthly_rent").notNull().default(0),
+  status: text("status").notNull().default("available"), // available|rented|under_maintenance|inactive
+  amenities: jsonb("amenities").default(sql`'[]'::jsonb`),
+  images: jsonb("images").default(sql`'[]'::jsonb`),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_property_units_restaurant").on(table.restaurantId), index("idx_property_units_property").on(table.propertyId)]);
+export const insertPropertyUnitSchema = createInsertSchema(propertyUnits).omit({ id: true, createdAt: true });
+export type InsertPropertyUnit = z.infer<typeof insertPropertyUnitSchema>;
+export type PropertyUnit = typeof propertyUnits.$inferSelect;
+
+export const propertyTenants = pgTable("property_tenants", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  fullName: text("full_name").notNull(),
+  idNumber: text("id_number"),
+  idType: text("id_type"), // national_id|iqama|passport
+  phone: text("phone"),
+  email: text("email"),
+  nationality: text("nationality"),
+  emergencyContact: jsonb("emergency_contact"),
+  companyName: text("company_name"),
+  crNumber: text("cr_number"),
+  documents: jsonb("documents").default(sql`'[]'::jsonb`),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_property_tenants_restaurant").on(table.restaurantId)]);
+export const insertPropertyTenantSchema = createInsertSchema(propertyTenants).omit({ id: true, createdAt: true });
+export type InsertPropertyTenant = z.infer<typeof insertPropertyTenantSchema>;
+export type PropertyTenant = typeof propertyTenants.$inferSelect;
+
+export const rentalContracts = pgTable("rental_contracts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  unitId: varchar("unit_id").references(() => propertyUnits.id).notNull(),
+  tenantId: varchar("tenant_id").references(() => propertyTenants.id).notNull(),
+  contractNumber: text("contract_number"),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
+  durationMonths: integer("duration_months").notNull(),
+  monthlyRent: integer("monthly_rent").notNull(),
+  totalValue: integer("total_value").notNull(),
+  securityDeposit: integer("security_deposit").notNull().default(0),
+  paymentFrequency: text("payment_frequency").notNull().default("monthly"), // monthly|quarterly|biannual|annual
+  paymentDay: integer("payment_day").notNull().default(1),
+  vatRate: integer("vat_rate").notNull().default(15), // percent
+  status: text("status").notNull().default("draft"), // draft|active|expired|terminated|renewed
+  autoRenew: boolean("auto_renew").notNull().default(false),
+  renewalNoticeDays: integer("renewal_notice_days").notNull().default(60),
+  terms: text("terms"),
+  documents: jsonb("documents").default(sql`'[]'::jsonb`),
+  signedDate: date("signed_date"),
+  terminatedDate: date("terminated_date"),
+  terminationReason: text("termination_reason"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_rental_contracts_restaurant").on(table.restaurantId), index("idx_rental_contracts_unit").on(table.unitId), index("idx_rental_contracts_tenant").on(table.tenantId)]);
+export const insertRentalContractSchema = createInsertSchema(rentalContracts).omit({ id: true, createdAt: true, contractNumber: true });
+export type InsertRentalContract = z.infer<typeof insertRentalContractSchema>;
+export type RentalContract = typeof rentalContracts.$inferSelect;
+
+export const rentalInvoices = pgTable("rental_invoices", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  contractId: varchar("contract_id").references(() => rentalContracts.id).notNull(),
+  unitId: varchar("unit_id").references(() => propertyUnits.id).notNull(),
+  tenantId: varchar("tenant_id").references(() => propertyTenants.id).notNull(),
+  invoiceNumber: text("invoice_number").notNull(),
+  type: text("type").notNull().default("rent"), // rent|deposit|maintenance|utilities|penalty|other
+  amount: integer("amount").notNull(),
+  taxAmount: integer("tax_amount").notNull().default(0),
+  totalAmount: integer("total_amount").notNull(),
+  amountPaid: integer("amount_paid").notNull().default(0),
+  dueDate: date("due_date").notNull(),
+  issueDate: date("issue_date").notNull(),
+  status: text("status").notNull().default("pending"), // pending|paid|partial|overdue|cancelled
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_rental_invoices_restaurant").on(table.restaurantId), index("idx_rental_invoices_contract").on(table.contractId), index("idx_rental_invoices_status").on(table.status)]);
+export const insertRentalInvoiceSchema = createInsertSchema(rentalInvoices).omit({ id: true, createdAt: true });
+export type InsertRentalInvoice = z.infer<typeof insertRentalInvoiceSchema>;
+export type RentalInvoice = typeof rentalInvoices.$inferSelect;
+
+export const rentalPayments = pgTable("rental_payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  invoiceId: varchar("invoice_id").references(() => rentalInvoices.id).notNull(),
+  contractId: varchar("contract_id").references(() => rentalContracts.id).notNull(),
+  tenantId: varchar("tenant_id").references(() => propertyTenants.id).notNull(),
+  amountPaid: integer("amount_paid").notNull(),
+  paymentDate: date("payment_date").notNull(),
+  method: text("method").notNull().default("cash"), // cash|bank_transfer|cheque|online
+  referenceNumber: text("reference_number"),
+  bankName: text("bank_name"),
+  receivedByUserId: varchar("received_by_user_id"),
+  notes: text("notes"),
+  receiptUrl: text("receipt_url"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_rental_payments_restaurant").on(table.restaurantId), index("idx_rental_payments_invoice").on(table.invoiceId)]);
+export const insertRentalPaymentSchema = createInsertSchema(rentalPayments).omit({ id: true, createdAt: true });
+export type InsertRentalPayment = z.infer<typeof insertRentalPaymentSchema>;
+export type RentalPayment = typeof rentalPayments.$inferSelect;
+
+export const propertyExpenses = pgTable("property_expenses", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  propertyId: varchar("property_id").references(() => properties.id),
+  unitId: varchar("unit_id").references(() => propertyUnits.id),
+  category: text("category").notNull(), // maintenance|utilities|insurance|tax|management_fee|salary|marketing|renovation|legal|other
+  description: text("description").notNull(),
+  amount: integer("amount").notNull(),
+  taxAmount: integer("tax_amount").notNull().default(0),
+  vendorName: text("vendor_name"),
+  vendorContact: text("vendor_contact"),
+  expenseDate: date("expense_date").notNull(),
+  dueDate: date("due_date"),
+  paidDate: date("paid_date"),
+  status: text("status").notNull().default("pending"), // pending|paid|overdue
+  receiptUrl: text("receipt_url"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_property_expenses_restaurant").on(table.restaurantId), index("idx_property_expenses_property").on(table.propertyId)]);
+export const insertPropertyExpenseSchema = createInsertSchema(propertyExpenses).omit({ id: true, createdAt: true });
+export type InsertPropertyExpense = z.infer<typeof insertPropertyExpenseSchema>;
+export type PropertyExpense = typeof propertyExpenses.$inferSelect;
+
+export const maintenanceRequests = pgTable("maintenance_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  propertyId: varchar("property_id").references(() => properties.id).notNull(),
+  unitId: varchar("unit_id").references(() => propertyUnits.id),
+  tenantId: varchar("tenant_id").references(() => propertyTenants.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  category: text("category"),
+  priority: text("priority").notNull().default("medium"), // low|medium|high|urgent
+  status: text("status").notNull().default("open"), // open|assigned|in_progress|completed|cancelled
+  reportedDate: date("reported_date").notNull().defaultNow(),
+  scheduledDate: date("scheduled_date"),
+  completedDate: date("completed_date"),
+  assignedToUserId: varchar("assigned_to_user_id"),
+  vendorName: text("vendor_name"),
+  vendorContact: text("vendor_contact"),
+  estimatedCost: integer("estimated_cost").default(0),
+  actualCost: integer("actual_cost").default(0),
+  beforeImages: jsonb("before_images").default(sql`'[]'::jsonb`),
+  afterImages: jsonb("after_images").default(sql`'[]'::jsonb`),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_maintenance_requests_restaurant").on(table.restaurantId), index("idx_maintenance_requests_status").on(table.status)]);
+export const insertMaintenanceRequestSchema = createInsertSchema(maintenanceRequests).omit({ id: true, createdAt: true });
+export type InsertMaintenanceRequest = z.infer<typeof insertMaintenanceRequestSchema>;
+export type MaintenanceRequest = typeof maintenanceRequests.$inferSelect;
+
+export const chartOfAccounts = pgTable("chart_of_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  code: text("code").notNull(),
+  name: text("name").notNull(),
+  nameAr: text("name_ar"),
+  type: text("type").notNull(), // asset|liability|equity|revenue|expense
+  parentId: varchar("parent_id"),
+  isActive: boolean("is_active").notNull().default(true),
+}, (table) => [index("idx_chart_of_accounts_restaurant").on(table.restaurantId)]);
+export const insertChartOfAccountSchema = createInsertSchema(chartOfAccounts).omit({ id: true });
+export type InsertChartOfAccount = z.infer<typeof insertChartOfAccountSchema>;
+export type ChartOfAccount = typeof chartOfAccounts.$inferSelect;
+
+export const journalEntries = pgTable("journal_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  entryNumber: text("entry_number").notNull(),
+  entryDate: date("entry_date").notNull().defaultNow(),
+  description: text("description"),
+  referenceType: text("reference_type"), // invoice|payment|expense|manual
+  referenceId: varchar("reference_id"),
+  createdByUserId: varchar("created_by_user_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_journal_entries_restaurant").on(table.restaurantId), index("idx_journal_entries_reference").on(table.referenceType, table.referenceId)]);
+export const insertJournalEntrySchema = createInsertSchema(journalEntries).omit({ id: true, createdAt: true });
+export type InsertJournalEntry = z.infer<typeof insertJournalEntrySchema>;
+export type JournalEntry = typeof journalEntries.$inferSelect;
+
+export const journalLines = pgTable("journal_lines", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  journalEntryId: varchar("journal_entry_id").references(() => journalEntries.id).notNull(),
+  accountCode: text("account_code").notNull(),
+  accountName: text("account_name").notNull(),
+  debit: integer("debit").notNull().default(0),
+  credit: integer("credit").notNull().default(0),
+  notes: text("notes"),
+}, (table) => [index("idx_journal_lines_entry").on(table.journalEntryId)]);
+export const insertJournalLineSchema = createInsertSchema(journalLines).omit({ id: true });
+export type InsertJournalLine = z.infer<typeof insertJournalLineSchema>;
+export type JournalLine = typeof journalLines.$inferSelect;
+
+export const propertyNotifications = pgTable("property_notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  userId: varchar("user_id"),
+  type: text("type").notNull(), // overdue_invoice|contract_expiring_soon|contract_expiring_critical|contract_expired|contract_renewed|maintenance_urgent
+  title: text("title").notNull(),
+  message: text("message"),
+  relatedType: text("related_type"),
+  relatedId: varchar("related_id"),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_property_notifications_restaurant").on(table.restaurantId), index("idx_property_notifications_unread").on(table.restaurantId, table.isRead)]);
+export const insertPropertyNotificationSchema = createInsertSchema(propertyNotifications).omit({ id: true, createdAt: true });
+export type InsertPropertyNotification = z.infer<typeof insertPropertyNotificationSchema>;
+export type PropertyNotification = typeof propertyNotifications.$inferSelect;

@@ -7454,6 +7454,277 @@ export const storage = new DatabaseStorage();
       )
     `);
     console.log('[Migration] Table verified/created: marketing_broadcast_templates');
+
+    // ===== Property Management (Real Estate Brokerage) =====
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS properties (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
+        address TEXT,
+        city TEXT,
+        district TEXT,
+        latitude DECIMAL(10,7),
+        longitude DECIMAL(10,7),
+        area_sqm DECIMAL(12,2),
+        floors INTEGER,
+        year_built INTEGER,
+        purchase_price INTEGER DEFAULT 0,
+        current_value INTEGER DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'available',
+        owner_name TEXT,
+        notes TEXT,
+        documents JSONB DEFAULT '[]'::jsonb,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_properties_restaurant ON properties(restaurant_id)`);
+    console.log('[Migration] Table verified/created: properties');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS property_units (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        property_id VARCHAR(255) NOT NULL REFERENCES properties(id),
+        unit_number TEXT NOT NULL,
+        type TEXT,
+        floor INTEGER,
+        area_sqm DECIMAL(12,2),
+        bedrooms INTEGER,
+        bathrooms INTEGER,
+        parking_spaces INTEGER,
+        monthly_rent INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'available',
+        amenities JSONB DEFAULT '[]'::jsonb,
+        images JSONB DEFAULT '[]'::jsonb,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_property_units_restaurant ON property_units(restaurant_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_property_units_property ON property_units(property_id)`);
+    console.log('[Migration] Table verified/created: property_units');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS property_tenants (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        full_name TEXT NOT NULL,
+        id_number TEXT,
+        id_type TEXT,
+        phone TEXT,
+        email TEXT,
+        nationality TEXT,
+        emergency_contact JSONB,
+        company_name TEXT,
+        cr_number TEXT,
+        documents JSONB DEFAULT '[]'::jsonb,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_property_tenants_restaurant ON property_tenants(restaurant_id)`);
+    console.log('[Migration] Table verified/created: property_tenants');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS rental_contracts (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        unit_id VARCHAR(255) NOT NULL REFERENCES property_units(id),
+        tenant_id VARCHAR(255) NOT NULL REFERENCES property_tenants(id),
+        contract_number TEXT,
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        duration_months INTEGER NOT NULL,
+        monthly_rent INTEGER NOT NULL,
+        total_value INTEGER NOT NULL,
+        security_deposit INTEGER NOT NULL DEFAULT 0,
+        payment_frequency TEXT NOT NULL DEFAULT 'monthly',
+        payment_day INTEGER NOT NULL DEFAULT 1,
+        vat_rate INTEGER NOT NULL DEFAULT 15,
+        status TEXT NOT NULL DEFAULT 'draft',
+        auto_renew BOOLEAN NOT NULL DEFAULT FALSE,
+        renewal_notice_days INTEGER NOT NULL DEFAULT 60,
+        terms TEXT,
+        documents JSONB DEFAULT '[]'::jsonb,
+        signed_date DATE,
+        terminated_date DATE,
+        termination_reason TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_rental_contracts_restaurant ON rental_contracts(restaurant_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_rental_contracts_unit ON rental_contracts(unit_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_rental_contracts_tenant ON rental_contracts(tenant_id)`);
+    console.log('[Migration] Table verified/created: rental_contracts');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS rental_invoices (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        contract_id VARCHAR(255) NOT NULL REFERENCES rental_contracts(id),
+        unit_id VARCHAR(255) NOT NULL REFERENCES property_units(id),
+        tenant_id VARCHAR(255) NOT NULL REFERENCES property_tenants(id),
+        invoice_number TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'rent',
+        amount INTEGER NOT NULL,
+        tax_amount INTEGER NOT NULL DEFAULT 0,
+        total_amount INTEGER NOT NULL,
+        amount_paid INTEGER NOT NULL DEFAULT 0,
+        due_date DATE NOT NULL,
+        issue_date DATE NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_rental_invoices_restaurant ON rental_invoices(restaurant_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_rental_invoices_contract ON rental_invoices(contract_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_rental_invoices_status ON rental_invoices(status)`);
+    console.log('[Migration] Table verified/created: rental_invoices');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS rental_payments (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        invoice_id VARCHAR(255) NOT NULL REFERENCES rental_invoices(id),
+        contract_id VARCHAR(255) NOT NULL REFERENCES rental_contracts(id),
+        tenant_id VARCHAR(255) NOT NULL REFERENCES property_tenants(id),
+        amount_paid INTEGER NOT NULL,
+        payment_date DATE NOT NULL,
+        method TEXT NOT NULL DEFAULT 'cash',
+        reference_number TEXT,
+        bank_name TEXT,
+        received_by_user_id VARCHAR(255),
+        notes TEXT,
+        receipt_url TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_rental_payments_restaurant ON rental_payments(restaurant_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_rental_payments_invoice ON rental_payments(invoice_id)`);
+    console.log('[Migration] Table verified/created: rental_payments');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS property_expenses (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        property_id VARCHAR(255) REFERENCES properties(id),
+        unit_id VARCHAR(255) REFERENCES property_units(id),
+        category TEXT NOT NULL,
+        description TEXT NOT NULL,
+        amount INTEGER NOT NULL,
+        tax_amount INTEGER NOT NULL DEFAULT 0,
+        vendor_name TEXT,
+        vendor_contact TEXT,
+        expense_date DATE NOT NULL,
+        due_date DATE,
+        paid_date DATE,
+        status TEXT NOT NULL DEFAULT 'pending',
+        receipt_url TEXT,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_property_expenses_restaurant ON property_expenses(restaurant_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_property_expenses_property ON property_expenses(property_id)`);
+    console.log('[Migration] Table verified/created: property_expenses');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS maintenance_requests (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        property_id VARCHAR(255) NOT NULL REFERENCES properties(id),
+        unit_id VARCHAR(255) REFERENCES property_units(id),
+        tenant_id VARCHAR(255) REFERENCES property_tenants(id),
+        title TEXT NOT NULL,
+        description TEXT,
+        category TEXT,
+        priority TEXT NOT NULL DEFAULT 'medium',
+        status TEXT NOT NULL DEFAULT 'open',
+        reported_date DATE NOT NULL DEFAULT CURRENT_DATE,
+        scheduled_date DATE,
+        completed_date DATE,
+        assigned_to_user_id VARCHAR(255),
+        vendor_name TEXT,
+        vendor_contact TEXT,
+        estimated_cost INTEGER DEFAULT 0,
+        actual_cost INTEGER DEFAULT 0,
+        before_images JSONB DEFAULT '[]'::jsonb,
+        after_images JSONB DEFAULT '[]'::jsonb,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_maintenance_requests_restaurant ON maintenance_requests(restaurant_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_maintenance_requests_status ON maintenance_requests(status)`);
+    console.log('[Migration] Table verified/created: maintenance_requests');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS chart_of_accounts (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        code TEXT NOT NULL,
+        name TEXT NOT NULL,
+        name_ar TEXT,
+        type TEXT NOT NULL,
+        parent_id VARCHAR(255),
+        is_active BOOLEAN NOT NULL DEFAULT TRUE
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_chart_of_accounts_restaurant ON chart_of_accounts(restaurant_id)`);
+    console.log('[Migration] Table verified/created: chart_of_accounts');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS journal_entries (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        entry_number TEXT NOT NULL,
+        entry_date DATE NOT NULL DEFAULT CURRENT_DATE,
+        description TEXT,
+        reference_type TEXT,
+        reference_id VARCHAR(255),
+        created_by_user_id VARCHAR(255),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_journal_entries_restaurant ON journal_entries(restaurant_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_journal_entries_reference ON journal_entries(reference_type, reference_id)`);
+    console.log('[Migration] Table verified/created: journal_entries');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS journal_lines (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        journal_entry_id VARCHAR(255) NOT NULL REFERENCES journal_entries(id),
+        account_code TEXT NOT NULL,
+        account_name TEXT NOT NULL,
+        debit INTEGER NOT NULL DEFAULT 0,
+        credit INTEGER NOT NULL DEFAULT 0,
+        notes TEXT
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_journal_lines_entry ON journal_lines(journal_entry_id)`);
+    console.log('[Migration] Table verified/created: journal_lines');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS property_notifications (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        user_id VARCHAR(255),
+        type TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT,
+        related_type TEXT,
+        related_id VARCHAR(255),
+        is_read BOOLEAN NOT NULL DEFAULT FALSE,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_property_notifications_restaurant ON property_notifications(restaurant_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_property_notifications_unread ON property_notifications(restaurant_id, is_read)`);
+    console.log('[Migration] Table verified/created: property_notifications');
   } catch (error: any) {
     // Only log if not a duplicate column error (which means columns already exist)
     if (!error.message?.includes('already exists')) {

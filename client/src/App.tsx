@@ -109,6 +109,18 @@ const Marketing = lazy(() => import("@/pages/marketing"));
 const CompanyProfile = lazy(() => import("@/pages/company-profile"));
 const InspectionTools = lazy(() => import("@/pages/inspection-tools"));
 const AppDiagram = lazy(() => import("@/pages/app-diagram"));
+const RealEstateDashboard = lazy(() => import("@/pages/real-estate/dashboard"));
+const REProperties = lazy(() => import("@/pages/real-estate/properties"));
+const REPropertyDetail = lazy(() => import("@/pages/real-estate/property-detail"));
+const REUnits = lazy(() => import("@/pages/real-estate/units"));
+const RETenants = lazy(() => import("@/pages/real-estate/tenants"));
+const REContracts = lazy(() => import("@/pages/real-estate/contracts"));
+const REInvoices = lazy(() => import("@/pages/real-estate/invoices"));
+const REPayments = lazy(() => import("@/pages/real-estate/payments"));
+const REExpenses = lazy(() => import("@/pages/real-estate/expenses"));
+const REMaintenance = lazy(() => import("@/pages/real-estate/maintenance"));
+const REReports = lazy(() => import("@/pages/real-estate/reports"));
+const REAccounting = lazy(() => import("@/pages/real-estate/accounting"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 
 // Auth pages loaded eagerly to avoid Suspense issues with AuthProvider
@@ -209,6 +221,18 @@ function Router() {
         <Route path="/marketing" component={Marketing} />
         <Route path="/inspection-tools" component={InspectionTools} />
         <Route path="/app-diagram" component={AppDiagram} />
+        <Route path="/real-estate/properties/:id">{() => <BusinessTypeGuard allowedTypes={['real_estate']}><REPropertyDetail /></BusinessTypeGuard>}</Route>
+        <Route path="/real-estate/properties">{() => <BusinessTypeGuard allowedTypes={['real_estate']}><REProperties /></BusinessTypeGuard>}</Route>
+        <Route path="/real-estate/units">{() => <BusinessTypeGuard allowedTypes={['real_estate']}><REUnits /></BusinessTypeGuard>}</Route>
+        <Route path="/real-estate/tenants">{() => <BusinessTypeGuard allowedTypes={['real_estate']}><RETenants /></BusinessTypeGuard>}</Route>
+        <Route path="/real-estate/contracts">{() => <BusinessTypeGuard allowedTypes={['real_estate']}><REContracts /></BusinessTypeGuard>}</Route>
+        <Route path="/real-estate/invoices">{() => <BusinessTypeGuard allowedTypes={['real_estate']}><REInvoices /></BusinessTypeGuard>}</Route>
+        <Route path="/real-estate/payments">{() => <BusinessTypeGuard allowedTypes={['real_estate']}><REPayments /></BusinessTypeGuard>}</Route>
+        <Route path="/real-estate/expenses">{() => <BusinessTypeGuard allowedTypes={['real_estate']}><REExpenses /></BusinessTypeGuard>}</Route>
+        <Route path="/real-estate/maintenance">{() => <BusinessTypeGuard allowedTypes={['real_estate']}><REMaintenance /></BusinessTypeGuard>}</Route>
+        <Route path="/real-estate/reports">{() => <BusinessTypeGuard allowedTypes={['real_estate']}><REReports /></BusinessTypeGuard>}</Route>
+        <Route path="/real-estate/accounting">{() => <BusinessTypeGuard allowedTypes={['real_estate']}><REAccounting /></BusinessTypeGuard>}</Route>
+        <Route path="/real-estate">{() => <BusinessTypeGuard allowedTypes={['real_estate']}><RealEstateDashboard /></BusinessTypeGuard>}</Route>
         <Route component={NotFound} />
       </Switch>
     </Suspense>

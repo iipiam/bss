@@ -23,7 +23,8 @@ export type Permission =
   | 'activityLog'
   | 'marketing'
   | 'mealSubscriptions'
-  | 'catering';
+  | 'catering'
+  | 'propertyManagement';
 
 export const ALL_PERMISSIONS: Permission[] = [
   'dashboard',
@@ -51,6 +52,7 @@ export const ALL_PERMISSIONS: Permission[] = [
   'marketing',
   'mealSubscriptions',
   'catering',
+  'propertyManagement',
 ];
 
 // Granular permission actions
@@ -139,6 +141,7 @@ export const ADMIN_PERMISSIONS: PermissionSet = {
   marketing: true,
   mealSubscriptions: true,
   catering: true,
+  propertyManagement: true,
 };
 
 export const DEFAULT_EMPLOYEE_PERMISSIONS: PermissionSet = {
@@ -167,6 +170,7 @@ export const DEFAULT_EMPLOYEE_PERMISSIONS: PermissionSet = {
   marketing: false,
   mealSubscriptions: false,
   catering: false,
+  propertyManagement: false,
 };
 
 // Business types supported by the platform. Keep this in sync with the
@@ -202,8 +206,8 @@ export const BUSINESS_TYPE_PERMISSIONS: Record<BusinessType, Permission[]> = {
     'investors', 'marketing', 'activityLog', 'users', 'settings', 'workingHours',
   ],
   real_estate: [
-    'dashboard', 'pos', 'orders', 'menu', 'branches', 'reports', 'sales',
-    'customers', 'bills', 'licenses', 'marketing', 'activityLog', 'users',
+    'dashboard', 'propertyManagement', 'reports', 'sales', 'customers',
+    'bills', 'licenses', 'branches', 'marketing', 'activityLog', 'users',
     'settings', 'workingHours',
   ],
   design_services: [
@@ -253,6 +257,7 @@ export const ROUTE_PERMISSIONS: Record<string, PermissionRequirement> = {
   '/api/working-hours': { mode: 'any', permissions: ['workingHours'] },
   '/api/bills': { mode: 'any', permissions: ['bills'] },
   '/api/chat': { mode: 'any', permissions: ['dashboard'] },
+  '/api/real-estate': { mode: 'any', permissions: ['propertyManagement'] },
 };
 
 // Backwards-compat: the 'orders' permission used to control BOTH service
