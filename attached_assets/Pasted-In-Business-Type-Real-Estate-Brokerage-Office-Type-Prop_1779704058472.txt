@@ -1,0 +1,323 @@
+In Business Type *Real Estate Brokerage
+Office Type *Property Management
+in Arabic and English.
+Use: Node.js + Express (or Next.js) backend, PostgreSQL database, React frontend with Tailwind CSS.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. DATABASE SCHEMA (Must implement all tables)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TABLE: properties
+- id, name, type (ENUM: residential/commercial/industrial/land/villa/
+  apartment/office/warehouse/mall/compound/hotel/showroom/clinic/other)
+- address, city, district, coordinates (lat/lng)
+- area_sqm, floors, year_built, purchase_price, current_value
+- status (ENUM: available/rented/for_sale/under_maintenance/inactive)
+- owner_id, notes, documents (JSON array of file URLs)
+- created_at, updated_at
+
+TABLE: units
+- id, property_id, unit_number, type, floor
+- area_sqm, bedrooms, bathrooms, parking_spaces
+- monthly_rent (base price), status
+- amenities (JSON), images (JSON), notes
+
+TABLE: tenants
+- id, full_name, id_number, id_type (national_id/iqama/passport)
+- phone, email, nationality, emergency_contact (JSON)
+- company_name (if commercial), cr_number
+- documents (JSON: id scan, contracts, etc.)
+- created_at
+
+TABLE: contracts
+- id, unit_id, tenant_id
+- start_date, end_date, duration_months
+- monthly_rent, total_value, security_deposit
+- payment_frequency (ENUM: monthly/quarterly/biannual/annual)
+- payment_day (day of month payment is due)
+- status (ENUM: draft/active/expired/terminated/renewed)
+- auto_renew (boolean), renewal_notice_days
+- terms (text), documents (JSON)
+- signed_date, terminated_date, termination_reason
+
+TABLE: invoices
+- id, contract_id, unit_id, tenant_id
+- invoice_number (auto-generated: INV-YYYY-NNNN)
+- type (ENUM: rent/deposit/maintenance/utilities/penalty/other)
+- amount, tax_amount, total_amount
+- due_date, issue_date
+- status (ENUM: pending/paid/partial/overdue/cancelled)
+- notes
+
+TABLE: payments
+- id, invoice_id, contract_id, tenant_id
+- amount_paid, payment_date
+- method (ENUM: cash/bank_transfer/cheque/online)
+- reference_number, bank_name
+- received_by (user_id)
+- notes, receipt_url
+
+TABLE: expenses
+- id, property_id, unit_id (nullable)
+- category (ENUM: maintenance/utilities/insurance/tax/management_fee/
+  salary/marketing/renovation/legal/other)
+- description, amount, tax_amount
+- vendor_name, vendor_contact
+- expense_date, due_date, paid_date
+- status (ENUM: pending/paid/overdue)
+- receipt_url, notes
+
+TABLE: maintenance_requests
+- id, property_id, unit_id, tenant_id (nullable)
+- title, description, category
+- priority (ENUM: low/medium/high/urgent)
+- status (ENUM: open/assigned/in_progress/completed/cancelled)
+- reported_date, scheduled_date, completed_date
+- assigned_to (user_id), vendor_name, vendor_contact
+- estimated_cost, actual_cost
+- before_images (JSON), after_images (JSON), notes
+
+TABLE: journal_entries (double-entry accounting)
+- id, entry_number, date, description
+- reference_type (invoice/payment/expense/manual)
+- reference_id
+- created_by (user_id)
+
+TABLE: journal_lines
+- id, journal_entry_id
+- account_code, account_name
+- debit, credit
+- notes
+
+TABLE: chart_of_accounts
+- id, code, name, type (ENUM: asset/liability/equity/revenue/expense)
+- parent_id (for hierarchy), is_active
+
+TABLE: notifications
+- id, user_id, type, title, message
+- related_type, related_id
+- is_read, created_at
+
+TABLE: audit_log
+- id, user_id, action, entity_type, entity_id
+- old_values (JSON), new_values (JSON), ip_address, created_at
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. BUSINESS LOGIC (Critical — implement exactly)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+A. INVOICE AUTO-GENERATION
+- When a contract is created/activated, automatically generate all invoices
+  for the entire contract duration based on payment_frequency
+- Each invoice has a due_date calculated from payment_day field
+- Invoices must include: rent amount + any applicable taxes (VAT 15%)
+
+B. OVERDUE DETECTION
+- Run a daily cron job: mark invoices as overdue if due_date < today and status = pending
+- Auto-create notifications for overdue invoices
+- Apply late penalty if configured (configurable % per day or fixed amount)
+
+C. CONTRACT ALERTS (Automated)
+- 90 days before expiry → notification type: "contract_expiring_soon"
+- 30 days before expiry → notification type: "contract_expiring_critical"
+- Day of expiry → auto-change contract status to "expired"
+- Auto-renew if auto_renew = true (create new contract, copy terms, update dates)
+
+D. DOUBLE-ENTRY ACCOUNTING
+- Every financial transaction must create journal entries automatically:
+  * Payment received → DR: Cash/Bank | CR: Rent Revenue
+  * Invoice issued → DR: Accounts Receivable | CR: Rent Revenue
+  * Expense paid → DR: Expense Account | CR: Cash/Bank
+  * Security deposit → DR: Cash | CR: Security Deposits Liability
+- Maintain a full chart of accounts with standard Arabic real estate accounts
+
+E. UNIT STATUS MANAGEMENT
+- Unit status must auto-update:
+  * Contract activated → unit status = "rented"
+  * Contract expired/terminated → unit status = "available"
+  * Maintenance request (urgent) → can flag as "under_maintenance"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. API ENDPOINTS (RESTful)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Implement full CRUD for all entities plus:
+
+GET  /api/dashboard/summary
+  → total properties, total units, occupied %, 
+    monthly revenue, monthly expenses, net income,
+    overdue invoices count and total amount,
+    expiring contracts (next 90 days)
+
+GET  /api/reports/income-statement?from=&to=&property_id=
+  → Revenue breakdown by property and unit type
+  → Expense breakdown by category
+  → Net Operating Income (NOI)
+  → Gross vs Net yield %
+
+GET  /api/reports/rent-roll
+  → All units with: tenant name, rent amount, lease dates,
+    payment status, days overdue (if any)
+
+GET  /api/reports/cash-flow?from=&to=
+  → Monthly cash in vs cash out, running balance
+
+GET  /api/reports/balance-sheet
+  → Assets (property values + receivables + cash)
+  → Liabilities (deposits + payables)
+  → Owner equity
+
+GET  /api/reports/aging-receivables
+  → Outstanding invoices grouped by: current / 30d / 60d / 90d / 90d+
+
+GET  /api/reports/occupancy?from=&to=
+  → Occupancy rate per property, per unit type, overall
+
+POST /api/invoices/:id/mark-paid
+  → Accept payment details, create payment record, update invoice,
+    auto-create journal entries, generate receipt PDF
+
+GET  /api/properties/:id/financial-summary
+  → Per-property: total income, total expenses, NOI, yield
+
+POST /api/contracts/:id/terminate
+  → Require termination_reason, settlement amount
+  → Auto-generate settlement invoice if needed
+  → Update unit status, create journal entries
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. FRONTEND PAGES & UI
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PAGE: Dashboard (/)
+- KPI cards: Total Properties, Occupied Units, Monthly Revenue,
+  Overdue Amount, Monthly Expenses, Net Income
+- Charts: Revenue vs Expenses (last 12 months bar chart),
+  Occupancy Rate (donut chart), Revenue by Property Type (pie)
+- Tables: Upcoming contract renewals (30 days), Recent payments,
+  Overdue invoices (with "Send reminder" button)
+- Notifications bell with unread count
+
+PAGE: Properties (/properties)
+- Grid/List view toggle
+- Filter by: type, status, city
+- Property card shows: image, name, type badge, unit count,
+  occupancy %, monthly income
+- Quick stats on hover/click
+
+PAGE: Property Detail (/properties/:id)
+- Property info + map embed
+- Units list with status indicators (color coded)
+- Financial summary: total income, expenses, NOI, yield %
+- Recent maintenance requests
+- Documents section (upload/download)
+
+PAGE: Units (/units or nested under property)
+- List with columns: unit number, type, tenant, rent, status, contract end
+- Status filter tabs: All / Available / Rented / Maintenance
+
+PAGE: Contracts (/contracts)
+- List with status filter tabs
+- Highlight expiring contracts (yellow: 90d, orange: 30d, red: expired)
+- Contract form: dynamic calculation of total value, installment amounts,
+  generate invoice schedule preview before saving
+
+PAGE: Tenants (/tenants)
+- Tenant profile with full history: contracts, payments, maintenance requests
+- Outstanding balance shown prominently
+
+PAGE: Invoices (/invoices)
+- Filter by: status, date range, property, tenant
+- Bulk select + bulk mark as paid
+- "Send reminder" button for overdue invoices
+- Download invoice as PDF
+
+PAGE: Payments (/payments)
+- Payment history with receipt download
+- Record new payment form with auto-fill from selected invoice
+
+PAGE: Expenses (/expenses)
+- Add expense with receipt upload
+- Filter by category, property, date
+- Total by category shown as chart
+
+PAGE: Maintenance (/maintenance)
+- Kanban board: Open → Assigned → In Progress → Completed
+- Or list view with filters
+- Cost tracking per request
+
+PAGE: Reports (/reports)
+- Sub-navigation: Income Statement, Rent Roll, Cash Flow,
+  Balance Sheet, Aging Report, Occupancy Report
+- All reports: date range picker, property filter
+- Export to PDF and Excel buttons
+- Charts where appropriate
+
+PAGE: Accounting (/accounting)
+- Chart of accounts list (hierarchical)
+- Journal entries list with search
+- Trial balance view
+
+PAGE: Settings (/settings)
+- Company info (name, logo, address, tax number)
+- Tax configuration (VAT rate, display on invoices)
+- Currency and number format
+- Notification preferences
+- Late payment penalty settings
+- Invoice numbering format
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. DOCUMENT GENERATION (PDF)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Generate professional Arabic/English PDFs for:
+- Rental contract (with all terms, signatures section)
+- Invoice (professional format with company logo, tax number, QR code)
+- Payment receipt
+- Rent roll report
+- Income statement report
+- All reports from the Reports section
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. VALIDATION & SECURITY RULES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- Cannot activate two contracts for the same unit at the same time
+- Cannot delete a property with active contracts
+- Cannot delete a contract with unpaid invoices
+- Payment amount cannot exceed remaining invoice balance
+- All money fields: store as integers (halalas/fils/cents) to avoid float errors
+- All API routes require authentication except /login
+- Role-based permissions: Viewer cannot modify, Accountant cannot add properties
+- All user actions logged in audit_log table
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. SEED DATA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Create realistic seed data with:
+- 1 owner user (admin@pms.com / Admin123!)
+- 5 properties of different types (residential compound, commercial building,
+  villa, warehouse, office)
+- 20+ units across those properties
+- 10+ tenants with full profiles
+- Active contracts for 70% of units
+- 6 months of historical invoices and payments
+- Some overdue invoices, some expiring contracts
+- Sample expenses and maintenance requests
+- Pre-built chart of accounts (Arabic real estate standard accounts)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+9. QUALITY REQUIREMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+- RTL support for Arabic text throughout the UI
+- Responsive design (mobile + tablet + desktop)
+- All currency displayed with 2 decimal places and currency symbol (ر.س)
+- Dates in both Hijri and Gregorian where appropriate
+- Loading states and error handling on all API calls
+- Form validation with clear Arabic error messages
+- Confirmation dialogs for destructive actions
+- Success/error toast notifications for all operations
+- Empty states with helpful messages and action buttons
+
+Build everything described above completely. Do not skip any section.
+Start with database schema and seed data, then backend API, then frontend.
+Make sure the financial reports are mathematically accurate and consistent
+(numbers in dashboard must match numbers in detailed reports).
