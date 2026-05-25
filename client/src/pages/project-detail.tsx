@@ -1305,6 +1305,38 @@ export default function ProjectDetail() {
                         <Button variant="ghost" size="sm" onClick={() => { setPhaseLeadDraft({ type: lead?.type || "", id: lead?.id || "" }); setPhaseLeadDialog({ phase: ph }); }} data-testid={`button-set-phase-lead-${ph}`}>
                           <User className="h-4 w-4 mr-1" />{lead ? ((t as any).changeLead || "Change Lead") : ((t as any).setLead || "Set Phase Lead")}
                         </Button>
+                        {canDownloadProjectPdf && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(`/api/service-projects/${projectId}/phases/${ph}/pdf?lang=${pdfLang}`, "_blank")}
+                            data-testid={`button-download-phase-pdf-${ph}`}
+                          >
+                            <Download className="h-4 w-4 mr-1" />{(t as any).downloadPhasePdf || tr("Download Phase PDF", "تحميل تقرير المرحلة")}
+                          </Button>
+                        )}
+                        {canDownloadProjectPdf && project?.clientPhone && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                const { openWhatsAppWithMessage } = await import("@/lib/whatsapp");
+                                window.open(`/api/service-projects/${projectId}/phases/${ph}/pdf?lang=${pdfLang}`, "_blank");
+                                const completed = allPhaseTasks.filter(tk => tk.status === "completed").length;
+                                const planned = allPhaseTasks.length;
+                                const leadName = lead ? assigneeLabel(lead.type, lead.id) : "-";
+                                const message = `*${project.name}*\n${tr("Phase Report", "تقرير المرحلة")} — ${tr("Phase", "المرحلة")} ${ph}\n\n${tr("Project", "المشروع")}: ${project.projectNumber}\n${tr("Phase Lead", "قائد المرحلة")}: ${leadName}\n${tr("Tasks (Planned / Completed)", "المهام (مخططة / مكتملة)")}: ${planned} / ${completed}\n\n${tr("Please find the phase report PDF attached.", "يرجى الاطلاع على تقرير المرحلة المرفق.")}`;
+                                openWhatsAppWithMessage(project.clientPhone!, message);
+                              } catch (e: any) {
+                                toast({ title: t.error || "Error", description: e.message, variant: "destructive" });
+                              }
+                            }}
+                            data-testid={`button-whatsapp-phase-${ph}`}
+                          >
+                            <MessageCircle className="h-4 w-4 mr-1" />{(t as any).sendPhaseWhatsApp || tr("Send via WhatsApp", "إرسال عبر واتساب")}
+                          </Button>
+                        )}
                       </div>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground">
                         <span>{phaseTasks.length} {(t.tasks || "tasks").toString().toLowerCase()}</span>

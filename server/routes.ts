@@ -17747,6 +17747,190 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     return { project, buffer: Buffer.from(pdfData) };
   }
 
+  // Per-phase PDF report: tasks (with assignees), milestone bills, totals (planned vs completed),
+  // phase lead, dates derived from CPM if available.
+  app.get("/api/service-projects/:id/phases/:phase/pdf", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const phase = Math.max(1, parseInt(req.params.phase) || 1);
+      const lang = req.query.lang === 'ar' ? 'ar' : 'en';
+      const isAr = lang === 'ar';
+      const dir = isAr ? 'rtl' : 'ltr';
+      const align = isAr ? 'right' : 'left';
+      const L = (en: string, ar: string) => isAr ? ar : en;
+
+      const project = await storage.getServiceProject(req.params.id, restaurantId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      const companyInfo = await storage.getCompanySettings(restaurantId);
+      const allTasks = await storage.getProjectTasks(restaurantId, project.id);
+      const allSchedules = await storage.getPaymentSchedules(restaurantId, project.id);
+      const employees = await storage.getUsers(restaurantId);
+      const contractors = await storage.getContractors(restaurantId);
+      const empMap = new Map(employees.map(e => [e.id, e.fullName || e.username || e.id]));
+      const contractorMap = new Map(contractors.map(c => [c.id, c.name || c.id]));
+      const resolveAssignee = (type?: string | null, id?: string | null): string => {
+        if (!type || !id) return '-';
+        if (type === 'employee') return empMap.get(id) || id;
+        if (type === 'contractor') return contractorMap.get(id) || id;
+        return id;
+      };
+
+      const phaseTasks = allTasks.filter(t => ((t as any).phase ?? 1) === phase);
+      const phaseRegex = new RegExp(`(?:phase|المرحلة)\\s*${phase}(?!\\d)`, 'i');
+      const phaseSchedules = allSchedules.filter(s => phaseRegex.test(s.milestoneName || ''));
+
+      const phaseLeads: Record<string, { type: string; id: string }> = (project as any).phaseLeads || {};
+      const lead = phaseLeads[String(phase)];
+      const leadLabel = lead ? resolveAssignee(lead.type, lead.id) : '-';
+
+      const plannedTaskCount = phaseTasks.length;
+      const completedTaskCount = phaseTasks.filter(tk => tk.status === 'completed').length;
+      const plannedDuration = phaseTasks.reduce((s, tk) => s + (tk.duration || 0), 0);
+      const completedDuration = phaseTasks.filter(tk => tk.status === 'completed').reduce((s, tk) => s + (tk.duration || 0), 0);
+      const plannedBills = phaseSchedules.reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
+      const paidBills = phaseSchedules.filter(s => s.status === 'paid').reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
+
+      const cpmStarts = phaseTasks.map(t => t.earlyStart).filter((v): v is number => typeof v === 'number');
+      const cpmEnds = phaseTasks.map(t => t.earlyFinish).filter((v): v is number => typeof v === 'number');
+      const phaseStartDay = cpmStarts.length ? Math.min(...cpmStarts) : null;
+      const phaseEndDay = cpmEnds.length ? Math.max(...cpmEnds) : null;
+      const projStart = project.startDate ? new Date(project.startDate) : null;
+      const dayToDate = (d: number | null) => {
+        if (d === null || !projStart) return '-';
+        const dt = new Date(projStart);
+        dt.setDate(dt.getDate() + d);
+        return dt.toLocaleDateString('en-GB');
+      };
+
+      const taskRows = phaseTasks.map((tk, i) => `
+        <tr style="${tk.isCritical ? 'background:#fef2f2;' : ''}">
+          <td>${i + 1}</td>
+          <td>${escapeHtml(tk.name)}${tk.isCritical ? ' !' : ''}</td>
+          <td style="text-align:center">${tk.duration} ${L('days', 'يوم')}</td>
+          <td style="text-align:center">${escapeHtml((tk.status || '').replace('_', ' '))}</td>
+          <td>${escapeHtml(resolveAssignee((tk as any).assigneeType, (tk as any).assigneeId))}</td>
+        </tr>`).join('');
+      const scheduleRows = phaseSchedules.map((s, idx) => `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${escapeHtml(s.milestoneName)}</td>
+          <td style="text-align:right">${parseFloat(s.amount || '0').toFixed(2)} SAR</td>
+          <td>${s.dueDate ? new Date(s.dueDate).toLocaleDateString('en-GB') : '-'}</td>
+          <td>${escapeHtml(s.status)}</td>
+        </tr>`).join('');
+
+      const htmlContent = `<!DOCTYPE html>
+<html lang="${lang}" dir="${dir}"><head><meta charset="UTF-8"><style>
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap');
+body { font-family: ${isAr ? "'Noto Naskh Arabic','Amiri',Arial,sans-serif" : "Arial, sans-serif"}; padding: 30px; font-size: 11px; color: #333; direction: ${dir}; text-align: ${align}; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #1a365d; padding-bottom: 15px; margin-bottom: 20px; }
+.company-info h1 { color: #1a365d; margin: 0; font-size: 22px; }
+.company-info p { margin: 2px 0; color: #666; font-size: 10px; }
+.title { text-align: ${isAr ? 'left' : 'right'}; }
+.title h2 { color: #1a365d; margin: 0; font-size: 22px; }
+.title p { margin: 2px 0; color: #666; }
+.project-info { background: #f0f4f8; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.info-item { font-size: 11px; }
+.info-item span { color: #666; }
+.section { margin: 22px 0; page-break-inside: avoid; }
+.section h3 { color: #1a365d; border-bottom: 1px solid #e2e8f0; padding-bottom: 5px; font-size: 14px; }
+table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 10px; }
+th { background: #1a365d; color: white; padding: 8px; text-align: ${align}; font-size: 10px; }
+td { padding: 7px 8px; border-bottom: 1px solid #e2e8f0; }
+tr:nth-child(even) { background: #f8fafc; }
+.summary-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+.summary-box { background: #e8f5e9; padding: 15px; border-radius: 6px; margin: 15px 0; }
+.summary-item { text-align: center; }
+.summary-item .label { font-size: 10px; color: #666; }
+.summary-item .value { font-size: 14px; font-weight: bold; color: #1a365d; }
+.footer { text-align: center; margin-top: 30px; padding-top: 10px; border-top: 1px solid #e2e8f0; color: #999; font-size: 9px; }
+</style></head><body>
+<div class="header">
+  <div class="company-info">
+    <h1>${escapeHtml(companyInfo?.companyName) || 'Company Name'}</h1>
+    ${companyInfo?.companyAddress ? `<p>${escapeHtml(companyInfo.companyAddress)}</p>` : ''}
+    ${companyInfo?.companyPhone ? `<p>Tel: ${escapeHtml(companyInfo.companyPhone)}</p>` : ''}
+    ${companyInfo?.companyEmail ? `<p>Email: ${escapeHtml(companyInfo.companyEmail)}</p>` : ''}
+  </div>
+  <div class="title">
+    <h2>${L('Phase Report', 'تقرير المرحلة')} — ${L('Phase', 'المرحلة')} ${phase}</h2>
+    <p>${escapeHtml(project.projectNumber)}</p>
+    <p>${new Date().toLocaleDateString('en-GB')}</p>
+  </div>
+</div>
+<div class="project-info">
+  <h3 style="color:#1a365d;margin:0 0 8px;">${escapeHtml(project.name)}</h3>
+  <div class="info-grid">
+    <div class="info-item"><span>${L('Client', 'العميل')}:</span> ${escapeHtml(project.clientName)}</div>
+    <div class="info-item"><span>${L('Phase Lead', 'قائد المرحلة')}:</span> ${escapeHtml(leadLabel)}</div>
+    <div class="info-item"><span>${L('Project Status', 'حالة المشروع')}:</span> ${escapeHtml(project.status)}</div>
+    <div class="info-item"><span>${L('Priority', 'الأولوية')}:</span> ${escapeHtml(project.priority)}</div>
+    <div class="info-item"><span>${L('Phase Start', 'بداية المرحلة')}:</span> ${dayToDate(phaseStartDay)}</div>
+    <div class="info-item"><span>${L('Phase End', 'نهاية المرحلة')}:</span> ${dayToDate(phaseEndDay)}</div>
+    <div class="info-item"><span>${L('Project Start', 'بداية المشروع')}:</span> ${project.startDate ? new Date(project.startDate).toLocaleDateString('en-GB') : '-'}</div>
+    <div class="info-item"><span>${L('Project End', 'نهاية المشروع')}:</span> ${project.endDate ? new Date(project.endDate).toLocaleDateString('en-GB') : '-'}</div>
+  </div>
+</div>
+<div class="summary-box">
+  <div class="summary-grid">
+    <div class="summary-item"><div class="label">${L('Tasks (Planned / Completed)', 'المهام (مخططة / مكتملة)')}</div><div class="value">${plannedTaskCount} / ${completedTaskCount}</div></div>
+    <div class="summary-item"><div class="label">${L('Duration (Planned / Completed)', 'المدة (مخططة / مكتملة)')}</div><div class="value">${plannedDuration} / ${completedDuration} ${L('days', 'يوم')}</div></div>
+    <div class="summary-item"><div class="label">${L('Bills (Planned / Paid)', 'الفواتير (مخططة / مدفوعة)')}</div><div class="value">${plannedBills.toFixed(2)} / ${paidBills.toFixed(2)} SAR</div></div>
+  </div>
+</div>
+${phaseTasks.length > 0 ? `
+<div class="section">
+  <h3>${L('Tasks', 'المهام')}</h3>
+  <table>
+    <thead><tr><th>#</th><th>${L('Task', 'المهمة')}</th><th>${L('Duration', 'المدة')}</th><th>${L('Status', 'الحالة')}</th><th>${L('Assignee', 'المسؤول')}</th></tr></thead>
+    <tbody>${taskRows}</tbody>
+  </table>
+</div>` : `<div class="section"><p style="color:#666;">${L('No tasks for this phase.', 'لا توجد مهام لهذه المرحلة.')}</p></div>`}
+${phaseSchedules.length > 0 ? `
+<div class="section">
+  <h3>${L('Milestone Bills', 'فواتير المراحل')}</h3>
+  <table>
+    <thead><tr><th>#</th><th>${L('Milestone', 'المرحلة')}</th><th>${L('Amount', 'المبلغ')}</th><th>${L('Due Date', 'تاريخ الاستحقاق')}</th><th>${L('Status', 'الحالة')}</th></tr></thead>
+    <tbody>${scheduleRows}
+      <tr style="font-weight:bold;background:#f0f4f8;"><td></td><td style="text-align:${isAr ? 'left' : 'right'}">${L('Total', 'الإجمالي')}:</td><td style="text-align:right">${plannedBills.toFixed(2)} SAR</td><td></td><td>${L('Paid', 'مدفوع')}: ${paidBills.toFixed(2)} SAR</td></tr>
+    </tbody>
+  </table>
+</div>` : ''}
+<div class="footer">
+  <p>${escapeHtml(companyInfo?.companyName) || 'Company'} — ${L('Phase Report', 'تقرير المرحلة')} — ${escapeHtml(project.projectNumber)} — ${L('Phase', 'المرحلة')} ${phase}</p>
+  <p>${L('Generated on', 'تم إنشاؤه في')} ${new Date().toLocaleDateString('en-GB')} ${new Date().toLocaleTimeString('en-GB')}</p>
+</div>
+</body></html>`;
+
+      const puppeteer = await import("puppeteer");
+      const { execSync } = await import("child_process");
+      const { existsSync } = await import("fs");
+      let chromiumPath: string | undefined = undefined;
+      try {
+        chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+        if (!chromiumPath || !existsSync(chromiumPath)) chromiumPath = undefined;
+      } catch (e) {}
+      const browser = await puppeteer.default.launch({
+        headless: true,
+        executablePath: chromiumPath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'],
+      });
+      const page = await browser.newPage();
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      const pdfData = await page.pdf({ format: 'A4', margin: { top: '15mm', right: '10mm', bottom: '15mm', left: '10mm' }, printBackground: true });
+      await browser.close();
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="project-${project.projectNumber}-phase-${phase}.pdf"`);
+      res.send(Buffer.from(pdfData));
+    } catch (error: any) {
+      console.error("Project phase PDF error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.get("/api/service-projects/:id/dossier-pdf", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
