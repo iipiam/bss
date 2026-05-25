@@ -128,6 +128,7 @@ const procurementSchema = z.object({
   totalPrice: z.string().min(1), vendor: z.string().optional().default(""),
   purchaseDate: z.string().min(1), deliveryDate: z.string().optional().default(""),
   status: z.string().min(1), notes: z.string().optional().default(""),
+  phase: z.string().optional().default("1"),
 });
 const paymentSchema = z.object({
   milestoneName: z.string().min(1), amount: z.string().min(1),
@@ -352,7 +353,7 @@ export default function ProjectDetail() {
 
   const svcForm = useForm<ServiceFormValues>({ resolver: zodResolver(serviceSchema), defaultValues: { serviceCatalogId: "", name: "", description: "", pricingMethod: "lump_sum", unitPrice: "0", quantity: "1", unit: "", totalPrice: "0", status: "pending", notes: "", phase: "1" } });
   const billForm = useForm<BillFormValues>({ resolver: zodResolver(billSchema), defaultValues: { description: "", amount: "", category: "", vendor: "", billDate: new Date().toISOString().split("T")[0], dueDate: "", status: "pending", paidDate: "", notes: "" } });
-  const procForm = useForm<ProcurementFormValues>({ resolver: zodResolver(procurementSchema), defaultValues: { itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "" } });
+  const procForm = useForm<ProcurementFormValues>({ resolver: zodResolver(procurementSchema), defaultValues: { itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "", phase: "1" } });
   const payForm = useForm<PaymentFormValues>({ resolver: zodResolver(paymentSchema), defaultValues: { milestoneName: "", amount: "", dueDate: "", status: "pending", paidDate: "", notes: "", phase: "1" } });
   const taskForm = useForm<TaskFormValues>({ resolver: zodResolver(taskSchema), defaultValues: { name: "", description: "", duration: "1", dependencies: "", status: "pending", phase: "1", assigneeType: "", assigneeId: "" } });
   const [assigneeFilter, setAssigneeFilter] = useState<string>("__all");
@@ -701,7 +702,7 @@ export default function ProjectDetail() {
   }
   function openEditProc(p: ProjectProcurementItem) {
     setEditProc(p);
-    procForm.reset({ itemName: p.itemName, description: p.description || "", quantity: p.quantity, unitPrice: p.unitPrice, totalPrice: p.totalPrice, vendor: p.vendor || "", purchaseDate: p.purchaseDate?.split("T")[0] || "", deliveryDate: p.deliveryDate?.split("T")[0] || "", status: p.status, notes: p.notes || "" });
+    procForm.reset({ itemName: p.itemName, description: p.description || "", quantity: p.quantity, unitPrice: p.unitPrice, totalPrice: p.totalPrice, vendor: p.vendor || "", purchaseDate: p.purchaseDate?.split("T")[0] || "", deliveryDate: p.deliveryDate?.split("T")[0] || "", status: p.status, notes: p.notes || "", phase: String((p as any).phase ?? 1) });
     setProcOpen(true);
   }
   async function downloadPaymentInvoice(p: PaymentScheduleItem) {
@@ -766,7 +767,8 @@ export default function ProjectDetail() {
     billMut.mutate(body);
   }
   function submitProc(data: ProcurementFormValues) {
-    const body: any = { ...data, projectId, description: data.description || null, vendor: data.vendor || null, deliveryDate: data.deliveryDate || null, notes: data.notes || null };
+    const phaseNum = Math.max(1, parseInt(data.phase || "1") || 1);
+    const body: any = { ...data, projectId, description: data.description || null, vendor: data.vendor || null, deliveryDate: data.deliveryDate || null, notes: data.notes || null, phase: phaseNum };
     if (editProc) body._editId = editProc.id;
     procMut.mutate(body);
   }
@@ -1164,11 +1166,24 @@ export default function ProjectDetail() {
         <TabsContent value="procurements" className="space-y-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <h2 className="text-lg font-semibold">{t.procurements || "Procurements"}</h2>
-            <Button onClick={() => { setEditProc(null); procForm.reset({ itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "" }); setProcOpen(true); }} data-testid="button-add-procurement"><Plus className="h-4 w-4 mr-2" />{t.addProcurement || "Add Procurement"}</Button>
+            <Button onClick={() => { setEditProc(null); procForm.reset({ itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "", phase: "1" }); setProcOpen(true); }} data-testid="button-add-procurement"><Plus className="h-4 w-4 mr-2" />{t.addProcurement || "Add Procurement"}</Button>
           </div>
           {procurements.length === 0 ? <p className="text-muted-foreground text-center py-8">{t.noProcurements || "No procurements added yet"}</p> : (
-            <div className="space-y-3">
-              {procurements.map(p => (
+            <div className="space-y-4">
+              {Array.from(new Set(procurements.map(p => (p as any).phase ?? 1))).sort((a: number, b: number) => a - b).map(ph => {
+                const phaseProcs = procurements.filter(p => ((p as any).phase ?? 1) === ph);
+                const phaseTotal = phaseProcs.reduce((sum, p) => sum + parseFloat(p.totalPrice || "0"), 0);
+                return (
+                  <div key={`proc-phase-${ph}`} className="space-y-2" data-testid={`group-procurement-phase-${ph}`}>
+                    <div className="flex items-center justify-between gap-2 flex-wrap px-1 py-1 border-b">
+                      <p className="font-semibold text-sm">{(t as any).phase || "Phase"} {ph}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <span>{phaseProcs.length} {(t.procurements || "items").toString().toLowerCase()}</span>
+                        <span className="font-semibold text-foreground">{fmtNum(String(phaseTotal))} SAR</span>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {phaseProcs.map(p => (
                 <Card key={p.id} data-testid={`card-procurement-${p.id}`}>
                   <CardContent className="pt-4 pb-4">
                     <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -1211,7 +1226,19 @@ export default function ProjectDetail() {
                   </CardContent>
                 </Card>
               ))}
-              <div className="flex justify-end pt-2 border-t"><p className="font-bold">{t.total}: {fmtNum(String(totalProc))} SAR</p></div>
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="flex items-center justify-between pt-2 border-t flex-wrap gap-2">
+                <Button variant="outline" size="sm" onClick={() => {
+                  const next = Math.max(1, ...procurements.map(p => (p as any).phase ?? 1)) + 1;
+                  setEditProc(null);
+                  procForm.reset({ itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "", phase: String(next) });
+                  setProcOpen(true);
+                }} data-testid="button-add-procurement-phase"><Plus className="h-4 w-4 mr-2" />{(t as any).addPhase || "Add Phase"}</Button>
+                <p className="font-bold">{t.total}: {fmtNum(String(totalProc))} SAR</p>
+              </div>
             </div>
           )}
         </TabsContent>
@@ -2463,6 +2490,9 @@ export default function ProjectDetail() {
                       <SelectItem value="cancelled">{t.cancelled}</SelectItem>
                     </SelectContent>
                   </Select><FormMessage /></FormItem>
+              )} />
+              <FormField control={procForm.control} name="phase" render={({ field }) => (
+                <FormItem><FormLabel>{(t as any).phase || "Phase"}</FormLabel><FormControl><Input data-testid="input-procurement-phase" type="number" min="1" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
               <FormField control={procForm.control} name="notes" render={({ field }) => (
                 <FormItem><FormLabel>{t.notes}</FormLabel><FormControl><Textarea data-testid="input-procurement-notes" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>

@@ -17956,15 +17956,26 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           <td style="text-align:right">${parseFloat(b.amount || '0').toFixed(2)} SAR</td>
           <td>${escapeHtml(b.status)}</td>
         </tr>`).join('');
-    const procurementRows = procurements.map((p, idx) => `
+    const procPhases = Array.from(new Set(procurements.map(p => (p as any).phase ?? 1))).sort((a: number, b: number) => a - b);
+    let procIdx = 0;
+    const procurementRows = procPhases.map((ph: number) => {
+      const phaseProcs = procurements.filter(p => ((p as any).phase ?? 1) === ph);
+      const phaseSum = phaseProcs.reduce((s, pr) => s + parseFloat(pr.totalPrice || '0'), 0);
+      const header = `<tr><td colspan="6" style="background:#eef2f7;color:#1a365d;font-weight:700;padding:7px 8px;">Phase ${ph} / المرحلة ${ph} — ${phaseProcs.length} — ${phaseSum.toFixed(2)} SAR</td></tr>`;
+      const rows = phaseProcs.map(p => {
+        procIdx += 1;
+        return `
         <tr>
-          <td>${idx + 1}</td>
+          <td>${procIdx}</td>
           <td>${escapeHtml(p.itemName)}</td>
           <td>${escapeHtml(p.vendor || '-')}</td>
           <td style="text-align:center">${p.quantity}</td>
           <td style="text-align:right">${parseFloat(p.totalPrice || '0').toFixed(2)} SAR</td>
           <td>${escapeHtml(p.status)}</td>
-        </tr>`).join('');
+        </tr>`;
+      }).join('');
+      return header + rows;
+    }).join('');
     const employees = await storage.getUsers(restaurantId);
     const contractors = await storage.getContractors(restaurantId);
     const empMap = new Map(employees.map(e => [e.id, e.fullName || e.username || e.id]));

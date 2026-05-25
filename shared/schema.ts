@@ -1867,6 +1867,7 @@ export const projectProcurements = pgTable("project_procurements", {
   deliveryDate: timestamp("delivery_date"),
   status: text("status").notNull().default("ordered"),
   notes: text("notes"),
+  phase: integer("phase").notNull().default(1),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

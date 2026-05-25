@@ -7210,6 +7210,7 @@ export const storage = new DatabaseStorage();
     await pool.query(`ALTER TABLE project_items ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     await pool.query(`ALTER TABLE project_services ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     await pool.query(`ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
+    await pool.query(`ALTER TABLE project_procurements ADD COLUMN IF NOT EXISTS phase INTEGER NOT NULL DEFAULT 1`);
     await pool.query(`ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS assignee_type TEXT`);
     await pool.query(`ALTER TABLE project_tasks ADD COLUMN IF NOT EXISTS assignee_id VARCHAR(255)`);
     await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS phase_leads JSONB DEFAULT '{}'::jsonb`);
