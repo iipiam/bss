@@ -585,10 +585,13 @@ export default function POS() {
     0,
   );
 
-  // Cart's `baseSubtotal` is VAT-exclusive (item.price comes from basePrice).
-  // The delivery app's listed customer price is VAT-inclusive, so the formula
-  // input ("gross") for delivery economics must be baseSubtotal * 1.15.
-  const deliveryGross = baseSubtotal * 1.15;
+  // Menu prices entered in BSS are already the customer-facing (VAT-inclusive)
+  // price the delivery app shows — the same number the user uses when defining
+  // subsidy-tier ranges in the Delivery-Apps page. So the formula input
+  // ("gross") for delivery economics is the cart subtotal as-is, with no
+  // additional VAT gross-up. This keeps POS in lock-step with the
+  // Delivery-Apps preview card and the server profitability calc.
+  const deliveryGross = baseSubtotal;
 
   // Subsidy: matched against the tier whose [minAmount, maxAmount] contains the
   // delivery gross (the value the customer actually pays in the app).

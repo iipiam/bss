@@ -20289,9 +20289,11 @@ ${phaseSchedules.length > 0 ? `
       const { calcDeliveryBreakdown, roundHalala, resolveSubsidy } = await import("@shared/deliveryCalc");
 
       // Pipeline scenarios — mirror BOTH paths end-to-end:
-      //   POS:     items → baseSubtotal → gross = baseSubtotal*(1+markUp)*1.15 → calc → net (stored as order.total)
+      //   POS:     items → baseSubtotal → gross = baseSubtotal*(1+markUp) → calc → net (stored as order.total)
       //   Server:  order.items → baseSubtotal → gross (same formula) → calc → net
       // Asserts both paths yield identical net for the same input.
+      // Note: menu prices are the customer-facing (VAT-inclusive) delivery-app
+      // price, so there is no separate *1.15 VAT gross-up.
       type PipelineInput = {
         items: Array<{ price: number; quantity: number; addons?: Array<{ price: number }> }>;
         markUpPercent: number;
@@ -20305,7 +20307,7 @@ ${phaseSchedules.length > 0 ? `
           const addonSum = (it.addons || []).reduce((s, a) => s + Number(a.price || 0), 0);
           return sum + (Number(it.price || 0) + addonSum) * Number(it.quantity || 0);
         }, 0);
-        const gross = baseSubtotal * (1 + p.markUpPercent / 100) * 1.15;
+        const gross = baseSubtotal * (1 + p.markUpPercent / 100);
         const subsidy = resolveSubsidy(gross, p.subsidyTiers);
         return calcDeliveryBreakdown({
           gross,
@@ -20357,7 +20359,7 @@ ${phaseSchedules.length > 0 ? `
             : 0;
           return sum + (Number(item.price || 0) + addonSum) * Number(item.quantity || 0);
         }, 0);
-        const serverGross = serverBaseSubtotal * (1 + s.input.markUpPercent / 100) * 1.15;
+        const serverGross = serverBaseSubtotal * (1 + s.input.markUpPercent / 100);
         const serverSubsidy = resolveSubsidy(serverGross, s.input.subsidyTiers);
         const serverBreakdown = calcDeliveryBreakdown({
           gross: serverGross,

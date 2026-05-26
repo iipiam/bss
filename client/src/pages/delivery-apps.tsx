@@ -22,6 +22,7 @@ import { z } from "zod";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDeviceLayout } from "@/lib/mobileLayout";
 import type { DeliveryProfitability } from "@shared/schema";
+import { calcDeliveryBreakdown, resolveSubsidy } from "@shared/deliveryCalc";
 import {
   DndContext,
   closestCenter,
@@ -89,42 +90,28 @@ function SortableDeliveryAppCard({ app, onEdit, onDelete, testOrderAmount, t, la
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Calculate net earnings for this app using correct formula
+  // Calculate net earnings using the SHARED canonical helper from
+  // shared/deliveryCalc.ts — same helper POS and server profitability use.
+  // This guarantees the preview card, the POS cart total, and the saved
+  // order total all produce identical numbers down to the halala.
   const calculateNet = (amount: number) => {
-    const commissionPercent = parseFloat(app.commission);
-    const bankingFeesPercent = parseFloat(app.bankingFees);
-    const posFees = parseFloat(app.posFees);
-    
-    // Find applicable subsidy tier (where order amount falls within the range)
-    const applicableTier = app.subsidyTiers.find(tier => {
-      const isAboveMin = amount >= tier.minAmount;
-      const isBelowMax = tier.maxAmount === null || amount <= tier.maxAmount;
-      return isAboveMin && isBelowMax;
+    const breakdown = calcDeliveryBreakdown({
+      gross: amount,
+      subsidy: resolveSubsidy(amount, app.subsidyTiers),
+      commissionPercent: parseFloat(app.commission),
+      bankingFeesPercent: parseFloat(app.bankingFees),
+      posFees: parseFloat(app.posFees),
     });
-    const subsidy = applicableTier ? applicableTier.subsidy : 0;
-
-    // Correct formula per user specification:
-    // Commission = (Item Price - Subsidy) × Commission%
-    const commissionAmount = (amount - subsidy) * (commissionPercent / 100);
-    
-    // Banking Fees = Item Price × Banking%
-    const bankingFeesAmount = amount * (bankingFeesPercent / 100);
-    
-    // VAT = (Commission + Subsidy + Banking Fees) × 0.15
-    const vatAmount = (commissionAmount + subsidy + bankingFeesAmount) * 0.15;
-    
-    // Net Earnings = Item Price - Commission - Subsidy - Banking Fees - VAT - POS Fees
-    const netEarnings = amount - commissionAmount - subsidy - bankingFeesAmount - vatAmount - posFees;
 
     return {
-      netEarnings,
-      netPercentage: (netEarnings / amount) * 100,
+      netEarnings: breakdown.net,
+      netPercentage: amount > 0 ? (breakdown.net / amount) * 100 : 0,
       breakdown: {
-        commission: commissionAmount,
-        bankingFees: bankingFeesAmount,
-        subsidy,
-        vat: vatAmount,
-        posFees,
+        commission: breakdown.commission,
+        bankingFees: breakdown.banking,
+        subsidy: breakdown.subsidy,
+        vat: breakdown.vat,
+        posFees: breakdown.posFees,
       },
     };
   };

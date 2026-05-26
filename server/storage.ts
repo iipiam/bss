@@ -3233,10 +3233,14 @@ export class DatabaseStorage implements IStorage {
       const markUpPercent = parseFloat(app.markUp || "0");
 
       appOrders.forEach(order => {
-        // Reconstruct the delivery "gross" (VAT-inclusive customer price) the
+        // Reconstruct the delivery "gross" (customer-facing price) the
         // same way client/src/pages/pos.tsx does:
-        //   baseSubtotal = sum(items: (price + addons) * qty)   // VAT-exclusive
-        //   gross        = baseSubtotal * (1 + markUp%) * 1.15
+        //   baseSubtotal = sum(items: (price + addons) * qty)
+        //   gross        = baseSubtotal * (1 + markUp%)
+        // Menu prices are already the customer-facing price the delivery app
+        // shows, and the subsidy-tier ranges are defined in those same units,
+        // so we do NOT apply a VAT gross-up here — that was the old POS bug
+        // that made subsidy tiers silently miss.
         // We CANNOT use order.total as gross — POS stores total = net for
         // delivery orders, so doing so would double-apply the deductions and
         // break parity with the cart total.
@@ -3247,7 +3251,7 @@ export class DatabaseStorage implements IStorage {
             : 0;
           return sum + (Number(item.price || 0) + addonSum) * Number(item.quantity || 0);
         }, 0);
-        const gross = baseSubtotal * (1 + markUpPercent / 100) * 1.15;
+        const gross = baseSubtotal * (1 + markUpPercent / 100);
         totalGrossRevenue += gross;
 
         // Find applicable subsidy tier (safely handle null/undefined tiers)
