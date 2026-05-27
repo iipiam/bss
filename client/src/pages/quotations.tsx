@@ -53,6 +53,8 @@ import {
   ThumbsUp,
   ThumbsDown,
   MessageSquare,
+  MessageCircle,
+  Send,
   Download,
   X,
 } from "lucide-react";
@@ -371,6 +373,44 @@ export default function Quotations() {
       });
     },
   });
+
+  const sendEmailMutation = useMutation({
+    mutationFn: async (quotation: Quotation) => {
+      return await apiRequest("POST", `/api/quotations/${quotation.id}/send-email`, { lang: pdfLang });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/quotations"] });
+      toast({
+        title: language === 'Arabic' ? 'تم الإرسال' : 'Email Sent',
+        description: language === 'Arabic' ? 'تم إرسال عرض السعر إلى البريد الإلكتروني للعميل.' : "Quotation sent to client's email.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: t.error,
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const sendWhatsApp = (quotation: Quotation) => {
+    const phone = (quotation.clientPhone || "").replace(/[^\d]/g, "");
+    if (!phone) {
+      toast({
+        title: t.error,
+        description: language === 'Arabic' ? 'لا يوجد رقم هاتف للعميل.' : "Client phone number is missing.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const pdfUrl = `${window.location.origin}/api/quotations/${quotation.id}/download-pdf?lang=${pdfLang}`;
+    const total = parseFloat(quotation.totalAmount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 });
+    const msg = language === 'Arabic'
+      ? `مرحباً ${quotation.clientName || ''}،\n\nعرض السعر رقم ${quotation.quotationNumber}\nالإجمالي: ${total} ر.س${quotation.validUntil ? `\nصالح حتى: ${new Date(quotation.validUntil).toLocaleDateString('en-GB')}` : ''}\n\nرابط التحميل:\n${pdfUrl}`
+      : `Hello ${quotation.clientName || ''},\n\nQuotation ${quotation.quotationNumber}\nTotal: ${total} SAR${quotation.validUntil ? `\nValid until: ${new Date(quotation.validUntil).toLocaleDateString('en-GB')}` : ''}\n\nDownload link:\n${pdfUrl}`;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  };
 
   const approveQuotationMutation = useMutation({
     mutationFn: async (quotation: Quotation) => {
@@ -1072,6 +1112,45 @@ export default function Quotations() {
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>{t.download}</TooltipContent>
+                    </Tooltip>
+                  )}
+                  {canDownloadQuotation && quotation.clientEmail && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={language === 'Arabic' ? 'إرسال بالبريد الإلكتروني' : 'Send via Email'}
+                          onClick={() => sendEmailMutation.mutate(quotation)}
+                          disabled={sendEmailMutation.isPending}
+                          data-testid={`button-send-email-${quotation.id}`}
+                          className="text-blue-600"
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {language === 'Arabic' ? `إرسال إلى ${quotation.clientEmail}` : `Email to ${quotation.clientEmail}`}
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  {canDownloadQuotation && quotation.clientPhone && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={language === 'Arabic' ? 'إرسال عبر واتساب' : 'Send via WhatsApp'}
+                          onClick={() => sendWhatsApp(quotation)}
+                          data-testid={`button-send-whatsapp-${quotation.id}`}
+                          className="text-green-600"
+                        >
+                          <MessageCircle className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        {language === 'Arabic' ? `واتساب إلى ${quotation.clientPhone}` : `WhatsApp to ${quotation.clientPhone}`}
+                      </TooltipContent>
                     </Tooltip>
                   )}
                   <Tooltip>

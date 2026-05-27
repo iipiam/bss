@@ -17662,6 +17662,54 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       .replace(/'/g, '&#039;');
   }
 
+  // Send the quotation PDF to the client's email. Re-uses the existing download-pdf
+  // endpoint to produce the PDF buffer so the email attachment always matches the
+  // PDF the user can download from the UI.
+  app.post("/api/quotations/:id/send-email", requireAuth, requireRestaurant, requirePermission('quotations'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
+      const quotation = await storage.getQuotation(req.params.id, restaurantId);
+      if (!quotation) return res.status(404).json({ message: "Quotation not found" });
+      const to = (req.body?.to as string) || quotation.clientEmail || "";
+      if (!to) return res.status(400).json({ message: "Client email is required" });
+      const lang = req.body?.lang === 'ar' ? 'ar' : 'en';
+      const isAr = lang === 'ar';
+
+      const pdfRes = await fetch(`http://localhost:${process.env.PORT || 5000}/api/quotations/${quotation.id}/download-pdf?lang=${lang}`, {
+        headers: { cookie: req.headers.cookie || "" },
+      });
+      if (!pdfRes.ok) return res.status(500).json({ message: "Failed to generate PDF" });
+      const pdfBuffer = Buffer.from(await pdfRes.arrayBuffer());
+
+      const companyInfo = await storage.getCompanySettings(restaurantId);
+      const companyName = companyInfo?.companyName || "BSS";
+      const subject = isAr
+        ? `عرض سعر ${quotation.quotationNumber} من ${companyName}`
+        : `Quotation ${quotation.quotationNumber} from ${companyName}`;
+      const greeting = isAr ? `مرحباً ${quotation.clientName || ''},` : `Dear ${quotation.clientName || 'Client'},`;
+      const body = isAr
+        ? `يسعدنا أن نرسل إليكم عرض السعر رقم <strong>${quotation.quotationNumber}</strong> مرفقاً بهذا البريد الإلكتروني بصيغة PDF.<br><br>إجمالي العرض: <strong>${parseFloat(quotation.totalAmount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })} ر.س</strong>${quotation.validUntil ? `<br>صالح حتى: ${new Date(quotation.validUntil).toLocaleDateString('en-GB')}` : ''}<br><br>لا تتردد في التواصل معنا لأي استفسار.`
+        : `Please find attached our quotation <strong>${quotation.quotationNumber}</strong> for your review.<br><br>Total: <strong>${parseFloat(quotation.totalAmount || '0').toLocaleString('en-US', { minimumFractionDigits: 2 })} SAR</strong>${quotation.validUntil ? `<br>Valid until: ${new Date(quotation.validUntil).toLocaleDateString('en-GB')}` : ''}<br><br>Feel free to reach out with any questions.`;
+      const html = `<div style="font-family:Arial,sans-serif;font-size:14px;color:#333;direction:${isAr ? 'rtl' : 'ltr'};text-align:${isAr ? 'right' : 'left'};"><p>${greeting}</p><p>${body}</p><p style="margin-top:24px;color:#666">${companyName}</p></div>`;
+
+      const { sendGenericEmail } = await import('./emailService');
+      const result = await sendGenericEmail({
+        to, subject, html,
+        attachments: [{ filename: `quotation-${quotation.quotationNumber}.pdf`, content: pdfBuffer, contentType: 'application/pdf' }],
+      });
+      if (!result.ok) return res.status(500).json({ message: result.error || "Failed to send email" });
+
+      try {
+        await storage.updateQuotation(quotation.id, restaurantId, { status: 'sent' } as any);
+      } catch {}
+      res.json({ ok: true, sentTo: to });
+    } catch (error: any) {
+      console.error("Quotation email error:", error);
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   app.get("/api/quotations/:id/download-pdf", requireAuth, requireRestaurant, requirePermission('quotations'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
