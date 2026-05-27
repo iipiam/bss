@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, LayoutGrid, List, Home, BedDouble, Bath, Maximize2, Car } from "lucide-react";
 import { PageHeader, StatusBadge, fmtSar, REBreadcrumb, sarToHalala, useRET } from "./_shared";
 import { localizedStatus, localizedType } from "@/i18n/realEstateTranslations";
 
@@ -20,6 +20,7 @@ export default function UnitsPage() {
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
   const { data: properties = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/properties"] });
   const { data: units = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/units"] });
+  const [view, setView] = useState<"grid" | "list">("grid");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState<any>({ propertyId: "", unitNumber: "", floor: "", type: "apartment", status: "available", bedrooms: "", bathrooms: "", areaSqm: "", monthlyRent: "", parking: "" });
@@ -83,43 +84,95 @@ export default function UnitsPage() {
               {properties.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
             </SelectContent>
           </Select>
+          <div className="inline-flex rounded-md border overflow-hidden" data-testid="toggle-view">
+            <Button size="sm" variant={view === "grid" ? "default" : "ghost"} className="rounded-none" onClick={() => setView("grid")} data-testid="button-view-grid" title={t.gridView || "Grid view"}>
+              <LayoutGrid className="w-4 h-4" />
+            </Button>
+            <Button size="sm" variant={view === "list" ? "default" : "ghost"} className="rounded-none" onClick={() => setView("list")} data-testid="button-view-list" title={t.listView || "List view"}>
+              <List className="w-4 h-4" />
+            </Button>
+          </div>
           <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-add-unit"><Plus className="w-4 h-4 mr-1" />{t.addUnit}</Button>
         </>
       } />
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t.unitNumberShort}</TableHead><TableHead>{t.property}</TableHead><TableHead>{t.typeLabel}</TableHead>
-                <TableHead>{t.bedBath}</TableHead><TableHead>{t.monthlyRent}</TableHead>
-                <TableHead>{t.statusLabel}</TableHead><TableHead className="w-24">{t.actions}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-6">{t.loading}</TableCell></TableRow>}
-              {!isLoading && filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">{t.noUnits}</TableCell></TableRow>}
-              {filtered.map((u: any) => (
-                <TableRow key={u.id} data-testid={`row-unit-${u.id}`}>
-                  <TableCell className="font-medium">{u.unitNumber}</TableCell>
-                  <TableCell>{propName(u.propertyId)}</TableCell>
-                  <TableCell>{localizedType(t, u.type)}</TableCell>
-                  <TableCell>{u.bedrooms ?? "—"} / {u.bathrooms ?? "—"}</TableCell>
-                  <TableCell>{fmtSar(u.monthlyRent)}</TableCell>
-                  <TableCell><StatusBadge status={u.status} /></TableCell>
-                  <TableCell>
+      {view === "list" ? (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.unitNumberShort}</TableHead><TableHead>{t.property}</TableHead><TableHead>{t.typeLabel}</TableHead>
+                  <TableHead>{t.bedBath}</TableHead><TableHead>{t.monthlyRent}</TableHead>
+                  <TableHead>{t.statusLabel}</TableHead><TableHead className="w-24">{t.actions}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-6">{t.loading}</TableCell></TableRow>}
+                {!isLoading && filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">{t.noUnits}</TableCell></TableRow>}
+                {filtered.map((u: any) => (
+                  <TableRow key={u.id} data-testid={`row-unit-${u.id}`}>
+                    <TableCell className="font-medium">{u.unitNumber}</TableCell>
+                    <TableCell>{propName(u.propertyId)}</TableCell>
+                    <TableCell>{localizedType(t, u.type)}</TableCell>
+                    <TableCell>{u.bedrooms ?? "—"} / {u.bathrooms ?? "—"}</TableCell>
+                    <TableCell>{fmtSar(u.monthlyRent)}</TableCell>
+                    <TableCell><StatusBadge status={u.status} /></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(u)} data-testid={`button-edit-${u.id}`}><Edit className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => { if (confirm(t.confirmDeleteUnit)) deleteMut.mutate(u.id); }} data-testid={`button-delete-${u.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : (
+        <div>
+          {isLoading && <div className="text-center py-10 text-muted-foreground">{t.loading}</div>}
+          {!isLoading && filtered.length === 0 && <div className="text-center py-10 text-muted-foreground">{t.noUnits}</div>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filtered.map((u: any) => (
+              <Card key={u.id} className="hover-elevate" data-testid={`card-unit-${u.id}`}>
+                <CardContent className="p-4 flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-10 h-10 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                        <Home className="w-5 h-5" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-semibold truncate" data-testid={`text-unit-number-${u.id}`}>{u.unitNumber}</div>
+                        <div className="text-xs text-muted-foreground truncate">{propName(u.propertyId)}</div>
+                      </div>
+                    </div>
+                    <StatusBadge status={u.status} />
+                  </div>
+
+                  <div className="text-xs text-muted-foreground">{localizedType(t, u.type)}{u.floor != null ? ` · ${t.floor || "Floor"} ${u.floor}` : ""}</div>
+
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
+                    <div className="flex items-center gap-1.5 text-muted-foreground"><BedDouble className="w-3.5 h-3.5" /><span className="text-foreground">{u.bedrooms ?? "—"}</span></div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground"><Bath className="w-3.5 h-3.5" /><span className="text-foreground">{u.bathrooms ?? "—"}</span></div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground"><Maximize2 className="w-3.5 h-3.5" /><span className="text-foreground">{u.areaSqm ? `${u.areaSqm} m²` : "—"}</span></div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground"><Car className="w-3.5 h-3.5" /><span className="text-foreground">{u.parking ?? "—"}</span></div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="font-semibold" data-testid={`text-rent-${u.id}`}>{fmtSar(u.monthlyRent)}</div>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(u)} data-testid={`button-edit-${u.id}`}><Edit className="w-4 h-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => { if (confirm(t.confirmDeleteUnit)) deleteMut.mutate(u.id); }} data-testid={`button-delete-${u.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <DialogContent className="max-w-2xl">
