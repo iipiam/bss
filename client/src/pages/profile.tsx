@@ -26,6 +26,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { InfoTip } from "@/components/ui/info-tip";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getPlanPricing, type BusinessType } from "@shared/subscriptionPricing";
 
 type ProfileResponse = {
   user: UserType;
@@ -92,11 +93,21 @@ export default function Profile() {
     const msPerMonth = 30.44 * 24 * 60 * 60 * 1000;
     const monthsUsed = Math.ceil((now.getTime() - startDate.getTime()) / msPerMonth);
     
+    // Pull the original yearly price + monthly burn rate from the central
+    // pricing helper so non-restaurant business types (real_estate yearly
+    // = 8,400 SAR, factory, services) refund against the right baseline.
+    const _bt = ((restaurant as any).businessType || 'restaurant') as BusinessType;
+    const _br = (restaurant as any).branchesCount || 1;
+    const _legacyTier = _bt === 'restaurant' && ['basic','premium','enterprise'].includes(String(restaurant.subscriptionPlan));
     let yearlyPrice = 1990;
-    if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
-    if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
-    
-    const monthlyRate = 199;
+    let monthlyRate = 199;
+    if (_legacyTier) {
+      if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
+      if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
+    } else {
+      yearlyPrice = Math.round(getPlanPricing('yearly', _br, _bt).grossAmount);
+      monthlyRate = Math.round(getPlanPricing('monthly', _br, _bt).grossAmount);
+    }
     const chargedAmount = monthlyRate * monthsUsed;
     const refundAmount = Math.max(0, yearlyPrice - chargedAmount);
     

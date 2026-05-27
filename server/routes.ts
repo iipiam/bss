@@ -6577,11 +6577,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         const msPerMonth = 30.44 * 24 * 60 * 60 * 1000;
         const monthsUsed = Math.ceil((cancellationDate.getTime() - subscriptionStartDate.getTime()) / msPerMonth);
 
+        // Derive the original yearly price and per-month burn rate from the
+        // central pricing helper so non-restaurant business types (real_estate
+        // = 8,400/yr, factory, services) refund against the right baseline.
+        // Legacy restaurant tier names ('basic'/'premium'/'enterprise') keep
+        // their historical ladder so existing refunds remain reproducible.
+        const _bt = (restaurant.businessType || 'restaurant') as BusinessType;
+        const _br = (restaurant as any).branchesCount || 1;
+        const _legacyTier = _bt === 'restaurant' && ['basic','premium','enterprise'].includes(String(restaurant.subscriptionPlan));
         let yearlyPrice = 1990;
-        if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
-        if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
-        
-        const monthlyRate = 199;
+        let monthlyRate = 199;
+        if (_legacyTier) {
+          if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
+          if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
+        } else {
+          yearlyPrice = Math.round(getPlanPricing('yearly', _br, _bt).grossAmount);
+          monthlyRate = Math.round(getPlanPricing('monthly', _br, _bt).grossAmount);
+        }
         const chargedAmount = monthlyRate * monthsUsed;
         
         // For "mistake" cancellations, refund is 0. For "client_request", calculate actual refund
@@ -12543,11 +12555,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const msPerMonth = 30.44 * 24 * 60 * 60 * 1000;
       const monthsUsed = Math.max(1, Math.ceil((cancellationDate.getTime() - subscriptionStartDate.getTime()) / msPerMonth));
 
+      // Derive the original yearly price and per-month burn rate from the
+      // central pricing helper so non-restaurant business types refund
+      // against the right baseline. See parallel block above.
+      const _bt2 = (restaurant.businessType || 'restaurant') as BusinessType;
+      const _br2 = (restaurant as any).branchesCount || 1;
+      const _legacyTier2 = _bt2 === 'restaurant' && ['basic','premium','enterprise'].includes(String(restaurant.subscriptionPlan));
       let yearlyPrice = 1990;
-      if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
-      if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
-      
-      const monthlyRate = 199;
+      let monthlyRate = 199;
+      if (_legacyTier2) {
+        if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
+        if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
+      } else {
+        yearlyPrice = Math.round(getPlanPricing('yearly', _br2, _bt2).grossAmount);
+        monthlyRate = Math.round(getPlanPricing('monthly', _br2, _bt2).grossAmount);
+      }
       const chargedAmount = monthlyRate * monthsUsed;
       
       // Determine cancellation reason

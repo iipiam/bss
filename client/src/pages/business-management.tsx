@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useAuth } from "@/lib/auth";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getPlanPricing, type BusinessType } from "@shared/subscriptionPricing";
 import { useDevice } from "@/contexts/DeviceContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -825,11 +826,21 @@ export default function BusinessManagement() {
     const msPerMonth = 30.44 * 24 * 60 * 60 * 1000;
     const monthsUsed = Math.ceil((now.getTime() - startDate.getTime()) / msPerMonth);
     
+    // Pull the original yearly price + monthly burn rate from the central
+    // pricing helper so non-restaurant business types (real_estate yearly
+    // = 8,400 SAR, factory, services) refund against the right baseline.
+    const _bt = ((client as any).businessType || 'restaurant') as BusinessType;
+    const _br = (client as any).branchesCount || 1;
+    const _legacyTier = _bt === 'restaurant' && ['basic','premium','enterprise'].includes(String(client.subscriptionPlan));
     let yearlyPrice = 1990;
-    if (client.subscriptionPlan === "premium") yearlyPrice = 2990;
-    if (client.subscriptionPlan === "enterprise") yearlyPrice = 4990;
-    
-    const monthlyRate = 199;  // Fixed monthly rate for early cancellation
+    let monthlyRate = 199;
+    if (_legacyTier) {
+      if (client.subscriptionPlan === "premium") yearlyPrice = 2990;
+      if (client.subscriptionPlan === "enterprise") yearlyPrice = 4990;
+    } else {
+      yearlyPrice = Math.round(getPlanPricing('yearly', _br, _bt).grossAmount);
+      monthlyRate = Math.round(getPlanPricing('monthly', _br, _bt).grossAmount);
+    }
     const chargedAmount = monthlyRate * monthsUsed;
     const refundAmount = Math.max(0, yearlyPrice - chargedAmount);
     
