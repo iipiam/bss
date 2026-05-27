@@ -592,7 +592,7 @@ export default function POS() {
   // before feeding it to calcDeliveryBreakdown. This keeps POS in lock-step
   // with the Delivery-Apps Net Earnings Calculator and the server profitability
   // calc (which also receives the VAT-inclusive gross).
-  const deliveryGross = baseSubtotal * 1.15;
+  const deliveryGross = Math.round(baseSubtotal * 1.15 * 100) / 100;
 
   // Subsidy: matched against the tier whose [minAmount, maxAmount] contains the
   // delivery gross (the value the customer actually pays in the app).
