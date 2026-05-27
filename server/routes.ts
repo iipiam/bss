@@ -5723,7 +5723,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
 
       // Calculate subscription amount using shared pricing module
-      const pricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, branches, businessType as BusinessType);
+      const pricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, branches, businessType as BusinessType, restaurantType);
       const totalAmount = pricing.grossAmount; // Total including VAT
       
       console.log(`[SIGNUP] Calculated subscription amount: ${totalAmount} SAR for ${subscriptionPlan} plan, ${branches} branch(es)`);
@@ -6591,8 +6591,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
           if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
         } else {
-          yearlyPrice = Math.round(getPlanPricing('yearly', _br, _bt).grossAmount);
-          monthlyRate = Math.round(getPlanPricing('monthly', _br, _bt).grossAmount);
+          yearlyPrice = Math.round(getPlanPricing('yearly', _br, _bt, restaurant.restaurantType).grossAmount);
+          monthlyRate = Math.round(getPlanPricing('monthly', _br, _bt, restaurant.restaurantType).grossAmount);
         }
         const chargedAmount = monthlyRate * monthsUsed;
         
@@ -6728,7 +6728,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       
       // Calculate new subscription amount
-      const pricing = getPlanPricing(plan as SubscriptionPlan, branches, (restaurant.businessType || 'restaurant') as BusinessType);
+      const pricing = getPlanPricing(plan as SubscriptionPlan, branches, (restaurant.businessType || 'restaurant') as BusinessType, restaurant.restaurantType);
       const totalAmount = pricing.grossAmount;
       
       console.log(`[SUBSCRIPTION UPDATE] User ${userId} updating to ${plan} plan with ${branches} branches, amount: ${totalAmount} SAR`);
@@ -6895,7 +6895,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           const serialNumber = await storage.getNextSubscriptionInvoiceSerialNumber();
           
           // Calculate pricing details
-          const pricing = getPlanPricing(newPlan as SubscriptionPlan, newBranchesCount, (restaurant.businessType || 'restaurant') as BusinessType);
+          const pricing = getPlanPricing(newPlan as SubscriptionPlan, newBranchesCount, (restaurant.businessType || 'restaurant') as BusinessType, restaurant.restaurantType);
           const additionalBranches = Math.max(0, newBranchesCount - 1);
           const additionalBranchesPrice = pricing.perBranchPrice * additionalBranches;
           
@@ -10742,13 +10742,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           const pricing = getPlanPricing(
             pendingSignup.subscriptionPlan as SubscriptionPlan, 
             branches, 
-            pendingSignup.businessType as BusinessType
+            pendingSignup.businessType as BusinessType,
+            pendingSignup.restaurantType
           );
           
           const basePlanPricing = getPlanPricing(
             pendingSignup.subscriptionPlan as SubscriptionPlan, 
             1, 
-            pendingSignup.businessType as BusinessType
+            pendingSignup.businessType as BusinessType,
+            pendingSignup.restaurantType
           );
           const basePlanPrice = basePlanPricing.netAmount;
           const additionalBranchesPrice = branches > 1 ? pricing.netAmount - basePlanPrice : 0;
@@ -11102,13 +11104,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           const pricing = getPlanPricing(
             pendingSignup.subscriptionPlan as SubscriptionPlan, 
             branches, 
-            pendingSignup.businessType as BusinessType
+            pendingSignup.businessType as BusinessType,
+            pendingSignup.restaurantType
           );
           
           const basePlanPricing = getPlanPricing(
             pendingSignup.subscriptionPlan as SubscriptionPlan, 
             1, 
-            pendingSignup.businessType as BusinessType
+            pendingSignup.businessType as BusinessType,
+            pendingSignup.restaurantType
           );
           const basePlanPrice = basePlanPricing.netAmount;
           const additionalBranchesPrice = branches > 1 ? pricing.netAmount - basePlanPrice : 0;
@@ -12200,13 +12204,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         const pricing = getPlanPricing(
           pendingSignup.subscriptionPlan as SubscriptionPlan, 
           branches, 
-          pendingSignup.businessType as BusinessType
+          pendingSignup.businessType as BusinessType,
+          pendingSignup.restaurantType
         );
         
         const basePlanPricing = getPlanPricing(
           pendingSignup.subscriptionPlan as SubscriptionPlan, 
           1, 
-          pendingSignup.businessType as BusinessType
+          pendingSignup.businessType as BusinessType,
+          pendingSignup.restaurantType
         );
         const basePlanPrice = basePlanPricing.netAmount;
         const additionalBranchesPrice = branches > 1 ? pricing.netAmount - basePlanPrice : 0;
@@ -12567,8 +12573,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
         if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
       } else {
-        yearlyPrice = Math.round(getPlanPricing('yearly', _br2, _bt2).grossAmount);
-        monthlyRate = Math.round(getPlanPricing('monthly', _br2, _bt2).grossAmount);
+        yearlyPrice = Math.round(getPlanPricing('yearly', _br2, _bt2, restaurant.restaurantType).grossAmount);
+        monthlyRate = Math.round(getPlanPricing('monthly', _br2, _bt2, restaurant.restaurantType).grossAmount);
       }
       const chargedAmount = monthlyRate * monthsUsed;
       
@@ -13884,7 +13890,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         // Get plan pricing
         const businessType = rest.businessType as 'restaurant' | 'factory' | 'real_estate';
         const planType = rest.subscriptionPlan as 'weekly' | 'monthly' | 'yearly';
-        const pricing = getPlanPricing(planType, 1, businessType);
+        const pricing = getPlanPricing(planType, 1, businessType, rest.restaurantType);
         
         // Calculate monthly rate based on plan
         let monthlyRate = 199;  // Fixed monthly rate for early cancellation

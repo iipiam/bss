@@ -41,18 +41,35 @@ const GROSS_PER_BRANCH_PRICES_FACTORY: Record<SubscriptionPlan, number> = {
   yearly: FACTORY_MONTHLY_PER_BRANCH * 12   // Auto-calculated: 2,400 × 12 = 28,800 SAR/year per branch
 };
 
-// GROSS prices (VAT-inclusive) for base plan (1 branch) - REAL ESTATE
-const GROSS_BASE_PRICES_REAL_ESTATE: Record<SubscriptionPlan, number> = {
+// GROSS prices (VAT-inclusive) for base plan (1 branch) - REAL ESTATE / PROPERTY MANAGEMENT
+// Used when restaurantType === "Property Management".
+const GROSS_BASE_PRICES_REAL_ESTATE_PM: Record<SubscriptionPlan, number> = {
   weekly: 299,
   monthly: 999,
   yearly: 8400
 };
 
-// GROSS prices (VAT-inclusive) per additional branch - REAL ESTATE
-const GROSS_PER_BRANCH_PRICES_REAL_ESTATE: Record<SubscriptionPlan, number> = {
+// GROSS prices (VAT-inclusive) per additional branch - REAL ESTATE / PROPERTY MANAGEMENT
+const GROSS_PER_BRANCH_PRICES_REAL_ESTATE_PM: Record<SubscriptionPlan, number> = {
   weekly: 59.80,   // ~20% of base weekly price per additional branch
   monthly: 79.80,  // ~20% of base monthly price per additional branch
   yearly: 1680     // 20% of base yearly price per additional branch
+};
+
+// GROSS prices (VAT-inclusive) for base plan (1 branch) - REAL ESTATE / BROKERAGE OFFICE
+// Used when restaurantType === "Brokerage Office" (or any non-Property-Management real_estate subtype).
+// Brokerage offices keep the original real_estate pricing (yearly 4,900 SAR) since the
+// Property Management vertical's extra features are what justify the 8,400 SAR yearly fee.
+const GROSS_BASE_PRICES_REAL_ESTATE_BROKERAGE: Record<SubscriptionPlan, number> = {
+  weekly: 299,
+  monthly: 999,
+  yearly: 4900
+};
+
+const GROSS_PER_BRANCH_PRICES_REAL_ESTATE_BROKERAGE: Record<SubscriptionPlan, number> = {
+  weekly: 59.80,
+  monthly: 79.80,
+  yearly: 499.80
 };
 
 // GROSS prices (VAT-inclusive) for base plan (1 branch) - SERVICE BUSINESSES
@@ -69,10 +86,22 @@ const GROSS_PER_BRANCH_PRICES_SERVICES: Record<SubscriptionPlan, number> = {
   yearly: 499.80   // ~20% of base yearly price per additional branch
 };
 
-function getBasePrices(businessType: BusinessType): Record<SubscriptionPlan, number> {
+// Real-estate is split into two pricing profiles: Property Management (PM) gets
+// the full vertical (rental contracts, accounting, etc.) at the higher yearly
+// fee. Brokerage Office keeps the original lower fee. Detection is case- and
+// whitespace-insensitive so old DB rows still resolve to the right ladder.
+function isPropertyManagement(restaurantType?: string | null): boolean {
+  if (!restaurantType) return false;
+  return restaurantType.trim().toLowerCase() === 'property management';
+}
+
+function getBasePrices(businessType: BusinessType, restaurantType?: string | null): Record<SubscriptionPlan, number> {
   switch (businessType) {
     case 'factory': return GROSS_BASE_PRICES_FACTORY;
-    case 'real_estate': return GROSS_BASE_PRICES_REAL_ESTATE;
+    case 'real_estate':
+      return isPropertyManagement(restaurantType)
+        ? GROSS_BASE_PRICES_REAL_ESTATE_PM
+        : GROSS_BASE_PRICES_REAL_ESTATE_BROKERAGE;
     case 'design_services':
     case 'installation_services':
     case 'it_services':
@@ -81,10 +110,13 @@ function getBasePrices(businessType: BusinessType): Record<SubscriptionPlan, num
   }
 }
 
-function getBranchPrices(businessType: BusinessType): Record<SubscriptionPlan, number> {
+function getBranchPrices(businessType: BusinessType, restaurantType?: string | null): Record<SubscriptionPlan, number> {
   switch (businessType) {
     case 'factory': return GROSS_PER_BRANCH_PRICES_FACTORY;
-    case 'real_estate': return GROSS_PER_BRANCH_PRICES_REAL_ESTATE;
+    case 'real_estate':
+      return isPropertyManagement(restaurantType)
+        ? GROSS_PER_BRANCH_PRICES_REAL_ESTATE_PM
+        : GROSS_PER_BRANCH_PRICES_REAL_ESTATE_BROKERAGE;
     case 'design_services':
     case 'installation_services':
     case 'it_services':
@@ -93,9 +125,14 @@ function getBranchPrices(businessType: BusinessType): Record<SubscriptionPlan, n
   }
 }
 
-export function getPlanPricing(plan: SubscriptionPlan, branchesCount: number = 1, businessType: BusinessType = 'restaurant'): PricingBreakdown {
-  const GROSS_BASE_PRICES = getBasePrices(businessType);
-  const GROSS_PER_BRANCH_PRICES = getBranchPrices(businessType);
+export function getPlanPricing(
+  plan: SubscriptionPlan,
+  branchesCount: number = 1,
+  businessType: BusinessType = 'restaurant',
+  restaurantType?: string | null
+): PricingBreakdown {
+  const GROSS_BASE_PRICES = getBasePrices(businessType, restaurantType);
+  const GROSS_PER_BRANCH_PRICES = getBranchPrices(businessType, restaurantType);
   
   const grossBasePrice = GROSS_BASE_PRICES[plan];
   const grossPerBranchPrice = GROSS_PER_BRANCH_PRICES[plan];

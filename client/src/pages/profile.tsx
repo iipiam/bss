@@ -105,8 +105,8 @@ export default function Profile() {
       if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
       if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
     } else {
-      yearlyPrice = Math.round(getPlanPricing('yearly', _br, _bt).grossAmount);
-      monthlyRate = Math.round(getPlanPricing('monthly', _br, _bt).grossAmount);
+      yearlyPrice = Math.round(getPlanPricing('yearly', _br, _bt, (restaurant as any).restaurantType).grossAmount);
+      monthlyRate = Math.round(getPlanPricing('monthly', _br, _bt, (restaurant as any).restaurantType).grossAmount);
     }
     const chargedAmount = monthlyRate * monthsUsed;
     const refundAmount = Math.max(0, yearlyPrice - chargedAmount);

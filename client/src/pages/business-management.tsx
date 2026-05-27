@@ -838,8 +838,8 @@ export default function BusinessManagement() {
       if (client.subscriptionPlan === "premium") yearlyPrice = 2990;
       if (client.subscriptionPlan === "enterprise") yearlyPrice = 4990;
     } else {
-      yearlyPrice = Math.round(getPlanPricing('yearly', _br, _bt).grossAmount);
-      monthlyRate = Math.round(getPlanPricing('monthly', _br, _bt).grossAmount);
+      yearlyPrice = Math.round(getPlanPricing('yearly', _br, _bt, (client as any).type).grossAmount);
+      monthlyRate = Math.round(getPlanPricing('monthly', _br, _bt, (client as any).type).grossAmount);
     }
     const chargedAmount = monthlyRate * monthsUsed;
     const refundAmount = Math.max(0, yearlyPrice - chargedAmount);

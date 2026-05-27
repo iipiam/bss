@@ -125,13 +125,13 @@ export default function Login() {
 
   // Calculate total price with branches (VAT-inclusive)
   const calculateTotalPrice = () => {
-    const pricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, branchesCount, signupBusinessType);
+    const pricing = getPlanPricing(subscriptionPlan as SubscriptionPlan, branchesCount, signupBusinessType, signupRestaurantType);
     return pricing.grossAmount.toFixed(2);
   };
   
   // Get pricing breakdown for display
   const getPricingBreakdown = () => {
-    return getPlanPricing(subscriptionPlan as SubscriptionPlan, branchesCount, signupBusinessType);
+    return getPlanPricing(subscriptionPlan as SubscriptionPlan, branchesCount, signupBusinessType, signupRestaurantType);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -1076,7 +1076,7 @@ export default function Login() {
                               )}
                             </div>
                             <div className="text-right">
-                              <p className="text-xl font-bold">{getPlanPricing('weekly', branchesCount, signupBusinessType).grossAmount.toFixed(2)} {t.sar}</p>
+                              <p className="text-xl font-bold">{getPlanPricing('weekly', branchesCount, signupBusinessType, signupRestaurantType).grossAmount.toFixed(2)} {t.sar}</p>
                               <p className="text-xs text-muted-foreground">{t.perWeekVatIncluded}</p>
                             </div>
                           </div>
@@ -1100,7 +1100,7 @@ export default function Login() {
                             )}
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">{getPlanPricing('monthly', branchesCount, signupBusinessType).grossAmount.toFixed(2)} {t.sar}</p>
+                            <p className="text-xl font-bold">{getPlanPricing('monthly', branchesCount, signupBusinessType, signupRestaurantType).grossAmount.toFixed(2)} {t.sar}</p>
                             <p className="text-xs text-muted-foreground">{t.perMonth} (VAT included)</p>
                           </div>
                         </div>
@@ -1124,11 +1124,11 @@ export default function Login() {
                               )}
                             </div>
                             <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-                              {t.save} {Math.round((1 - getPlanPricing('yearly', branchesCount, signupBusinessType).grossAmount / (getPlanPricing('monthly', branchesCount, signupBusinessType).grossAmount * 12)) * 100)}%
+                              {t.save} {Math.round((1 - getPlanPricing('yearly', branchesCount, signupBusinessType, signupRestaurantType).grossAmount / (getPlanPricing('monthly', branchesCount, signupBusinessType, signupRestaurantType).grossAmount * 12)) * 100)}%
                             </Badge>
                           </div>
                           <div className="text-right">
-                            <p className="text-xl font-bold">{getPlanPricing('yearly', branchesCount, signupBusinessType).grossAmount.toFixed(2)} {t.sar}</p>
+                            <p className="text-xl font-bold">{getPlanPricing('yearly', branchesCount, signupBusinessType, signupRestaurantType).grossAmount.toFixed(2)} {t.sar}</p>
                             <p className="text-xs text-muted-foreground">{t.perYear} (VAT included)</p>
                           </div>
                         </div>
