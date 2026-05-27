@@ -1,5 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { getRealEstateT, localizedStatus, localizedPriority } from "@/i18n/realEstateTranslations";
 
 export const halalaToSar = (h: number | string | null | undefined) => {
   const n = typeof h === "string" ? Number(h) : h ?? 0;
@@ -16,6 +18,11 @@ export const fmtDate = (d?: string | Date | null) => {
   if (!d) return "—";
   try { return new Date(d).toISOString().slice(0, 10); } catch { return String(d); }
 };
+
+export function useRET() {
+  const { language } = useLanguage();
+  return getRealEstateT(language);
+}
 
 const STATUS_TONES: Record<string, string> = {
   available: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300",
@@ -40,12 +47,14 @@ const STATUS_TONES: Record<string, string> = {
 };
 
 export function StatusBadge({ status }: { status?: string | null }) {
+  const t = useRET();
   const s = String(status || "—");
   const tone = STATUS_TONES[s] || "bg-muted text-muted-foreground";
-  return <Badge className={`${tone} no-default-active-elevate`} data-testid={`badge-status-${s}`}>{s.replace(/_/g, " ")}</Badge>;
+  return <Badge className={`${tone} no-default-active-elevate`} data-testid={`badge-status-${s}`}>{localizedStatus(t, s)}</Badge>;
 }
 
 export function PriorityBadge({ priority }: { priority?: string | null }) {
+  const t = useRET();
   const map: Record<string, string> = {
     low: "bg-muted text-muted-foreground",
     medium: "bg-blue-500/15 text-blue-700 dark:text-blue-300",
@@ -53,7 +62,7 @@ export function PriorityBadge({ priority }: { priority?: string | null }) {
     urgent: "bg-rose-500/15 text-rose-700 dark:text-rose-300",
   };
   const p = String(priority || "medium");
-  return <Badge className={`${map[p] || map.medium} no-default-active-elevate`}>{p}</Badge>;
+  return <Badge className={`${map[p] || map.medium} no-default-active-elevate`}>{localizedPriority(t, p)}</Badge>;
 }
 
 export function PageHeader({ title, subtitle, actions }: { title: string; subtitle?: string; actions?: React.ReactNode }) {
@@ -69,9 +78,10 @@ export function PageHeader({ title, subtitle, actions }: { title: string; subtit
 }
 
 export function REBreadcrumb() {
+  const t = useRET();
   return (
     <div className="mb-2 text-sm text-muted-foreground">
-      <Link href="/real-estate" className="hover:underline" data-testid="link-re-home">Property Management</Link>
+      <Link href="/real-estate" className="hover:underline" data-testid="link-re-home">{t.propertyManagement}</Link>
     </div>
   );
 }

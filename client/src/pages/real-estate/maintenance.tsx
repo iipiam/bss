@@ -10,141 +10,155 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2 } from "lucide-react";
-import { PageHeader, StatusBadge, PriorityBadge, fmtSar, fmtDate, REBreadcrumb, sarToHalala } from "./_shared";
+import { PageHeader, StatusBadge, PriorityBadge, fmtSar, fmtDate, REBreadcrumb, sarToHalala, useRET } from "./_shared";
+import { localizedStatus, localizedPriority } from "@/i18n/realEstateTranslations";
 
-const PRIORITIES = ["low", "medium", "high", "urgent"];
-const STATUSES = ["open", "assigned", "in_progress", "completed", "cancelled"];
+const STATUSES = ["open","assigned","in_progress","completed","cancelled"];
+const PRIORITIES = ["low","medium","high","urgent"];
 
 export default function MaintenancePage() {
+  const t = useRET();
   const { toast } = useToast();
   const { data: requests = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/maintenance"] });
   const { data: properties = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/properties"] });
   const { data: units = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/units"] });
-
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const blank: any = { propertyId: "", unitId: "", title: "", description: "", category: "", priority: "medium", status: "open", reportedDate: new Date().toISOString().slice(0, 10), scheduledDate: "", completedDate: "", vendorName: "", vendorContact: "", estimatedCost: "", actualCost: "", notes: "" };
-  const [form, setForm] = useState<any>(blank);
-  const reset = () => { setEditing(null); setForm(blank); };
+  const [form, setForm] = useState<any>({ propertyId: "", unitId: "", title: "", description: "", category: "", priority: "medium", status: "open", vendorContact: "", estimatedCost: "", actualCost: "", reportedDate: new Date().toISOString().slice(0, 10), scheduledDate: "", completedDate: "" });
 
-  const openEdit = (m: any) => {
-    setEditing(m);
+  const reset = () => { setEditing(null); setForm({ propertyId: properties[0]?.id || "", unitId: "", title: "", description: "", category: "", priority: "medium", status: "open", vendorContact: "", estimatedCost: "", actualCost: "", reportedDate: new Date().toISOString().slice(0, 10), scheduledDate: "", completedDate: "" }); };
+
+  const openEdit = (r: any) => {
+    setEditing(r);
     setForm({
-      ...blank, ...m,
-      unitId: m.unitId || "",
-      estimatedCost: m.estimatedCost ? Number(m.estimatedCost) / 100 : "",
-      actualCost: m.actualCost ? Number(m.actualCost) / 100 : "",
-      scheduledDate: m.scheduledDate || "", completedDate: m.completedDate || "",
+      propertyId: r.propertyId || "", unitId: r.unitId || "",
+      title: r.title || "", description: r.description || "",
+      category: r.category || "", priority: r.priority || "medium", status: r.status || "open",
+      vendorContact: r.vendorContact || "",
+      estimatedCost: r.estimatedCost ? Number(r.estimatedCost) / 100 : "",
+      actualCost: r.actualCost ? Number(r.actualCost) / 100 : "",
+      reportedDate: r.reportedDate?.slice(0, 10) || "",
+      scheduledDate: r.scheduledDate?.slice(0, 10) || "",
+      completedDate: r.completedDate?.slice(0, 10) || "",
     });
     setOpen(true);
   };
 
   const upsertMut = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (payload: any) => {
       const data = {
-        ...form,
-        unitId: form.unitId || null,
-        estimatedCost: form.estimatedCost === "" ? 0 : sarToHalala(form.estimatedCost),
-        actualCost: form.actualCost === "" ? 0 : sarToHalala(form.actualCost),
-        scheduledDate: form.scheduledDate || null,
-        completedDate: form.completedDate || null,
+        ...payload,
+        unitId: payload.unitId || null,
+        estimatedCost: payload.estimatedCost === "" ? null : sarToHalala(payload.estimatedCost),
+        actualCost: payload.actualCost === "" ? null : sarToHalala(payload.actualCost),
+        scheduledDate: payload.scheduledDate || null,
+        completedDate: payload.completedDate || null,
       };
       const res = editing
         ? await apiRequest("PATCH", `/api/real-estate/maintenance/${editing.id}`, data)
         : await apiRequest("POST", "/api/real-estate/maintenance", data);
       return res.json();
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/real-estate/maintenance"] }); toast({ title: editing ? "Request updated" : "Request created" }); setOpen(false); reset(); },
-    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/real-estate/maintenance"] });
+      toast({ title: editing ? t.requestUpdated : t.requestCreated });
+      setOpen(false); reset();
+    },
+    onError: (e: any) => toast({ title: t.error, description: e.message, variant: "destructive" }),
   });
 
   const deleteMut = useMutation({
     mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/real-estate/maintenance/${id}`); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/real-estate/maintenance"] }); toast({ title: "Deleted" }); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/real-estate/maintenance"] }); toast({ title: t.requestDeleted }); },
   });
 
   const propName = (id: string) => properties.find((p: any) => p.id === id)?.name || "—";
-  const filteredUnits = form.propertyId ? units.filter((u: any) => u.propertyId === form.propertyId) : units;
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <REBreadcrumb />
-      <PageHeader title="Maintenance Requests" subtitle="Track upkeep and repairs" actions={
-        <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-add-maintenance"><Plus className="w-4 h-4 mr-1" />New Request</Button>
+      <PageHeader title={t.maintenanceRequests} subtitle={t.maintenanceSubtitle} actions={
+        <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-new-request"><Plus className="w-4 h-4 mr-1" />{t.newRequest}</Button>
       } />
-      <Card><CardContent className="p-0">
-        <Table>
-          <TableHeader><TableRow>
-            <TableHead>Reported</TableHead><TableHead>Title</TableHead><TableHead>Property</TableHead>
-            <TableHead>Priority</TableHead><TableHead>Status</TableHead><TableHead>Cost</TableHead>
-            <TableHead className="w-24">Actions</TableHead>
-          </TableRow></TableHeader>
-          <TableBody>
-            {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-6">Loading…</TableCell></TableRow>}
-            {!isLoading && requests.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">No requests</TableCell></TableRow>}
-            {requests.map((m: any) => (
-              <TableRow key={m.id} data-testid={`row-maintenance-${m.id}`}>
-                <TableCell>{fmtDate(m.reportedDate)}</TableCell>
-                <TableCell className="font-medium">{m.title}</TableCell>
-                <TableCell>{propName(m.propertyId)}</TableCell>
-                <TableCell><PriorityBadge priority={m.priority} /></TableCell>
-                <TableCell><StatusBadge status={m.status} /></TableCell>
-                <TableCell>{fmtSar(m.actualCost || m.estimatedCost)}</TableCell>
-                <TableCell><div className="flex gap-1">
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(m)}><Edit className="w-4 h-4" /></Button>
-                  <Button size="icon" variant="ghost" onClick={() => { if (confirm("Delete?")) deleteMut.mutate(m.id); }}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
-                </div></TableCell>
+
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t.reported}</TableHead><TableHead>{t.property}</TableHead><TableHead>{t.title}</TableHead>
+                <TableHead>{t.priority}</TableHead><TableHead>{t.statusLabel}</TableHead>
+                <TableHead>{t.cost}</TableHead><TableHead className="w-24">{t.actions}</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent></Card>
+            </TableHeader>
+            <TableBody>
+              {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-6">{t.loading}</TableCell></TableRow>}
+              {!isLoading && requests.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">{t.noRequests}</TableCell></TableRow>}
+              {requests.map((r: any) => (
+                <TableRow key={r.id} data-testid={`row-maintenance-${r.id}`}>
+                  <TableCell>{fmtDate(r.reportedDate)}</TableCell>
+                  <TableCell>{propName(r.propertyId)}</TableCell>
+                  <TableCell className="font-medium">{r.title}</TableCell>
+                  <TableCell><PriorityBadge priority={r.priority} /></TableCell>
+                  <TableCell><StatusBadge status={r.status} /></TableCell>
+                  <TableCell>{r.actualCost ? fmtSar(r.actualCost) : r.estimatedCost ? `~${fmtSar(r.estimatedCost)}` : "—"}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-1">
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(r)} data-testid={`button-edit-${r.id}`}><Edit className="w-4 h-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => { if (confirm(t.confirmDelete)) deleteMut.mutate(r.id); }} data-testid={`button-delete-${r.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editing ? "Edit Request" : "New Maintenance Request"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? t.editRequest : t.newMaintenanceRequest}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-3 py-2">
-            <div className="col-span-2"><label className="text-sm">Title *</label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} data-testid="input-title" /></div>
-            <div><label className="text-sm">Property *</label>
-              <Select value={form.propertyId} onValueChange={(v) => setForm({ ...form, propertyId: v, unitId: "" })}>
-                <SelectTrigger><SelectValue placeholder="Select property" /></SelectTrigger>
+            <div><label className="text-sm">{t.property} *</label>
+              <Select value={form.propertyId} onValueChange={(v) => setForm({ ...form, propertyId: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{properties.map((p: any) => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><label className="text-sm">Unit (optional)</label>
+            <div><label className="text-sm">{t.unitOptional}</label>
               <Select value={form.unitId || "_none"} onValueChange={(v) => setForm({ ...form, unitId: v === "_none" ? "" : v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="_none">None</SelectItem>
-                  {filteredUnits.map((u: any) => <SelectItem key={u.id} value={u.id}>{u.unitNumber}</SelectItem>)}
+                  <SelectItem value="_none">{t.none}</SelectItem>
+                  {units.filter((u: any) => !form.propertyId || u.propertyId === form.propertyId).map((u: any) => <SelectItem key={u.id} value={u.id}>{u.unitNumber}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div><label className="text-sm">Category</label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder="plumbing / electrical / hvac" /></div>
-            <div><label className="text-sm">Priority</label>
+            <div className="col-span-2"><label className="text-sm">{t.title} *</label><Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} /></div>
+            <div className="col-span-2"><label className="text-sm">{t.descriptionLabel}</label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+            <div><label className="text-sm">{t.category}</label><Input value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} placeholder={t.maintCategoryHint} /></div>
+            <div><label className="text-sm">{t.priority}</label>
               <Select value={form.priority} onValueChange={(v) => setForm({ ...form, priority: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{PRIORITIES.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
+                <SelectContent>{PRIORITIES.map((p) => <SelectItem key={p} value={p}>{localizedPriority(t, p)}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><label className="text-sm">Status</label>
+            <div><label className="text-sm">{t.statusLabel}</label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{localizedStatus(t, s)}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><label className="text-sm">Reported Date</label><Input type="date" value={form.reportedDate} onChange={(e) => setForm({ ...form, reportedDate: e.target.value })} /></div>
-            <div><label className="text-sm">Scheduled</label><Input type="date" value={form.scheduledDate} onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })} /></div>
-            <div><label className="text-sm">Completed</label><Input type="date" value={form.completedDate} onChange={(e) => setForm({ ...form, completedDate: e.target.value })} /></div>
-            <div><label className="text-sm">Vendor Name</label><Input value={form.vendorName} onChange={(e) => setForm({ ...form, vendorName: e.target.value })} /></div>
-            <div><label className="text-sm">Vendor Contact</label><Input value={form.vendorContact} onChange={(e) => setForm({ ...form, vendorContact: e.target.value })} /></div>
-            <div><label className="text-sm">Estimated Cost (SAR)</label><Input type="number" step="0.01" value={form.estimatedCost} onChange={(e) => setForm({ ...form, estimatedCost: e.target.value })} /></div>
-            <div><label className="text-sm">Actual Cost (SAR)</label><Input type="number" step="0.01" value={form.actualCost} onChange={(e) => setForm({ ...form, actualCost: e.target.value })} /></div>
-            <div className="col-span-2"><label className="text-sm">Description</label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
+            <div><label className="text-sm">{t.vendorContact}</label><Input value={form.vendorContact} onChange={(e) => setForm({ ...form, vendorContact: e.target.value })} /></div>
+            <div><label className="text-sm">{t.estimatedCost}</label><Input type="number" step="0.01" value={form.estimatedCost} onChange={(e) => setForm({ ...form, estimatedCost: e.target.value })} /></div>
+            <div><label className="text-sm">{t.actualCost}</label><Input type="number" step="0.01" value={form.actualCost} onChange={(e) => setForm({ ...form, actualCost: e.target.value })} /></div>
+            <div><label className="text-sm">{t.reportedDate}</label><Input type="date" value={form.reportedDate} onChange={(e) => setForm({ ...form, reportedDate: e.target.value })} /></div>
+            <div><label className="text-sm">{t.scheduled}</label><Input type="date" value={form.scheduledDate} onChange={(e) => setForm({ ...form, scheduledDate: e.target.value })} /></div>
+            <div><label className="text-sm">{t.completed}</label><Input type="date" value={form.completedDate} onChange={(e) => setForm({ ...form, completedDate: e.target.value })} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => upsertMut.mutate()} disabled={upsertMut.isPending || !form.title || !form.propertyId} data-testid="button-save-maintenance">{editing ? "Save" : "Create"}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t.cancel}</Button>
+            <Button onClick={() => upsertMut.mutate(form)} disabled={upsertMut.isPending || !form.propertyId || !form.title}>{editing ? t.save : t.create}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

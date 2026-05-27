@@ -10,12 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Edit, Trash2 } from "lucide-react";
-import { PageHeader, StatusBadge, fmtSar, REBreadcrumb, sarToHalala } from "./_shared";
+import { PageHeader, StatusBadge, fmtSar, REBreadcrumb, sarToHalala, useRET } from "./_shared";
+import { localizedType, localizedStatus } from "@/i18n/realEstateTranslations";
 
 const TYPES = ["residential","commercial","industrial","land","villa","apartment","office","warehouse","mall","compound","hotel","showroom","clinic","other"];
 const STATUSES = ["available","rented","for_sale","under_maintenance","inactive"];
 
 export default function PropertiesPage() {
+  const t = useRET();
   const { toast } = useToast();
   const { data: properties = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/properties"] });
   const [open, setOpen] = useState(false);
@@ -54,23 +56,23 @@ export default function PropertiesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/real-estate/properties"] });
-      toast({ title: editing ? "Property updated" : "Property created" });
+      toast({ title: editing ? t.propertyUpdated : t.propertyCreated });
       setOpen(false); reset();
     },
-    onError: (e: any) => toast({ title: "Error", description: e.message, variant: "destructive" }),
+    onError: (e: any) => toast({ title: t.error, description: e.message, variant: "destructive" }),
   });
 
   const deleteMut = useMutation({
     mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/real-estate/properties/${id}`); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/real-estate/properties"] }); toast({ title: "Property deleted" }); },
-    onError: (e: any) => toast({ title: "Cannot delete", description: e.message, variant: "destructive" }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/real-estate/properties"] }); toast({ title: t.propertyDeleted }); },
+    onError: (e: any) => toast({ title: t.cannotDelete, description: e.message, variant: "destructive" }),
   });
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
       <REBreadcrumb />
-      <PageHeader title="Properties" subtitle="Real estate assets in your portfolio" actions={
-        <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-add-property"><Plus className="w-4 h-4 mr-1" />Add Property</Button>
+      <PageHeader title={t.properties} subtitle={t.propertiesSubtitle} actions={
+        <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-add-property"><Plus className="w-4 h-4 mr-1" />{t.addProperty}</Button>
       } />
 
       <Card>
@@ -78,24 +80,25 @@ export default function PropertiesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead><TableHead>Type</TableHead><TableHead>City</TableHead>
-                <TableHead>Status</TableHead><TableHead>Current Value</TableHead><TableHead className="w-24">Actions</TableHead>
+                <TableHead>{t.name}</TableHead><TableHead>{t.typeLabel}</TableHead><TableHead>{t.city}</TableHead>
+                <TableHead>{t.statusLabel}</TableHead>
+                <TableHead>{t.currentValue}</TableHead><TableHead className="w-24">{t.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={6} className="text-center py-6">Loading…</TableCell></TableRow>}
-              {!isLoading && properties.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-6 text-muted-foreground">No properties yet</TableCell></TableRow>}
+              {isLoading && <TableRow><TableCell colSpan={6} className="text-center py-6">{t.loading}</TableCell></TableRow>}
+              {!isLoading && properties.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-6 text-muted-foreground">{t.noProperties}</TableCell></TableRow>}
               {properties.map((p: any) => (
                 <TableRow key={p.id} data-testid={`row-property-${p.id}`}>
                   <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell className="capitalize">{p.type}</TableCell>
+                  <TableCell>{localizedType(t, p.type)}</TableCell>
                   <TableCell>{p.city || "—"}</TableCell>
                   <TableCell><StatusBadge status={p.status} /></TableCell>
                   <TableCell>{fmtSar(p.currentValue)}</TableCell>
                   <TableCell>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(p)} data-testid={`button-edit-${p.id}`}><Edit className="w-4 h-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => { if (confirm("Delete this property?")) deleteMut.mutate(p.id); }} data-testid={`button-delete-${p.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => { if (confirm(t.confirmDeleteProperty)) deleteMut.mutate(p.id); }} data-testid={`button-delete-${p.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -107,35 +110,35 @@ export default function PropertiesPage() {
 
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editing ? "Edit Property" : "New Property"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editing ? t.editProperty : t.newProperty}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-3 py-2">
-            <div className="col-span-2"><label className="text-sm">Name *</label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} data-testid="input-name" /></div>
-            <div><label className="text-sm">Type</label>
+            <div className="col-span-2"><label className="text-sm">{t.name} *</label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} data-testid="input-name" /></div>
+            <div><label className="text-sm">{t.typeLabel}</label>
               <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
                 <SelectTrigger data-testid="select-type"><SelectValue /></SelectTrigger>
-                <SelectContent>{TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                <SelectContent>{TYPES.map((tp) => <SelectItem key={tp} value={tp}>{localizedType(t, tp)}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><label className="text-sm">Status</label>
+            <div><label className="text-sm">{t.statusLabel}</label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
                 <SelectTrigger data-testid="select-status"><SelectValue /></SelectTrigger>
-                <SelectContent>{STATUSES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
+                <SelectContent>{STATUSES.map((s) => <SelectItem key={s} value={s}>{localizedStatus(t, s)}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div><label className="text-sm">City</label><Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
-            <div><label className="text-sm">District</label><Input value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} /></div>
-            <div className="col-span-2"><label className="text-sm">Address</label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
-            <div><label className="text-sm">Area (sqm)</label><Input type="number" value={form.areaSqm} onChange={(e) => setForm({ ...form, areaSqm: e.target.value })} /></div>
-            <div><label className="text-sm">Floors</label><Input type="number" value={form.floors} onChange={(e) => setForm({ ...form, floors: e.target.value })} /></div>
-            <div><label className="text-sm">Year Built</label><Input type="number" value={form.yearBuilt} onChange={(e) => setForm({ ...form, yearBuilt: e.target.value })} /></div>
-            <div><label className="text-sm">Owner Name</label><Input value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} /></div>
-            <div><label className="text-sm">Purchase Price (SAR)</label><Input type="number" step="0.01" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })} /></div>
-            <div><label className="text-sm">Current Value (SAR)</label><Input type="number" step="0.01" value={form.currentValue} onChange={(e) => setForm({ ...form, currentValue: e.target.value })} /></div>
-            <div className="col-span-2"><label className="text-sm">Notes</label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+            <div><label className="text-sm">{t.city}</label><Input value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
+            <div><label className="text-sm">{t.district}</label><Input value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} /></div>
+            <div className="col-span-2"><label className="text-sm">{t.address}</label><Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
+            <div><label className="text-sm">{t.areaSqm}</label><Input type="number" value={form.areaSqm} onChange={(e) => setForm({ ...form, areaSqm: e.target.value })} /></div>
+            <div><label className="text-sm">{t.floors}</label><Input type="number" value={form.floors} onChange={(e) => setForm({ ...form, floors: e.target.value })} /></div>
+            <div><label className="text-sm">{t.yearBuilt}</label><Input type="number" value={form.yearBuilt} onChange={(e) => setForm({ ...form, yearBuilt: e.target.value })} /></div>
+            <div><label className="text-sm">{t.ownerName}</label><Input value={form.ownerName} onChange={(e) => setForm({ ...form, ownerName: e.target.value })} /></div>
+            <div><label className="text-sm">{t.purchasePrice}</label><Input type="number" step="0.01" value={form.purchasePrice} onChange={(e) => setForm({ ...form, purchasePrice: e.target.value })} /></div>
+            <div><label className="text-sm">{t.currentValue}</label><Input type="number" step="0.01" value={form.currentValue} onChange={(e) => setForm({ ...form, currentValue: e.target.value })} /></div>
+            <div className="col-span-2"><label className="text-sm">{t.notes}</label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button onClick={() => upsertMut.mutate(form)} disabled={upsertMut.isPending || !form.name} data-testid="button-save">{editing ? "Save" : "Create"}</Button>
+            <Button variant="outline" onClick={() => setOpen(false)}>{t.cancel}</Button>
+            <Button onClick={() => upsertMut.mutate(form)} disabled={upsertMut.isPending || !form.name} data-testid="button-save">{editing ? t.save : t.create}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
