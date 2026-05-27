@@ -24,17 +24,17 @@ export default function ExpensesPage() {
   const [view, setView] = useViewMode("expenses");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState<any>({ propertyId: "", category: "maintenance", description: "", amount: "", vatAmount: "", vendorName: "", expenseDate: new Date().toISOString().slice(0, 10), dueDate: "", paidDate: "", status: "pending", notes: "", receiptUrl: "" });
+  const [form, setForm] = useState<any>({ propertyId: "", category: "maintenance", description: "", amount: "", taxAmount: "", vendorName: "", expenseDate: new Date().toISOString().slice(0, 10), dueDate: "", paidDate: "", status: "pending", notes: "", receiptUrl: "" });
   const [uploading, setUploading] = useState(false);
 
-  const reset = () => { setEditing(null); setForm({ propertyId: properties[0]?.id || "", category: "maintenance", description: "", amount: "", vatAmount: "", vendorName: "", expenseDate: new Date().toISOString().slice(0, 10), dueDate: "", paidDate: "", status: "pending", notes: "", receiptUrl: "" }); };
+  const reset = () => { setEditing(null); setForm({ propertyId: properties[0]?.id || "", category: "maintenance", description: "", amount: "", taxAmount: "", vendorName: "", expenseDate: new Date().toISOString().slice(0, 10), dueDate: "", paidDate: "", status: "pending", notes: "", receiptUrl: "" }); };
 
   const openEdit = (ex: any) => {
     setEditing(ex);
     setForm({
       propertyId: ex.propertyId || "", category: ex.category || "maintenance",
       description: ex.description || "", amount: Number(ex.amount || 0) / 100,
-      vatAmount: ex.vatAmount ? Number(ex.vatAmount) / 100 : "",
+      taxAmount: ex.taxAmount ? Number(ex.taxAmount) / 100 : "",
       vendorName: ex.vendorName || "",
       expenseDate: ex.expenseDate?.slice(0, 10) || "",
       dueDate: ex.dueDate?.slice(0, 10) || "", paidDate: ex.paidDate?.slice(0, 10) || "",
@@ -71,7 +71,7 @@ export default function ExpensesPage() {
       const data = {
         ...payload,
         amount: sarToHalala(payload.amount || 0),
-        vatAmount: payload.vatAmount === "" ? 0 : sarToHalala(payload.vatAmount),
+        taxAmount: payload.taxAmount === "" ? 0 : sarToHalala(payload.taxAmount),
         dueDate: payload.dueDate || null,
         paidDate: payload.paidDate || null,
       };
@@ -204,7 +204,7 @@ export default function ExpensesPage() {
             </div>
             <div className="col-span-2"><label className="text-sm">{t.descriptionLabel}</label><Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} /></div>
             <div><label className="text-sm">{t.amountSar} *</label><Input type="number" step="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} /></div>
-            <div><label className="text-sm">{t.vatSar}</label><Input type="number" step="0.01" value={form.vatAmount} onChange={(e) => setForm({ ...form, vatAmount: e.target.value })} /></div>
+            <div><label className="text-sm">{t.vatSar}</label><Input type="number" step="0.01" value={form.taxAmount} onChange={(e) => setForm({ ...form, taxAmount: e.target.value })} /></div>
             <div><label className="text-sm">{t.vendorName}</label><Input value={form.vendorName} onChange={(e) => setForm({ ...form, vendorName: e.target.value })} /></div>
             <div><label className="text-sm">{t.statusLabel}</label>
               <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
