@@ -57,13 +57,14 @@ const GROSS_PER_BRANCH_PRICES_REAL_ESTATE_PM: Record<SubscriptionPlan, number> =
 };
 
 // GROSS prices (VAT-inclusive) for base plan (1 branch) - REAL ESTATE / BROKERAGE OFFICE
-// Used when restaurantType === "Brokerage Office" (or any non-Property-Management real_estate subtype).
-// Brokerage offices keep the original real_estate pricing (yearly 4,900 SAR) since the
-// Property Management vertical's extra features are what justify the 8,400 SAR yearly fee.
+// Used for any non-Property-Management real_estate subtype (Brokerage Office,
+// Real Estate Marketing, Auction Management). Matches the standard service-business
+// ladder (299/399/2499) — the Property Management vertical's extra features are
+// what justify the higher 8,400 SAR yearly fee.
 const GROSS_BASE_PRICES_REAL_ESTATE_BROKERAGE: Record<SubscriptionPlan, number> = {
   weekly: 299,
-  monthly: 999,
-  yearly: 4900
+  monthly: 399,
+  yearly: 2499
 };
 
 const GROSS_PER_BRANCH_PRICES_REAL_ESTATE_BROKERAGE: Record<SubscriptionPlan, number> = {
