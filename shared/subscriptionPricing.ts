@@ -44,8 +44,8 @@ const GROSS_PER_BRANCH_PRICES_FACTORY: Record<SubscriptionPlan, number> = {
 // GROSS prices (VAT-inclusive) for base plan (1 branch) - REAL ESTATE
 const GROSS_BASE_PRICES_REAL_ESTATE: Record<SubscriptionPlan, number> = {
   weekly: 299,
-  monthly: 399,
-  yearly: 2499
+  monthly: 999,
+  yearly: 4900
 };
 
 // GROSS prices (VAT-inclusive) per additional branch - REAL ESTATE
