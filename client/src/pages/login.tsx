@@ -1183,7 +1183,7 @@ export default function Login() {
                     {/* English */}
                     <div className="space-y-2 text-left">
                       <p className="text-muted-foreground leading-relaxed">
-                        <span className="font-semibold">1-</span> When canceling the subscription before the expiration of the specified period, the financial balance will be calculated at the value of one month's subscription of 199 Saudi Riyals only, only when subscribing annually, while there is a discount applied by the company that owns the application.
+                        <span className="font-semibold">1 -</span> when canceling the subscription before the expiration of the specified period , the financial balance is calculated at the value of one month, when subscribing annually, because there is a discount applied by the company that owns the application.
                       </p>
                       <p className="text-muted-foreground leading-relaxed">
                         <span className="font-semibold">2-</span> If the subscription is canceled with several months and a few days, the value of the days will be calculated by dividing the value of the monthly subscription by the number of days of the month (30 days).
@@ -1192,7 +1192,7 @@ export default function Login() {
                     {/* Arabic */}
                     <div className="space-y-2 text-right" dir="rtl">
                       <p className="text-muted-foreground leading-relaxed">
-                        <span className="font-semibold">١-</span> عند إلغاء الاشتراك قبل انتهاء المدة المحددة يتم احتساب المتبقي المالي بقيمة الشهر الواحد البالغ ١٩٩ ريال سعودي فقط لا غير عند الاشتراك سنوياً وذلك لوجود خصم مطبق من قبل الشركة المالكة للتطبيق.
+                        <span className="font-semibold">١-</span> عند إلغاء الاشتراك قبل انتهاء المدة المحددة يتم احتساب المتبقي المالي بقيمة الشهر الواحد , عند الاشتراك سنوياً وذلك لوجود خصم مطبق من قبل الشركة المالكة للتطبيق.
                       </p>
                       <p className="text-muted-foreground leading-relaxed">
                         <span className="font-semibold">٢-</span> في حال إلغاء الاشتراك مع وجود عدة أشهر وبضعة أيام سيتم احتساب قيمة الأيام بتقسيم قيمة الاشتراك الشهري على عدد أيام الشهر (٣٠ يوماً).

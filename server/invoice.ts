@@ -2026,11 +2026,11 @@ export async function generateSubscriptionInvoice(data: {
         <h3 style="text-align: center;">Refund policy / سياسة استرداد الاموال</h3>
         <div class="refund-policy-content">
           <div class="en">
-            <p>1-when canceling the subscription before the expiration of the specified period of the subscription item, the financial balance will be calculated at the value of one month's subscription of 199 Saudi riyals only, only when subscribing annually, while there is a discount applied by the company that owns the application.</p>
+            <p>1 - when canceling the subscription before the expiration of the specified period , the financial balance is calculated at the value of one month, when subscribing annually, because there is a discount applied by the company that owns the application.</p>
             <p>2-if the subscription is canceled with several months and a few days, the value of the days will be calculated by dividing the value of the monthly subscription by the number of days of the month 30 days.</p>
           </div>
           <div class="ar">
-            <p>1- عند الغاء الاشتراك قبل مضي المدة المحددة لبند الاشتراك سيتم احتساب المتبقي المالي بقيمة اشتراك الشهر الواحد البالغ 199 ريال سعودي فقط لا غير عند الاشتراك سنويا اثناء وجود خصم مطبق من قبل الشركة المالكة للتطبيق.</p>
+            <p>١- عند إلغاء الاشتراك قبل انتهاء المدة المحددة يتم احتساب المتبقي المالي بقيمة الشهر الواحد , عند الاشتراك سنوياً وذلك لوجود خصم مطبق من قبل الشركة المالكة للتطبيق.</p>
             <p>2- اذا تم الغاء الاشتراك بوجود عدة اشهر وبضعة ايام سيتم احتساب قيمة الايام بتقسيم قيمة الاشترااك الشهري على عدد ايام الشهر 30 يوما.</p>
           </div>
         </div>
