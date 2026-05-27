@@ -126,6 +126,7 @@ function getPermissionLabels(t: any, businessType: BusinessType): Record<Permiss
     catering: (t as any).cateringContracts || "Catering Contracts",
     projects: t.projects || "Projects",
     quotations: t.quotations || "Quotations",
+    propertyManagement: (t as any).propertyManagement || "Property Management",
   };
 }
 
