@@ -353,7 +353,13 @@ export const coaStore = {
 export const journalStore = {
   listEntries: async (restaurantId: string) => {
     const r = await pool.query(
-      `SELECT * FROM journal_entries WHERE restaurant_id = $1 ORDER BY entry_date DESC, created_at DESC`,
+      `SELECT je.*,
+              COALESCE((SELECT SUM(debit) FROM journal_lines jl WHERE jl.journal_entry_id = je.id), 0)::bigint  AS total_debit,
+              COALESCE((SELECT SUM(credit) FROM journal_lines jl WHERE jl.journal_entry_id = je.id), 0)::bigint AS total_credit,
+              CASE WHEN je.reference_type IS NOT NULL THEN INITCAP(je.reference_type) ELSE NULL END AS reference
+         FROM journal_entries je
+        WHERE je.restaurant_id = $1
+        ORDER BY je.entry_date DESC, je.created_at DESC`,
       [restaurantId],
     );
     return rowsToCamel(r.rows);
