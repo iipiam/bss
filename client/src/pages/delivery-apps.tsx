@@ -457,8 +457,8 @@ export default function DeliveryApps() {
     // Banking Fees = Item Price × Banking%
     const bankingFeesAmount = amount * (bankingFeesPercent / 100);
     
-    // VAT = Item Price × 0.15
-    const vat = amount * 0.15;
+    // VAT = (Commission + Subsidy + Banking Fees) × 0.15
+    const vat = (commissionAmount + subsidy + bankingFeesAmount) * 0.15;
     
     // Net Earnings = Item Price - Commission - Subsidy - Banking Fees - VAT - POS Fees
     const netEarnings = amount - commissionAmount - subsidy - bankingFeesAmount - vat - posFees;

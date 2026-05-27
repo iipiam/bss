@@ -20406,7 +20406,7 @@ ${phaseSchedules.length > 0 ? `
         const subsidizedPrice = gross - subsidy;
         const commission = subsidizedPrice * (commissionPercent / 100);
         const banking = gross * (bankingFeesPercent / 100);
-        const vat = gross * 0.15;
+        const vat = (commission + subsidy + banking) * 0.15;
         const net = gross - commission - subsidy - banking - vat - posFees;
         const expected = {
           gross: roundHalala(gross),
