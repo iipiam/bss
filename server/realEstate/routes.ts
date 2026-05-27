@@ -483,6 +483,45 @@ export function registerRealEstateRoutes(
     return null;
   }
 
+  app.get("/api/real-estate/accounting/journal/:id/export", ...view, async (req, res) => {
+    try {
+      const restaurantId = rid(req);
+      const entry: any = await journalStore.getEntryWithLines(req.params.id, restaurantId);
+      if (!entry) return res.status(404).json({ message: "Journal entry not found" });
+      const lines = entry.lines || [];
+      let totalDr = 0, totalCr = 0;
+      const rows = lines.map((ln: any) => {
+        totalDr += Number(ln.debit || 0); totalCr += Number(ln.credit || 0);
+        return [
+          `${ln.accountCode || ""} — ${ln.accountName || ""}`,
+          ln.description || "",
+          ln.debit ? SAR(ln.debit) : "",
+          ln.credit ? SAR(ln.credit) : "",
+        ];
+      });
+      rows.push(["", "TOTAL / الإجمالي", SAR(totalDr), SAR(totalCr)]);
+      const restR = await pool.query(`SELECT name FROM restaurants WHERE id = $1`, [restaurantId]);
+      const companyName = restR.rows[0]?.name || "Company";
+      const pdf = await generateReportPdf({
+        title: `Journal Entry ${entry.entryNumber || ""}`,
+        titleAr: `قيد يومية ${entry.entryNumber || ""}`,
+        companyName,
+        rows: [
+          { label: "Entry # / رقم القيد", value: entry.entryNumber || "—" },
+          { label: "Date / التاريخ", value: entry.entryDate?.slice(0, 10) || "—" },
+          { label: "Description / الوصف", value: entry.description || "—" },
+          { label: "Reference / المرجع", value: entry.reference || "—" },
+          { label: "Total Debit / إجمالي المدين", value: SAR(totalDr) + " ر.س" },
+          { label: "Total Credit / إجمالي الدائن", value: SAR(totalCr) + " ر.س" },
+        ],
+        tableRows: { headers: ["Account / الحساب", "Description / الوصف", "Debit (ر.س)", "Credit (ر.س)"], data: rows },
+      });
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="journal-${entry.entryNumber || entry.id}.pdf"`);
+      res.end(pdf);
+    } catch (e) { err(res, e); }
+  });
+
   app.get("/api/real-estate/accounting/:type/export", ...view, async (req, res) => {
     try {
       const format = String(req.query.format || "pdf").toLowerCase();

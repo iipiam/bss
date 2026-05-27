@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, FileDown, FileSpreadsheet } from "lucide-react";
+import { Plus, FileDown, FileSpreadsheet, Download } from "lucide-react";
 import { PageHeader, fmtSar, fmtDate, REBreadcrumb, useRET } from "./_shared";
 import { localizedAccountType } from "@/i18n/realEstateTranslations";
 
@@ -25,6 +25,22 @@ export default function AccountingPage() {
       const a = document.createElement("a");
       a.href = url;
       a.download = `${type}-${new Date().toISOString().slice(0, 10)}.${format === "excel" ? "xlsx" : "pdf"}`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast({ title: t.error, description: e.message, variant: "destructive" });
+    }
+  };
+
+  const downloadEntryPdf = async (entry: any) => {
+    try {
+      const res = await fetch(`/api/real-estate/accounting/journal/${entry.id}/export`, { credentials: "include" });
+      if (!res.ok) throw new Error(`Download failed (${res.status})`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `journal-${entry.entryNumber || entry.id}.pdf`;
       document.body.appendChild(a); a.click(); a.remove();
       URL.revokeObjectURL(url);
     } catch (e: any) {
@@ -92,9 +108,9 @@ export default function AccountingPage() {
           <Card><CardContent className="p-0">
             <ExportButtons type="journal" />
             <Table>
-              <TableHeader><TableRow><TableHead>{t.entryNumber}</TableHead><TableHead>{t.dateLabel}</TableHead><TableHead>{t.descriptionLabel}</TableHead><TableHead>{t.reference}</TableHead><TableHead className="text-right">{t.total}</TableHead></TableRow></TableHeader>
+              <TableHeader><TableRow><TableHead>{t.entryNumber}</TableHead><TableHead>{t.dateLabel}</TableHead><TableHead>{t.descriptionLabel}</TableHead><TableHead>{t.reference}</TableHead><TableHead className="text-right">{t.total}</TableHead><TableHead className="w-16"></TableHead></TableRow></TableHeader>
               <TableBody>
-                {entries.length === 0 && <TableRow><TableCell colSpan={5} className="text-center py-6 text-muted-foreground">{t.noJournalEntries}</TableCell></TableRow>}
+                {entries.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-6 text-muted-foreground">{t.noJournalEntries}</TableCell></TableRow>}
                 {entries.map((e: any) => (
                   <TableRow key={e.id} data-testid={`row-entry-${e.id}`}>
                     <TableCell className="font-mono">{e.entryNumber}</TableCell>
@@ -102,6 +118,11 @@ export default function AccountingPage() {
                     <TableCell>{e.description}</TableCell>
                     <TableCell>{e.reference || "—"}</TableCell>
                     <TableCell className="text-right">{fmtSar(e.totalDebit)}</TableCell>
+                    <TableCell className="text-right">
+                      <Button size="icon" variant="ghost" onClick={() => downloadEntryPdf(e)} data-testid={`button-pdf-entry-${e.id}`} title={t.exportPdf || "Export PDF"}>
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
