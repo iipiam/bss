@@ -13,6 +13,7 @@ import {
 } from "./accounting";
 import { generateInvoicePdf, generateReceiptPdf, generateContractPdf, generateReportPdf } from "./pdf";
 import { seedRealEstate } from "./seed";
+import * as XLSX from "xlsx";
 
 type Mw = (req: any, res: any, next: any) => any;
 
@@ -594,49 +595,154 @@ export function registerRealEstateRoutes(
     } catch (e) { err(res, e); }
   });
 
-  app.get("/api/real-estate/reports/:type/pdf", ...view, async (req, res) => {
-    try {
-      const r = rid(req);
-      const restR = await pool.query(`SELECT name FROM restaurants WHERE id = $1`, [r]);
-      const companyName = restR.rows[0]?.name || "Company";
-      const type = req.params.type;
-      let title = "", titleAr = "", rows: any[] = [], tableRows: any = undefined;
-      if (type === "rent-roll") {
-        title = "Rent Roll Report"; titleAr = "تقرير الإيجارات";
-        const data = await (await fetch(`http://localhost:${process.env.PORT || 5000}/api/real-estate/reports/rent-roll`, {
-          headers: { cookie: req.headers.cookie || "" },
-        })).json();
-        tableRows = {
-          headers: ["Property", "Unit", "Tenant", "Monthly Rent", "End Date", "Outstanding"],
-          data: data.map((d: any) => [d.propertyName || "", d.unitNumber, d.tenantName || "-", SAR(d.monthlyRent), d.endDate || "-", SAR(d.outstanding)]),
-        };
-        rows = [{ label: "Total Units", value: String(data.length) }];
-      } else if (type === "income-statement") {
-        title = "Income Statement"; titleAr = "قائمة الدخل";
-        const data = await (await fetch(`http://localhost:${process.env.PORT || 5000}/api/real-estate/reports/income-statement`, {
-          headers: { cookie: req.headers.cookie || "" },
-        })).json();
-        rows = [
+  // ---------- Report export helpers ----------
+  // Build a normalized {title, titleAr, summary, headers, rows} structure for a given report type.
+  // Re-used by both the PDF and Excel exports so they stay in lockstep.
+  async function buildReportExport(reportType: string, req: Request, range: { from?: string; to?: string }) {
+    const cookie = req.headers.cookie || "";
+    const base = `http://localhost:${process.env.PORT || 5000}/api/real-estate/reports`;
+    const qs = range.from && range.to ? `?from=${range.from}&to=${range.to}` : "";
+    const fetchJson = async (path: string) => (await fetch(`${base}${path}`, { headers: { cookie } })).json();
+
+    if (reportType === "rent-roll") {
+      const data = await fetchJson("/rent-roll");
+      return {
+        title: "Rent Roll Report", titleAr: "تقرير الإيجارات",
+        summary: [{ label: "Total Units", value: String(data.length) }],
+        headers: ["Property", "Unit", "Tenant", "Monthly Rent (ر.س)", "Start Date", "End Date", "Status", "Outstanding (ر.س)"],
+        rows: data.map((d: any) => [d.propertyName || "", d.unitNumber, d.tenantName || "-", SAR(d.monthlyRent), d.startDate || "-", d.endDate || "-", d.contractStatus || "-", SAR(d.outstanding)]),
+      };
+    }
+    if (reportType === "income-statement") {
+      const data = await fetchJson(`/income-statement${qs}`);
+      return {
+        title: "Income Statement", titleAr: "قائمة الدخل",
+        summary: [
           { label: "From / من", value: data.from },
           { label: "To / إلى", value: data.to },
           { label: "Total Revenue / إجمالي الإيرادات", value: SAR(data.totalRevenue) + " ر.س" },
           { label: "Total Expenses / إجمالي المصروفات", value: SAR(data.totalExpenses) + " ر.س" },
           { label: "Net Operating Income / صافي الدخل", value: SAR(data.noi) + " ر.س" },
-        ];
-        tableRows = {
-          headers: ["Category", "Amount (ر.س)"],
-          data: [
-            ...data.revenueByType.map((x: any) => [`Revenue — ${x.type}`, SAR(x.revenue)]),
-            ...data.expensesByCategory.map((x: any) => [`Expense — ${x.category}`, SAR(x.amount)]),
-          ],
-        };
-      } else {
-        return res.status(400).json({ message: "Unsupported report type" });
-      }
-      const pdf = await generateReportPdf({ title, titleAr, rows, tableRows, companyName });
+        ],
+        headers: ["Line", "Amount (ر.س)"],
+        rows: [
+          ...(data.revenueByType || []).map((x: any) => [`Revenue — ${x.type}`, SAR(x.revenue)]),
+          ...(data.expensesByCategory || []).map((x: any) => [`Expense — ${x.category}`, SAR(x.amount)]),
+        ],
+      };
+    }
+    if (reportType === "cash-flow") {
+      const data = await fetchJson(`/cash-flow${qs}`);
+      const series = data.series || [];
+      const totalIn = series.reduce((s: number, m: any) => s + Number(m.cashIn || 0), 0);
+      const totalOut = series.reduce((s: number, m: any) => s + Number(m.cashOut || 0), 0);
+      return {
+        title: "Cash Flow Report", titleAr: "تقرير التدفق النقدي",
+        summary: [
+          { label: "From / من", value: data.from },
+          { label: "To / إلى", value: data.to },
+          { label: "Cash In / المقبوضات", value: SAR(totalIn) + " ر.س" },
+          { label: "Cash Out / المدفوعات", value: SAR(totalOut) + " ر.س" },
+          { label: "Net / الصافي", value: SAR(totalIn - totalOut) + " ر.س" },
+        ],
+        headers: ["Month", "Cash In (ر.س)", "Cash Out (ر.س)", "Net (ر.س)", "Running Balance (ر.س)"],
+        rows: series.map((m: any) => [m.month, SAR(m.cashIn), SAR(m.cashOut), SAR(m.net), SAR(m.runningBalance)]),
+      };
+    }
+    if (reportType === "balance-sheet") {
+      const data = await fetchJson("/balance-sheet");
+      return {
+        title: "Balance Sheet", titleAr: "الميزانية العمومية",
+        summary: [
+          { label: "Total Assets / إجمالي الأصول", value: SAR(data.assets?.total || 0) + " ر.س" },
+          { label: "Total Liabilities / إجمالي الالتزامات", value: SAR(data.liabilities?.total || 0) + " ر.س" },
+          { label: "Equity / حقوق الملكية", value: SAR(data.equity || 0) + " ر.س" },
+        ],
+        headers: ["Account", "Amount (ر.س)"],
+        rows: [
+          ["Property Value", SAR(data.assets?.propertyValue || 0)],
+          ["Cash on Hand", SAR(data.assets?.cashOnHand || 0)],
+          ["Bank", SAR(data.assets?.bank || 0)],
+          ["Receivables", SAR(data.assets?.receivables || 0)],
+          ["Total Assets", SAR(data.assets?.total || 0)],
+          ["Security Deposits (Liability)", SAR(data.liabilities?.securityDeposits || 0)],
+          ["VAT Payable", SAR(data.liabilities?.vatPayable || 0)],
+          ["Total Liabilities", SAR(data.liabilities?.total || 0)],
+          ["Equity", SAR(data.equity || 0)],
+        ],
+      };
+    }
+    if (reportType === "aging-receivables" || reportType === "aging") {
+      const data = await fetchJson("/aging-receivables");
+      const b = data.buckets || {};
+      const total = Number(b.current || 0) + Number(b.d30 || 0) + Number(b.d60 || 0) + Number(b.d90 || 0) + Number(b.d90plus || 0);
+      return {
+        title: "Aging Receivables", titleAr: "تقرير أعمار الذمم",
+        summary: [{ label: "Total Outstanding / إجمالي المستحقات", value: SAR(total) + " ر.س" }],
+        headers: ["Bucket", "Amount (ر.س)"],
+        rows: [
+          ["Current (0 days)", SAR(b.current || 0)],
+          ["1-30 days", SAR(b.d30 || 0)],
+          ["31-60 days", SAR(b.d60 || 0)],
+          ["61-90 days", SAR(b.d90 || 0)],
+          ["90+ days", SAR(b.d90plus || 0)],
+        ],
+      };
+    }
+    if (reportType === "occupancy") {
+      const data = await fetchJson("/occupancy");
+      const o = data.overall || {};
+      return {
+        title: "Occupancy Report", titleAr: "تقرير الإشغال",
+        summary: [
+          { label: "Total Units / إجمالي الوحدات", value: String(o.totalUnits || 0) },
+          { label: "Rented / المؤجرة", value: String(o.rentedUnits || 0) },
+          { label: "Occupancy % / نسبة الإشغال", value: `${Number(o.occupancyPct || 0).toFixed(1)}%` },
+        ],
+        headers: ["Property", "Type", "Units", "Rented", "Occupancy %"],
+        rows: (data.byProperty || []).map((x: any) => [x.name, x.type, String(x.units), String(x.rented), `${Number(x.occupancyPct || 0).toFixed(1)}%`]),
+      };
+    }
+    return null;
+  }
+
+  app.get("/api/real-estate/reports/:type/pdf", ...view, async (req, res) => {
+    try {
+      const r = rid(req);
+      const restR = await pool.query(`SELECT name FROM restaurants WHERE id = $1`, [r]);
+      const companyName = restR.rows[0]?.name || "Company";
+      const data = await buildReportExport(req.params.type, req, { from: req.query.from as string, to: req.query.to as string });
+      if (!data) return res.status(400).json({ message: "Unsupported report type" });
+      const pdf = await generateReportPdf({
+        title: data.title, titleAr: data.titleAr, rows: data.summary, companyName,
+        tableRows: data.rows.length ? { headers: data.headers, data: data.rows } : undefined,
+      });
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="${type}-${new Date().toISOString().slice(0, 10)}.pdf"`);
+      res.setHeader("Content-Disposition", `attachment; filename="${req.params.type}-${new Date().toISOString().slice(0, 10)}.pdf"`);
       res.end(pdf);
+    } catch (e) { err(res, e); }
+  });
+
+  app.get("/api/real-estate/reports/:type/excel", ...view, async (req, res) => {
+    try {
+      const data = await buildReportExport(req.params.type, req, { from: req.query.from as string, to: req.query.to as string });
+      if (!data) return res.status(400).json({ message: "Unsupported report type" });
+      const wb = XLSX.utils.book_new();
+      const summarySheet = XLSX.utils.aoa_to_sheet([
+        [data.title], [data.titleAr], [],
+        ["Generated", new Date().toISOString().slice(0, 19).replace("T", " ")], [],
+        ["Summary"],
+        ...data.summary.map((s) => [s.label, s.value]),
+      ]);
+      XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+      if (data.rows.length) {
+        const detailSheet = XLSX.utils.aoa_to_sheet([data.headers, ...data.rows]);
+        XLSX.utils.book_append_sheet(wb, detailSheet, "Details");
+      }
+      const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename="${req.params.type}-${new Date().toISOString().slice(0, 10)}.xlsx"`);
+      res.end(buf);
     } catch (e) { err(res, e); }
   });
 
