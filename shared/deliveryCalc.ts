@@ -7,7 +7,7 @@
 //   subsidizedPrice = gross - subsidy
 //   commission      = subsidizedPrice * commission%
 //   banking         = gross * banking%
-//   vat             = (commission + subsidy + banking) * 15%
+//   vat             = gross * 15%
 //   net             = gross - commission - subsidy - banking - vat - posFees
 
 export interface DeliveryCalcInput {
@@ -47,7 +47,7 @@ export function calcDeliveryBreakdown(input: DeliveryCalcInput): DeliveryCalcRes
   const subsidizedPrice = gross - subsidy;
   const commission = subsidizedPrice * (commissionPercent / 100);
   const banking = gross * (bankingFeesPercent / 100);
-  const vat = (commission + subsidy + banking) * DELIVERY_VAT_RATE;
+  const vat = gross * DELIVERY_VAT_RATE;
   const net = gross - commission - subsidy - banking - vat - posFees;
 
   return {
