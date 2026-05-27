@@ -494,7 +494,7 @@ export function registerRealEstateRoutes(
         totalDr += Number(ln.debit || 0); totalCr += Number(ln.credit || 0);
         return [
           `${ln.accountCode || ""} — ${ln.accountName || ""}`,
-          ln.description || "",
+          ln.notes || ln.description || "",
           ln.debit ? SAR(ln.debit) : "",
           ln.credit ? SAR(ln.credit) : "",
         ];
@@ -502,24 +502,35 @@ export function registerRealEstateRoutes(
       rows.push(["", "TOTAL / الإجمالي", SAR(totalDr), SAR(totalCr)]);
       const restR = await pool.query(`SELECT name FROM restaurants WHERE id = $1`, [restaurantId]);
       const companyName = restR.rows[0]?.name || "Company";
+      const fmtDate = (d: any): string => {
+        if (!d) return "—";
+        if (d instanceof Date) return d.toISOString().slice(0, 10);
+        const s = String(d);
+        return s.slice(0, 10) || "—";
+      };
       const pdf = await generateReportPdf({
         title: `Journal Entry ${entry.entryNumber || ""}`,
         titleAr: `قيد يومية ${entry.entryNumber || ""}`,
         companyName,
         rows: [
           { label: "Entry # / رقم القيد", value: entry.entryNumber || "—" },
-          { label: "Date / التاريخ", value: entry.entryDate?.slice(0, 10) || "—" },
+          { label: "Date / التاريخ", value: fmtDate(entry.entryDate) },
           { label: "Description / الوصف", value: entry.description || "—" },
-          { label: "Reference / المرجع", value: entry.reference || "—" },
+          { label: "Reference / المرجع", value: entry.referenceType ? `${entry.referenceType} ${entry.referenceId || ""}`.trim() : "—" },
           { label: "Total Debit / إجمالي المدين", value: SAR(totalDr) + " ر.س" },
           { label: "Total Credit / إجمالي الدائن", value: SAR(totalCr) + " ر.س" },
         ],
         tableRows: { headers: ["Account / الحساب", "Description / الوصف", "Debit (ر.س)", "Credit (ر.س)"], data: rows },
       });
+      const buf = Buffer.isBuffer(pdf) ? pdf : Buffer.from(pdf);
       res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Length", String(buf.length));
       res.setHeader("Content-Disposition", `attachment; filename="journal-${entry.entryNumber || entry.id}.pdf"`);
-      res.end(pdf);
-    } catch (e) { err(res, e); }
+      res.send(buf);
+    } catch (e) {
+      console.error("[realEstate] journal export error:", e);
+      err(res, e);
+    }
   });
 
   app.get("/api/real-estate/accounting/:type/export", ...view, async (req, res) => {
