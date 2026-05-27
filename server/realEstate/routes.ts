@@ -14,6 +14,31 @@ import {
 import { generateInvoicePdf, generateReceiptPdf, generateContractPdf, generateReportPdf } from "./pdf";
 import { seedRealEstate } from "./seed";
 import * as XLSX from "xlsx";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+
+const expenseInvoiceStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const dir = path.join(process.cwd(), "public", "uploads", "expense-invoices");
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    cb(null, dir);
+  },
+  filename: (_req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `exp-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+  },
+});
+const uploadExpenseInvoice = multer({
+  storage: expenseInvoiceStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    const allowedExt = /\.(pdf|jpe?g|png|gif|webp)$/i;
+    const allowedMime = ["application/pdf", "image/jpeg", "image/png", "image/gif", "image/webp"];
+    if (allowedExt.test(file.originalname) && allowedMime.includes(file.mimetype)) return cb(null, true);
+    cb(new Error("Only PDF, JPG, PNG, GIF, or WebP files are allowed"));
+  },
+});
 
 type Mw = (req: any, res: any, next: any) => any;
 
@@ -342,6 +367,15 @@ export function registerRealEstateRoutes(
   });
   app.delete("/api/real-estate/expenses/:id", ...del, async (req, res) => {
     try { ok(res, { ok: await expensesStore.remove(req.params.id, rid(req)) }); } catch (e) { err(res, e); }
+  });
+
+  // Upload an invoice image/PDF for an expense. Returns the public URL to store on the expense's receiptUrl.
+  app.post("/api/real-estate/expenses/upload-invoice", ...add, uploadExpenseInvoice.single("file"), (req, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "No file uploaded" });
+      const url = `/uploads/expense-invoices/${req.file.filename}`;
+      res.json({ url, filename: req.file.originalname, size: req.file.size, mimeType: req.file.mimetype });
+    } catch (e: any) { res.status(500).json({ message: e?.message || "Upload failed" }); }
   });
 
   // ============ Maintenance ============

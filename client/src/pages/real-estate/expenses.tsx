@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, Upload, FileText, X } from "lucide-react";
 import { PageHeader, StatusBadge, fmtSar, fmtDate, REBreadcrumb, sarToHalala, useRET } from "./_shared";
 import { localizedCategory, localizedStatus } from "@/i18n/realEstateTranslations";
 
@@ -23,9 +23,10 @@ export default function ExpensesPage() {
   const { data: properties = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/properties"] });
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
-  const [form, setForm] = useState<any>({ propertyId: "", category: "maintenance", description: "", amount: "", vatAmount: "", vendorName: "", expenseDate: new Date().toISOString().slice(0, 10), dueDate: "", paidDate: "", status: "pending", notes: "" });
+  const [form, setForm] = useState<any>({ propertyId: "", category: "maintenance", description: "", amount: "", vatAmount: "", vendorName: "", expenseDate: new Date().toISOString().slice(0, 10), dueDate: "", paidDate: "", status: "pending", notes: "", receiptUrl: "" });
+  const [uploading, setUploading] = useState(false);
 
-  const reset = () => { setEditing(null); setForm({ propertyId: properties[0]?.id || "", category: "maintenance", description: "", amount: "", vatAmount: "", vendorName: "", expenseDate: new Date().toISOString().slice(0, 10), dueDate: "", paidDate: "", status: "pending", notes: "" }); };
+  const reset = () => { setEditing(null); setForm({ propertyId: properties[0]?.id || "", category: "maintenance", description: "", amount: "", vatAmount: "", vendorName: "", expenseDate: new Date().toISOString().slice(0, 10), dueDate: "", paidDate: "", status: "pending", notes: "", receiptUrl: "" }); };
 
   const openEdit = (ex: any) => {
     setEditing(ex);
@@ -36,9 +37,32 @@ export default function ExpensesPage() {
       vendorName: ex.vendorName || "",
       expenseDate: ex.expenseDate?.slice(0, 10) || "",
       dueDate: ex.dueDate?.slice(0, 10) || "", paidDate: ex.paidDate?.slice(0, 10) || "",
-      status: ex.status || "pending", notes: ex.notes || "",
+      status: ex.status || "pending", notes: ex.notes || "", receiptUrl: ex.receiptUrl || "",
     });
     setOpen(true);
+  };
+
+  const handleFileUpload = async (file: File) => {
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast({ title: t.error, description: "File must be smaller than 10MB", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch("/api/real-estate/expenses/upload-invoice", { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) {
+        const e = await res.json().catch(() => ({ message: "Upload failed" }));
+        throw new Error(e.message || "Upload failed");
+      }
+      const data = await res.json();
+      setForm((f: any) => ({ ...f, receiptUrl: data.url }));
+      toast({ title: t.invoiceUploaded || "Invoice uploaded" });
+    } catch (e: any) {
+      toast({ title: t.error, description: e.message, variant: "destructive" });
+    } finally { setUploading(false); }
   };
 
   const upsertMut = useMutation({
@@ -101,6 +125,11 @@ export default function ExpensesPage() {
                   <TableCell><StatusBadge status={ex.status} /></TableCell>
                   <TableCell>
                     <div className="flex gap-1">
+                      {ex.receiptUrl && (
+                        <Button size="icon" variant="ghost" asChild data-testid={`button-view-invoice-${ex.id}`}>
+                          <a href={ex.receiptUrl} target="_blank" rel="noreferrer" title={t.viewInvoice || "View invoice"}><FileText className="w-4 h-4" /></a>
+                        </Button>
+                      )}
                       <Button size="icon" variant="ghost" onClick={() => openEdit(ex)} data-testid={`button-edit-${ex.id}`}><Edit className="w-4 h-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => { if (confirm(t.confirmDelete)) deleteMut.mutate(ex.id); }} data-testid={`button-delete-${ex.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
                     </div>
@@ -142,6 +171,22 @@ export default function ExpensesPage() {
             <div><label className="text-sm">{t.dueDate}</label><Input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} /></div>
             <div><label className="text-sm">{t.paidDate}</label><Input type="date" value={form.paidDate} onChange={(e) => setForm({ ...form, paidDate: e.target.value })} /></div>
             <div className="col-span-2"><label className="text-sm">{t.notes}</label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
+            <div className="col-span-2">
+              <label className="text-sm">{t.invoiceAttachment || "Invoice (PDF / image)"}</label>
+              {form.receiptUrl ? (
+                <div className="flex items-center gap-2 mt-1 p-2 border rounded-md" data-testid="attached-invoice">
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <a href={form.receiptUrl} target="_blank" rel="noreferrer" className="text-sm flex-1 truncate hover:underline" data-testid="link-invoice">{form.receiptUrl.split("/").pop()}</a>
+                  <Button size="icon" variant="ghost" onClick={() => setForm({ ...form, receiptUrl: "" })} data-testid="button-remove-invoice"><X className="w-4 h-4" /></Button>
+                </div>
+              ) : (
+                <label className="mt-1 flex items-center gap-2 px-3 py-2 border border-dashed rounded-md cursor-pointer hover-elevate" data-testid="dropzone-invoice">
+                  <Upload className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">{uploading ? (t.loading || "Uploading...") : (t.uploadInvoiceHint || "Click to upload (PDF, JPG, PNG, GIF, WebP — max 10MB)")}</span>
+                  <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,application/pdf,image/*" disabled={uploading} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); e.target.value = ""; }} data-testid="input-invoice-file" />
+                </label>
+              )}
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>{t.cancel}</Button>
