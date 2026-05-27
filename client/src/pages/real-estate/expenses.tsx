@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2, Upload, FileText, X } from "lucide-react";
-import { PageHeader, StatusBadge, fmtSar, fmtDate, REBreadcrumb, sarToHalala, useRET } from "./_shared";
+import { Plus, Edit, Trash2, Upload, FileText, X, Tag, Calendar } from "lucide-react";
+import { PageHeader, StatusBadge, fmtSar, fmtDate, REBreadcrumb, sarToHalala, useRET, ViewToggle, useViewMode } from "./_shared";
 import { localizedCategory, localizedStatus } from "@/i18n/realEstateTranslations";
 
 const CATS = ["maintenance","utilities","insurance","tax","management_fee","salary","marketing","renovation","legal","other"];
@@ -21,6 +21,7 @@ export default function ExpensesPage() {
   const { toast } = useToast();
   const { data: expenses = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/expenses"] });
   const { data: properties = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/properties"] });
+  const [view, setView] = useViewMode("expenses");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState<any>({ propertyId: "", category: "maintenance", description: "", amount: "", vatAmount: "", vendorName: "", expenseDate: new Date().toISOString().slice(0, 10), dueDate: "", paidDate: "", status: "pending", notes: "", receiptUrl: "" });
@@ -98,32 +99,76 @@ export default function ExpensesPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <REBreadcrumb />
       <PageHeader title={t.propertyExpenses} subtitle={t.expensesSubtitle} actions={
-        <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-add-expense"><Plus className="w-4 h-4 mr-1" />{t.addExpense}</Button>
+        <>
+          <ViewToggle view={view} onChange={setView} testId="toggle-view-expenses" />
+          <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-add-expense"><Plus className="w-4 h-4 mr-1" />{t.addExpense}</Button>
+        </>
       } />
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t.dateLabel}</TableHead><TableHead>{t.property}</TableHead><TableHead>{t.category}</TableHead>
-                <TableHead>{t.descriptionLabel}</TableHead><TableHead>{t.amount}</TableHead>
-                <TableHead>{t.vendor}</TableHead><TableHead>{t.statusLabel}</TableHead><TableHead className="w-24">{t.actions}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={8} className="text-center py-6">{t.loading}</TableCell></TableRow>}
-              {!isLoading && expenses.length === 0 && <TableRow><TableCell colSpan={8} className="text-center py-6 text-muted-foreground">{t.noExpenses}</TableCell></TableRow>}
-              {expenses.map((ex: any) => (
-                <TableRow key={ex.id} data-testid={`row-expense-${ex.id}`}>
-                  <TableCell>{fmtDate(ex.expenseDate)}</TableCell>
-                  <TableCell>{propName(ex.propertyId)}</TableCell>
-                  <TableCell>{localizedCategory(t, ex.category)}</TableCell>
-                  <TableCell>{ex.description}</TableCell>
-                  <TableCell className="font-semibold">{fmtSar(ex.amount)}</TableCell>
-                  <TableCell>{ex.vendorName || "—"}</TableCell>
-                  <TableCell><StatusBadge status={ex.status} /></TableCell>
-                  <TableCell>
+      {view === "list" ? (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.dateLabel}</TableHead><TableHead>{t.property}</TableHead><TableHead>{t.category}</TableHead>
+                  <TableHead>{t.descriptionLabel}</TableHead><TableHead>{t.amount}</TableHead>
+                  <TableHead>{t.vendor}</TableHead><TableHead>{t.statusLabel}</TableHead><TableHead className="w-24">{t.actions}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading && <TableRow><TableCell colSpan={8} className="text-center py-6">{t.loading}</TableCell></TableRow>}
+                {!isLoading && expenses.length === 0 && <TableRow><TableCell colSpan={8} className="text-center py-6 text-muted-foreground">{t.noExpenses}</TableCell></TableRow>}
+                {expenses.map((ex: any) => (
+                  <TableRow key={ex.id} data-testid={`row-expense-${ex.id}`}>
+                    <TableCell>{fmtDate(ex.expenseDate)}</TableCell>
+                    <TableCell>{propName(ex.propertyId)}</TableCell>
+                    <TableCell>{localizedCategory(t, ex.category)}</TableCell>
+                    <TableCell>{ex.description}</TableCell>
+                    <TableCell className="font-semibold">{fmtSar(ex.amount)}</TableCell>
+                    <TableCell>{ex.vendorName || "—"}</TableCell>
+                    <TableCell><StatusBadge status={ex.status} /></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {ex.receiptUrl && (
+                          <Button size="icon" variant="ghost" asChild data-testid={`button-view-invoice-${ex.id}`}>
+                            <a href={ex.receiptUrl} target="_blank" rel="noreferrer" title={t.viewInvoice || "View invoice"}><FileText className="w-4 h-4" /></a>
+                          </Button>
+                        )}
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(ex)} data-testid={`button-edit-${ex.id}`}><Edit className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => { if (confirm(t.confirmDelete)) deleteMut.mutate(ex.id); }} data-testid={`button-delete-${ex.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : (
+        <div>
+          {isLoading && <div className="text-center py-10 text-muted-foreground">{t.loading}</div>}
+          {!isLoading && expenses.length === 0 && <div className="text-center py-10 text-muted-foreground">{t.noExpenses}</div>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {expenses.map((ex: any) => (
+              <Card key={ex.id} className="hover-elevate" data-testid={`card-expense-${ex.id}`}>
+                <CardContent className="p-4 flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-10 h-10 rounded-md bg-amber-500/15 text-amber-700 flex items-center justify-center shrink-0"><Tag className="w-5 h-5" /></div>
+                      <div className="min-w-0">
+                        <div className="font-semibold truncate" data-testid={`text-expense-desc-${ex.id}`}>{ex.description || localizedCategory(t, ex.category)}</div>
+                        <div className="text-xs text-muted-foreground truncate">{localizedCategory(t, ex.category)} · {propName(ex.propertyId)}</div>
+                      </div>
+                    </div>
+                    <StatusBadge status={ex.status} />
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex items-center gap-1.5 text-muted-foreground"><Calendar className="w-3.5 h-3.5" /><span className="text-foreground">{fmtDate(ex.expenseDate)}</span></div>
+                    <div className="text-xs"><span className="text-muted-foreground">{t.vendor}:</span> <span>{ex.vendorName || "—"}</span></div>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="font-semibold">{fmtSar(ex.amount)}</div>
                     <div className="flex gap-1">
                       {ex.receiptUrl && (
                         <Button size="icon" variant="ghost" asChild data-testid={`button-view-invoice-${ex.id}`}>
@@ -133,13 +178,13 @@ export default function ExpensesPage() {
                       <Button size="icon" variant="ghost" onClick={() => openEdit(ex)} data-testid={`button-edit-${ex.id}`}><Edit className="w-4 h-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => { if (confirm(t.confirmDelete)) deleteMut.mutate(ex.id); }} data-testid={`button-delete-${ex.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <DialogContent className="max-w-2xl">

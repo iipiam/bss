@@ -10,8 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, FileDown, XCircle } from "lucide-react";
-import { PageHeader, StatusBadge, fmtSar, fmtDate, REBreadcrumb, sarToHalala, downloadBlob, useRET } from "./_shared";
+import { Plus, FileDown, XCircle, FileText, User, Home } from "lucide-react";
+import { PageHeader, StatusBadge, fmtSar, fmtDate, REBreadcrumb, sarToHalala, downloadBlob, useRET, ViewToggle, useViewMode } from "./_shared";
 import { localizedFrequency } from "@/i18n/realEstateTranslations";
 
 const FREQS = ["monthly","quarterly","biannual","annual"];
@@ -22,6 +22,7 @@ export default function ContractsPage() {
   const { data: contracts = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/contracts"] });
   const { data: units = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/units"] });
   const { data: tenants = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/tenants"] });
+  const [view, setView] = useViewMode("contracts");
   const [open, setOpen] = useState(false);
   const [termOpen, setTermOpen] = useState<any>(null);
   const [termReason, setTermReason] = useState("");
@@ -71,44 +72,85 @@ export default function ContractsPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <REBreadcrumb />
       <PageHeader title={t.rentalContracts} subtitle={t.contractsSubtitle} actions={
-        <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-new-contract"><Plus className="w-4 h-4 mr-1" />{t.newContract}</Button>
+        <>
+          <ViewToggle view={view} onChange={setView} testId="toggle-view-contracts" />
+          <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-new-contract"><Plus className="w-4 h-4 mr-1" />{t.newContract}</Button>
+        </>
       } />
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t.contractNumber}</TableHead><TableHead>{t.tenant}</TableHead><TableHead>{t.unit}</TableHead>
-                <TableHead>{t.period}</TableHead><TableHead>{t.monthlyRent}</TableHead>
-                <TableHead>{t.statusLabel}</TableHead><TableHead className="w-32">{t.actions}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-6">{t.loading}</TableCell></TableRow>}
-              {!isLoading && contracts.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">{t.noContracts}</TableCell></TableRow>}
-              {contracts.map((c: any) => (
-                <TableRow key={c.id} data-testid={`row-contract-${c.id}`}>
-                  <TableCell className="font-medium">{c.contractNumber}</TableCell>
-                  <TableCell>{tenantLabel(c.tenantId)}</TableCell>
-                  <TableCell>{unitLabel(c.unitId)}</TableCell>
-                  <TableCell>{fmtDate(c.startDate)} → {fmtDate(c.endDate)}</TableCell>
-                  <TableCell>{fmtSar(c.monthlyRent)}</TableCell>
-                  <TableCell><StatusBadge status={c.status} /></TableCell>
-                  <TableCell>
+      {view === "list" ? (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.contractNumber}</TableHead><TableHead>{t.tenant}</TableHead><TableHead>{t.unit}</TableHead>
+                  <TableHead>{t.period}</TableHead><TableHead>{t.monthlyRent}</TableHead>
+                  <TableHead>{t.statusLabel}</TableHead><TableHead className="w-32">{t.actions}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-6">{t.loading}</TableCell></TableRow>}
+                {!isLoading && contracts.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">{t.noContracts}</TableCell></TableRow>}
+                {contracts.map((c: any) => (
+                  <TableRow key={c.id} data-testid={`row-contract-${c.id}`}>
+                    <TableCell className="font-medium">{c.contractNumber}</TableCell>
+                    <TableCell>{tenantLabel(c.tenantId)}</TableCell>
+                    <TableCell>{unitLabel(c.unitId)}</TableCell>
+                    <TableCell>{fmtDate(c.startDate)} → {fmtDate(c.endDate)}</TableCell>
+                    <TableCell>{fmtSar(c.monthlyRent)}</TableCell>
+                    <TableCell><StatusBadge status={c.status} /></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => downloadPdf(c.id)} data-testid={`button-pdf-${c.id}`}><FileDown className="w-4 h-4" /></Button>
+                        {c.status === "active" && (
+                          <Button size="icon" variant="ghost" onClick={() => setTermOpen(c)} data-testid={`button-terminate-${c.id}`}><XCircle className="w-4 h-4 text-rose-500" /></Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : (
+        <div>
+          {isLoading && <div className="text-center py-10 text-muted-foreground">{t.loading}</div>}
+          {!isLoading && contracts.length === 0 && <div className="text-center py-10 text-muted-foreground">{t.noContracts}</div>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {contracts.map((c: any) => (
+              <Card key={c.id} className="hover-elevate" data-testid={`card-contract-${c.id}`}>
+                <CardContent className="p-4 flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-10 h-10 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0"><FileText className="w-5 h-5" /></div>
+                      <div className="min-w-0">
+                        <div className="font-semibold truncate" data-testid={`text-contract-number-${c.id}`}>{c.contractNumber}</div>
+                        <div className="text-xs text-muted-foreground truncate">{fmtDate(c.startDate)} → {fmtDate(c.endDate)}</div>
+                      </div>
+                    </div>
+                    <StatusBadge status={c.status} />
+                  </div>
+                  <div className="space-y-1.5 text-sm">
+                    <div className="flex items-center gap-1.5 text-muted-foreground"><User className="w-3.5 h-3.5" /><span className="text-foreground truncate">{tenantLabel(c.tenantId)}</span></div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground"><Home className="w-3.5 h-3.5" /><span className="text-foreground truncate">{unitLabel(c.unitId)}</span></div>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="font-semibold">{fmtSar(c.monthlyRent)}</div>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => downloadPdf(c.id)} data-testid={`button-pdf-${c.id}`}><FileDown className="w-4 h-4" /></Button>
                       {c.status === "active" && (
                         <Button size="icon" variant="ghost" onClick={() => setTermOpen(c)} data-testid={`button-terminate-${c.id}`}><XCircle className="w-4 h-4 text-rose-500" /></Button>
                       )}
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">

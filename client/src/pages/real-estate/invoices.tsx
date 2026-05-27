@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { FileDown, DollarSign } from "lucide-react";
-import { PageHeader, StatusBadge, fmtSar, fmtDate, REBreadcrumb, sarToHalala, downloadBlob, useRET } from "./_shared";
+import { FileDown, DollarSign, Receipt, Calendar } from "lucide-react";
+import { PageHeader, StatusBadge, fmtSar, fmtDate, REBreadcrumb, sarToHalala, downloadBlob, useRET, ViewToggle, useViewMode } from "./_shared";
 import { localizedMethod, localizedStatus } from "@/i18n/realEstateTranslations";
 
 const METHODS = ["bank_transfer","cash","cheque","online"];
@@ -18,6 +18,7 @@ export default function InvoicesPage() {
   const t = useRET();
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState("all");
+  const [view, setView] = useViewMode("invoices");
   const { data: invoices = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/invoices"] });
   const [payOpen, setPayOpen] = useState<any>(null);
   const [payForm, setPayForm] = useState<any>({ amount: "", paymentDate: new Date().toISOString().slice(0, 10), method: "bank_transfer", referenceNumber: "", bankName: "" });
@@ -48,50 +49,93 @@ export default function InvoicesPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <REBreadcrumb />
       <PageHeader title={t.rentalInvoices} subtitle={t.invoicesSubtitle} actions={
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48" data-testid="select-status-filter"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t.allStatuses}</SelectItem>
-            {["pending","paid","partial","overdue","cancelled"].map((s) => <SelectItem key={s} value={s}>{localizedStatus(t, s)}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48" data-testid="select-status-filter"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t.allStatuses}</SelectItem>
+              {["pending","paid","partial","overdue","cancelled"].map((s) => <SelectItem key={s} value={s}>{localizedStatus(t, s)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <ViewToggle view={view} onChange={setView} testId="toggle-view-invoices" />
+        </>
       } />
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t.invoiceNumber}</TableHead><TableHead>{t.issued}</TableHead><TableHead>{t.due}</TableHead>
-                <TableHead>{t.total}</TableHead><TableHead>{t.paidCol}</TableHead>
-                <TableHead>{t.statusLabel}</TableHead><TableHead className="w-32">{t.actions}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-6">{t.loading}</TableCell></TableRow>}
-              {!isLoading && filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">{t.noInvoices}</TableCell></TableRow>}
-              {filtered.map((inv: any) => (
-                <TableRow key={inv.id} data-testid={`row-invoice-${inv.id}`}>
-                  <TableCell className="font-medium">{inv.invoiceNumber}</TableCell>
-                  <TableCell>{fmtDate(inv.issueDate)}</TableCell>
-                  <TableCell>{fmtDate(inv.dueDate)}</TableCell>
-                  <TableCell>{fmtSar(inv.totalAmount)}</TableCell>
-                  <TableCell>{fmtSar(inv.amountPaid || 0)}</TableCell>
-                  <TableCell><StatusBadge status={inv.status} /></TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
+      {view === "list" ? (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.invoiceNumber}</TableHead><TableHead>{t.issued}</TableHead><TableHead>{t.due}</TableHead>
+                  <TableHead>{t.total}</TableHead><TableHead>{t.paidCol}</TableHead>
+                  <TableHead>{t.statusLabel}</TableHead><TableHead className="w-32">{t.actions}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-6">{t.loading}</TableCell></TableRow>}
+                {!isLoading && filtered.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">{t.noInvoices}</TableCell></TableRow>}
+                {filtered.map((inv: any) => (
+                  <TableRow key={inv.id} data-testid={`row-invoice-${inv.id}`}>
+                    <TableCell className="font-medium">{inv.invoiceNumber}</TableCell>
+                    <TableCell>{fmtDate(inv.issueDate)}</TableCell>
+                    <TableCell>{fmtDate(inv.dueDate)}</TableCell>
+                    <TableCell>{fmtSar(inv.totalAmount)}</TableCell>
+                    <TableCell>{fmtSar(inv.amountPaid || 0)}</TableCell>
+                    <TableCell><StatusBadge status={inv.status} /></TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => downloadPdf(inv.id)} data-testid={`button-pdf-${inv.id}`}><FileDown className="w-4 h-4" /></Button>
+                        {inv.status !== "paid" && inv.status !== "cancelled" && (
+                          <Button size="icon" variant="ghost" onClick={() => { setPayOpen(inv); setPayForm({ ...payForm, amount: (Number(inv.totalAmount) - Number(inv.amountPaid || 0)) / 100 }); }} data-testid={`button-pay-${inv.id}`}><DollarSign className="w-4 h-4 text-emerald-500" /></Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : (
+        <div>
+          {isLoading && <div className="text-center py-10 text-muted-foreground">{t.loading}</div>}
+          {!isLoading && filtered.length === 0 && <div className="text-center py-10 text-muted-foreground">{t.noInvoices}</div>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filtered.map((inv: any) => {
+              const balance = Number(inv.totalAmount || 0) - Number(inv.amountPaid || 0);
+              return (
+                <Card key={inv.id} className="hover-elevate" data-testid={`card-invoice-${inv.id}`}>
+                  <CardContent className="p-4 flex flex-col gap-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-10 h-10 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0"><Receipt className="w-5 h-5" /></div>
+                        <div className="min-w-0">
+                          <div className="font-semibold truncate" data-testid={`text-invoice-number-${inv.id}`}>{inv.invoiceNumber}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="w-3 h-3" />{fmtDate(inv.issueDate)}</div>
+                        </div>
+                      </div>
+                      <StatusBadge status={inv.status} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div><div className="text-xs text-muted-foreground">{t.due}</div><div>{fmtDate(inv.dueDate)}</div></div>
+                      <div><div className="text-xs text-muted-foreground">{t.total}</div><div className="font-semibold">{fmtSar(inv.totalAmount)}</div></div>
+                      <div><div className="text-xs text-muted-foreground">{t.paidCol}</div><div className="text-emerald-600">{fmtSar(inv.amountPaid || 0)}</div></div>
+                      <div><div className="text-xs text-muted-foreground">{t.balanceDue}</div><div className={balance > 0 ? "text-rose-600" : ""}>{fmtSar(balance)}</div></div>
+                    </div>
+                    <div className="flex justify-end gap-1 pt-2 border-t">
                       <Button size="icon" variant="ghost" onClick={() => downloadPdf(inv.id)} data-testid={`button-pdf-${inv.id}`}><FileDown className="w-4 h-4" /></Button>
                       {inv.status !== "paid" && inv.status !== "cancelled" && (
-                        <Button size="icon" variant="ghost" onClick={() => { setPayOpen(inv); setPayForm({ ...payForm, amount: (Number(inv.totalAmount) - Number(inv.amountPaid || 0)) / 100 }); }} data-testid={`button-pay-${inv.id}`}><DollarSign className="w-4 h-4 text-emerald-500" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => { setPayOpen(inv); setPayForm({ ...payForm, amount: balance / 100 }); }} data-testid={`button-pay-${inv.id}`}><DollarSign className="w-4 h-4 text-emerald-500" /></Button>
                       )}
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <Dialog open={!!payOpen} onOpenChange={(o) => !o && setPayOpen(null)}>
         <DialogContent>

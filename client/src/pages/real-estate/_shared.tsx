@@ -1,7 +1,39 @@
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { LayoutGrid, List } from "lucide-react";
 import { Link } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getRealEstateT, localizedStatus, localizedPriority } from "@/i18n/realEstateTranslations";
+
+export type ViewMode = "grid" | "list";
+
+export function useViewMode(key: string, initial: ViewMode = "grid") {
+  const storageKey = `re-view-${key}`;
+  const [view, setViewState] = useState<ViewMode>(() => {
+    if (typeof window === "undefined") return initial;
+    const v = window.localStorage.getItem(storageKey);
+    return (v === "grid" || v === "list") ? v : initial;
+  });
+  const setView = (v: ViewMode) => {
+    setViewState(v);
+    try { window.localStorage.setItem(storageKey, v); } catch {}
+  };
+  return [view, setView] as const;
+}
+
+export function ViewToggle({ view, onChange, testId = "toggle-view", gridLabel, listLabel }: { view: ViewMode; onChange: (v: ViewMode) => void; testId?: string; gridLabel?: string; listLabel?: string }) {
+  return (
+    <div className="inline-flex rounded-md border overflow-hidden" data-testid={testId}>
+      <Button size="sm" variant={view === "grid" ? "default" : "ghost"} className="rounded-none" onClick={() => onChange("grid")} data-testid={`${testId}-grid`} title={gridLabel || "Grid view"}>
+        <LayoutGrid className="w-4 h-4" />
+      </Button>
+      <Button size="sm" variant={view === "list" ? "default" : "ghost"} className="rounded-none" onClick={() => onChange("list")} data-testid={`${testId}-list`} title={listLabel || "List view"}>
+        <List className="w-4 h-4" />
+      </Button>
+    </div>
+  );
+}
 
 export const halalaToSar = (h: number | string | null | undefined) => {
   const n = typeof h === "string" ? Number(h) : h ?? 0;

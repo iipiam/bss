@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Edit, UserCircle, Trash2, DollarSign, TrendingUp, FileDown, Banknote, ChefHat, FileText, Upload, Eye, X, Calendar, Download } from "lucide-react";
+import { Plus, Search, Edit, UserCircle, Trash2, DollarSign, TrendingUp, FileDown, Banknote, ChefHat, FileText, Upload, Eye, X, Calendar, Download, LayoutGrid, List } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -110,6 +110,15 @@ type InvestorFormValues = {
 
 export default function Investors() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [view, setView] = useState<"grid" | "list">(() => {
+    if (typeof window === "undefined") return "grid";
+    const v = window.localStorage.getItem("investors-view");
+    return v === "list" ? "list" : "grid";
+  });
+  const changeView = (v: "grid" | "list") => {
+    setView(v);
+    try { window.localStorage.setItem("investors-view", v); } catch {}
+  };
   const [open, setOpen] = useState(false);
   const [editingInvestor, setEditingInvestor] = useState<Investor | null>(null);
   const [deletingInvestor, setDeletingInvestor] = useState<Investor | null>(null);
@@ -1110,6 +1119,14 @@ export default function Investors() {
           </p>
         </div>
         <div className={`flex flex-col sm:flex-row gap-2 ${layout.isMobile ? "w-full" : ""}`}>
+          <div className="inline-flex rounded-md border overflow-hidden" data-testid="toggle-view-investors">
+            <Button size="sm" variant={view === "grid" ? "default" : "ghost"} className="rounded-none" onClick={() => changeView("grid")} data-testid="toggle-view-investors-grid" title={t.gridView || "Grid view"}>
+              <LayoutGrid className="w-4 h-4" />
+            </Button>
+            <Button size="sm" variant={view === "list" ? "default" : "ghost"} className="rounded-none" onClick={() => changeView("list")} data-testid="toggle-view-investors-list" title={t.listView || "List view"}>
+              <List className="w-4 h-4" />
+            </Button>
+          </div>
           <Link href="/investment-agreement-templates">
             <Button
               variant="outline"
@@ -1490,6 +1507,66 @@ export default function Investors() {
       </div>
 
       {/* Investors List */}
+      {view === "list" ? (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.name || "Name"}</TableHead>
+                  <TableHead>{t.type || "Type"}</TableHead>
+                  <TableHead>{t.contact || "Contact"}</TableHead>
+                  <TableHead>{t.amountInvested || "Invested"}</TableHead>
+                  <TableHead>{t.interestPercentage || "%"}</TableHead>
+                  <TableHead>{t.monthlyEarnings || "Monthly"}</TableHead>
+                  <TableHead>{t.bankName || "Bank"}</TableHead>
+                  <TableHead className="w-40">{t.actions || "Actions"}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredInvestors.length === 0 ? (
+                  <TableRow><TableCell colSpan={8} className="text-center py-10 text-muted-foreground">{t.noInvestorsFound || "No investors found"}</TableCell></TableRow>
+                ) : filteredInvestors.map((investor) => {
+                  const monthly = calculateMonthlyEarnings(investor);
+                  return (
+                    <TableRow key={investor.id} data-testid={`row-investor-${investor.id}`}>
+                      <TableCell className="font-medium">{investor.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {(investor.investorType || "money") === "recipe"
+                            ? (t.recipeOwner || "Recipe")
+                            : (t.moneyInvestor || "Money")}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">{investor.contactNumber || "—"}</TableCell>
+                      <TableCell>{Number(investor.amountInvested || 0).toLocaleString()} {t.sar || "SAR"}</TableCell>
+                      <TableCell>{investor.interestPercentage}%</TableCell>
+                      <TableCell className="text-emerald-600 font-semibold">{monthly.toFixed(2)}</TableCell>
+                      <TableCell className="text-sm">{investor.bankName || "—"}</TableCell>
+                      <TableCell>
+                        <div className="flex gap-1">
+                          <Button size="icon" variant="ghost" onClick={() => handlePreviewStatement(investor)} disabled={loadingPreview && previewInvestorName === investor.name} data-testid={`button-preview-statement-${investor.id}`} title={t.previewStatement || "Preview Statement"}>
+                            <Eye className={`h-4 w-4 ${loadingPreview && previewInvestorName === investor.name ? 'animate-pulse' : ''}`} />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => handleDownloadStatement(investor)} disabled={downloadingStatement === investor.id} data-testid={`button-download-statement-${investor.id}`} title={t.downloadStatement || "Download Statement"}>
+                            <FileDown className={`h-4 w-4 ${downloadingStatement === investor.id ? 'animate-pulse' : ''}`} />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => handleEdit(investor)} data-testid={`button-edit-${investor.id}`} title={t.edit}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="ghost" onClick={() => setDeletingInvestor(investor)} data-testid={`button-delete-${investor.id}`} title={t.delete || "Delete"}>
+                            <Trash2 className="h-4 w-4 text-rose-500" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : (
       <div className={`grid ${layout.gridCols({ desktop: 3, tablet: 2, mobile: 1 })} gap-4`}>
         {filteredInvestors.length === 0 ? (
           <Card className="col-span-full">
@@ -1984,6 +2061,7 @@ export default function Investors() {
           })
         )}
       </div>
+      )}
 
       {/* Monthly Investor Earnings Card */}
       <Card className="mt-6">

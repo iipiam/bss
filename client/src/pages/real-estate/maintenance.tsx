@@ -9,8 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import { PageHeader, StatusBadge, PriorityBadge, fmtSar, fmtDate, REBreadcrumb, sarToHalala, useRET } from "./_shared";
+import { Plus, Edit, Trash2, Wrench, Calendar } from "lucide-react";
+import { PageHeader, StatusBadge, PriorityBadge, fmtSar, fmtDate, REBreadcrumb, sarToHalala, useRET, ViewToggle, useViewMode } from "./_shared";
 import { localizedStatus, localizedPriority } from "@/i18n/realEstateTranslations";
 
 const STATUSES = ["open","assigned","in_progress","completed","cancelled"];
@@ -22,6 +22,7 @@ export default function MaintenancePage() {
   const { data: requests = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/maintenance"] });
   const { data: properties = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/properties"] });
   const { data: units = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/units"] });
+  const [view, setView] = useViewMode("maintenance");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState<any>({ propertyId: "", unitId: "", title: "", description: "", category: "", priority: "medium", status: "open", vendorContact: "", estimatedCost: "", actualCost: "", reportedDate: new Date().toISOString().slice(0, 10), scheduledDate: "", completedDate: "" });
@@ -78,42 +79,82 @@ export default function MaintenancePage() {
     <div className="p-6 max-w-7xl mx-auto">
       <REBreadcrumb />
       <PageHeader title={t.maintenanceRequests} subtitle={t.maintenanceSubtitle} actions={
-        <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-new-request"><Plus className="w-4 h-4 mr-1" />{t.newRequest}</Button>
+        <>
+          <ViewToggle view={view} onChange={setView} testId="toggle-view-maintenance" />
+          <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-new-request"><Plus className="w-4 h-4 mr-1" />{t.newRequest}</Button>
+        </>
       } />
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t.reported}</TableHead><TableHead>{t.property}</TableHead><TableHead>{t.title}</TableHead>
-                <TableHead>{t.priority}</TableHead><TableHead>{t.statusLabel}</TableHead>
-                <TableHead>{t.cost}</TableHead><TableHead className="w-24">{t.actions}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-6">{t.loading}</TableCell></TableRow>}
-              {!isLoading && requests.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">{t.noRequests}</TableCell></TableRow>}
-              {requests.map((r: any) => (
-                <TableRow key={r.id} data-testid={`row-maintenance-${r.id}`}>
-                  <TableCell>{fmtDate(r.reportedDate)}</TableCell>
-                  <TableCell>{propName(r.propertyId)}</TableCell>
-                  <TableCell className="font-medium">{r.title}</TableCell>
-                  <TableCell><PriorityBadge priority={r.priority} /></TableCell>
-                  <TableCell><StatusBadge status={r.status} /></TableCell>
-                  <TableCell>{r.actualCost ? fmtSar(r.actualCost) : r.estimatedCost ? `~${fmtSar(r.estimatedCost)}` : "—"}</TableCell>
-                  <TableCell>
+      {view === "list" ? (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.reported}</TableHead><TableHead>{t.property}</TableHead><TableHead>{t.title}</TableHead>
+                  <TableHead>{t.priority}</TableHead><TableHead>{t.statusLabel}</TableHead>
+                  <TableHead>{t.cost}</TableHead><TableHead className="w-24">{t.actions}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading && <TableRow><TableCell colSpan={7} className="text-center py-6">{t.loading}</TableCell></TableRow>}
+                {!isLoading && requests.length === 0 && <TableRow><TableCell colSpan={7} className="text-center py-6 text-muted-foreground">{t.noRequests}</TableCell></TableRow>}
+                {requests.map((r: any) => (
+                  <TableRow key={r.id} data-testid={`row-maintenance-${r.id}`}>
+                    <TableCell>{fmtDate(r.reportedDate)}</TableCell>
+                    <TableCell>{propName(r.propertyId)}</TableCell>
+                    <TableCell className="font-medium">{r.title}</TableCell>
+                    <TableCell><PriorityBadge priority={r.priority} /></TableCell>
+                    <TableCell><StatusBadge status={r.status} /></TableCell>
+                    <TableCell>{r.actualCost ? fmtSar(r.actualCost) : r.estimatedCost ? `~${fmtSar(r.estimatedCost)}` : "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(r)} data-testid={`button-edit-${r.id}`}><Edit className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => { if (confirm(t.confirmDelete)) deleteMut.mutate(r.id); }} data-testid={`button-delete-${r.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : (
+        <div>
+          {isLoading && <div className="text-center py-10 text-muted-foreground">{t.loading}</div>}
+          {!isLoading && requests.length === 0 && <div className="text-center py-10 text-muted-foreground">{t.noRequests}</div>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {requests.map((r: any) => (
+              <Card key={r.id} className="hover-elevate" data-testid={`card-maintenance-${r.id}`}>
+                <CardContent className="p-4 flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-10 h-10 rounded-md bg-indigo-500/15 text-indigo-600 flex items-center justify-center shrink-0"><Wrench className="w-5 h-5" /></div>
+                      <div className="min-w-0">
+                        <div className="font-semibold truncate" data-testid={`text-maint-title-${r.id}`}>{r.title}</div>
+                        <div className="text-xs text-muted-foreground truncate">{propName(r.propertyId)}</div>
+                      </div>
+                    </div>
+                    <StatusBadge status={r.status} />
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <PriorityBadge priority={r.priority} />
+                    {r.category && <span className="text-xs text-muted-foreground">{r.category}</span>}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><Calendar className="w-3.5 h-3.5" /><span className="text-foreground">{fmtDate(r.reportedDate)}</span></div>
+                  <div className="flex items-center justify-between pt-2 border-t">
+                    <div className="font-semibold">{r.actualCost ? fmtSar(r.actualCost) : r.estimatedCost ? `~${fmtSar(r.estimatedCost)}` : "—"}</div>
                     <div className="flex gap-1">
                       <Button size="icon" variant="ghost" onClick={() => openEdit(r)} data-testid={`button-edit-${r.id}`}><Edit className="w-4 h-4" /></Button>
                       <Button size="icon" variant="ghost" onClick={() => { if (confirm(t.confirmDelete)) deleteMut.mutate(r.id); }} data-testid={`button-delete-${r.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
                     </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">

@@ -8,8 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Edit, Trash2 } from "lucide-react";
-import { PageHeader, REBreadcrumb, useRET } from "./_shared";
+import { Plus, Edit, Trash2, User, Phone, Mail, Building } from "lucide-react";
+import { PageHeader, REBreadcrumb, useRET, ViewToggle, useViewMode } from "./_shared";
 import { localizedIdType } from "@/i18n/realEstateTranslations";
 
 const ID_TYPES = ["national_id","iqama","passport"];
@@ -18,6 +18,7 @@ export default function TenantsPage() {
   const t = useRET();
   const { toast } = useToast();
   const { data: tenants = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/tenants"] });
+  const [view, setView] = useViewMode("tenants");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState<any>({ fullName: "", idType: "national_id", idNumber: "", phone: "", email: "", nationality: "", companyName: "", crNumber: "" });
@@ -59,40 +60,76 @@ export default function TenantsPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <REBreadcrumb />
       <PageHeader title={t.tenants} subtitle={t.tenantsSubtitle} actions={
-        <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-add-tenant"><Plus className="w-4 h-4 mr-1" />{t.addTenant}</Button>
+        <>
+          <ViewToggle view={view} onChange={setView} testId="toggle-view-tenants" />
+          <Button onClick={() => { reset(); setOpen(true); }} data-testid="button-add-tenant"><Plus className="w-4 h-4 mr-1" />{t.addTenant}</Button>
+        </>
       } />
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t.fullName}</TableHead><TableHead>{t.idLabel}</TableHead><TableHead>{t.phone}</TableHead>
-                <TableHead>{t.email}</TableHead><TableHead>{t.company}</TableHead><TableHead className="w-24">{t.actions}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && <TableRow><TableCell colSpan={6} className="text-center py-6">{t.loading}</TableCell></TableRow>}
-              {!isLoading && tenants.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-6 text-muted-foreground">{t.noTenants}</TableCell></TableRow>}
-              {tenants.map((te: any) => (
-                <TableRow key={te.id} data-testid={`row-tenant-${te.id}`}>
-                  <TableCell className="font-medium">{te.fullName}</TableCell>
-                  <TableCell>{localizedIdType(t, te.idType)}: {te.idNumber || "—"}</TableCell>
-                  <TableCell>{te.phone || "—"}</TableCell>
-                  <TableCell>{te.email || "—"}</TableCell>
-                  <TableCell>{te.companyName || "—"}</TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" onClick={() => openEdit(te)} data-testid={`button-edit-${te.id}`}><Edit className="w-4 h-4" /></Button>
-                      <Button size="icon" variant="ghost" onClick={() => { if (confirm(t.confirmDeleteTenant)) deleteMut.mutate(te.id); }} data-testid={`button-delete-${te.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
-                    </div>
-                  </TableCell>
+      {view === "list" ? (
+        <Card>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>{t.fullName}</TableHead><TableHead>{t.idLabel}</TableHead><TableHead>{t.phone}</TableHead>
+                  <TableHead>{t.email}</TableHead><TableHead>{t.company}</TableHead><TableHead className="w-24">{t.actions}</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {isLoading && <TableRow><TableCell colSpan={6} className="text-center py-6">{t.loading}</TableCell></TableRow>}
+                {!isLoading && tenants.length === 0 && <TableRow><TableCell colSpan={6} className="text-center py-6 text-muted-foreground">{t.noTenants}</TableCell></TableRow>}
+                {tenants.map((te: any) => (
+                  <TableRow key={te.id} data-testid={`row-tenant-${te.id}`}>
+                    <TableCell className="font-medium">{te.fullName}</TableCell>
+                    <TableCell>{localizedIdType(t, te.idType)}: {te.idNumber || "—"}</TableCell>
+                    <TableCell>{te.phone || "—"}</TableCell>
+                    <TableCell>{te.email || "—"}</TableCell>
+                    <TableCell>{te.companyName || "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(te)} data-testid={`button-edit-${te.id}`}><Edit className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => { if (confirm(t.confirmDeleteTenant)) deleteMut.mutate(te.id); }} data-testid={`button-delete-${te.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      ) : (
+        <div>
+          {isLoading && <div className="text-center py-10 text-muted-foreground">{t.loading}</div>}
+          {!isLoading && tenants.length === 0 && <div className="text-center py-10 text-muted-foreground">{t.noTenants}</div>}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {tenants.map((te: any) => (
+              <Card key={te.id} className="hover-elevate" data-testid={`card-tenant-${te.id}`}>
+                <CardContent className="p-4 flex flex-col gap-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="w-10 h-10 rounded-md bg-primary/10 text-primary flex items-center justify-center shrink-0"><User className="w-5 h-5" /></div>
+                      <div className="min-w-0">
+                        <div className="font-semibold truncate" data-testid={`text-tenant-name-${te.id}`}>{te.fullName}</div>
+                        <div className="text-xs text-muted-foreground truncate">{localizedIdType(t, te.idType)}: {te.idNumber || "—"}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 text-sm">
+                    <div className="flex items-center gap-1.5 text-muted-foreground"><Phone className="w-3.5 h-3.5" /><span className="text-foreground truncate">{te.phone || "—"}</span></div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground"><Mail className="w-3.5 h-3.5" /><span className="text-foreground truncate">{te.email || "—"}</span></div>
+                    <div className="flex items-center gap-1.5 text-muted-foreground"><Building className="w-3.5 h-3.5" /><span className="text-foreground truncate">{te.companyName || "—"}</span></div>
+                  </div>
+                  <div className="flex justify-end gap-1 pt-2 border-t">
+                    <Button size="icon" variant="ghost" onClick={() => openEdit(te)} data-testid={`button-edit-${te.id}`}><Edit className="w-4 h-4" /></Button>
+                    <Button size="icon" variant="ghost" onClick={() => { if (confirm(t.confirmDeleteTenant)) deleteMut.mutate(te.id); }} data-testid={`button-delete-${te.id}`}><Trash2 className="w-4 h-4 text-rose-500" /></Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) reset(); }}>
         <DialogContent className="max-w-2xl">
