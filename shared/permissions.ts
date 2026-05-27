@@ -24,7 +24,15 @@ export type Permission =
   | 'marketing'
   | 'mealSubscriptions'
   | 'catering'
-  | 'propertyManagement';
+  | 'propertyManagement'
+  | 'tenants'
+  | 'rentalContracts'
+  | 'rentalInvoices'
+  | 'rentalPayments'
+  | 'propertyExpenses'
+  | 'maintenance'
+  | 'propertyReports'
+  | 'accounting';
 
 export const ALL_PERMISSIONS: Permission[] = [
   'dashboard',
@@ -53,6 +61,14 @@ export const ALL_PERMISSIONS: Permission[] = [
   'mealSubscriptions',
   'catering',
   'propertyManagement',
+  'tenants',
+  'rentalContracts',
+  'rentalInvoices',
+  'rentalPayments',
+  'propertyExpenses',
+  'maintenance',
+  'propertyReports',
+  'accounting',
 ];
 
 // Granular permission actions
@@ -142,6 +158,14 @@ export const ADMIN_PERMISSIONS: PermissionSet = {
   mealSubscriptions: true,
   catering: true,
   propertyManagement: true,
+  tenants: true,
+  rentalContracts: true,
+  rentalInvoices: true,
+  rentalPayments: true,
+  propertyExpenses: true,
+  maintenance: true,
+  propertyReports: true,
+  accounting: true,
 };
 
 export const DEFAULT_EMPLOYEE_PERMISSIONS: PermissionSet = {
@@ -171,6 +195,14 @@ export const DEFAULT_EMPLOYEE_PERMISSIONS: PermissionSet = {
   mealSubscriptions: false,
   catering: false,
   propertyManagement: false,
+  tenants: false,
+  rentalContracts: false,
+  rentalInvoices: false,
+  rentalPayments: false,
+  propertyExpenses: false,
+  maintenance: false,
+  propertyReports: false,
+  accounting: false,
 };
 
 // Business types supported by the platform. Keep this in sync with the
@@ -206,7 +238,9 @@ export const BUSINESS_TYPE_PERMISSIONS: Record<BusinessType, Permission[]> = {
     'investors', 'marketing', 'activityLog', 'users', 'settings', 'workingHours',
   ],
   real_estate: [
-    'dashboard', 'propertyManagement', 'reports', 'sales', 'customers',
+    'dashboard', 'pos', 'propertyManagement', 'tenants', 'rentalContracts',
+    'rentalInvoices', 'rentalPayments', 'propertyExpenses', 'maintenance',
+    'propertyReports', 'accounting', 'reports', 'sales', 'customers',
     'bills', 'licenses', 'branches', 'marketing', 'activityLog', 'users',
     'settings', 'workingHours',
   ],
@@ -257,6 +291,17 @@ export const ROUTE_PERMISSIONS: Record<string, PermissionRequirement> = {
   '/api/working-hours': { mode: 'any', permissions: ['workingHours'] },
   '/api/bills': { mode: 'any', permissions: ['bills'] },
   '/api/chat': { mode: 'any', permissions: ['dashboard'] },
+  '/api/real-estate/properties': { mode: 'any', permissions: ['propertyManagement'] },
+  '/api/real-estate/units': { mode: 'any', permissions: ['propertyManagement'] },
+  '/api/real-estate/dashboard': { mode: 'any', permissions: ['propertyManagement'] },
+  '/api/real-estate/tenants': { mode: 'any', permissions: ['tenants'] },
+  '/api/real-estate/contracts': { mode: 'any', permissions: ['rentalContracts'] },
+  '/api/real-estate/invoices': { mode: 'any', permissions: ['rentalInvoices'] },
+  '/api/real-estate/payments': { mode: 'any', permissions: ['rentalPayments'] },
+  '/api/real-estate/expenses': { mode: 'any', permissions: ['propertyExpenses'] },
+  '/api/real-estate/maintenance': { mode: 'any', permissions: ['maintenance'] },
+  '/api/real-estate/reports': { mode: 'any', permissions: ['propertyReports'] },
+  '/api/real-estate/accounting': { mode: 'any', permissions: ['accounting'] },
   '/api/real-estate': { mode: 'any', permissions: ['propertyManagement'] },
 };
 
@@ -265,6 +310,11 @@ export const ROUTE_PERMISSIONS: Record<string, PermissionRequirement> = {
 // the new keys do not exist at all), fall back to the legacy 'orders'
 // grant. An explicit deny on 'projects'/'quotations' is ALWAYS respected —
 // owners must be able to revoke one half without the other.
+const RE_GRANULAR_PERMISSIONS: Permission[] = [
+  'tenants', 'rentalContracts', 'rentalInvoices', 'rentalPayments',
+  'propertyExpenses', 'maintenance', 'propertyReports', 'accounting',
+];
+
 function resolvePermissionValue(
   userPermissions: PermissionSet | undefined,
   permission: Permission,
@@ -273,6 +323,14 @@ function resolvePermissionValue(
   const direct = userPermissions[permission];
   if ((permission === 'projects' || permission === 'quotations') && direct === undefined) {
     return userPermissions['orders'];
+  }
+  // Legacy real-estate accounts had a single `propertyManagement` flag that
+  // covered every /real-estate/* page. When the granular keys are missing,
+  // fall back to that umbrella so existing employees do not silently lose
+  // access on upgrade. An explicit set value (true/false/granular) on the
+  // new key always wins.
+  if (RE_GRANULAR_PERMISSIONS.includes(permission) && direct === undefined) {
+    return userPermissions['propertyManagement'];
   }
   return direct;
 }

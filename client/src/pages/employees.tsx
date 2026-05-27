@@ -126,7 +126,17 @@ function getPermissionLabels(t: any, businessType: BusinessType): Record<Permiss
     catering: (t as any).cateringContracts || "Catering Contracts",
     projects: t.projects || "Projects",
     quotations: t.quotations || "Quotations",
-    propertyManagement: (t as any).propertyManagement || "Property Management",
+    propertyManagement: isRealEstate
+      ? `${(t as any).propertyManagement || "Property Management"} (${(t as any).properties || "Properties"} / ${(t as any).units || "Units"})`
+      : ((t as any).propertyManagement || "Property Management"),
+    tenants: (t as any).tenants || "Tenants",
+    rentalContracts: (t as any).rentalContracts || "Rental Contracts",
+    rentalInvoices: (t as any).rentalInvoices || "Rental Invoices",
+    rentalPayments: (t as any).rentalPayments || "Rental Payments",
+    propertyExpenses: (t as any).propertyExpenses || "Property Expenses",
+    maintenance: (t as any).maintenance || "Maintenance",
+    propertyReports: (t as any).propertyReports || "Property Reports",
+    accounting: (t as any).accounting || "Accounting",
   };
 }
 
