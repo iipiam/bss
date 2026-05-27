@@ -1124,7 +1124,7 @@ export default function Login() {
                               )}
                             </div>
                             <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-                              {t.save} 17%
+                              {t.save} {Math.round((1 - getPlanPricing('yearly', branchesCount, signupBusinessType).grossAmount / (getPlanPricing('monthly', branchesCount, signupBusinessType).grossAmount * 12)) * 100)}%
                             </Badge>
                           </div>
                           <div className="text-right">

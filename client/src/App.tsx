@@ -537,7 +537,7 @@ function AppContent() {
                                         )}
                                       </div>
                                       <Badge variant="default" className="bg-green-600 hover:bg-green-700">
-                                        Save 17%
+                                        Save {Math.max(0, Math.round((1 - (1990 + (branchesCount - 1) * 398.63) / ((199 + (branchesCount - 1) * 79.80) * 12)) * 100))}%
                                       </Badge>
                                     </div>
                                     <div className="text-right">
