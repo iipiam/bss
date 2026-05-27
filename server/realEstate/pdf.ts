@@ -10,23 +10,22 @@ async function getBrowser() {
   if (browserInstance) {
     try { await browserInstance.version(); return browserInstance; } catch { browserInstance = null; }
   }
-  const candidates = [
-    process.env.PUPPETEER_EXECUTABLE_PATH,
-    process.env.CHROMIUM_PATH,
-    "/nix/store/chromium",
-    "/usr/bin/chromium-browser",
-    "/usr/bin/chromium",
-    "/usr/bin/google-chrome",
-  ].filter(Boolean) as string[];
   const opts: any = {
     headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--no-zygote"],
+    args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu", "--single-process", "--no-zygote"],
   };
+  const fs = await import("fs");
+  const { execSync } = await import("child_process");
+  const candidates: string[] = [];
+  if (process.env.PUPPETEER_EXECUTABLE_PATH) candidates.push(process.env.PUPPETEER_EXECUTABLE_PATH);
+  if (process.env.CHROMIUM_PATH) candidates.push(process.env.CHROMIUM_PATH);
+  try {
+    const found = execSync("which chromium 2>/dev/null || which chromium-browser 2>/dev/null || which google-chrome 2>/dev/null", { encoding: "utf8" }).trim();
+    if (found) candidates.push(found);
+  } catch {}
+  candidates.push("/usr/bin/chromium-browser", "/usr/bin/chromium", "/usr/bin/google-chrome");
   for (const p of candidates) {
-    try {
-      const fs = await import("fs");
-      if (fs.existsSync(p)) { opts.executablePath = p; break; }
-    } catch {}
+    try { if (p && fs.existsSync(p)) { opts.executablePath = p; break; } } catch {}
   }
   browserInstance = await puppeteer.launch(opts);
   return browserInstance;
