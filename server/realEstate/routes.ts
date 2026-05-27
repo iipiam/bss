@@ -422,6 +422,105 @@ export function registerRealEstateRoutes(
     try { ok(res, await journalStore.trialBalance(rid(req))); } catch (e) { err(res, e); }
   });
 
+  // ---- Accounting exports (PDF + Excel) for chart of accounts, journal, trial balance ----
+  async function buildAccountingExport(type: string, restaurantId: string) {
+    if (type === "coa" || type === "chart-of-accounts") {
+      const rows = await coaStore.list(restaurantId);
+      return {
+        title: "Chart of Accounts", titleAr: "دليل الحسابات",
+        summary: [{ label: "Total Accounts / إجمالي الحسابات", value: String(rows.length) }],
+        headers: ["Code", "Name", "Name (AR)", "Type", "Active"],
+        rows: rows.map((a: any) => [a.code || "", a.name || "", a.nameAr || "", a.type || "", a.isActive ? "Yes" : "No"]),
+      };
+    }
+    if (type === "journal") {
+      const entries = await journalStore.listEntries(restaurantId);
+      const detailed = await Promise.all(entries.map((e: any) => journalStore.getEntryWithLines(e.id, restaurantId)));
+      const flatRows: string[][] = [];
+      let totalDr = 0, totalCr = 0;
+      for (const e of detailed) {
+        if (!e) continue;
+        const lines = e.lines || [];
+        for (let i = 0; i < lines.length; i++) {
+          const ln = lines[i];
+          totalDr += Number(ln.debit || 0); totalCr += Number(ln.credit || 0);
+          flatRows.push([
+            i === 0 ? (e.entryNumber || "") : "",
+            i === 0 ? (e.entryDate?.slice(0, 10) || "") : "",
+            i === 0 ? (e.description || "") : "",
+            `${ln.accountCode || ""} — ${ln.accountName || ""}`,
+            ln.debit ? SAR(ln.debit) : "",
+            ln.credit ? SAR(ln.credit) : "",
+          ]);
+        }
+      }
+      return {
+        title: "General Journal", titleAr: "دفتر اليومية",
+        summary: [
+          { label: "Entries / القيود", value: String(entries.length) },
+          { label: "Total Debits / إجمالي المدين", value: SAR(totalDr) + " ر.س" },
+          { label: "Total Credits / إجمالي الدائن", value: SAR(totalCr) + " ر.س" },
+        ],
+        headers: ["Entry #", "Date", "Description", "Account", "Debit (ر.س)", "Credit (ر.س)"],
+        rows: flatRows,
+      };
+    }
+    if (type === "trial-balance") {
+      const tb = await journalStore.trialBalance(restaurantId);
+      const totalDr = tb.reduce((s: number, r: any) => s + Number(r.debit || 0), 0);
+      const totalCr = tb.reduce((s: number, r: any) => s + Number(r.credit || 0), 0);
+      return {
+        title: "Trial Balance", titleAr: "ميزان المراجعة",
+        summary: [
+          { label: "Total Debits / إجمالي المدين", value: SAR(totalDr) + " ر.س" },
+          { label: "Total Credits / إجمالي الدائن", value: SAR(totalCr) + " ر.س" },
+          { label: "Difference / الفرق", value: SAR(totalDr - totalCr) + " ر.س" },
+        ],
+        headers: ["Code", "Account", "Debit (ر.س)", "Credit (ر.س)", "Balance (ر.س)"],
+        rows: tb.map((r: any) => [r.accountCode || "", r.accountName || "", SAR(r.debit), SAR(r.credit), SAR(r.balance)]),
+      };
+    }
+    return null;
+  }
+
+  app.get("/api/real-estate/accounting/:type/export", ...view, async (req, res) => {
+    try {
+      const format = String(req.query.format || "pdf").toLowerCase();
+      const data = await buildAccountingExport(req.params.type, rid(req));
+      if (!data) return res.status(400).json({ message: "Unsupported accounting export type" });
+      const stamp = new Date().toISOString().slice(0, 10);
+      const fname = `${req.params.type}-${stamp}`;
+      if (format === "excel" || format === "xlsx") {
+        const wb = XLSX.utils.book_new();
+        const summarySheet = XLSX.utils.aoa_to_sheet([
+          [data.title], [data.titleAr], [],
+          ["Generated", new Date().toISOString().slice(0, 19).replace("T", " ")], [],
+          ["Summary"],
+          ...data.summary.map((s) => [s.label, s.value]),
+        ]);
+        XLSX.utils.book_append_sheet(wb, summarySheet, "Summary");
+        if (data.rows.length) {
+          const detailSheet = XLSX.utils.aoa_to_sheet([data.headers, ...data.rows]);
+          XLSX.utils.book_append_sheet(wb, detailSheet, "Details");
+        }
+        const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+        res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        res.setHeader("Content-Disposition", `attachment; filename="${fname}.xlsx"`);
+        return res.end(buf);
+      }
+      // PDF (default)
+      const restR = await pool.query(`SELECT name FROM restaurants WHERE id = $1`, [rid(req)]);
+      const companyName = restR.rows[0]?.name || "Company";
+      const pdf = await generateReportPdf({
+        title: data.title, titleAr: data.titleAr, rows: data.summary, companyName,
+        tableRows: data.rows.length ? { headers: data.headers, data: data.rows } : undefined,
+      });
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="${fname}.pdf"`);
+      res.end(pdf);
+    } catch (e) { err(res, e); }
+  });
+
   // ============ Dashboard ============
   app.get("/api/real-estate/dashboard/summary", ...view, async (req, res) => {
     try {

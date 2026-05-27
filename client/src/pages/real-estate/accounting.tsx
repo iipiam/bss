@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus } from "lucide-react";
+import { Plus, FileDown, FileSpreadsheet } from "lucide-react";
 import { PageHeader, fmtSar, fmtDate, REBreadcrumb, useRET } from "./_shared";
 import { localizedAccountType } from "@/i18n/realEstateTranslations";
 
@@ -15,6 +15,33 @@ export default function AccountingPage() {
   const { data: accounts = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/accounting/coa"] });
   const { data: entries = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/accounting/journal"] });
   const { data: trialBalance = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/accounting/trial-balance"] });
+
+  const downloadExport = async (type: "coa" | "journal" | "trial-balance", format: "pdf" | "excel") => {
+    try {
+      const res = await fetch(`/api/real-estate/accounting/${type}/export?format=${format}`, { credentials: "include" });
+      if (!res.ok) throw new Error(`Download failed (${res.status})`);
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${type}-${new Date().toISOString().slice(0, 10)}.${format === "excel" ? "xlsx" : "pdf"}`;
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      toast({ title: t.error, description: e.message, variant: "destructive" });
+    }
+  };
+
+  const ExportButtons = ({ type }: { type: "coa" | "journal" | "trial-balance" }) => (
+    <div className="flex gap-2 p-3 border-b">
+      <Button size="sm" variant="outline" onClick={() => downloadExport(type, "pdf")} data-testid={`button-export-${type}-pdf`}>
+        <FileDown className="w-4 h-4 mr-1" />{t.exportPdf || "Export PDF"}
+      </Button>
+      <Button size="sm" variant="outline" onClick={() => downloadExport(type, "excel")} data-testid={`button-export-${type}-excel`}>
+        <FileSpreadsheet className="w-4 h-4 mr-1" />{t.exportExcel || "Export Excel"}
+      </Button>
+    </div>
+  );
 
   const seedMut = useMutation({
     mutationFn: async () => { await apiRequest("POST", "/api/real-estate/accounting/coa/ensure"); },
@@ -42,6 +69,7 @@ export default function AccountingPage() {
 
         <TabsContent value="chart">
           <Card><CardContent className="p-0">
+            <ExportButtons type="coa" />
             <Table>
               <TableHeader><TableRow><TableHead>{t.code}</TableHead><TableHead>{t.name}</TableHead><TableHead>{t.nameAr}</TableHead><TableHead>{t.typeLabel}</TableHead><TableHead>{t.active}</TableHead></TableRow></TableHeader>
               <TableBody>
@@ -62,6 +90,7 @@ export default function AccountingPage() {
 
         <TabsContent value="journal">
           <Card><CardContent className="p-0">
+            <ExportButtons type="journal" />
             <Table>
               <TableHeader><TableRow><TableHead>{t.entryNumber}</TableHead><TableHead>{t.dateLabel}</TableHead><TableHead>{t.descriptionLabel}</TableHead><TableHead>{t.reference}</TableHead><TableHead className="text-right">{t.total}</TableHead></TableRow></TableHeader>
               <TableBody>
@@ -82,6 +111,7 @@ export default function AccountingPage() {
 
         <TabsContent value="tb">
           <Card><CardContent className="p-0">
+            <ExportButtons type="trial-balance" />
             <Table>
               <TableHeader><TableRow><TableHead>{t.account}</TableHead><TableHead>{t.typeLabel}</TableHead><TableHead className="text-right">{t.debit}</TableHead><TableHead className="text-right">{t.credit}</TableHead></TableRow></TableHeader>
               <TableBody>
