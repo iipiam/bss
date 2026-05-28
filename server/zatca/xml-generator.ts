@@ -158,17 +158,16 @@ export function generateInvoiceTypeCodeName(
   invoiceType: "standard" | "simplified",
   documentType?: "invoice" | "credit_note" | "debit_note"
 ): string {
-  // KSA-2 invoice transaction code, 9 characters (NNPNESBCG):
+  // KSA-2 invoice transaction code, 7 characters (NNPNESB):
   //   positions 1-2 (NN) = invoice subtype — "01" for standard tax invoice,
   //   "02" for simplified tax invoice.
-  //   positions 3-9 (PNESBCG) = transaction flags (3rd-party, nominal,
-  //   exports, summary, self-billed, continuous supply, B2G); all default
-  //   to "0".
+  //   positions 3-7 (PNESB) = transaction flags (3rd-party, nominal,
+  //   exports, summary, self-billed); all default to "0".
   // The document type (388/381/383) is BT-3 and is encoded ONLY in the
   // element value, never in this @name attribute — credit/debit notes keep
   // the same subtype prefix as their underlying invoice.
   const nn = invoiceType === "standard" ? "01" : "02";
-  return `${nn}0000000`; // 9 characters total: NN + PNESBCG
+  return `${nn}00000`; // 7 characters total: NN + PNESB
 }
 
 /**
@@ -303,12 +302,6 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   const isCreditOrDebitNote = documentType === "credit_note" || documentType === "debit_note";
   const formattedVat = formatVatNumber(sellerInfo.vatNumber);
 
-  // KSA-10: credit/debit notes must carry the reason for issuance.
-  const adjustmentNoteXml = isCreditOrDebitNote
-    ? `
-  <cbc:Note>${escapeXml(adjustmentReason || "Adjustment")}</cbc:Note>`
-    : "";
-
   const defaultPIH = "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==";
   const pihValue = previousInvoiceHash || defaultPIH;
 
@@ -420,7 +413,7 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   <cbc:UUID>${escapeXml(uuid)}</cbc:UUID>
   <cbc:IssueDate>${escapeXml(issueDate)}</cbc:IssueDate>
   <cbc:IssueTime>${escapeXml(issueTime)}</cbc:IssueTime>
-  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>${adjustmentNoteXml}
+  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
   <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>${billingReferenceXml}
   <cac:AdditionalDocumentReference>
@@ -464,7 +457,12 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
     <cbc:ActualDeliveryDate>${escapeXml(issueDate)}</cbc:ActualDeliveryDate>
   </cac:Delivery>
   <cac:PaymentMeans>
-    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
+    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>${
+    isCreditOrDebitNote
+      ? `
+    <cbc:InstructionNote>${escapeXml((adjustmentReason && adjustmentReason.trim()) || "Adjustment")}</cbc:InstructionNote>`
+      : ""
+  }
   </cac:PaymentMeans>
   <cac:TaxTotal>
     <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
