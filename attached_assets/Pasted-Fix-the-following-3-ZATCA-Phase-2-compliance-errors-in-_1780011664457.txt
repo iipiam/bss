@@ -1,0 +1,39 @@
+Fix the following 3 ZATCA Phase 2 compliance errors in xml-generator.ts:
+Fix 1 — KSA-2: Invoice type code name is 7 characters but must be 9 characters (NNPNESBCG format)
+Find the function generateInvoiceTypeCodeName() and change it from returning 7-character strings to 9-character strings:
+ts// WRONG (current)
+export function generateInvoiceTypeCodeName(
+  invoiceType: "standard" | "simplified"
+): string {
+  return invoiceType === "standard" ? "0100000" : "0200000";
+}
+
+// CORRECT (fix to this)
+export function generateInvoiceTypeCodeName(
+  invoiceType: "standard" | "simplified",
+  documentType?: "invoice" | "credit_note" | "debit_note"
+): string {
+  const nn = invoiceType === "standard" ? "01" : "02";
+  return `${nn}0000000`; // 9 characters total: NN + PNESBCG
+}
+Also find every place in the file that calls generateInvoiceTypeCodeName() and update the call to pass documentType as the second argument.
+
+Fix 2 — KSA-10: Credit notes and debit notes must include a <cbc:Note> reason field
+Inside the buildInvoiceBodyParts() function, find where invoiceTypeCode and invoiceTypeCodeName are used to build the XML header string. Add this logic:
+tsconst adjustmentNoteXml =
+  documentType === "credit_note" || documentType === "debit_note"
+    ? `<cbc:Note>${escapeXml(data.adjustmentReason || "Adjustment")}</cbc:Note>`
+    : "";
+Then insert ${adjustmentNoteXml} into the XML template string immediately after the <cbc:InvoiceTypeCode> line, like this:
+xml<cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
+${adjustmentNoteXml}
+<cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
+
+Fix 3 — Make sure adjustmentReason is included in the ZatcaInvoiceData interface
+Check if the ZatcaInvoiceData interface already has adjustmentReason?: string. If it does not exist, add it:
+tsinterface ZatcaInvoiceData {
+  // ... existing fields ...
+  adjustmentReason?: string; // Required for credit notes and debit notes (KSA-10)
+}
+
+After all 3 fixes, do not change anything else in the file. These are the only changes needed.
