@@ -49,9 +49,11 @@ interface ZatcaSettings {
   complianceCsidSecret: string | null;
   productionCsid: string | null;
   productionCsidSecret: string | null;
+  complianceRequestId: string | null;
   onboardingStatus: string;
   lastHashedInvoice: string | null;
   invoiceCounter: number;
+  credentialsCorrupted?: boolean;
 }
 
 interface InvoiceZatcaStatus {
@@ -424,12 +426,10 @@ export default function ZatcaSettingsPage() {
     },
   });
 
-  const isCredentialsCorrupted = settings && (
-    settings.complianceCsid === "[CONFIGURED]" ||
-    settings.complianceCsidSecret === "[CONFIGURED]" ||
-    settings.privateKey === "[CONFIGURED]" ||
-    settings.complianceRequestId === "[CONFIGURED]"
-  );
+  // The server computes corruption from the RAW stored values. The page only
+  // ever receives masked sensitive fields ("[CONFIGURED]"), so it cannot make
+  // this decision itself without flagging every valid credential as corrupt.
+  const isCredentialsCorrupted = !!settings?.credentialsCorrupted;
 
   const saveManualCredentialsMutation = useMutation({
     mutationFn: async () => {

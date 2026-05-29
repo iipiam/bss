@@ -15030,6 +15030,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.json(null);
       }
       
+      // Detect genuinely corrupted credentials from the RAW stored values
+      // (before masking). A legacy bug could write the literal placeholder
+      // "[CONFIGURED]" into the database instead of real credentials. We must
+      // decide this on the server: the masked response below replaces real
+      // values with "[CONFIGURED]" too, so the client cannot tell a
+      // hidden-but-valid credential apart from a corrupted one.
+      const credentialsCorrupted = [
+        settings.privateKey,
+        settings.complianceCsid,
+        settings.complianceCsidSecret,
+        settings.productionCsid,
+        settings.productionCsidSecret,
+        settings.complianceRequestId,
+      ].some((value) => value === "[CONFIGURED]");
+      
       // Map database field names to frontend field names
       const safeSettings: Record<string, any> = {
         ...settings,
@@ -15047,6 +15062,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         complianceCsidSecret: settings.complianceCsidSecret ? "[CONFIGURED]" : null,
         productionCsid: settings.productionCsid ? "[CONFIGURED]" : null,
         productionCsidSecret: settings.productionCsidSecret ? "[CONFIGURED]" : null,
+        // Server-computed flag so the UI does not misread the mask as corruption
+        credentialsCorrupted,
       };
       
       res.json(safeSettings);
