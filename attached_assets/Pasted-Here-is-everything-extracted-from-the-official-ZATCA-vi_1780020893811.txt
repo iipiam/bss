@@ -1,0 +1,230 @@
+Here is everything extracted from the official ZATCA video transcript, turned into a complete Replit prompt:
+
+Full Replit Prompt — ZATCA Phase 2 Integration (Based on Official ZATCA Video)
+
+Implement the complete ZATCA Phase 2 integration process exactly as described in the official ZATCA documentation. Here are all the steps, rules, and technical requirements:
+
+STEP 1 — CSR Configuration & Generation
+The CSR configuration file must contain exactly these fields:
+csr.common.name        = name or asset tracking number of the EGS unit (free text)
+csr.serial.number      = 1-{SolutionName}|2-{ModelOrVersion}|3-{DeviceSerialNumber}
+csr.organization.identifier = VAT number (15 digits, starts with 3, ends with 3)
+csr.organization.unit.name  = branch name (or 10-digit TIN for group members)
+csr.organization.name       = legal organization name
+csr.country.name            = two-letter ISO 3166 code (SA for Saudi Arabia)
+csr.invoice.type            = 1000 (standard only) | 0100 (simplified only) | 1100 (both)
+csr.location.address        = branch location (short address format from Absher/Saudi national address)
+csr.industry.business.category = industry or sector of the business
+Serial number format rule — must follow exactly:
+1-{ManufacturerOrSolutionProvider}|2-{ModelOrVersion}|3-{ActualDeviceSerial}
+Example: 1-MySoftware|2-v1.0|3-DEVICE-00001
+If this format is not followed exactly, ZATCA will return a 400 error saying the CSR is invalid.
+Invoice type codes:
+1000 = standard tax invoices only
+0100 = simplified tax invoices only
+1100 = both standard and simplified
+Key generation rule:
+
+Use prime256v1 (NIST P-256 / secp256r1) elliptic curve
+The private key must be stored securely on the server and never exposed
+If the private key is ever compromised, the certificate must be revoked and a new one requested
+Each certificate is associated with one private key only
+
+
+STEP 2 — OTP Generation (User Action)
+The user must:
+
+Log into the Fatoora portal using their TIN number and password
+Select the environment: simulation (for testing) or production (for live)
+Click "Onboard a new solution unit/device"
+Specify the number of devices to onboard (up to 100 OTPs at once)
+Click "Generate OTP code"
+Copy the OTP and paste it into your platform
+
+Important rules:
+
+OTP is valid for a limited time only — must be used quickly
+The VAT number used in the CSR must exactly match the VAT number in the Fatoora portal account that generated the OTP
+Simulation environment submissions are NOT captured as real invoices
+Production environment submissions ARE captured as real invoices
+Simulation is recommended before going live but not mandatory
+
+
+STEP 3 — Request Compliance CSID
+API: POST /compliance
+Headers:
+OTP: {the OTP from Step 2}
+Accept-Version: V2
+Content-Type: application/json
+Request body:
+json{
+  "csr": "{base64 encoded CSR}"
+}
+Success response (200):
+json{
+  "requestID": "1234567",
+  "dispositionMessage": "ISSUED",
+  "binarySecurityToken": "TUlJQ...",
+  "secret": "Xlj15..."
+}
+What to store from this response:
+complianceCsid        = binarySecurityToken
+complianceCsidSecret  = secret
+complianceRequestId   = requestID
+csidIssuedAt          = new Date()
+Error responses:
+400 = bad request (invalid OTP, missing CSR, or invalid CSR format)
+Important: The binarySecurityToken IS the Compliance Certificate (X.509 in base64). It must be decoded from base64 to get the actual PEM certificate for signing. ZATCA encodes it as base64(base64(DER)) — decode it once to get the inner base64, then wrap in PEM headers.
+
+STEP 4 — Compliance Checks (6 Invoice Types)
+API: POST /compliance/invoices
+Headers:
+Authorization: Basic {base64(binarySecurityToken:secret)}
+Accept-Version: V2
+Accept-Language: en
+Content-Type: application/json
+Request body:
+json{
+  "invoiceHash": "{hash of the invoice}",
+  "uuid": "{UUID of the invoice}",
+  "invoice": "{base64 encoded XML invoice}"
+}
+How many invoices to send depends on csr.invoice.type:
+
+If 1000 (standard only): send 3 documents — standard invoice, standard debit note, standard credit note
+If 0100 (simplified only): send 3 documents — simplified invoice, simplified debit note, simplified credit note
+If 1100 (both): send all 6 documents
+
+The 6 document types:
+1. Standard Tax Invoice        → type code 388, name="010000000", Clearance-Status: 1
+2. Standard Debit Note         → type code 383, name="010000000", Clearance-Status: 1, must have <cbc:Note> reason
+3. Standard Credit Note        → type code 381, name="010000000", Clearance-Status: 1, must have <cbc:Note> reason
+4. Simplified Tax Invoice      → type code 388, name="020000000", Clearance-Status: 0
+5. Simplified Debit Note       → type code 383, name="020000000", Clearance-Status: 0, must have <cbc:Note> reason
+6. Simplified Credit Note      → type code 381, name="020000000", Clearance-Status: 0, must have <cbc:Note> reason
+Critical XML rules:
+
+InvoiceTypeCode name attribute must be exactly 9 characters: 010000000 for standard, 020000000 for simplified
+Credit notes and debit notes must include <cbc:Note>{reason}</cbc:Note> at the invoice header level, immediately after <cbc:InvoiceTypeCode> and before <cbc:DocumentCurrencyCode>
+The invoice must encode the seller VAT number that matches the one used to get the OTP
+
+Simplified invoices must be signed before submission:
+
+Sign the invoice XML with the private key using ECDSA-SHA256
+The signing process updates the invoice hash automatically
+After signing, use the new hash — do not recompute it separately
+
+Standard invoices do NOT need to be signed by the taxpayer:
+
+ZATCA signs standard invoices on their side
+ZATCA returns the signed cleared invoice in the response — this is the authoritative version
+
+Success response: 200 OK with status REPORTED (simplified) or CLEARED (standard)
+These submissions are NOT real invoices — they are compliance test submissions only.
+
+STEP 5 — Request Production CSID
+Only proceed to this step after ALL required compliance checks pass successfully.
+API: POST /production/csids
+Headers:
+Authorization: Basic {base64(complianceBinarySecurityToken:complianceSecret)}
+Accept-Version: V2
+Content-Type: application/json
+Request body:
+json{
+  "compliance_request_id": "{requestID from Step 3}"
+}
+Success response (200):
+json{
+  "requestID": "9999999",
+  "dispositionMessage": "ISSUED",
+  "binarySecurityToken": "TUlJR...",
+  "secret": "Abc123..."
+}
+What to store:
+productionCsid        = binarySecurityToken
+productionCsidSecret  = secret
+isEnabled             = true
+onboardingStatus      = "production_ready"
+Error responses:
+400 = one or more compliance checks are incomplete (response details which ones are missing)
+401 = wrong username or password in Authorization header
+Production CSID expiry: 5 years (not 1 year — the video says 5 years). Renewal uses the same endpoint.
+
+STEP 6 — Submitting Real Invoices
+For Simplified Invoices — Reporting API:
+POST /invoices/reporting/single
+Headers:
+  Authorization: Basic {base64(productionBinarySecurityToken:productionSecret)}
+  Accept-Version: V2
+  Accept-Language: en
+  Clearance-Status: 0
+  Content-Type: application/json
+
+Body:
+  {
+    "invoiceHash": "{hash}",
+    "uuid": "{uuid}",
+    "invoice": "{base64 encoded signed XML}"
+  }
+Response status: REPORTED
+For Standard Invoices — Clearance API:
+POST /invoices/clearance/single
+Headers:
+  Authorization: Basic {base64(productionBinarySecurityToken:productionSecret)}
+  Accept-Version: V2
+  Accept-Language: en
+  Clearance-Status: 1
+  Content-Type: application/json
+
+Body:
+  {
+    "invoiceHash": "{hash}",
+    "uuid": "{uuid}",
+    "invoice": "{base64 encoded XML}"
+  }
+Response status: CLEARED — and the response body includes clearedInvoice (the ZATCA-signed version)
+Critical rule for standard invoices: The clearedInvoice returned by ZATCA in the clearance response is the ONLY version that should be stored and shared with the buyer. The locally generated unsigned version must NOT be shared with clients until ZATCA returns a cleared version.
+
+STEP 7 — Response Handling Rules
+200 CLEARED/REPORTED  = fully accepted, no issues
+202 CLEARED/REPORTED  = accepted WITH warnings
+                        → invoice is still valid
+                        → taxpayer should fix warnings in future submissions
+                        → no further action needed for this invoice
+400                   = rejected, errors must be fixed and resubmitted
+401                   = wrong credentials
+Warnings (202) do not require resubmission of the same invoice. They are informational for future improvements.
+
+STEP 8 — Invoice Hash Rules
+
+Hash must be computed from the canonical XML (C14N compliant, not regex-based)
+For simplified invoices: the signing process updates the hash — use the hash from the signed invoice, never recompute after signing
+For retry submissions: use the hash stored in the database at original signing time — never recompute the hash from the stored XML
+Each change to the invoice XML produces a different hash — always regenerate hash after any XML change
+
+
+STEP 9 — Invoice Counter and Chain Rules
+
+Invoice counter (ICV) must be sequential: 1, 2, 3... per EGS device
+Previous invoice hash (PIH) must be included in each invoice linking to the previous one
+For the very first invoice, PIH is a predefined default value
+The counter and previous hash must come from the database, never from Date.now() or random values
+
+
+STEP 10 — Authorization Header Format
+For all APIs after the Compliance CSID step:
+Username = binarySecurityToken (exactly as received, no extra spaces or characters)
+Password  = secret (exactly as received, no extra spaces or characters)
+Format    = Basic {base64(username:password)}
+Critical: Do not add any extra whitespace, newlines, or characters to the username or password. Copy them exactly as received from ZATCA.
+
+STEP 11 — Environment Rules
+Sandbox     → public, static data, no credentials needed, for API exploration only
+Simulation  → requires real Fatoora portal credentials, real OTP, test with real VAT data
+Production  → live environment, all submissions are real legal invoices
+The production CSID renewal API and onboarding API share the same endpoint — the difference is whether it is a new onboarding or a renewal after 5 years.
+
+Summary of All API Endpoints and Their Auth
+StepAPIAuthKey Header3POST /complianceNoneOTP in header4POST /compliance/invoicesBasic (complianceCsid:secret)Accept-Version: V25POST /production/csidsBasic (complianceCsid:secret)Accept-Version: V26aPOST /invoices/reporting/singleBasic (productionCsid:secret)Clearance-Status: 06bPOST /invoices/clearance/singleBasic (productionCsid:secret)Clearance-Status: 1
+
+Do not change anything outside the ZATCA integration flow. Apply all of the above exactly as specified.

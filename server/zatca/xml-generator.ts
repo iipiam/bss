@@ -422,12 +422,22 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   // the unsigned variant directly. The signed variant uses the same content
   // but inserts UBLExtensions immediately before <cbc:ProfileID> and adds the
   // QR / cac:Signature blocks.
+  // KSA-10 (rule BR-KSA-17): credit/debit notes (BT-3 = 381/383) MUST carry the
+  // reason for issuance. ZATCA accepts it as a header-level cbc:Note placed
+  // immediately after cbc:InvoiceTypeCode and before cbc:DocumentCurrencyCode
+  // (matches ZATCA's official SDK samples). Do NOT move this into cac:PaymentMeans
+  // or any other block. Always emit a non-empty value so the note is never blank.
+  const adjustmentNoteXml = isCreditOrDebitNote
+    ? `
+  <cbc:Note>${escapeXml((adjustmentReason && adjustmentReason.trim()) || "Adjustment")}</cbc:Note>`
+    : "";
+
   const headerCommon = `<cbc:ProfileID>reporting:1.0</cbc:ProfileID>
   <cbc:ID>${escapeXml(invoiceNumber)}</cbc:ID>
   <cbc:UUID>${escapeXml(uuid)}</cbc:UUID>
   <cbc:IssueDate>${escapeXml(issueDate)}</cbc:IssueDate>
   <cbc:IssueTime>${escapeXml(issueTime)}</cbc:IssueTime>
-  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
+  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>${adjustmentNoteXml}
   <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
   <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>${billingReferenceXml}
   <cac:AdditionalDocumentReference>
@@ -471,17 +481,7 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
     <cbc:ActualDeliveryDate>${escapeXml(issueDate)}</cbc:ActualDeliveryDate>
   </cac:Delivery>
   <cac:PaymentMeans>
-    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>${
-    // KSA-10 (rule BR-KSA-17): credit/debit notes (BT-3 = 381/383) MUST carry
-    // the reason for issuance, and ZATCA's validator accepts it ONLY here, as
-    // cbc:InstructionNote inside cac:PaymentMeans. Do NOT move this to a
-    // header-level cbc:Note — the validator rejects that with
-    // "must contain the reason (KSA-10)". Always emit a non-empty value.
-    isCreditOrDebitNote
-      ? `
-    <cbc:InstructionNote>${escapeXml((adjustmentReason && adjustmentReason.trim()) || "Adjustment")}</cbc:InstructionNote>`
-      : ""
-  }
+    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
   </cac:PaymentMeans>
   <cac:TaxTotal>
     <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>

@@ -93,6 +93,9 @@ interface ProcessInvoiceParams {
   }>;
   customerName?: string;
   customerVat?: string;
+  documentType?: "credit_note" | "debit_note";
+  referencedInvoiceNumber?: string;
+  adjustmentReason?: string;
 }
 
 interface ZatcaProcessResult {
@@ -155,6 +158,9 @@ export async function processInvoiceForZatca(
     invoiceNumber: params.invoiceNumber,
     invoiceType: params.invoiceType,
     invoiceSubType: invoiceSubType as "01" | "02",
+    documentType: params.documentType,
+    referencedInvoiceNumber: params.referencedInvoiceNumber,
+    adjustmentReason: params.adjustmentReason,
     paymentMethod: params.paymentMethod,
     subtotal: params.subtotal,
     vatAmount: params.vatAmount,
