@@ -107,7 +107,6 @@ export function generatePhase2QrCode(
   certificateSignature: string
 ): string {
   const formattedVat = formatVatNumber(vatNumber);
-  const hashBuf = Buffer.from(invoiceHash, "base64");
   const sigBuf = Buffer.from(signature, "base64");
   const pubBuf = Buffer.from(publicKey, "base64");
   const certSigBuf = Buffer.from(certificateSignature, "base64");
@@ -117,7 +116,13 @@ export function generatePhase2QrCode(
     generateTlvData(3, timestamp),
     generateTlvData(4, formatDecimal(totalWithVat)),
     generateTlvData(5, formatDecimal(vatAmount)),
-    generateTlvData(6, hashBuf),
+    // Tag 6 (invoice hash) must carry the base64 *text* of the digest — the
+    // same 44-char string ZATCA recomputes from the canonical XML and compares
+    // against. generateTlvData UTF-8-encodes the string, producing 44 bytes.
+    // Passing the base64-decoded 32 raw bytes here makes ZATCA report
+    // "Invoice xml hash does not match with qr code invoice xml hash" for
+    // simplified invoices (which keep our QR, unlike cleared standard ones).
+    generateTlvData(6, invoiceHash),
     generateTlvData(7, sigBuf),
     generateTlvData(8, pubBuf),
     generateTlvData(9, certSigBuf),
@@ -224,8 +229,9 @@ export function canonicalizeInvoiceXml(xmlContent: string): string {
 /**
  * ZATCA invoice hash: SHA-256 of the canonical XML, expressed as base64 of
  * the raw 32-byte digest (44 characters). This matches ZATCA's Java SDK
- * convention. QR Tag 6 must therefore receive the raw 32 bytes, which is
- * what `Buffer.from(invoiceHash, "base64")` produces in generatePhase2QrCode.
+ * convention. QR Tag 6 must receive this 44-character base64 *string* (UTF-8
+ * encoded), NOT the decoded 32 raw bytes — ZATCA recomputes the hash from the
+ * XML as this same base64 string and compares it byte-for-byte to Tag 6.
  *
  * History: an earlier version of this function emitted the 88-char form
  * (base64 of the lowercase hex string). The SDK-compliant 44-char form is

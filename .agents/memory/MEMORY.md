@@ -1,1 +1,3 @@
-- [ZATCA InvoiceTypeCode @name + note reason](zatca-invoice-type-code.md) — KSA-2 @name must be 9-char NNPNESBCG (NOT 7-char); KSA-10 reason goes in PaymentMeans/InstructionNote. Trust live validator over docs.
+- [ZATCA invoice type code](zatca-invoice-type-code.md) — KSA-2 9-char transaction code + BT-3 doc type rules for invoice/credit/debit notes.
+- [ZATCA QR tag 6 encoding](zatca-qr-tag6-encoding.md) — invoice hash in Phase-2 QR tag 6 must be the 44-char base64 STRING, not decoded 32 bytes; mismatch hits simplified invoices only.
+- [BSS VM deployment](bss-vm-deployment.md) — self-managed VM at /home/BSS via pm2 + git; repeatable deploy steps and ecosystem.config.cjs/.env requirements.
