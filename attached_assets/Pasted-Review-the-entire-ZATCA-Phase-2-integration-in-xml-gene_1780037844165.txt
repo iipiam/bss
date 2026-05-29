@@ -1,0 +1,208 @@
+Review the entire ZATCA Phase 2 integration in xml-generator.ts, crypto.ts, service.ts, and api-client.ts and fix every issue listed below. These requirements come directly from the official ZATCA XML Implementation Standard v1.2 and Security Features Implementation Standard v1.1.
+
+FIX 1 — KSA-2: InvoiceTypeCode name attribute
+The name attribute on <cbc:InvoiceTypeCode> must be exactly 7 characters in the format NNPNESB where:
+NN = positions 1-2: 01 for standard tax invoice, 02 for simplified tax invoice
+P  = position 3: 3rd party invoice, 0=false, 1=true
+N  = position 4: Nominal invoice, 0=false, 1=true
+E  = position 5: Exports invoice, 0=false, 1=true
+S  = position 6: Summary invoice, 0=false, 1=true
+B  = position 7: Self billed invoice, 0=false, 1=true
+Default all flag positions to 0. Examples from the official specification:
+Standard tax invoice:     <cbc:InvoiceTypeCode name="0100000">388</cbc:InvoiceTypeCode>
+Simplified tax invoice:   <cbc:InvoiceTypeCode name="0200000">388</cbc:InvoiceTypeCode>
+Standard debit note:      <cbc:InvoiceTypeCode name="0100000">383</cbc:InvoiceTypeCode>
+Simplified debit note:    <cbc:InvoiceTypeCode name="0200000">383</cbc:InvoiceTypeCode>
+Standard credit note:     <cbc:InvoiceTypeCode name="0100000">381</cbc:InvoiceTypeCode>
+Simplified credit note:   <cbc:InvoiceTypeCode name="0200000">381</cbc:InvoiceTypeCode>
+Fix generateInvoiceTypeCodeName() to return exactly 7 characters:
+tsexport function generateInvoiceTypeCodeName(
+  invoiceType: "standard" | "simplified"
+): string {
+  const nn = invoiceType === "standard" ? "01" : "02";
+  return `${nn}00000`; // 7 characters: NN + PNESB all zeros
+}
+
+FIX 2 — KSA-17 (BR-KSA-17): Credit/Debit Note Reason
+Rule BR-KSA-17 states: debit and credit notes (type code 383 or 381) must contain the reason (KSA-10) at this exact location:
+ubl:Invoice / cac:PaymentMeans / cbc:InstructionNote
+The reason must go inside <cac:PaymentMeans> as <cbc:InstructionNote>, NOT as <cbc:Note> at the header level. Fix the XML generator to emit:
+xml<cac:PaymentMeans>
+  <cbc:PaymentMeansCode>10</cbc:PaymentMeansCode>
+  <cbc:InstructionNote>Goods returned</cbc:InstructionNote>
+</cac:PaymentMeans>
+Only add <cbc:InstructionNote> when documentType === "credit_note" or documentType === "debit_note" and adjustmentReason is provided.
+
+FIX 3 — BR-KSA-56: BillingReference is mandatory for credit/debit notes
+Rule BR-KSA-56 states: for credit notes (381) and debit notes (383), <cac:BillingReference> with the original invoice number (BT-25) is mandatory.
+Add this to the XML for credit/debit notes:
+xml<cac:BillingReference>
+  <cac:InvoiceDocumentReference>
+    <cbc:ID>${referencedInvoiceNumber}</cbc:ID>
+  </cac:InvoiceDocumentReference>
+</cac:BillingReference>
+Make sure referencedInvoiceNumber is passed in ZatcaInvoiceData and used here.
+
+FIX 4 — BR-KSA-26: Previous Invoice Hash (PIH) encoding
+Rule BR-KSA-26 states the previous invoice hash must be computed as follows:
+
+Remove <ext:UBLExtensions> block
+Remove <cac:AdditionalDocumentReference> where <cbc:ID> = QR
+Remove <cac:Signature> block
+Canonicalize using C14N11 standard
+Hash using SHA-256 to a binary object
+Base64 encode the binary object
+
+For the very first invoice, the previous invoice hash must be exactly:
+NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==
+This is base64 of SHA-256 of the character "0" (zero).
+
+FIX 5 — BR-KSA-09: Seller address must have all required fields
+Rule BR-KSA-09 states the seller address must contain all of these:
+
+<cbc:StreetName> (BT-35)
+<cbc:BuildingNumber> (KSA-17) — must be exactly 4 digits (BR-KSA-37)
+<cbc:PostalZone> (BT-38) — must be exactly 5 digits (BR-KSA-66)
+<cbc:CityName> (BT-37)
+<cbc:CitySubdivisionName> (KSA-3) — district name
+<cac:Country><cbc:IdentificationCode> (BT-40)
+
+
+FIX 6 — BR-KSA-42: Buyer name mandatory for standard invoices
+Rule BR-KSA-42 states buyer name (BT-44) is mandatory for standard tax invoices and associated credit/debit notes (where name starts with "01"). Make sure <cac:PartyLegalEntity><cbc:RegistrationName> is always included for standard invoices.
+
+FIX 7 — BR-KSA-52/53: Line VAT amount and line total mandatory for standard invoices
+For standard invoices (KSA-2 positions 1-2 = "01"), each invoice line MUST contain:
+xml<cac:TaxTotal>
+  <cbc:TaxAmount currencyID="SAR">{lineVatAmount}</cbc:TaxAmount>
+  <cbc:RoundingAmount currencyID="SAR">{lineTotalWithVat}</cbc:RoundingAmount>
+</cac:TaxTotal>
+Where:
+
+lineVatAmount = lineExtensionAmount × (vatRate / 100)
+lineTotalWithVat = lineExtensionAmount + lineVatAmount
+
+These are already in the code but verify they are only required for standard invoices. For simplified invoices they are optional.
+
+FIX 8 — BR-KSA-EN16931-08: Only ONE TaxTotal with TaxSubtotal
+Rule BR-KSA-EN16931-08 states: only one <cac:TaxTotal> with <cac:TaxSubtotal> must be provided. Remove the duplicate <cac:TaxTotal> that has only <cbc:TaxAmount> without <cac:TaxSubtotal>. Keep only the one that contains <cac:TaxSubtotal>.
+
+FIX 9 — BR-KSA-68: TaxCurrencyCode is mandatory
+Rule BR-KSA-68 states <cbc:TaxCurrencyCode> must exist. Rule BR-KSA-EN16931-02 states it must be "SAR". Make sure this is always in the XML:
+xml<cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>
+
+FIX 10 — BR-KSA-EN16931-01: ProfileID is mandatory
+Rule BR-KSA-EN16931-01 states BusinessProcess (BT-23) must be "reporting:1.0". Add this to the XML:
+xml<cbc:ProfileID>reporting:1.0</cbc:ProfileID>
+
+FIX 11 — BR-KSA-70: IssueTime is mandatory
+Rule BR-KSA-70 states every invoice must contain <cbc:IssueTime> in format HH:mm:ss (local time) or HH:mm:ssZ (UTC). This is already in the code but confirm it is always present and formatted correctly.
+
+FIX 12 — QR Code: Must be base64, max 700 characters
+From Security Features v1.1, Section 4: The QR code must be Base64 encoded and must not exceed 700 characters total. The TLV structure for Phase 2 must include all 9 tags:
+Tag 1: Seller name (UTF-8 bytes)
+Tag 2: VAT registration number (UTF-8 bytes)
+Tag 3: Timestamp ISO 8601 format: 2022-02-21T12:13:57Z
+Tag 4: Invoice total with VAT (UTF-8 bytes)
+Tag 5: VAT total (UTF-8 bytes)
+Tag 6: Hash of XML invoice — 32 raw bytes (SHA-256 binary, NOT hex string)
+Tag 7: ECDSA signature (raw bytes from signing)
+Tag 8: ECDSA public key extracted from the private key (raw bytes)
+Tag 9: For simplified invoices: ECDSA signature of ZATCA's CA cryptographic stamp
+Critical for Tag 6: The hash must be the 32 raw binary bytes of SHA-256, NOT the hex string bytes. The length of Tag 6 value must be exactly 32 bytes.
+TLV encoding rules:
+
+Tag: 1 byte
+Length: 1 byte (unsigned 8-bit integer, the byte count)
+Value: UTF-8 encoded bytes for tags 1-5, raw binary bytes for tags 6-9
+
+
+FIX 13 — Invoice Hash: Must be base64 of raw SHA-256 bytes (44 chars)
+From BR-KSA-26 and Security Features v1.1: the invoice hash stored in <ds:DigestValue> and used in QR Tag 6 must be:
+
+Remove UBLExtensions, QR AdditionalDocumentReference, and Signature blocks
+Canonicalize using C14N11
+SHA-256 the result to get 32 raw bytes
+Base64 encode those 32 raw bytes → result is 44 characters
+
+This means generateInvoiceHash() should return a 44-character base64 string, not an 88-character string. Fix:
+tsexport function generateInvoiceHash(xmlContent: string): string {
+  return crypto
+    .createHash("sha256")
+    .update(canonicalizeInvoiceXml(xmlContent), "utf8")
+    .digest("base64"); // 44 chars — base64 of raw 32 bytes
+}
+
+FIX 14 — Signing: ECDSA must use prime256v1 curve
+From Security Features v1.1, Requirement 16:
+
+Hashing algorithm: SHA-256
+Asymmetric key algorithm: ECDSA
+Key length: 256 bits
+Curve: P-256 (prime256v1 / secp256r1)
+
+In crypto.ts line 209, change the curve:
+ts// WRONG:
+execSync(`openssl ecparam -name secp256k1 -genkey ...`);
+
+// CORRECT:
+execSync(`openssl ecparam -name prime256v1 -genkey ...`);
+
+FIX 15 — XAdES Signature Structure
+From Security Features v1.1 Section 2.3.3, the signature structure must include these transforms before canonicalization:
+xml<ds:Transforms>
+  <ds:Transform Algorithm="http://www.w3.org/TR/1999/REC-xpath-19991116">
+    <ds:XPath>not(//ancestor-or-self::ext:UBLExtensions)</ds:XPath>
+  </ds:Transform>
+  <ds:Transform Algorithm="http://www.w3.org/TR/1999/REC-xpath-19991116">
+    <ds:XPath>not(//ancestor-or-self::cac:Signature)</ds:XPath>
+  </ds:Transform>
+  <ds:Transform Algorithm="http://www.w3.org/TR/1999/REC-xpath-19991116">
+    <ds:XPath>not(//ancestor-or-self::cac:AdditionalDocumentReference[cbc:ID='QR'])</ds:XPath>
+  </ds:Transform>
+  <ds:Transform Algorithm="http://www.w3.org/2006/12/xml-c14n11"/>
+</ds:Transforms>
+These are already in the code — confirm they are present and in this exact order.
+
+FIX 16 — Payment Means Codes
+From section 11.2.5, only these payment codes are valid:
+10 = cash
+30 = credit
+42 = payment to bank account
+48 = bank card
+1  = instrument not defined (free text)
+Current code maps bank_transfer to 30. This should be 42 for bank account payment. Fix:
+tspaymentMethod === "cash"          ? "10" :
+paymentMethod === "card"          ? "48" :
+paymentMethod === "bank_transfer" ? "42" : "30"
+
+FIX 17 — File Naming Convention
+From section 14, invoice XML files must be named:
+{SellerVATNumber}_{Date}T{Time}_{InvoiceNumber}.xml
+Where:
+
+Date = YYYYMMDD (no dashes)
+Time = HHmmss (no colons)
+Invoice number: all non-alphanumeric characters replaced by dash
+
+Example: 3xxxxxxxxx1xxx3_20210526T132400_2021-05-26-23555.xml
+Implement this file naming when storing or exporting invoice XML files.
+
+FIX 18 — Rounding Rules
+From section 10: all rounding must use "half-up" rule (round half away from zero). All document-level monetary amounts must be rounded to exactly 2 decimal places. VAT category tax amount must be rounded at document level, not as a sum of rounded line amounts.
+
+FIX 19 — BR-KSA-33/34: Invoice Counter (ICV)
+Rule BR-KSA-33 states every invoice must have an invoice counter value (KSA-16) that contains only digits (BR-KSA-34). This goes in:
+xml<cac:AdditionalDocumentReference>
+  <cbc:ID>ICV</cbc:ID>
+  <cbc:UUID>{sequentialCounter}</cbc:UUID>
+</cac:AdditionalDocumentReference>
+The counter must be sequential integers from the database. Never use Date.now().
+
+FIX 20 — BR-KSA-03: UUID format
+Rule BR-KSA-03 states the UUID must contain only letters, digits, and dashes. The current crypto.randomUUID() produces the correct format. Confirm no other characters are introduced.
+
+SUMMARY TABLE of all XML elements and their rules
+ElementRuleRequirement<cbc:ProfileID>BR-KSA-EN16931-01Must be "reporting:1.0"<cbc:UUID>BR-KSA-03Letters, digits, dashes only<cbc:IssueDate>BR-KSA-F-01YYYY-MM-DD format<cbc:IssueTime>BR-KSA-70HH:mm:ss or HH:mm:ssZ<cbc:InvoiceTypeCode name="">BR-KSA-067 chars NNPNESB<cbc:DocumentCurrencyCode>BR-05SAR<cbc:TaxCurrencyCode>BR-KSA-68, BR-KSA-EN16931-02SAR, mandatory<cac:BillingReference>BR-KSA-56Mandatory for 381/383ICV AdditionalDocumentReferenceBR-KSA-33/34Sequential digits onlyPIH AdditionalDocumentReferenceBR-KSA-61, BR-KSA-26Base64 SHA-256, C14N11QR AdditionalDocumentReferenceBR-KSA-27Base64, max 700 charsSeller BuildingNumberBR-KSA-37Exactly 4 digitsSeller PostalZoneBR-KSA-66Exactly 5 digitsBuyer nameBR-KSA-42Mandatory for standard invoices<cbc:InstructionNote> in PaymentMeansBR-KSA-17Mandatory for 381/383<cac:TaxTotal> with TaxSubtotalBR-KSA-EN16931-08Only ONE allowedLine TaxAmount + RoundingAmountBR-KSA-52/53Mandatory for standard invoices<cbc:PaymentMeansCode>BR-KSA-16Must be 10/30/42/48/1
+
+Do not change any non-ZATCA features. Apply all fixes exactly as specified above.
