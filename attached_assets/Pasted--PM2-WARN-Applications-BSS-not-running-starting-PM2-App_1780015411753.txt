@@ -1,0 +1,92 @@
+[PM2][WARN] Applications BSS not running, starting...
+[PM2] App [BSS] launched (1 instances)
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 0    │ online    │ 0%       │ 12.6mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[PM2] Saving current process list...
+[PM2] Successfully saved in /home/Kinzhal/.pm2/dump.pm2
+[TAILING] Tailing last 15 lines for [BSS] process (change the value with --lines option)
+/home/Kinzhal/.pm2/logs/BSS-out.log last 15 lines:
+0|BSS      | [ZATCA] SDK available: false
+0|BSS      | [realEstateCron] daily sweep scheduler started
+0|BSS      | [realEstate] routes registered + cron started
+0|BSS      | [ZATCA] SDK available: false
+0|BSS      | [realEstateCron] daily sweep scheduler started
+0|BSS      | [realEstate] routes registered + cron started
+0|BSS      | [ZATCA] SDK available: false
+0|BSS      | [realEstateCron] daily sweep scheduler started
+0|BSS      | [realEstate] routes registered + cron started
+0|BSS      | [ZATCA] SDK available: false
+0|BSS      | [realEstateCron] daily sweep scheduler started
+0|BSS      | [realEstate] routes registered + cron started
+0|BSS      | [ZATCA] SDK available: false
+0|BSS      | [realEstateCron] daily sweep scheduler started
+0|BSS      | [realEstate] routes registered + cron started
+
+/home/Kinzhal/.pm2/logs/BSS-error.log last 15 lines:
+0|BSS      |   syscall: 'listen',
+0|BSS      |   address: '0.0.0.0',
+0|BSS      |   port: 3000
+0|BSS      | }
+0|BSS      | Error: listen EADDRINUSE: address already in use 0.0.0.0:3000
+0|BSS      |     at Server.setupListenHandle [as _listen2] (node:net:1908:16)
+0|BSS      |     at listenInCluster (node:net:1965:12)
+0|BSS      |     at doListen (node:net:2139:7)
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:83:21) {
+0|BSS      |   code: 'EADDRINUSE',
+0|BSS      |   errno: -98,
+0|BSS      |   syscall: 'listen',
+0|BSS      |   address: '0.0.0.0',
+0|BSS      |   port: 3000
+0|BSS      | }
+
+0|BSS  | [ZATCA] SDK available: false
+0|BSS  | [realEstateCron] daily sweep scheduler started
+0|BSS  | [realEstate] routes registered + cron started
+0|BSS  | 12:43:15 AM [express] serving on port 3000
+0|BSS  | [Migration] Restaurants column verified/added: has_vat_registration, tax_number made nullable
+0|BSS  | [Migration] Procurement columns verified/added: inventory_item_id, original_procurement_id, unit
+0|BSS  | [Migration] Investors columns verified/added: national_id, contact_number, investor_type, recipe_id, document_path, document_content, document_filename, agreement_content, agreement_filename, agreement_generated_at, signed_agreement_content, signed_agreement_filename, signed_agreement_uploaded_at
+0|BSS  | [Migration] Settings column verified/added: weekly_schedule
+0|BSS  | [Migration] Table verified/created: device_serial_numbers
+0|BSS  | [Migration] Table verified/created: pending_signups
+0|BSS  | [Migration] Invoices columns verified/added: document_type, referenced_invoice_id, adjustment_reason
+0|BSS  | [Migration] service_projects columns verified/added: actual_cost, contractor_id, client_cr_number, client_vat_number, client_address, client_legal_representative
+0|BSS  | [Migration] Table verified/created: contracts
+0|BSS  | [Migration] Table verified/created: valuations
+0|BSS  | [Migration] Table verified/created: meal_subscriptions
+0|BSS  | [Migration] Meal subscriptions columns verified/added: delivery_log, delivery_hours, credit_balance, number_of_days
+0|BSS  | [Migration] Table verified/created: service_catalog
+0|BSS  | [Migration] Table verified/created: contractors
+0|BSS  | [Migration] Tables verified/created: catering_contracts, catering_contract_templates
+0|BSS  | [Migration] Table verified/created: investment_agreement_templates
+0|BSS  | [Migration] service_projects decision-center columns verified/added: approval_status, lifecycle_status, approved_at, approved_by, decline_reason, customer_id (+FK)
+0|BSS  | [Migration] Table verified/created: customer_documents (+FKs)
+0|BSS  | [Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings, customer_documents
+0|BSS  | [Migration] product_items column verified/added: selling_price
+0|BSS  | [Migration] project_items column verified/added: selling_price
+0|BSS  | [Migration] Tables verified/created: assignment_history, contractor_settlements
+0|BSS  | [Migration] phase column verified/added: project_items, project_services, project_tasks, product_items, product_service_links, product_tasks
+0|BSS  | [Migration] Tables verified/created: project_client_requirements, project_meetings
+0|BSS  | [Migration] Tables verified/created: product_client_requirements, product_meetings
+0|BSS  | [Migration] Table verified/created: influencer_profiles
+0|BSS  | [Migration] Table verified/created: blogger_profiles
+0|BSS  | [Migration] Table verified/created: company_profiles (with font_family, header_style)
+0|BSS  | [Migration] Table verified/created: marketing_discount_codes
+0|BSS  | [Migration] Table verified/created: marketing_broadcast_templates
+0|BSS  | [Migration] Table verified/created: properties
+0|BSS  | [Migration] Table verified/created: property_units
+0|BSS  | [Migration] Table verified/created: property_tenants
+0|BSS  | [Migration] Table verified/created: rental_contracts
+0|BSS  | [Migration] Table verified/created: rental_invoices
+0|BSS  | [Migration] Table verified/created: rental_payments
+0|BSS  | [Migration] Table verified/created: property_expenses
+0|BSS  | [Migration] Table verified/created: maintenance_requests
+0|BSS  | [Migration] Table verified/created: chart_of_accounts
+0|BSS  | [Migration] Table verified/created: journal_entries
+0|BSS  | [Migration] Table verified/created: journal_lines
+0|BSS  | [Migration] Table verified/created: property_notifications
+0|BSS  | [WebSocket] Client connected: user=bb811919-d05b-439a-a394-346154ce15e2, restaurant=IT_ACCOUNT (IT Account), conversations=0
+0|BSS  | [WebSocket] Client connected: user=9aed1efb-44ec-49c0-8600-4785bb6ad80b, restaurant=bf31801a-dade-4aa9-8531-62cf6d1415fc, conversations=0

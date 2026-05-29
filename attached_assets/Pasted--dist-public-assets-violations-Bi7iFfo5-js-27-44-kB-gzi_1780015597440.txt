@@ -1,0 +1,138 @@
+../dist/public/assets/violations-Bi7iFfo5.js                         27.44 kB │ gzip:   6.43 kB
+../dist/public/assets/service-projects-DMXlSHT5.js                   27.67 kB │ gzip:   6.61 kB
+../dist/public/assets/investment-agreement-templates-DNqUONmJ.js     29.18 kB │ gzip:   9.68 kB
+../dist/public/assets/quotations-CF1AUzfd.js                         29.95 kB │ gzip:   7.79 kB
+../dist/public/assets/dashboard-rCMraOLi.js                          31.22 kB │ gzip:   8.17 kB
+../dist/public/assets/shop-CDwpiRAg.js                               31.37 kB │ gzip:   7.08 kB
+../dist/public/assets/menu-C3WmxMGB.js                               31.96 kB │ gzip:   8.50 kB
+../dist/public/assets/meal-subscriptions-BlwNJQz0.js                 33.19 kB │ gzip:   8.60 kB
+../dist/public/assets/procurement-D5s79rUC.js                        36.09 kB │ gzip:   8.79 kB
+../dist/public/assets/delivery-apps-DeQI5ARS.js                      36.90 kB │ gzip:   8.80 kB
+../dist/public/assets/zatca-settings-BL61o824.js                     39.03 kB │ gzip:   9.22 kB
+../dist/public/assets/pos-CaLhVC1T.js                                43.72 kB │ gzip:   8.74 kB
+../dist/public/assets/sortable.esm-DHlfixH7.js                       45.72 kB │ gzip:  15.31 kB
+../dist/public/assets/catering-contracts-B9VzVAOH.js                 49.29 kB │ gzip:  13.87 kB
+../dist/public/assets/employees-25tNt8Xp.js                          50.87 kB │ gzip:   9.12 kB
+../dist/public/assets/profitability-DGrHNx8l.js                      53.43 kB │ gzip:  10.92 kB
+../dist/public/assets/investors-list--h4thmMY.js                     54.17 kB │ gzip:  11.51 kB
+../dist/public/assets/inventory-DWcff3P9.js                          55.73 kB │ gzip:  14.80 kB
+../dist/public/assets/service-catalog-BeJuplXJ.js                    58.87 kB │ gzip:  11.76 kB
+../dist/public/assets/company-profile-C04jNdVq.js                    68.77 kB │ gzip:  17.55 kB
+../dist/public/assets/financial-Bb6Vtnlg.js                          71.19 kB │ gzip:  12.25 kB
+../dist/public/assets/it-account-management-f_WoFiR-.js              74.11 kB │ gzip:  12.63 kB
+../dist/public/assets/index-e3zU7-h_.js                              86.91 kB │ gzip:  24.20 kB
+../dist/public/assets/business-management-DGYMxSqJ.js               100.02 kB │ gzip:  22.09 kB
+../dist/public/assets/schema-B7CX5RRk.js                            112.62 kB │ gzip:  22.32 kB
+../dist/public/assets/project-detail-DeDuhBQD.js                    116.62 kB │ gzip:  23.71 kB
+../dist/public/assets/index.es-DlCA7-yi.js                          158.60 kB │ gzip:  52.92 kB
+../dist/public/assets/marketing-CQC5aItW.js                         178.44 kB │ gzip:  54.10 kB
+../dist/public/assets/html2canvas.esm-Ge7aVWlp.js                   201.40 kB │ gzip:  47.48 kB
+../dist/public/assets/xlsx-BsqxREE8.js                              282.98 kB │ gzip:  94.97 kB
+../dist/public/assets/tutorial-pCTK2Wgs.js                          316.68 kB │ gzip:  71.88 kB
+../dist/public/assets/generateCategoricalChart-kJO4cSN0.js          382.61 kB │ gzip: 105.43 kB
+../dist/public/assets/jspdf.es.min-D7HjAcUm.js                      384.96 kB │ gzip: 125.67 kB
+../dist/public/assets/index-BUGlZjIb.js                           1,728.09 kB │ gzip: 498.11 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 28.48s
+
+  dist/index.js  1.7mb ⚠️
+
+⚡ Done in 123ms
+[PM2] Applying action restartProcessId on app [BSS](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 1    │ online    │ 0%       │ 17.6mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+Kinzhal@BSS-Server:/home/BSS$ pm2 startup
+[PM2] Init System found: systemd
+[PM2] To setup the Startup Script, copy/paste the following command:
+sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u Kinzhal --hp /home/Kinzhal
+Kinzhal@BSS-Server:/home/BSS$ sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u Kinzhal --hp /home/Kinzhal
+
+                        -------------
+
+__/\\\\\\\\\\\\\____/\\\\____________/\\\\____/\\\\\\\\\_____
+ _\/\\\/////////\\\_\/\\\\\\________/\\\\\\__/\\\///////\\\___
+  _\/\\\_______\/\\\_\/\\\//\\\____/\\\//\\\_\///______\//\\\__
+   _\/\\\\\\\\\\\\\/__\/\\\\///\\\/\\\/_\/\\\___________/\\\/___
+    _\/\\\/////////____\/\\\__\///\\\/___\/\\\________/\\\//_____
+     _\/\\\_____________\/\\\____\///_____\/\\\_____/\\\//________
+      _\/\\\_____________\/\\\_____________\/\\\___/\\\/___________
+       _\/\\\_____________\/\\\_____________\/\\\__/\\\\\\\\\\\\\\\_
+        _\///______________\///______________\///__\///////////////__
+
+
+                          Runtime Edition
+
+        PM2 is a Production Process Manager for Node.js applications
+                     with a built-in Load Balancer.
+
+                Start and Daemonize any application:
+                $ pm2 start app.js
+
+                Load Balance 4 instances of api.js:
+                $ pm2 start api.js -i 4
+
+                Monitor in production:
+                $ pm2 monitor
+
+                Make pm2 auto-boot at server restart:
+                $ pm2 startup
+
+                To go further checkout:
+                http://pm2.io/
+
+
+                        -------------
+
+[PM2] Init System found: systemd
+Platform systemd
+Template
+[Unit]
+Description=PM2 process manager
+Documentation=https://pm2.keymetrics.io/
+After=network.target
+
+[Service]
+Type=forking
+User=Kinzhal
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/usr/bin:/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
+Environment=PM2_HOME=/home/Kinzhal/.pm2
+PIDFile=/home/Kinzhal/.pm2/pm2.pid
+Restart=on-failure
+
+ExecStart=/usr/lib/node_modules/pm2/bin/pm2 resurrect
+ExecReload=/usr/lib/node_modules/pm2/bin/pm2 reload all
+ExecStop=/usr/lib/node_modules/pm2/bin/pm2 kill
+
+[Install]
+WantedBy=multi-user.target
+
+Target path
+/etc/systemd/system/pm2-Kinzhal.service
+Command list
+[ 'systemctl enable pm2-Kinzhal' ]
+[PM2] Writing init configuration in /etc/systemd/system/pm2-Kinzhal.service
+[PM2] Making script booting at startup...
+[PM2] [-] Executing: systemctl enable pm2-Kinzhal...
+Created symlink /etc/systemd/system/multi-user.target.wants/pm2-Kinzhal.service → /etc/systemd/system/pm2-Kinzhal.service.
+[PM2] [v] Command successfully executed.
++---------------------------------------+
+[PM2] Freeze a process list on reboot via:
+$ pm2 save
+
+[PM2] Remove init script via:
+$ pm2 unstartup systemd
+Kinzhal@BSS-Server:/home/BSS$ pm2 save
+[PM2] Saving current process list...
+[PM2] Successfully saved in /home/Kinzhal/.pm2/dump.pm2
+Kinzhal@BSS-Server:/home/BSS$
