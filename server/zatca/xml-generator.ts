@@ -158,16 +158,18 @@ export function generateInvoiceTypeCodeName(
   invoiceType: "standard" | "simplified",
   documentType?: "invoice" | "credit_note" | "debit_note"
 ): string {
-  // KSA-2 invoice transaction code, 7 characters (NNPNESB):
+  // KSA-2 invoice transaction code, 9 characters (NNPNESBCG) — required by
+  // ZATCA's current validator:
   //   positions 1-2 (NN) = invoice subtype — "01" for standard tax invoice,
   //   "02" for simplified tax invoice.
-  //   positions 3-7 (PNESB) = transaction flags (3rd-party, nominal,
-  //   exports, summary, self-billed); all default to "0".
+  //   position 3 (P) = 3rd-party, 4 (N) = nominal, 5 (E) = exports,
+  //   6 (S) = summary, 7 (B) = self-billed, 8 (C) = continuous supply,
+  //   9 (G) = B2G; all default to "0".
   // The document type (388/381/383) is BT-3 and is encoded ONLY in the
   // element value, never in this @name attribute — credit/debit notes keep
   // the same subtype prefix as their underlying invoice.
   const nn = invoiceType === "standard" ? "01" : "02";
-  return `${nn}00000`; // 7 characters total: NN + PNESB
+  return `${nn}0000000`; // 9 characters total: NN + PNESBCG
 }
 
 /**

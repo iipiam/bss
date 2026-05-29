@@ -1,0 +1,1 @@
+- [ZATCA InvoiceTypeCode @name + note reason](zatca-invoice-type-code.md) — KSA-2 @name must be 9-char NNPNESBCG (NOT 7-char); KSA-10 reason goes in PaymentMeans/InstructionNote. Trust live validator over docs.
