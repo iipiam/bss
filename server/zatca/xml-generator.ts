@@ -427,12 +427,7 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   <cbc:UUID>${escapeXml(uuid)}</cbc:UUID>
   <cbc:IssueDate>${escapeXml(issueDate)}</cbc:IssueDate>
   <cbc:IssueTime>${escapeXml(issueTime)}</cbc:IssueTime>
-  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>${
-    isCreditOrDebitNote
-      ? `
-  <cbc:Note>${escapeXml((adjustmentReason && adjustmentReason.trim()) || "Adjustment")}</cbc:Note>`
-      : ""
-  }
+  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
   <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>${billingReferenceXml}
   <cac:AdditionalDocumentReference>
@@ -476,7 +471,17 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
     <cbc:ActualDeliveryDate>${escapeXml(issueDate)}</cbc:ActualDeliveryDate>
   </cac:Delivery>
   <cac:PaymentMeans>
-    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
+    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>${
+    // KSA-10 (rule BR-KSA-17): credit/debit notes (BT-3 = 381/383) MUST carry
+    // the reason for issuance, and ZATCA's validator accepts it ONLY here, as
+    // cbc:InstructionNote inside cac:PaymentMeans. Do NOT move this to a
+    // header-level cbc:Note — the validator rejects that with
+    // "must contain the reason (KSA-10)". Always emit a non-empty value.
+    isCreditOrDebitNote
+      ? `
+    <cbc:InstructionNote>${escapeXml((adjustmentReason && adjustmentReason.trim()) || "Adjustment")}</cbc:InstructionNote>`
+      : ""
+  }
   </cac:PaymentMeans>
   <cac:TaxTotal>
     <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
