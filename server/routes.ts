@@ -20910,8 +20910,8 @@ ${phaseSchedules.length > 0 ? `
 
   // ===== Property Management (real_estate) =====
   try {
-    const { registerRealEstateRoutes } = await import("./realEstate/routes");
-    const { startRealEstateCron } = await import("./realEstate/cron");
+    const { registerRealEstateRoutes } = await import("./realEstateRoutes");
+    const { startRealEstateCron } = await import("./realEstateCron");
     registerRealEstateRoutes(app, requireAuth, requireRestaurant, requirePermission, requireAction);
     startRealEstateCron();
     console.log("[realEstate] routes registered + cron started");

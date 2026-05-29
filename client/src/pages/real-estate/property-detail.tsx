@@ -11,9 +11,9 @@ export default function PropertyDetail() {
   const t = useRET();
   const [, params] = useRoute("/real-estate/properties/:id");
   const propertyId = params?.id;
-  const { data: property, isLoading } = useQuery<any>({ queryKey: ["/api/real-estate/properties", propertyId], enabled: !!propertyId });
-  const { data: units = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/units"], select: (all: any) => all.filter((u: any) => u.propertyId === propertyId) });
-  const { data: kpis } = useQuery<any>({ queryKey: ["/api/real-estate/properties", propertyId, "financial-summary"], enabled: !!propertyId });
+  const { data: property, isLoading } = useQuery<any>({ queryKey: ["/api/properties", propertyId], enabled: !!propertyId });
+  const { data: units = [] } = useQuery<any[]>({ queryKey: ["/api/property-units"], select: (all: any) => all.filter((u: any) => u.propertyId === propertyId) });
+  const { data: kpis } = useQuery<any>({ queryKey: ["/api/properties", propertyId, "financial-summary"], enabled: !!propertyId });
 
   if (isLoading) return <div className="p-6">{t.loading}</div>;
   if (!property) return <div className="p-6">—</div>;

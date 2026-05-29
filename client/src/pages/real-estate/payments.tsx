@@ -11,13 +11,13 @@ export default function PaymentsPage() {
   const t = useRET();
   const { toast } = useToast();
   const [view, setView] = useViewMode("payments");
-  const { data: payments = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/payments"] });
-  const { data: invoices = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/invoices"] });
+  const { data: payments = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/property-payments"] });
+  const { data: invoices = [] } = useQuery<any[]>({ queryKey: ["/api/property-invoices"] });
 
   const invLabel = (id: string) => invoices.find((i: any) => i.id === id)?.invoiceNumber || "—";
 
   const downloadReceipt = async (id: string) => {
-    try { await downloadBlob(`/api/real-estate/payments/${id}/receipt-pdf`, `receipt-${id}.pdf`); }
+    try { await downloadBlob(`/api/property-payments/${id}/receipt-pdf`, `receipt-${id}.pdf`); }
     catch (e: any) { toast({ title: t.pdfError, description: e.message, variant: "destructive" }); }
   };
 

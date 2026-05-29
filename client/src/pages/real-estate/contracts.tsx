@@ -19,9 +19,9 @@ const FREQS = ["monthly","quarterly","biannual","annual"];
 export default function ContractsPage() {
   const t = useRET();
   const { toast } = useToast();
-  const { data: contracts = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/contracts"] });
-  const { data: units = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/units"] });
-  const { data: tenants = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/tenants"] });
+  const { data: contracts = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/property-contracts"] });
+  const { data: units = [] } = useQuery<any[]>({ queryKey: ["/api/property-units"] });
+  const { data: tenants = [] } = useQuery<any[]>({ queryKey: ["/api/property-tenants"] });
   const [view, setView] = useViewMode("contracts");
   const [open, setOpen] = useState(false);
   const [termOpen, setTermOpen] = useState<any>(null);
@@ -32,7 +32,7 @@ export default function ContractsPage() {
 
   const createMut = useMutation({
     mutationFn: async (payload: any) => {
-      const res = await apiRequest("POST", "/api/real-estate/contracts", {
+      const res = await apiRequest("POST", "/api/property-contracts", {
         ...payload,
         monthlyRent: sarToHalala(payload.monthlyRent || 0),
         securityDeposit: sarToHalala(payload.securityDeposit || 0),
@@ -43,8 +43,8 @@ export default function ContractsPage() {
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/real-estate/contracts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/real-estate/invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/property-contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/property-invoices"] });
       toast({ title: t.contractCreated });
       setOpen(false); reset();
     },
@@ -52,9 +52,9 @@ export default function ContractsPage() {
   });
 
   const terminateMut = useMutation({
-    mutationFn: async ({ id, reason }: any) => { await apiRequest("POST", `/api/real-estate/contracts/${id}/terminate`, { terminationReason: reason }); },
+    mutationFn: async ({ id, reason }: any) => { await apiRequest("POST", `/api/property-contracts/${id}/terminate`, { terminationReason: reason }); },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/real-estate/contracts"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/property-contracts"] });
       toast({ title: t.contractTerminated });
       setTermOpen(null); setTermReason("");
     },
@@ -64,7 +64,7 @@ export default function ContractsPage() {
   const tenantLabel = (id: string) => tenants.find((te: any) => te.id === id)?.fullName || "—";
 
   const downloadPdf = async (id: string) => {
-    try { await downloadBlob(`/api/real-estate/contracts/${id}/pdf`, `contract-${id}.pdf`); }
+    try { await downloadBlob(`/api/property-contracts/${id}/pdf`, `contract-${id}.pdf`); }
     catch (e: any) { toast({ title: t.pdfError, description: e.message, variant: "destructive" }); }
   };
 

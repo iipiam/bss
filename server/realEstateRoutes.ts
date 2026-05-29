@@ -1,18 +1,20 @@
 // REST API for Property Management vertical (real_estate business type).
-// All routes are mounted under /api/real-estate/* and gated by requirePermission('propertyManagement').
+// CRUD resources are mounted under /api/properties and /api/property-* ; dashboard,
+// reports, accounting, notifications and seed remain under /api/real-estate/*.
+// Every endpoint is gated by requirePermission('propertyManagement').
 import type { Express, Request, Response } from "express";
-import { pool } from "../db";
+import { pool } from "./db";
 import {
   propertiesStore, unitsStore, tenantsStore, contractsStore,
   invoicesStore, paymentsStore, expensesStore, maintenanceStore,
   coaStore, journalStore, notificationsStore,
-} from "./storage";
-import { generateInvoiceSchedule } from "./invoiceGen";
+} from "./realEstateStorage";
+import { generateInvoiceSchedule } from "./realEstate";
 import {
   ensureStandardChartOfAccounts, postPaymentReceived, postSecurityDeposit, postExpensePaid, postInvoiceIssued,
-} from "./accounting";
-import { generateInvoicePdf, generateReceiptPdf, generateContractPdf, generateReportPdf } from "./pdf";
-import { seedRealEstate } from "./seed";
+} from "./realEstate";
+import { generateInvoicePdf, generateReceiptPdf, generateContractPdf, generateReportPdf } from "./realEstatePdf";
+import { seedRealEstate } from "./realEstate";
 import * as XLSX from "xlsx";
 import multer from "multer";
 import path from "path";
@@ -64,15 +66,17 @@ export function registerRealEstateRoutes(
     edit: [requireAuth, requireRestaurant, requireAction(perm, "edit")],
     del: [requireAuth, requireRestaurant, requireAction(perm, "delete")],
   });
+  // Collapsed to a single `propertyManagement` permission: every real-estate
+  // endpoint is now gated by the same key (per plan-alignment refactor).
   const pm = gset("propertyManagement");
-  const tn = gset("tenants");
-  const rc = gset("rentalContracts");
-  const ri = gset("rentalInvoices");
-  const rp = gset("rentalPayments");
-  const px = gset("propertyExpenses");
-  const mt = gset("maintenance");
-  const rr = gset("propertyReports");
-  const ac = gset("accounting");
+  const tn = pm;
+  const rc = pm;
+  const ri = pm;
+  const rp = pm;
+  const px = pm;
+  const mt = pm;
+  const rr = pm;
+  const ac = pm;
   // Default (back-compat) — most legacy refs in this file used these names.
   const view = pm.view;
   const add = pm.add;
@@ -82,10 +86,10 @@ export function registerRealEstateRoutes(
   const uid = (req: any) => req.session.user?.id as string | undefined;
 
   // ============ Properties ============
-  app.get("/api/real-estate/properties", ...view, async (req, res) => {
+  app.get("/api/properties", ...view, async (req, res) => {
     try { ok(res, await propertiesStore.list(rid(req))); } catch (e) { err(res, e); }
   });
-  app.get("/api/real-estate/properties/:id", ...view, async (req, res) => {
+  app.get("/api/properties/:id", ...view, async (req, res) => {
     try {
       const property = await propertiesStore.get(req.params.id, rid(req));
       if (!property) return res.status(404).json({ message: "Not found" });
@@ -93,16 +97,16 @@ export function registerRealEstateRoutes(
       ok(res, { ...property, units });
     } catch (e) { err(res, e); }
   });
-  app.post("/api/real-estate/properties", ...add, async (req, res) => {
+  app.post("/api/properties", ...add, async (req, res) => {
     try { ok(res, await propertiesStore.create(rid(req), req.body), 201); } catch (e) { err(res, e); }
   });
-  app.patch("/api/real-estate/properties/:id", ...edit, async (req, res) => {
+  app.patch("/api/properties/:id", ...edit, async (req, res) => {
     try { ok(res, await propertiesStore.update(req.params.id, rid(req), req.body)); } catch (e) { err(res, e); }
   });
-  app.delete("/api/real-estate/properties/:id", ...del, async (req, res) => {
+  app.delete("/api/properties/:id", ...del, async (req, res) => {
     try { ok(res, { ok: await propertiesStore.remove(req.params.id, rid(req)) }); } catch (e) { err(res, e); }
   });
-  app.get("/api/real-estate/properties/:id/financial-summary", ...view, async (req, res) => {
+  app.get("/api/properties/:id/financial-summary", ...view, async (req, res) => {
     try {
       const r = rid(req);
       const inc = await pool.query(
@@ -124,24 +128,24 @@ export function registerRealEstateRoutes(
   });
 
   // ============ Units ============
-  app.get("/api/real-estate/units", ...view, async (req, res) => {
+  app.get("/api/property-units", ...view, async (req, res) => {
     try { ok(res, await unitsStore.list(rid(req), req.query.propertyId as string | undefined)); } catch (e) { err(res, e); }
   });
-  app.get("/api/real-estate/units/:id", ...view, async (req, res) => {
+  app.get("/api/property-units/:id", ...view, async (req, res) => {
     try { ok(res, await unitsStore.get(req.params.id, rid(req))); } catch (e) { err(res, e); }
   });
-  app.post("/api/real-estate/units", ...add, async (req, res) => {
+  app.post("/api/property-units", ...add, async (req, res) => {
     try { ok(res, await unitsStore.create(rid(req), req.body), 201); } catch (e) { err(res, e); }
   });
-  app.patch("/api/real-estate/units/:id", ...edit, async (req, res) => {
+  app.patch("/api/property-units/:id", ...edit, async (req, res) => {
     try { ok(res, await unitsStore.update(req.params.id, rid(req), req.body)); } catch (e) { err(res, e); }
   });
-  app.delete("/api/real-estate/units/:id", ...del, async (req, res) => {
+  app.delete("/api/property-units/:id", ...del, async (req, res) => {
     try { ok(res, { ok: await unitsStore.remove(req.params.id, rid(req)) }); } catch (e) { err(res, e); }
   });
 
   // ============ Tenants ============
-  app.get("/api/real-estate/tenants", ...tn.view, async (req, res) => {
+  app.get("/api/property-tenants", ...tn.view, async (req, res) => {
     try {
       const tenants = await tenantsStore.list(rid(req));
       const enriched = await Promise.all(tenants.map(async (t: any) => ({
@@ -150,7 +154,7 @@ export function registerRealEstateRoutes(
       ok(res, enriched);
     } catch (e) { err(res, e); }
   });
-  app.get("/api/real-estate/tenants/:id", ...tn.view, async (req, res) => {
+  app.get("/api/property-tenants/:id", ...tn.view, async (req, res) => {
     try {
       const tenant = await tenantsStore.get(req.params.id, rid(req));
       if (!tenant) return res.status(404).json({ message: "Not found" });
@@ -160,21 +164,21 @@ export function registerRealEstateRoutes(
       ok(res, { ...tenant, contracts: contracts.rows, payments: payments.rows, outstandingBalance: outstanding });
     } catch (e) { err(res, e); }
   });
-  app.post("/api/real-estate/tenants", ...tn.add, async (req, res) => {
+  app.post("/api/property-tenants", ...tn.add, async (req, res) => {
     try { ok(res, await tenantsStore.create(rid(req), req.body), 201); } catch (e) { err(res, e); }
   });
-  app.patch("/api/real-estate/tenants/:id", ...tn.edit, async (req, res) => {
+  app.patch("/api/property-tenants/:id", ...tn.edit, async (req, res) => {
     try { ok(res, await tenantsStore.update(req.params.id, rid(req), req.body)); } catch (e) { err(res, e); }
   });
-  app.delete("/api/real-estate/tenants/:id", ...tn.del, async (req, res) => {
+  app.delete("/api/property-tenants/:id", ...tn.del, async (req, res) => {
     try { ok(res, { ok: await tenantsStore.remove(req.params.id, rid(req)) }); } catch (e) { err(res, e); }
   });
 
   // ============ Contracts ============
-  app.get("/api/real-estate/contracts", ...rc.view, async (req, res) => {
+  app.get("/api/property-contracts", ...rc.view, async (req, res) => {
     try { ok(res, await contractsStore.list(rid(req), req.query.status as string | undefined)); } catch (e) { err(res, e); }
   });
-  app.get("/api/real-estate/contracts/:id", ...rc.view, async (req, res) => {
+  app.get("/api/property-contracts/:id", ...rc.view, async (req, res) => {
     try {
       const contract = await contractsStore.get(req.params.id, rid(req));
       if (!contract) return res.status(404).json({ message: "Not found" });
@@ -182,7 +186,7 @@ export function registerRealEstateRoutes(
       ok(res, { ...contract, invoices });
     } catch (e) { err(res, e); }
   });
-  app.post("/api/real-estate/contracts", ...rc.add, async (req, res) => {
+  app.post("/api/property-contracts", ...rc.add, async (req, res) => {
     try {
       const body = req.body;
       const startDate = new Date(body.startDate);
@@ -207,7 +211,7 @@ export function registerRealEstateRoutes(
       ok(res, enriched, 201);
     } catch (e) { err(res, e); }
   });
-  app.patch("/api/real-estate/contracts/:id", ...rc.edit, async (req, res) => {
+  app.patch("/api/property-contracts/:id", ...rc.edit, async (req, res) => {
     try {
       const before = await contractsStore.get(req.params.id, rid(req));
       const updated = await contractsStore.update(req.params.id, rid(req), req.body);
@@ -220,10 +224,10 @@ export function registerRealEstateRoutes(
       ok(res, updated);
     } catch (e) { err(res, e); }
   });
-  app.delete("/api/real-estate/contracts/:id", ...rc.del, async (req, res) => {
+  app.delete("/api/property-contracts/:id", ...rc.del, async (req, res) => {
     try { ok(res, { ok: await contractsStore.remove(req.params.id, rid(req)) }); } catch (e) { err(res, e); }
   });
-  app.post("/api/real-estate/contracts/:id/terminate", ...rc.edit, async (req, res) => {
+  app.post("/api/property-contracts/:id/terminate", ...rc.edit, async (req, res) => {
     try {
       const c = await contractsStore.get(req.params.id, rid(req));
       if (!c) return res.status(404).json({ message: "Not found" });
@@ -257,7 +261,7 @@ export function registerRealEstateRoutes(
   });
 
   // ============ Invoices ============
-  app.get("/api/real-estate/invoices", ...ri.view, async (req, res) => {
+  app.get("/api/property-invoices", ...ri.view, async (req, res) => {
     try {
       const filters: any = {};
       if (req.query.status) filters.status = String(req.query.status);
@@ -266,7 +270,7 @@ export function registerRealEstateRoutes(
       ok(res, await invoicesStore.list(rid(req), filters));
     } catch (e) { err(res, e); }
   });
-  app.get("/api/real-estate/invoices/:id", ...ri.view, async (req, res) => {
+  app.get("/api/property-invoices/:id", ...ri.view, async (req, res) => {
     try {
       const inv = await invoicesStore.get(req.params.id, rid(req));
       if (!inv) return res.status(404).json({ message: "Not found" });
@@ -274,7 +278,7 @@ export function registerRealEstateRoutes(
       ok(res, { ...inv, payments });
     } catch (e) { err(res, e); }
   });
-  app.post("/api/real-estate/invoices/:id/mark-paid", ...ri.edit, async (req, res) => {
+  app.post("/api/property-invoices/:id/mark-paid", ...ri.edit, async (req, res) => {
     try {
       const inv = await invoicesStore.get(req.params.id, rid(req));
       if (!inv) return res.status(404).json({ message: "Not found" });
@@ -298,7 +302,7 @@ export function registerRealEstateRoutes(
       ok(res, { invoice: updated, payment });
     } catch (e) { err(res, e); }
   });
-  app.get("/api/real-estate/invoices/:id/pdf", ...ri.view, async (req, res) => {
+  app.get("/api/property-invoices/:id/pdf", ...ri.view, async (req, res) => {
     try {
       const r = rid(req);
       const inv = await invoicesStore.get(req.params.id, r);
@@ -320,10 +324,10 @@ export function registerRealEstateRoutes(
   });
 
   // ============ Payments ============
-  app.get("/api/real-estate/payments", ...rp.view, async (req, res) => {
+  app.get("/api/property-payments", ...rp.view, async (req, res) => {
     try { ok(res, await paymentsStore.list(rid(req))); } catch (e) { err(res, e); }
   });
-  app.get("/api/real-estate/payments/:id/receipt-pdf", ...rp.view, async (req, res) => {
+  app.get("/api/property-payments/:id/receipt-pdf", ...rp.view, async (req, res) => {
     try {
       const r = rid(req);
       const pay = await paymentsStore.get(req.params.id, r);
@@ -342,7 +346,7 @@ export function registerRealEstateRoutes(
   });
 
   // ============ Contract PDF ============
-  app.get("/api/real-estate/contracts/:id/pdf", ...rc.view, async (req, res) => {
+  app.get("/api/property-contracts/:id/pdf", ...rc.view, async (req, res) => {
     try {
       const r = rid(req);
       const c = await contractsStore.get(req.params.id, r);
@@ -362,20 +366,20 @@ export function registerRealEstateRoutes(
   });
 
   // ============ Expenses ============
-  app.get("/api/real-estate/expenses", ...px.view, async (req, res) => {
+  app.get("/api/property-expenses", ...px.view, async (req, res) => {
     try { ok(res, await expensesStore.list(rid(req), req.query.propertyId as string | undefined)); } catch (e) { err(res, e); }
   });
-  app.get("/api/real-estate/expenses/:id", ...px.view, async (req, res) => {
+  app.get("/api/property-expenses/:id", ...px.view, async (req, res) => {
     try { ok(res, await expensesStore.get(req.params.id, rid(req))); } catch (e) { err(res, e); }
   });
-  app.post("/api/real-estate/expenses", ...px.add, async (req, res) => {
+  app.post("/api/property-expenses", ...px.add, async (req, res) => {
     try {
       const e = await expensesStore.create(rid(req), req.body);
       if (e.status === "paid") { try { await postExpensePaid(rid(req), e); } catch {} }
       ok(res, e, 201);
     } catch (e) { err(res, e); }
   });
-  app.patch("/api/real-estate/expenses/:id", ...px.edit, async (req, res) => {
+  app.patch("/api/property-expenses/:id", ...px.edit, async (req, res) => {
     try {
       const before = await expensesStore.get(req.params.id, rid(req));
       const updated = await expensesStore.update(req.params.id, rid(req), req.body);
@@ -385,12 +389,12 @@ export function registerRealEstateRoutes(
       ok(res, updated);
     } catch (e) { err(res, e); }
   });
-  app.delete("/api/real-estate/expenses/:id", ...px.del, async (req, res) => {
+  app.delete("/api/property-expenses/:id", ...px.del, async (req, res) => {
     try { ok(res, { ok: await expensesStore.remove(req.params.id, rid(req)) }); } catch (e) { err(res, e); }
   });
 
   // Upload an invoice image/PDF for an expense. Returns the public URL to store on the expense's receiptUrl.
-  app.post("/api/real-estate/expenses/upload-invoice", ...px.add, uploadExpenseInvoice.single("file"), (req, res) => {
+  app.post("/api/property-expenses/upload-invoice", ...px.add, uploadExpenseInvoice.single("file"), (req, res) => {
     try {
       if (!req.file) return res.status(400).json({ message: "No file uploaded" });
       const url = `/uploads/expense-invoices/${req.file.filename}`;
@@ -399,16 +403,16 @@ export function registerRealEstateRoutes(
   });
 
   // ============ Maintenance ============
-  app.get("/api/real-estate/maintenance", ...mt.view, async (req, res) => {
+  app.get("/api/property-maintenance", ...mt.view, async (req, res) => {
     try { ok(res, await maintenanceStore.list(rid(req))); } catch (e) { err(res, e); }
   });
-  app.get("/api/real-estate/maintenance/:id", ...mt.view, async (req, res) => {
+  app.get("/api/property-maintenance/:id", ...mt.view, async (req, res) => {
     try { ok(res, await maintenanceStore.get(req.params.id, rid(req))); } catch (e) { err(res, e); }
   });
-  app.post("/api/real-estate/maintenance", ...mt.add, async (req, res) => {
+  app.post("/api/property-maintenance", ...mt.add, async (req, res) => {
     try { ok(res, await maintenanceStore.create(rid(req), req.body), 201); } catch (e) { err(res, e); }
   });
-  app.patch("/api/real-estate/maintenance/:id", ...mt.edit, async (req, res) => {
+  app.patch("/api/property-maintenance/:id", ...mt.edit, async (req, res) => {
     try {
       const before = await maintenanceStore.get(req.params.id, rid(req));
       const updated = await maintenanceStore.update(req.params.id, rid(req), req.body);
@@ -421,7 +425,7 @@ export function registerRealEstateRoutes(
       ok(res, updated);
     } catch (e) { err(res, e); }
   });
-  app.delete("/api/real-estate/maintenance/:id", ...mt.del, async (req, res) => {
+  app.delete("/api/property-maintenance/:id", ...mt.del, async (req, res) => {
     try { ok(res, { ok: await maintenanceStore.remove(req.params.id, rid(req)) }); } catch (e) { err(res, e); }
   });
 

@@ -19,8 +19,8 @@ const STATUSES = ["pending","paid","overdue"];
 export default function ExpensesPage() {
   const t = useRET();
   const { toast } = useToast();
-  const { data: expenses = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/expenses"] });
-  const { data: properties = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/properties"] });
+  const { data: expenses = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/property-expenses"] });
+  const { data: properties = [] } = useQuery<any[]>({ queryKey: ["/api/properties"] });
   const [view, setView] = useViewMode("expenses");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -53,7 +53,7 @@ export default function ExpensesPage() {
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const res = await fetch("/api/real-estate/expenses/upload-invoice", { method: "POST", body: fd, credentials: "include" });
+      const res = await fetch("/api/property-expenses/upload-invoice", { method: "POST", body: fd, credentials: "include" });
       if (!res.ok) {
         const e = await res.json().catch(() => ({ message: "Upload failed" }));
         throw new Error(e.message || "Upload failed");
@@ -76,12 +76,12 @@ export default function ExpensesPage() {
         paidDate: payload.paidDate || null,
       };
       const res = editing
-        ? await apiRequest("PATCH", `/api/real-estate/expenses/${editing.id}`, data)
-        : await apiRequest("POST", "/api/real-estate/expenses", data);
+        ? await apiRequest("PATCH", `/api/property-expenses/${editing.id}`, data)
+        : await apiRequest("POST", "/api/property-expenses", data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/real-estate/expenses"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/property-expenses"] });
       toast({ title: editing ? t.expenseUpdated : t.expenseCreated });
       setOpen(false); reset();
     },
@@ -89,8 +89,8 @@ export default function ExpensesPage() {
   });
 
   const deleteMut = useMutation({
-    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/real-estate/expenses/${id}`); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/real-estate/expenses"] }); toast({ title: t.expenseDeleted }); },
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/property-expenses/${id}`); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/property-expenses"] }); toast({ title: t.expenseDeleted }); },
   });
 
   const propName = (id: string) => properties.find((p: any) => p.id === id)?.name || "—";

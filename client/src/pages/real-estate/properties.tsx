@@ -19,7 +19,7 @@ const STATUSES = ["available","rented","for_sale","under_maintenance","inactive"
 export default function PropertiesPage() {
   const t = useRET();
   const { toast } = useToast();
-  const { data: properties = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/properties"] });
+  const { data: properties = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/properties"] });
   const [view, setView] = useViewMode("properties");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -51,12 +51,12 @@ export default function PropertiesPage() {
         areaSqm: payload.areaSqm === "" ? null : String(payload.areaSqm),
       };
       const res = editing
-        ? await apiRequest("PATCH", `/api/real-estate/properties/${editing.id}`, data)
-        : await apiRequest("POST", "/api/real-estate/properties", data);
+        ? await apiRequest("PATCH", `/api/properties/${editing.id}`, data)
+        : await apiRequest("POST", "/api/properties", data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/real-estate/properties"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
       toast({ title: editing ? t.propertyUpdated : t.propertyCreated });
       setOpen(false); reset();
     },
@@ -64,8 +64,8 @@ export default function PropertiesPage() {
   });
 
   const deleteMut = useMutation({
-    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/real-estate/properties/${id}`); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/real-estate/properties"] }); toast({ title: t.propertyDeleted }); },
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/properties/${id}`); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/properties"] }); toast({ title: t.propertyDeleted }); },
     onError: (e: any) => toast({ title: t.cannotDelete, description: e.message, variant: "destructive" }),
   });
 

@@ -19,19 +19,19 @@ export default function InvoicesPage() {
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState("all");
   const [view, setView] = useViewMode("invoices");
-  const { data: invoices = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/invoices"] });
+  const { data: invoices = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/property-invoices"] });
   const [payOpen, setPayOpen] = useState<any>(null);
   const [payForm, setPayForm] = useState<any>({ amount: "", paymentDate: new Date().toISOString().slice(0, 10), method: "bank_transfer", referenceNumber: "", bankName: "" });
 
   const payMut = useMutation({
     mutationFn: async ({ invoiceId, payload }: any) => {
-      await apiRequest("POST", `/api/real-estate/invoices/${invoiceId}/mark-paid`, {
+      await apiRequest("POST", `/api/property-invoices/${invoiceId}/mark-paid`, {
         ...payload, amount: sarToHalala(payload.amount),
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/real-estate/invoices"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/real-estate/payments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/property-invoices"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/property-payments"] });
       toast({ title: t.paymentRecorded });
       setPayOpen(null);
     },
@@ -39,7 +39,7 @@ export default function InvoicesPage() {
   });
 
   const downloadPdf = async (id: string) => {
-    try { await downloadBlob(`/api/real-estate/invoices/${id}/pdf`, `invoice-${id}.pdf`); }
+    try { await downloadBlob(`/api/property-invoices/${id}/pdf`, `invoice-${id}.pdf`); }
     catch (e: any) { toast({ title: t.pdfError, description: e.message, variant: "destructive" }); }
   };
 

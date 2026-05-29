@@ -19,9 +19,9 @@ const PRIORITIES = ["low","medium","high","urgent"];
 export default function MaintenancePage() {
   const t = useRET();
   const { toast } = useToast();
-  const { data: requests = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/maintenance"] });
-  const { data: properties = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/properties"] });
-  const { data: units = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/units"] });
+  const { data: requests = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/property-maintenance"] });
+  const { data: properties = [] } = useQuery<any[]>({ queryKey: ["/api/properties"] });
+  const { data: units = [] } = useQuery<any[]>({ queryKey: ["/api/property-units"] });
   const [view, setView] = useViewMode("maintenance");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -56,12 +56,12 @@ export default function MaintenancePage() {
         completedDate: payload.completedDate || null,
       };
       const res = editing
-        ? await apiRequest("PATCH", `/api/real-estate/maintenance/${editing.id}`, data)
-        : await apiRequest("POST", "/api/real-estate/maintenance", data);
+        ? await apiRequest("PATCH", `/api/property-maintenance/${editing.id}`, data)
+        : await apiRequest("POST", "/api/property-maintenance", data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/real-estate/maintenance"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/property-maintenance"] });
       toast({ title: editing ? t.requestUpdated : t.requestCreated });
       setOpen(false); reset();
     },
@@ -69,8 +69,8 @@ export default function MaintenancePage() {
   });
 
   const deleteMut = useMutation({
-    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/real-estate/maintenance/${id}`); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/real-estate/maintenance"] }); toast({ title: t.requestDeleted }); },
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/property-maintenance/${id}`); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/property-maintenance"] }); toast({ title: t.requestDeleted }); },
   });
 
   const propName = (id: string) => properties.find((p: any) => p.id === id)?.name || "—";

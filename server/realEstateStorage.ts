@@ -1,5 +1,5 @@
 // Property Management storage helpers - direct pg queries, snake_case <-> camelCase mapping.
-import { pool } from "../db";
+import { pool } from "./db";
 
 // ---------- snake_case <-> camelCase ----------
 const toCamel = (s: string) => s.replace(/_([a-z])/g, (_, c) => c.toUpperCase());

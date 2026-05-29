@@ -2,9 +2,9 @@
 //   - Mark overdue invoices and notify
 //   - Send 90d / 30d expiry alerts
 //   - Auto-expire contracts past end_date (auto-renew when enabled)
-import { pool } from "../db";
-import { invoicesStore, notificationsStore, contractsStore, unitsStore } from "./storage";
-import { generateInvoiceSchedule } from "./invoiceGen";
+import { pool } from "./db";
+import { invoicesStore, notificationsStore, contractsStore, unitsStore } from "./realEstateStorage";
+import { generateInvoiceSchedule } from "./realEstate";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 let timer: NodeJS.Timeout | null = null;

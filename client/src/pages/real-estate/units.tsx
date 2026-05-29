@@ -18,8 +18,8 @@ export default function UnitsPage() {
   const t = useRET();
   const { toast } = useToast();
   const [propertyFilter, setPropertyFilter] = useState<string>("all");
-  const { data: properties = [] } = useQuery<any[]>({ queryKey: ["/api/real-estate/properties"] });
-  const { data: units = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/units"] });
+  const { data: properties = [] } = useQuery<any[]>({ queryKey: ["/api/properties"] });
+  const { data: units = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/property-units"] });
   const [view, setView] = useState<"grid" | "list">("grid");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -51,12 +51,12 @@ export default function UnitsPage() {
         monthlyRent: payload.monthlyRent === "" ? 0 : sarToHalala(payload.monthlyRent),
       };
       const res = editing
-        ? await apiRequest("PATCH", `/api/real-estate/units/${editing.id}`, data)
-        : await apiRequest("POST", "/api/real-estate/units", data);
+        ? await apiRequest("PATCH", `/api/property-units/${editing.id}`, data)
+        : await apiRequest("POST", "/api/property-units", data);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/real-estate/units"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/property-units"] });
       toast({ title: editing ? t.unitUpdated : t.unitCreated });
       setOpen(false); reset();
     },
@@ -64,8 +64,8 @@ export default function UnitsPage() {
   });
 
   const deleteMut = useMutation({
-    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/real-estate/units/${id}`); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/real-estate/units"] }); toast({ title: t.unitDeleted }); },
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/property-units/${id}`); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/property-units"] }); toast({ title: t.unitDeleted }); },
     onError: (e: any) => toast({ title: t.cannotDelete, description: e.message, variant: "destructive" }),
   });
 

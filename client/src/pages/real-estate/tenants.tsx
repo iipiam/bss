@@ -17,7 +17,7 @@ const ID_TYPES = ["national_id","iqama","passport"];
 export default function TenantsPage() {
   const t = useRET();
   const { toast } = useToast();
-  const { data: tenants = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/real-estate/tenants"] });
+  const { data: tenants = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/property-tenants"] });
   const [view, setView] = useViewMode("tenants");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
@@ -38,12 +38,12 @@ export default function TenantsPage() {
   const upsertMut = useMutation({
     mutationFn: async (payload: any) => {
       const res = editing
-        ? await apiRequest("PATCH", `/api/real-estate/tenants/${editing.id}`, payload)
-        : await apiRequest("POST", "/api/real-estate/tenants", payload);
+        ? await apiRequest("PATCH", `/api/property-tenants/${editing.id}`, payload)
+        : await apiRequest("POST", "/api/property-tenants", payload);
       return res.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/real-estate/tenants"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/property-tenants"] });
       toast({ title: editing ? t.tenantUpdated : t.tenantCreated });
       setOpen(false); reset();
     },
@@ -51,8 +51,8 @@ export default function TenantsPage() {
   });
 
   const deleteMut = useMutation({
-    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/real-estate/tenants/${id}`); },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/real-estate/tenants"] }); toast({ title: t.tenantDeleted }); },
+    mutationFn: async (id: string) => { await apiRequest("DELETE", `/api/property-tenants/${id}`); },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["/api/property-tenants"] }); toast({ title: t.tenantDeleted }); },
     onError: (e: any) => toast({ title: t.cannotDelete, description: e.message, variant: "destructive" }),
   });
 
