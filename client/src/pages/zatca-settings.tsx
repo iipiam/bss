@@ -434,16 +434,24 @@ export default function ZatcaSettingsPage() {
   const saveManualCredentialsMutation = useMutation({
     mutationFn: async () => {
       const credentialData: Record<string, any> = { restaurantId: selectedRestaurantId };
-      if (manualCredentials.privateKey) credentialData.privateKey = manualCredentials.privateKey;
-      if (manualCredentials.complianceCsid) credentialData.complianceCsid = manualCredentials.complianceCsid;
-      if (manualCredentials.complianceCsidSecret) credentialData.complianceCsidSecret = manualCredentials.complianceCsidSecret;
-      if (manualCredentials.productionCsid) credentialData.productionCsid = manualCredentials.productionCsid;
-      if (manualCredentials.productionCsidSecret) credentialData.productionCsidSecret = manualCredentials.productionCsidSecret;
+      const stripQuotes = (s: string) => s.replace(/^['"]+/, "").replace(/['"]+$/, "");
+      const cleanToken = (s: string) => stripQuotes(s.trim()).replace(/\s+/g, "");
+      const cleanKey = (s: string) => stripQuotes(s.trim());
+      const privateKey = cleanKey(manualCredentials.privateKey);
+      const complianceCsid = cleanToken(manualCredentials.complianceCsid);
+      const complianceCsidSecret = cleanToken(manualCredentials.complianceCsidSecret);
+      const productionCsid = cleanToken(manualCredentials.productionCsid);
+      const productionCsidSecret = cleanToken(manualCredentials.productionCsidSecret);
+      if (privateKey) credentialData.privateKey = privateKey;
+      if (complianceCsid) credentialData.complianceCsid = complianceCsid;
+      if (complianceCsidSecret) credentialData.complianceCsidSecret = complianceCsidSecret;
+      if (productionCsid) credentialData.productionCsid = productionCsid;
+      if (productionCsidSecret) credentialData.productionCsidSecret = productionCsidSecret;
       
-      if (manualCredentials.productionCsid && manualCredentials.productionCsidSecret) {
+      if (productionCsid && productionCsidSecret) {
         credentialData.onboardingStatus = "production_ready";
         credentialData.isEnabled = true;
-      } else if (manualCredentials.complianceCsid && manualCredentials.complianceCsidSecret) {
+      } else if (complianceCsid && complianceCsidSecret) {
         credentialData.onboardingStatus = "compliance_received";
       }
       
@@ -715,6 +723,14 @@ export default function ZatcaSettingsPage() {
                       placeholder={t.enterCommonName || "e.g., EGS1-TST-886431145-399900000000001"}
                       data-testid="input-common-name"
                     />
+                    {!!formData.csrCommonName && (() => {
+                      const v = formData.csrCommonName || "";
+                      if (/\s/.test(v)) {
+                        return <p className="text-xs text-destructive">{isRTL ? "يجب ألا يحتوي على مسافات." : "Must not contain spaces."}</p>;
+                      }
+                      return <p className="text-xs text-green-600">{isRTL ? "التنسيق يبدو صحيحًا" : "Format looks valid"}</p>;
+                    })()}
+                    <p className="text-xs text-muted-foreground">{isRTL ? "معرّف الجهاز على الشهادة، مثل EGS1-TST-886431145-399900000000001 (بدون مسافات)." : "Device identifier on the certificate, e.g. EGS1-TST-886431145-399900000000001 (no spaces)."}</p>
                   </div>
 
                   <div className="space-y-2">
@@ -775,6 +791,13 @@ export default function ZatcaSettingsPage() {
                       placeholder={t.enterDeviceSerial || "e.g., 1-TST|2-TST|3-ed22f1d8-e6a2-1118-9b58-d9a8195e05"}
                       data-testid="input-device-serial"
                     />
+                    {!!formData.csrSerialNumber && (() => {
+                      const ok = /^1-.+\|2-.+\|3-.+$/.test(formData.csrSerialNumber || "");
+                      return ok
+                        ? <p className="text-xs text-green-600">{isRTL ? "التنسيق يبدو صحيحًا" : "Format looks valid"}</p>
+                        : <p className="text-xs text-destructive">{isRTL ? "يجب أن يكون بالتنسيق 1-...|2-...|3-..." : "Must be in the format 1-...|2-...|3-..."}</p>;
+                    })()}
+                    <p className="text-xs text-muted-foreground">{isRTL ? "ثلاثة أجزاء مفصولة بالرمز | ، مثل 1-TST|2-TST|3-ed22f1d8..." : "Three parts separated by | , e.g. 1-TST|2-TST|3-ed22f1d8..."}</p>
                   </div>
 
                   <div className="space-y-2">
@@ -786,6 +809,17 @@ export default function ZatcaSettingsPage() {
                       placeholder={t.enterCrNumber || "e.g., 3100000000"}
                       data-testid="input-cr-number"
                     />
+                    {!!formData.crNumber && (() => {
+                      const v = formData.crNumber || "";
+                      if (!/^\d+$/.test(v)) {
+                        return <p className="text-xs text-destructive">{isRTL ? "أرقام فقط." : "Digits only."}</p>;
+                      }
+                      if (v.length === 10) {
+                        return <p className="text-xs text-green-600">{isRTL ? "التنسيق يبدو صحيحًا" : "Format looks valid"}</p>;
+                      }
+                      return <p className="text-xs text-muted-foreground">{isRTL ? `عادة 10 أرقام (حاليًا ${v.length})` : `Usually 10 digits (currently ${v.length})`}</p>;
+                    })()}
+                    <p className="text-xs text-muted-foreground">{isRTL ? "رقم السجل التجاري، عادة 10 أرقام، مثل 3100000000." : "Commercial registration number, usually 10 digits, e.g. 3100000000."}</p>
                   </div>
                 </div>
 
@@ -847,6 +881,12 @@ export default function ZatcaSettingsPage() {
                         placeholder={t.enterPostalCode || "12345"}
                         data-testid="input-postal-code"
                       />
+                      {!!formData.postalZone && (() => {
+                        const ok = /^\d{5}$/.test(formData.postalZone || "");
+                        return ok
+                          ? <p className="text-xs text-green-600">{isRTL ? "التنسيق يبدو صحيحًا" : "Format looks valid"}</p>
+                          : <p className="text-xs text-destructive">{isRTL ? "يجب أن يكون 5 أرقام." : "Must be 5 digits."}</p>;
+                      })()}
                     </div>
 
                     <div className="space-y-2">
@@ -939,6 +979,7 @@ export default function ZatcaSettingsPage() {
                       maxLength={6}
                       data-testid="input-otp"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">{isRTL ? "رمز مكوّن من 6 أرقام من بوابة فاتورة (يصلح لمرة واحدة)." : "6-digit one-time code from the Fatoora portal."}</p>
                   </div>
                   <Button
                     onClick={() => onboardMutation.mutate()}
@@ -1076,6 +1117,7 @@ export default function ZatcaSettingsPage() {
                       placeholder={t.enterComplianceRequestId || "From step 2"}
                       data-testid="input-compliance-request-id"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">{isRTL ? "رقم الطلب الذي تم إرجاعه عند طلب شهادة الامتثال (الخطوة 2)، أرقام فقط." : "The request ID returned when you requested the compliance CSID (step 2) — digits only."}</p>
                   </div>
                   <Button
                     onClick={() => productionCsidMutation.mutate()}
@@ -1224,6 +1266,19 @@ export default function ZatcaSettingsPage() {
                         </AlertDescription>
                       </Alert>
 
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertTitle>{isRTL ? "مرجع تنسيق ZATCA" : "ZATCA Format Reference"}</AlertTitle>
+                        <AlertDescription>
+                          <ul className="list-disc ms-4 mt-1 space-y-1 text-xs">
+                            <li>{isRTL ? "المفتاح الخاص: نص PEM يبدأ بـ -----BEGIN ويشمل سطري البداية والنهاية." : "Private Key: PEM text starting with -----BEGIN, including the BEGIN and END lines."}</li>
+                            <li>{isRTL ? "CSID (binarySecurityToken): سلسلة base64 طويلة، الصقها كما وردت تمامًا." : "CSID (binarySecurityToken): a long base64 string — paste exactly as returned."}</li>
+                            <li>{isRTL ? "السر (secret): سلسلة قصيرة من حقل secret في استجابة ZATCA، دون مسافات." : "Secret: the short string from ZATCA's \"secret\" field — no spaces."}</li>
+                            <li>{isRTL ? "انسخ قيم binarySecurityToken و secret من استجابة ZATCA (JSON) دون أي تعديل." : "Copy the binarySecurityToken and secret from ZATCA's JSON response without any edits."}</li>
+                          </ul>
+                        </AlertDescription>
+                      </Alert>
+
                       <div className="space-y-2">
                         <Label>{t.privateKey || "Private Key"} (PEM format)</Label>
                         <Textarea
@@ -1233,6 +1288,12 @@ export default function ZatcaSettingsPage() {
                           className="font-mono text-xs min-h-[100px]"
                           data-testid="textarea-private-key"
                         />
+                        {!!manualCredentials.privateKey && (() => {
+                          const ok = manualCredentials.privateKey.trim().startsWith("-----BEGIN");
+                          return ok
+                            ? <p className="text-xs text-green-600">{isRTL ? "التنسيق يبدو صحيحًا" : "Format looks valid"}</p>
+                            : <p className="text-xs text-destructive">{isRTL ? "يجب أن يبدأ بـ -----BEGIN ...-----" : "Must start with -----BEGIN ...-----"}</p>;
+                        })()}
                         <p className="text-xs text-muted-foreground">
                           {(t as any).privateKeyHint || "The ECDSA private key used for signing invoices (secp256k1)"}
                         </p>
@@ -1250,6 +1311,13 @@ export default function ZatcaSettingsPage() {
                             className="font-mono text-xs min-h-[80px]"
                             data-testid="textarea-compliance-csid"
                           />
+                          {!!manualCredentials.complianceCsid && (() => {
+                            const ok = /^[A-Za-z0-9+/=\s]+$/.test(manualCredentials.complianceCsid.trim());
+                            return ok
+                              ? <p className="text-xs text-green-600">{isRTL ? "التنسيق يبدو صحيحًا" : "Format looks valid"}</p>
+                              : <p className="text-xs text-destructive">{isRTL ? "يجب أن يحتوي على أحرف base64 فقط (A-Z، a-z، 0-9، +، /، =)." : "Must contain base64 characters only (A-Z, a-z, 0-9, +, /, =)."}</p>;
+                          })()}
+                          <p className="text-xs text-muted-foreground">{isRTL ? "الصق قيمة binarySecurityToken كما وردت من ZATCA تمامًا دون تعديل." : "Paste the binarySecurityToken value exactly as returned by ZATCA, without editing."}</p>
                         </div>
                         <div className="space-y-2">
                           <Label>{(t as any).complianceCsidSecretLabel || "Compliance CSID Secret"}</Label>
@@ -1261,6 +1329,7 @@ export default function ZatcaSettingsPage() {
                             className="font-mono"
                             data-testid="input-compliance-csid-secret"
                           />
+                          <p className="text-xs text-muted-foreground">{isRTL ? "الصق قيمة secret كما وردت من ZATCA دون مسافات." : "Paste the secret value exactly as returned by ZATCA, no spaces."}</p>
                         </div>
                       </div>
 
@@ -1276,6 +1345,13 @@ export default function ZatcaSettingsPage() {
                             className="font-mono text-xs min-h-[80px]"
                             data-testid="textarea-production-csid"
                           />
+                          {!!manualCredentials.productionCsid && (() => {
+                            const ok = /^[A-Za-z0-9+/=\s]+$/.test(manualCredentials.productionCsid.trim());
+                            return ok
+                              ? <p className="text-xs text-green-600">{isRTL ? "التنسيق يبدو صحيحًا" : "Format looks valid"}</p>
+                              : <p className="text-xs text-destructive">{isRTL ? "يجب أن يحتوي على أحرف base64 فقط (A-Z، a-z، 0-9، +، /، =)." : "Must contain base64 characters only (A-Z, a-z, 0-9, +, /, =)."}</p>;
+                          })()}
+                          <p className="text-xs text-muted-foreground">{isRTL ? "الصق قيمة binarySecurityToken للإنتاج كما وردت من ZATCA تمامًا دون تعديل." : "Paste the production binarySecurityToken value exactly as returned by ZATCA, without editing."}</p>
                         </div>
                         <div className="space-y-2">
                           <Label>{(t as any).productionCsidSecretLabel || "Production CSID Secret"}</Label>
@@ -1287,6 +1363,7 @@ export default function ZatcaSettingsPage() {
                             className="font-mono"
                             data-testid="input-production-csid-secret"
                           />
+                          <p className="text-xs text-muted-foreground">{isRTL ? "الصق قيمة secret للإنتاج كما وردت من ZATCA دون مسافات." : "Paste the production secret value exactly as returned by ZATCA, no spaces."}</p>
                         </div>
                       </div>
 
