@@ -308,10 +308,13 @@ export async function processInvoiceForZatca(
     zatcaResponse = result;
 
     if (result.success) {
-      // Map "<status>_with_warnings" → keep the status as cleared/reported
-      // but mark as "warning" so the UI surfaces the warnings explicitly.
+      // ZATCA statuses (already normalized to lowercase by submitInvoiceToZatca):
+      //   cleared / reported               → cleared / reported
+      //   accepted with warnings ("warning") or "<status>_with_warnings"
+      //                                    → warning (still successful)
+      //   not cleared / not reported       → handled as rejection (result.success=false)
       const baseStatus = result.status.replace(/_with_warnings$/, "");
-      if (result.status.endsWith("_with_warnings")) {
+      if (result.status === "warning" || result.status.endsWith("_with_warnings")) {
         submissionStatus = "warning" as any;
       } else {
         submissionStatus = baseStatus === "cleared" ? "cleared" :
@@ -443,7 +446,7 @@ export async function retryPendingInvoices(restaurantId: string): Promise<{
 
     if (result.success) {
       succeeded++;
-      const isWarning = result.status.endsWith("_with_warnings");
+      const isWarning = result.status === "warning" || result.status.endsWith("_with_warnings");
       const baseStatus = result.status.replace(/_with_warnings$/, "");
       const newStatus: "cleared" | "reported" | "pending" | "warning" =
         isWarning ? "warning" :
@@ -905,9 +908,17 @@ export async function runComplianceChecks(
       errorMessage = `Authentication failed${ageInfo}. Your Compliance CSID may have expired. Please go back to Step 2, generate a new OTP, and request a new Compliance CSID. Then re-run compliance checks within 1 hour.`;
     }
 
+    // Normalize ZATCA status (capitalized: "Cleared"/"Reported"/"Not Cleared"/
+    // "Not Reported"/"Accepted with Warnings") to lowercase before comparing.
+    const normalizedComplianceStatus = response.data?.status?.toLowerCase();
+    const complianceRejected =
+      normalizedComplianceStatus === "not cleared" ||
+      normalizedComplianceStatus === "not reported" ||
+      normalizedComplianceStatus === "rejected";
+
     results.push({
       invoiceType: testType.label,
-      passed: response.success && response.data?.status !== "REJECTED",
+      passed: response.success && !complianceRejected,
       errors: is401 ? [{ code: "AUTH_EXPIRED", message: errorMessage }] :
               response.error ? [{ code: response.error.code, message: response.error.message }] : 
               response.data?.validationResults?.errorMessages,

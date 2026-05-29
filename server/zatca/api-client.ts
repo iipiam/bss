@@ -212,10 +212,12 @@ export class ZatcaApiClient {
   }
 
   async requestProductionCSID(complianceRequestId: string): Promise<ZatcaResponse<CSIDResponse>> {
+    // ZATCA requires compliance_request_id to be a string in the request body.
+    // Coerce defensively in case it was stored/passed as a number.
     return this.request<CSIDResponse>(
       "/production/csids",
       "POST",
-      { compliance_request_id: complianceRequestId }
+      { compliance_request_id: String(complianceRequestId) }
     );
   }
 
@@ -331,23 +333,53 @@ export async function submitInvoiceToZatca(
     }
   }
 
+  // ZATCA returns the status with capital letters: "Cleared", "Reported",
+  // "Not Cleared", "Not Reported", "Accepted with Warnings". Always normalize
+  // to lowercase before comparing.
+  const rawStatus = data.status?.toLowerCase() || "pending";
+
   // ZATCA returns HTTP 202 with the invoice cleared/reported "with warnings".
   // The response body still contains validationResults; surface as warning
   // state so the UI can display the warnings rather than a hard success.
   const hasWarnings =
     (data.validationResults?.warningMessages?.length || 0) > 0 ||
     (response.warnings?.length || 0) > 0;
-  let normalizedStatus = data.status?.toLowerCase() || "pending";
-  if (hasWarnings && (normalizedStatus === "cleared" || normalizedStatus === "reported")) {
-    normalizedStatus = `${normalizedStatus}_with_warnings`;
+
+  const isCleared = rawStatus === "cleared";
+  const isReported = rawStatus === "reported";
+  // "Accepted with Warnings" (HTTP 202) means the invoice WAS accepted on the
+  // reporting path — it is a success, not a failure.
+  const isAcceptedWithWarnings = rawStatus === "accepted with warnings";
+  // "Not Cleared" / "Not Reported" are explicit rejections from ZATCA.
+  const isRejected = rawStatus === "not cleared" || rawStatus === "not reported";
+
+  if (isRejected) {
+    return {
+      success: false,
+      status: "rejected",
+      errors: data.validationResults?.errorMessages
+        || (response.error ? [{ code: response.error.code, message: response.error.message }] : []),
+      warnings: data.validationResults?.warningMessages || response.warnings
+    };
+  }
+
+  let normalizedStatus: string;
+  if (isAcceptedWithWarnings) {
+    normalizedStatus = "warning";
+  } else if (isCleared || isReported) {
+    normalizedStatus = hasWarnings ? `${rawStatus}_with_warnings` : rawStatus;
+  } else {
+    normalizedStatus = rawStatus;
   }
 
   return {
     success: true,
     status: normalizedStatus,
     zatcaUuid: uuid,
-    clearedAt: data.status === "CLEARED" ? now : undefined,
-    reportedAt: data.status === "REPORTED" ? now : undefined,
+    clearedAt: isCleared ? now : undefined,
+    // "Accepted with Warnings" is a reporting-path success, so record it as
+    // reported as well.
+    reportedAt: (isReported || isAcceptedWithWarnings) ? now : undefined,
     clearedXml,
     errors: data.validationResults?.errorMessages,
     warnings: data.validationResults?.warningMessages || response.warnings
