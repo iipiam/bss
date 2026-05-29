@@ -423,13 +423,13 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   // but inserts UBLExtensions immediately before <cbc:ProfileID> and adds the
   // QR / cac:Signature blocks.
   // KSA-10 (rule BR-KSA-17): credit/debit notes (BT-3 = 381/383) MUST carry the
-  // reason for issuance. ZATCA accepts it as a header-level cbc:Note placed
-  // immediately after cbc:InvoiceTypeCode and before cbc:DocumentCurrencyCode
-  // (matches ZATCA's official SDK samples). Do NOT move this into cac:PaymentMeans
-  // or any other block. Always emit a non-empty value so the note is never blank.
-  const adjustmentNoteXml = isCreditOrDebitNote
+  // reason for issuance inside cac:PaymentMeans/cbc:InstructionNote. This is the
+  // exact location ZATCA validates against — a header-level cbc:Note is NOT
+  // accepted and causes "must contain the reason (KSA-10)" rejections. Always
+  // emit a non-empty value so the reason is never blank.
+  const instructionNoteXml = isCreditOrDebitNote
     ? `
-  <cbc:Note>${escapeXml((adjustmentReason && adjustmentReason.trim()) || "Adjustment")}</cbc:Note>`
+    <cbc:InstructionNote>${escapeXml((adjustmentReason && adjustmentReason.trim()) || "Adjustment")}</cbc:InstructionNote>`
     : "";
 
   const headerCommon = `<cbc:ProfileID>reporting:1.0</cbc:ProfileID>
@@ -437,7 +437,7 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   <cbc:UUID>${escapeXml(uuid)}</cbc:UUID>
   <cbc:IssueDate>${escapeXml(issueDate)}</cbc:IssueDate>
   <cbc:IssueTime>${escapeXml(issueTime)}</cbc:IssueTime>
-  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>${adjustmentNoteXml}
+  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
   <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
   <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>${billingReferenceXml}
   <cac:AdditionalDocumentReference>
@@ -481,7 +481,7 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
     <cbc:ActualDeliveryDate>${escapeXml(issueDate)}</cbc:ActualDeliveryDate>
   </cac:Delivery>
   <cac:PaymentMeans>
-    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
+    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>${instructionNoteXml}
   </cac:PaymentMeans>
   <cac:TaxTotal>
     <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
