@@ -580,6 +580,18 @@ export async function getProductionCSID(
     return { success: false, message: "ZATCA credentials are corrupted (contain placeholder values). Please use the 'Reset Onboarding' button and re-run Step 2 to get fresh credentials." };
   }
 
+  // ZATCA requires the production CSID to be requested only AFTER all
+  // compliance checks have passed. runComplianceChecks records success by
+  // setting onboardingStatus to "compliance_passed"; refuse to proceed
+  // otherwise so we never request production credentials with failing or
+  // never-run checks.
+  if (settings.onboardingStatus !== "compliance_passed" && settings.onboardingStatus !== "production_ready") {
+    return {
+      success: false,
+      message: "Compliance checks have not passed yet. Please run Step 3 (compliance checks) and ensure all checks pass before requesting the Production CSID.",
+    };
+  }
+
   if (complianceRequestId === "[CONFIGURED]") {
     return { success: false, message: "Compliance Request ID is corrupted. Please use the 'Reset Onboarding' button and re-run Step 2." };
   }

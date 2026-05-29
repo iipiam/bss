@@ -427,7 +427,12 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   <cbc:UUID>${escapeXml(uuid)}</cbc:UUID>
   <cbc:IssueDate>${escapeXml(issueDate)}</cbc:IssueDate>
   <cbc:IssueTime>${escapeXml(issueTime)}</cbc:IssueTime>
-  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>
+  <cbc:InvoiceTypeCode name="${invoiceTypeCodeName}">${invoiceTypeCode}</cbc:InvoiceTypeCode>${
+    isCreditOrDebitNote
+      ? `
+  <cbc:Note>${escapeXml((adjustmentReason && adjustmentReason.trim()) || "Adjustment")}</cbc:Note>`
+      : ""
+  }
   <cbc:DocumentCurrencyCode>SAR</cbc:DocumentCurrencyCode>
   <cbc:TaxCurrencyCode>SAR</cbc:TaxCurrencyCode>${billingReferenceXml}
   <cac:AdditionalDocumentReference>
@@ -471,12 +476,7 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
     <cbc:ActualDeliveryDate>${escapeXml(issueDate)}</cbc:ActualDeliveryDate>
   </cac:Delivery>
   <cac:PaymentMeans>
-    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>${
-    isCreditOrDebitNote
-      ? `
-    <cbc:InstructionNote>${escapeXml((adjustmentReason && adjustmentReason.trim()) || "Adjustment")}</cbc:InstructionNote>`
-      : ""
-  }
+    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>
   </cac:PaymentMeans>
   <cac:TaxTotal>
     <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
