@@ -1212,6 +1212,7 @@ export interface Translations {
   businessManagement: string;
   inspectionTools: string;
   appDiagram: string;
+  itTutorial?: string;
   businessManagementDescription: string;
   clientSubscriptions: string;
   subscriptionInvoices: string;
@@ -3767,6 +3768,7 @@ export const translations: Record<Language, Translations> = {
     businessManagement: 'Business Management',
     inspectionTools: 'Inspection Tools',
     appDiagram: 'App Diagram',
+    itTutorial: 'IT Operations Guide',
     businessManagementDescription: 'Manage client subscriptions, invoices, and VAT statements',
     clientSubscriptions: 'Client Subscriptions',
     subscriptionInvoices: 'Subscription Invoices',
@@ -6295,6 +6297,7 @@ export const translations: Record<Language, Translations> = {
     businessManagement: 'إدارة الأعمال',
     inspectionTools: 'أدوات الفحص',
     appDiagram: 'مخطط التطبيق',
+    itTutorial: 'دليل عمليات تقنية المعلومات',
     businessManagementDescription: 'إدارة اشتراكات العملاء والفواتير وبيانات ضريبة القيمة المضافة',
     clientSubscriptions: 'اشتراكات العملاء',
     subscriptionInvoices: 'فواتير الاشتراكات',

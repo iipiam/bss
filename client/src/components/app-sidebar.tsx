@@ -49,6 +49,7 @@ import {
   IdCard,
   Stethoscope,
   Network,
+  GraduationCap,
 } from "lucide-react";
 import logoImage from "@assets/Kinzhal_logo_1768960890639.png";
 import {
@@ -205,6 +206,7 @@ export function AppSidebar() {
     { title: t.zatcaSettings || "ZATCA E-Invoicing", url: "/zatca-settings", icon: Shield, testId: "zatca-settings", gradient: "from-green-600 to-emerald-500" },
     { title: t.inspectionTools || "Inspection Tools", url: "/inspection-tools", icon: Stethoscope, testId: "inspection-tools", gradient: "from-pink-500 to-rose-500" },
     { title: t.appDiagram || "App Diagram", url: "/app-diagram", icon: Network, testId: "app-diagram", gradient: "from-indigo-500 to-blue-500" },
+    { title: t.itTutorial || "IT Operations Guide", url: "/it-tutorial", icon: GraduationCap, testId: "it-tutorial", gradient: "from-pink-500 to-rose-500" },
   ];
 
   // Support menu items for IT Dashboard (visible only to IT accounts)
