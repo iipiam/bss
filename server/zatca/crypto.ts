@@ -88,6 +88,7 @@ interface CSRConfig {
   branchName: string;
   solutionName?: string;
   environment?: "sandbox" | "simulation" | "production";
+  businessCategory?: string;
 }
 
 function truncateToAsn1Max(value: string, maxBytes: number = 64): string {
@@ -116,6 +117,12 @@ function createCSRConfigFile(config: CSRConfig, configPath: string): void {
   const safeCommonName = truncateToAsn1Max(config.commonName);
   const safeBranchName = truncateToAsn1Max(config.branchName);
   const safeEgsSerial = truncateToAsn1Max(egsSerial);
+  // csr.industry.business.category — the industry/sector of the business (free
+  // text). Fall back to the EGS serial only when no industry is configured so
+  // the field is never empty (ZATCA requires a non-empty value here).
+  const safeBusinessCategory = truncateToAsn1Max(
+    (config.businessCategory && config.businessCategory.trim()) || egsSerial
+  );
   
   if (safeOrgName !== config.organizationName) {
     console.log(`[ZATCA CSR Config] Organization name truncated from ${Buffer.byteLength(config.organizationName, "utf8")} to ${Buffer.byteLength(safeOrgName, "utf8")} bytes: "${safeOrgName}"`);
@@ -155,7 +162,7 @@ SN = ${safeEgsSerial}
 UID = ${config.vatNumber}
 title = ${config.invoiceType}
 registeredAddress = ${safeBranchName}
-businessCategory = ${safeEgsSerial}
+businessCategory = ${safeBusinessCategory}
 `.trim();
 
   fs.writeFileSync(configPath, configContent);
@@ -172,7 +179,8 @@ export function generateCSR(
   egsUnitSerialNumber: string,
   branchName: string,
   solutionName: string = "BSS",
-  environment: "sandbox" | "simulation" | "production" = "sandbox"
+  environment: "sandbox" | "simulation" | "production" = "sandbox",
+  businessCategory: string = ""
 ): { csr: string; privateKey: string } {
   const cleanVat = (vatNumber || "").trim();
   if (!cleanVat || !/^\d{15}$/.test(cleanVat)) {
@@ -203,7 +211,8 @@ export function generateCSR(
       egsUnitSerialNumber,
       branchName,
       solutionName,
-      environment
+      environment,
+      businessCategory
     }, configPath);
 
     // ZATCA mandates the secp256r1 curve (a.k.a. prime256v1 / NIST P-256)

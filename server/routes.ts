@@ -15162,9 +15162,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         settings.csrOrganizationIdentifier || "",
         (settings.csrInvoiceType || "1100") as "1000" | "0100" | "1100",
         settings.csrSerialNumber || "",
-        settings.csrOrganizationUnitName || "",
+        settings.csrLocationAddress || settings.csrOrganizationUnitName || "",
         "BSS",
-        env
+        env,
+        settings.csrIndustryBusinessCategory || ""
       );
       
       await storage.updateZatcaSettings(targetRestaurantId, {
@@ -15248,9 +15249,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         settings.csrOrganizationIdentifier || "",
         (settings.csrInvoiceType || "1100") as "1000" | "0100" | "1100",
         settings.csrSerialNumber || "",
-        settings.csrOrganizationUnitName || "",
+        settings.csrLocationAddress || settings.csrOrganizationUnitName || "",
         "BSS",
-        env
+        env,
+        settings.csrIndustryBusinessCategory || ""
       );
 
       await storage.updateZatcaSettings(targetRestaurantId, {
