@@ -107,7 +107,6 @@ export function generatePhase2QrCode(
   certificateSignature: string
 ): string {
   const formattedVat = formatVatNumber(vatNumber);
-  const sigBuf = Buffer.from(signature, "base64");
   const pubBuf = Buffer.from(publicKey, "base64");
   const certSigBuf = Buffer.from(certificateSignature, "base64");
   return Buffer.concat([
@@ -123,7 +122,14 @@ export function generatePhase2QrCode(
     // "Invoice xml hash does not match with qr code invoice xml hash" for
     // simplified invoices (which keep our QR, unlike cleared standard ones).
     generateTlvData(6, invoiceHash),
-    generateTlvData(7, sigBuf),
+    // Tag 7 (ECDSA invoice signature) follows the SAME rule as Tag 6: it must
+    // carry the base64 *text* of the signature — the exact string ZATCA reads
+    // from <ds:SignatureValue> in the XML and compares against. Passing the
+    // base64-decoded raw signature bytes here makes ZATCA report "invoice
+    // signature value does not match with qr invoice signature value" for
+    // simplified invoices. Tags 8/9 (public key, cert signature) DO use the
+    // raw decoded bytes — only tags 6 and 7 are base64 text.
+    generateTlvData(7, signature),
     generateTlvData(8, pubBuf),
     generateTlvData(9, certSigBuf),
   ]).toString("base64");

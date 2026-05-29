@@ -1,3 +1,3 @@
 - [ZATCA invoice type code](zatca-invoice-type-code.md) — KSA-2 9-char transaction code + BT-3 doc type rules for invoice/credit/debit notes.
-- [ZATCA QR tag 6 encoding](zatca-qr-tag6-encoding.md) — invoice hash in Phase-2 QR tag 6 must be the 44-char base64 STRING, not decoded 32 bytes; mismatch hits simplified invoices only.
+- [ZATCA QR tags 6 & 7 encoding](zatca-qr-tag6-encoding.md) — Phase-2 QR tags 6 (hash) & 7 (signature) must be base64 STRINGS, not decoded bytes; tags 8/9 stay raw bytes; mismatch hits simplified invoices only.
 - [BSS VM deployment](bss-vm-deployment.md) — self-managed VM at /home/BSS via pm2 + git; repeatable deploy steps and ecosystem.config.cjs/.env requirements.
