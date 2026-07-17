@@ -316,7 +316,7 @@ function AppContent() {
   // Handle IT account redirects using useEffect to avoid render issues
   // IT accounts can access /it-dashboard, /performance, /it-account-management, /business-management, /zatca-settings, and /support routes
   useEffect(() => {
-    const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/zatca-settings', '/inspection-tools', '/app-diagram', '/it-tutorial'];
+    const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/zatca-settings', '/inspection-tools', '/app-diagram', '/it-tutorial', '/marketing'];
     const itOnlyRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/inspection-tools', '/app-diagram', '/it-tutorial'];
     const isAllowedRoute = allowedITRoutes.includes(location) || location.startsWith('/support');
 

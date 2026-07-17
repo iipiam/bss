@@ -237,7 +237,49 @@ const requireRestaurant = (req: any, res: any, next: any) => {
   next();
 };
 
+// ===== Marketing access for both client and IT accounts =====
+// IT accounts (restaurantId = null) get their own internal marketing
+// workspace stored under a dedicated sentinel restaurant row. Client
+// accounts keep the normal tenant scoping + 'marketing' permission checks.
+export const IT_MARKETING_RESTAURANT_ID = "it-internal-marketing";
+
+const marketingScope = (req: any): string =>
+  req.session.user?.restaurantId || IT_MARKETING_RESTAURANT_ID;
+
+const requireMarketing = (action?: 'add' | 'delete') => (req: any, res: any, next: any) => {
+  if (!req.session?.user) {
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+  // IT accounts: full access to their own internal marketing workspace.
+  // Explicit check (accountType + null restaurantId) to avoid any accidental
+  // bypass from malformed client sessions with a falsy restaurantId.
+  if (req.session.accountType === 'it' && !req.session.user.restaurantId) {
+    return next();
+  }
+  if (action) {
+    return requireAction('marketing', action)(req, res, next);
+  }
+  return requirePermission('marketing')(req, res, next);
+};
+
 export async function registerRoutes(app: Express, sessionParser: any): Promise<Server> {
+  // Ensure the internal IT marketing workspace row exists (sentinel restaurant).
+  // subscriptionStatus 'cancelled' keeps it out of IT client/business listings.
+  try {
+    await db.insert(restaurants).values({
+      id: IT_MARKETING_RESTAURANT_ID,
+      name: "BSS Internal (IT Marketing)",
+      nationalId: "0000000000",
+      commercialRegistration: "0000000000",
+      businessType: "restaurant",
+      type: "Internal",
+      subscriptionPlan: "yearly",
+      subscriptionStatus: "cancelled",
+    } as any).onConflictDoNothing();
+  } catch (err) {
+    console.error("[marketing] failed to ensure IT marketing workspace:", err);
+  }
+
   // Rate limiter for emergency bootstrap reset endpoint
   const bootstrapResetLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -20610,9 +20652,9 @@ ${phaseSchedules.length > 0 ? `
 
   // ====================== Marketing Tools (Multi-tenant) ======================
   // Discount Codes
-  app.get("/api/marketing/discount-codes", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
+  app.get("/api/marketing/discount-codes", requireAuth, requireMarketing(), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const codes = await storage.getMarketingDiscountCodes(restaurantId);
       res.json(codes);
     } catch (e: any) {
@@ -20620,9 +20662,9 @@ ${phaseSchedules.length > 0 ? `
     }
   });
 
-  app.post("/api/marketing/discount-codes", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+  app.post("/api/marketing/discount-codes", requireAuth, requireMarketing('add'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const body = {
         ...req.body,
         restaurantId,
@@ -20639,17 +20681,17 @@ ${phaseSchedules.length > 0 ? `
     }
   });
 
-  app.delete("/api/marketing/discount-codes/:id", requireAuth, requireRestaurant, requireAction('marketing', 'delete'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId!;
+  app.delete("/api/marketing/discount-codes/:id", requireAuth, requireMarketing('delete'), async (req, res) => {
+    const restaurantId = marketingScope(req);
     const ok = await storage.deleteMarketingDiscountCode(req.params.id, restaurantId);
     if (!ok) return res.status(404).json({ error: "Discount code not found" });
     res.status(204).send();
   });
 
   // QR scan counts for discount codes + bloggers (Marketing dashboards)
-  app.get("/api/marketing/qr-scans/stats", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
+  app.get("/api/marketing/qr-scans/stats", requireAuth, requireMarketing(), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const counts = await storage.getMarketingQrScanCounts(restaurantId);
       res.json(counts);
     } catch (e: any) {
@@ -20658,9 +20700,9 @@ ${phaseSchedules.length > 0 ? `
   });
 
   // Blogger commission tiers (list all for the tenant, used by Bloggers tab)
-  app.get("/api/marketing/commission-tiers", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
+  app.get("/api/marketing/commission-tiers", requireAuth, requireMarketing(), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const tiers = await storage.getAllBloggerCommissionTiers(restaurantId);
       res.json(tiers);
     } catch (e: any) {
@@ -20676,9 +20718,9 @@ ${phaseSchedules.length > 0 ? `
     })).max(50),
   });
 
-  app.put("/api/marketing/blogger-profiles/:id/commission-tiers", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+  app.put("/api/marketing/blogger-profiles/:id/commission-tiers", requireAuth, requireMarketing('add'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const blogger = await storage.getBloggerProfile(req.params.id, restaurantId);
       if (!blogger) return res.status(404).json({ error: "Blogger not found" });
       const { tiers } = commissionTiersBodySchema.parse(req.body);
@@ -20774,9 +20816,9 @@ ${phaseSchedules.length > 0 ? `
   });
 
   // Broadcast Templates
-  app.get("/api/marketing/broadcast-templates", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
+  app.get("/api/marketing/broadcast-templates", requireAuth, requireMarketing(), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const templates = await storage.getMarketingBroadcastTemplates(restaurantId);
       res.json(templates);
     } catch (e: any) {
@@ -20784,9 +20826,9 @@ ${phaseSchedules.length > 0 ? `
     }
   });
 
-  app.post("/api/marketing/broadcast-templates", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+  app.post("/api/marketing/broadcast-templates", requireAuth, requireMarketing('add'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const data = insertMarketingBroadcastTemplateSchema.parse({ ...req.body, restaurantId });
       const created = await storage.createMarketingBroadcastTemplate(data);
       res.status(201).json(created);
@@ -20798,22 +20840,22 @@ ${phaseSchedules.length > 0 ? `
     }
   });
 
-  app.delete("/api/marketing/broadcast-templates/:id", requireAuth, requireRestaurant, requireAction('marketing', 'delete'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId!;
+  app.delete("/api/marketing/broadcast-templates/:id", requireAuth, requireMarketing('delete'), async (req, res) => {
+    const restaurantId = marketingScope(req);
     const ok = await storage.deleteMarketingBroadcastTemplate(req.params.id, restaurantId);
     if (!ok) return res.status(404).json({ error: "Broadcast template not found" });
     res.status(204).send();
   });
 
   // Influencer Profiles (Fake Followers Detector)
-  app.get("/api/marketing/influencer-profiles", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId!;
+  app.get("/api/marketing/influencer-profiles", requireAuth, requireMarketing(), async (req, res) => {
+    const restaurantId = marketingScope(req);
     const items = await storage.getInfluencerProfiles(restaurantId);
     res.json(items);
   });
-  app.post("/api/marketing/influencer-profiles", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+  app.post("/api/marketing/influencer-profiles", requireAuth, requireMarketing('add'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const data = insertInfluencerProfileSchema.parse({ ...req.body, restaurantId });
       const created = await storage.createInfluencerProfile(data);
       res.json(created);
@@ -20821,9 +20863,9 @@ ${phaseSchedules.length > 0 ? `
       res.status(400).json({ error: err?.message || "Invalid data" });
     }
   });
-  app.patch("/api/marketing/influencer-profiles/:id", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+  app.patch("/api/marketing/influencer-profiles/:id", requireAuth, requireMarketing('add'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const data = insertInfluencerProfileSchema.partial().omit({ restaurantId: true } as any).parse(req.body);
       const updated = await storage.updateInfluencerProfile(req.params.id, restaurantId, data);
       if (!updated) return res.status(404).json({ error: "Not found" });
@@ -20832,22 +20874,22 @@ ${phaseSchedules.length > 0 ? `
       res.status(400).json({ error: err?.message || "Invalid data" });
     }
   });
-  app.delete("/api/marketing/influencer-profiles/:id", requireAuth, requireRestaurant, requireAction('marketing', 'delete'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId!;
+  app.delete("/api/marketing/influencer-profiles/:id", requireAuth, requireMarketing('delete'), async (req, res) => {
+    const restaurantId = marketingScope(req);
     const ok = await storage.deleteInfluencerProfile(req.params.id, restaurantId);
     if (!ok) return res.status(404).json({ error: "Not found" });
     res.status(204).send();
   });
 
   // Blogger Profiles (Marketing > Bloggers tab)
-  app.get("/api/marketing/blogger-profiles", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId!;
+  app.get("/api/marketing/blogger-profiles", requireAuth, requireMarketing(), async (req, res) => {
+    const restaurantId = marketingScope(req);
     const items = await storage.getBloggerProfiles(restaurantId);
     res.json(items);
   });
-  app.post("/api/marketing/blogger-profiles", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+  app.post("/api/marketing/blogger-profiles", requireAuth, requireMarketing('add'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const data = insertBloggerProfileSchema.parse({ ...req.body, restaurantId });
       const created = await storage.createBloggerProfile(data);
       res.json(created);
@@ -20855,9 +20897,9 @@ ${phaseSchedules.length > 0 ? `
       res.status(400).json({ error: err?.message || "Invalid data" });
     }
   });
-  app.patch("/api/marketing/blogger-profiles/:id", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+  app.patch("/api/marketing/blogger-profiles/:id", requireAuth, requireMarketing('add'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const data = insertBloggerProfileSchema.partial().omit({ restaurantId: true } as any).parse(req.body);
       const updated = await storage.updateBloggerProfile(req.params.id, restaurantId, data);
       if (!updated) return res.status(404).json({ error: "Not found" });
@@ -20866,15 +20908,15 @@ ${phaseSchedules.length > 0 ? `
       res.status(400).json({ error: err?.message || "Invalid data" });
     }
   });
-  app.delete("/api/marketing/blogger-profiles/:id", requireAuth, requireRestaurant, requireAction('marketing', 'delete'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId!;
+  app.delete("/api/marketing/blogger-profiles/:id", requireAuth, requireMarketing('delete'), async (req, res) => {
+    const restaurantId = marketingScope(req);
     const ok = await storage.deleteBloggerProfile(req.params.id, restaurantId);
     if (!ok) return res.status(404).json({ error: "Not found" });
     res.status(204).send();
   });
-  app.get("/api/marketing/influencer-profiles/pdf", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
+  app.get("/api/marketing/influencer-profiles/pdf", requireAuth, requireMarketing(), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const items = await storage.getInfluencerProfiles(restaurantId);
       const esc = (s: any) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" } as any)[c]);
       const avgFake = items.length ? (items.reduce((s, i) => s + Number(i.fakePct || 0), 0) / items.length).toFixed(1) : "0.0";
@@ -20930,9 +20972,9 @@ ${phaseSchedules.length > 0 ? `
   });
 
   // Promo Poster PDF (A4) generated via Puppeteer
-  app.post("/api/marketing/poster-pdf", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+  app.post("/api/marketing/poster-pdf", requireAuth, requireMarketing('add'), async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
+      const restaurantId = marketingScope(req);
       const rawTitle = String(req.body?.title || "").slice(0, 200);
       const rawBody = String(req.body?.body || "").slice(0, 2000);
       const rawPrice = String(req.body?.price || "").slice(0, 50);
