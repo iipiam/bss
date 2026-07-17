@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, ChefHat, Trash2, Download, Upload, FileDown, GripVertical, Edit, X } from "lucide-react";
+import { Plus, ChefHat, Trash2, Download, Upload, FileDown, GripVertical, Edit, X, Search, Calculator } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -201,6 +201,22 @@ export default function Recipes() {
   }, [recipesData]);
   
   const [localRecipes, setLocalRecipes] = useState<Recipe[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const displayedRecipes = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return localRecipes;
+    return localRecipes.filter((r) => r.name.toLowerCase().includes(q));
+  }, [localRecipes, searchQuery]);
+
+  const recipeStats = useMemo(() => {
+    const count = localRecipes.length;
+    const totalCost = localRecipes.reduce((sum, r) => sum + (parseFloat(r.cost as any) || 0), 0);
+    return {
+      count,
+      avgCost: count > 0 ? totalCost / count : 0,
+    };
+  }, [localRecipes]);
   
   // Sync localRecipes with recipes when recipes changes
   useEffect(() => {
@@ -841,22 +857,66 @@ export default function Recipes() {
         </div>
       </div>
 
+      <div className={`grid gap-4 ${layout.isMobile ? 'grid-cols-1' : 'grid-cols-2'}`}>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-md bg-primary/10">
+                <ChefHat className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Total Recipes</p>
+                <p className="text-2xl font-bold font-mono" data-testid="text-recipe-count">{recipeStats.count}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-md bg-primary/10">
+                <Calculator className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Average Recipe Cost</p>
+                <p className="text-2xl font-bold font-mono" data-testid="text-avg-recipe-cost">{recipeStats.avgCost.toFixed(2)} SAR</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search recipes by name..."
+          className="pl-9"
+          data-testid="input-search-recipes"
+        />
+      </div>
+
+      {displayedRecipes.length === 0 && searchQuery.trim() !== "" ? (
+        <p className="text-muted-foreground text-center py-8" data-testid="text-no-recipes-found">No recipes found for "{searchQuery}"</p>
+      ) : (
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
         <SortableContext
-          items={localRecipes.map((r) => r.id)}
+          items={displayedRecipes.map((r) => r.id)}
           strategy={verticalListSortingStrategy}
         >
           <div className="grid gap-6">
-            {localRecipes.map((recipe) => (
+            {displayedRecipes.map((recipe) => (
               <SortableRecipeCard key={recipe.id} recipe={recipe} onEdit={handleEditRecipe} onDelete={handleDeleteClick} />
             ))}
           </div>
         </SortableContext>
       </DndContext>
+      )}
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

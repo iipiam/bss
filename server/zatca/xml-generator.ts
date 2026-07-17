@@ -69,8 +69,12 @@ function escapeXml(str: string): string {
     .replace(/'/g, "&apos;");
 }
 
+// ZATCA rounding rule (XML Implementation Standard §10): "half-up", i.e.
+// round halves away from zero, to exactly `decimals` places.
 function formatDecimal(value: number, decimals: number = 2): string {
-  return value.toFixed(decimals);
+  const factor = Math.pow(10, decimals);
+  const rounded = (Math.sign(value) || 1) * Math.round(Math.abs(value) * factor + Number.EPSILON) / factor;
+  return rounded.toFixed(decimals);
 }
 
 export function formatVatNumber(vatNumber: string): string {
@@ -169,18 +173,18 @@ export function generateInvoiceTypeCodeName(
   invoiceType: "standard" | "simplified",
   documentType?: "invoice" | "credit_note" | "debit_note"
 ): string {
-  // KSA-2 invoice transaction code, 9 characters (NNPNESBCG) — required by
-  // ZATCA's current validator:
+  // KSA-2 invoice transaction code, 7 characters (NNPNESB) — matches the
+  // official ZATCA SDK R3.4.7 samples (e.g. "0100000" standard, "0200000"
+  // simplified, "0110000" 3rd-party, "0100100" export):
   //   positions 1-2 (NN) = invoice subtype — "01" for standard tax invoice,
   //   "02" for simplified tax invoice.
   //   position 3 (P) = 3rd-party, 4 (N) = nominal, 5 (E) = exports,
-  //   6 (S) = summary, 7 (B) = self-billed, 8 (C) = continuous supply,
-  //   9 (G) = B2G; all default to "0".
+  //   6 (S) = summary, 7 (B) = self-billed; all default to "0".
   // The document type (388/381/383) is BT-3 and is encoded ONLY in the
   // element value, never in this @name attribute — credit/debit notes keep
   // the same subtype prefix as their underlying invoice.
   const nn = invoiceType === "standard" ? "01" : "02";
-  return `${nn}0000000`; // 9 characters total: NN + PNESBCG
+  return `${nn}00000`; // 7 characters total: NN + PNESB
 }
 
 /**
@@ -481,7 +485,7 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
     <cbc:ActualDeliveryDate>${escapeXml(issueDate)}</cbc:ActualDeliveryDate>
   </cac:Delivery>
   <cac:PaymentMeans>
-    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : "30"}</cbc:PaymentMeansCode>${instructionNoteXml}
+    <cbc:PaymentMeansCode>${paymentMethod === "cash" ? "10" : paymentMethod === "card" ? "48" : paymentMethod === "bank_transfer" ? "42" : "30"}</cbc:PaymentMeansCode>${instructionNoteXml}
   </cac:PaymentMeans>
   <cac:TaxTotal>
     <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>

@@ -202,6 +202,12 @@ import {
   type MarketingDiscountCode,
   type InsertMarketingDiscountCode,
   marketingDiscountCodes,
+  type MarketingQrScan,
+  type InsertMarketingQrScan,
+  marketingQrScans,
+  type BloggerCommissionTier,
+  type InsertBloggerCommissionTier,
+  bloggerCommissionTiers,
   type MarketingBroadcastTemplate,
   type InsertMarketingBroadcastTemplate,
   marketingBroadcastTemplates,
@@ -797,6 +803,15 @@ export interface IStorage {
 
   // Marketing - Discount Codes (MULTI-TENANT)
   getMarketingDiscountCodes(restaurantId: string): Promise<MarketingDiscountCode[]>;
+  getMarketingDiscountCodeByCode(restaurantId: string, code: string): Promise<MarketingDiscountCode | undefined>;
+  incrementDiscountCodeUsage(id: string, restaurantId: string): Promise<void>;
+  createMarketingQrScan(scan: InsertMarketingQrScan): Promise<MarketingQrScan>;
+  getMarketingQrScanCounts(restaurantId: string): Promise<Array<{ targetType: string; targetId: string; count: number }>>;
+  getMarketingQrScanCount(restaurantId: string, targetType: string, targetId: string): Promise<number>;
+  getBloggerProfile(id: string, restaurantId: string): Promise<BloggerProfile | undefined>;
+  getBloggerCommissionTiers(restaurantId: string, bloggerId: string): Promise<BloggerCommissionTier[]>;
+  getAllBloggerCommissionTiers(restaurantId: string): Promise<BloggerCommissionTier[]>;
+  setBloggerCommissionTiers(restaurantId: string, bloggerId: string, tiers: Array<{ fromScans: number; toScans: number | null; ratePerScan: string }>): Promise<BloggerCommissionTier[]>;
   createMarketingDiscountCode(code: InsertMarketingDiscountCode): Promise<MarketingDiscountCode>;
   deleteMarketingDiscountCode(id: string, restaurantId: string): Promise<boolean>;
 
@@ -6531,6 +6546,72 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(marketingDiscountCodes.id, id), eq(marketingDiscountCodes.restaurantId, restaurantId)))
       .returning();
     return result.length > 0;
+  }
+  async getMarketingDiscountCodeByCode(restaurantId: string, code: string): Promise<MarketingDiscountCode | undefined> {
+    const rows = await db.select().from(marketingDiscountCodes)
+      .where(and(eq(marketingDiscountCodes.restaurantId, restaurantId), eq(marketingDiscountCodes.code, code)));
+    return rows[0];
+  }
+  async incrementDiscountCodeUsage(id: string, restaurantId: string): Promise<void> {
+    await db.update(marketingDiscountCodes)
+      .set({ usageCount: sql`${marketingDiscountCodes.usageCount} + 1` })
+      .where(and(eq(marketingDiscountCodes.id, id), eq(marketingDiscountCodes.restaurantId, restaurantId)));
+  }
+
+  // Marketing - QR Scans
+  async createMarketingQrScan(scan: InsertMarketingQrScan): Promise<MarketingQrScan> {
+    const [created] = await db.insert(marketingQrScans).values(scan).returning();
+    return created;
+  }
+  async getMarketingQrScanCounts(restaurantId: string): Promise<Array<{ targetType: string; targetId: string; count: number }>> {
+    const rows = await db.select({
+      targetType: marketingQrScans.targetType,
+      targetId: marketingQrScans.targetId,
+      count: sql<number>`count(*)::int`,
+    }).from(marketingQrScans)
+      .where(eq(marketingQrScans.restaurantId, restaurantId))
+      .groupBy(marketingQrScans.targetType, marketingQrScans.targetId);
+    return rows;
+  }
+  async getMarketingQrScanCount(restaurantId: string, targetType: string, targetId: string): Promise<number> {
+    const rows = await db.select({ count: sql<number>`count(*)::int` }).from(marketingQrScans)
+      .where(and(
+        eq(marketingQrScans.restaurantId, restaurantId),
+        eq(marketingQrScans.targetType, targetType),
+        eq(marketingQrScans.targetId, targetId),
+      ));
+    return rows[0]?.count ?? 0;
+  }
+
+  // Blogger Commission Tiers
+  async getBloggerProfile(id: string, restaurantId: string): Promise<BloggerProfile | undefined> {
+    const rows = await db.select().from(bloggerProfiles)
+      .where(and(eq(bloggerProfiles.id, id), eq(bloggerProfiles.restaurantId, restaurantId)));
+    return rows[0];
+  }
+  async getBloggerCommissionTiers(restaurantId: string, bloggerId: string): Promise<BloggerCommissionTier[]> {
+    return db.select().from(bloggerCommissionTiers)
+      .where(and(eq(bloggerCommissionTiers.restaurantId, restaurantId), eq(bloggerCommissionTiers.bloggerId, bloggerId)))
+      .orderBy(bloggerCommissionTiers.sortOrder);
+  }
+  async getAllBloggerCommissionTiers(restaurantId: string): Promise<BloggerCommissionTier[]> {
+    return db.select().from(bloggerCommissionTiers)
+      .where(eq(bloggerCommissionTiers.restaurantId, restaurantId))
+      .orderBy(bloggerCommissionTiers.sortOrder);
+  }
+  async setBloggerCommissionTiers(restaurantId: string, bloggerId: string, tiers: Array<{ fromScans: number; toScans: number | null; ratePerScan: string }>): Promise<BloggerCommissionTier[]> {
+    await db.delete(bloggerCommissionTiers)
+      .where(and(eq(bloggerCommissionTiers.restaurantId, restaurantId), eq(bloggerCommissionTiers.bloggerId, bloggerId)));
+    if (tiers.length === 0) return [];
+    const values = tiers.map((t, i) => ({
+      restaurantId,
+      bloggerId,
+      fromScans: t.fromScans,
+      toScans: t.toScans,
+      ratePerScan: t.ratePerScan,
+      sortOrder: i,
+    }));
+    return db.insert(bloggerCommissionTiers).values(values).returning();
   }
 
   // Marketing - Broadcast Templates

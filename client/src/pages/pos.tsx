@@ -46,7 +46,163 @@ import { useBusinessType } from "@/hooks/useBusinessType";
 import type { MenuItem, DeliveryApp, Addon } from "@shared/schema";
 import { calcDeliveryBreakdown } from "@shared/deliveryCalc";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calculator } from "lucide-react";
+import { Calculator, QrCode, Ticket } from "lucide-react";
+import { useRef } from "react";
+import { Html5Qrcode } from "html5-qrcode";
+
+interface AppliedDiscount {
+  id: string;
+  code: string;
+  discountType: string;
+  discountValue: string;
+}
+
+function QrScanDialog({
+  open,
+  onOpenChange,
+  onResult,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onResult: (result: any) => void;
+}) {
+  const { toast } = useToast();
+  const [manualCode, setManualCode] = useState("");
+  const [scanning, setScanning] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const processingRef = useRef(false);
+
+  const stopScanner = async () => {
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+      } catch {}
+      try {
+        scannerRef.current.clear();
+      } catch {}
+      scannerRef.current = null;
+    }
+    setScanning(false);
+  };
+
+  const submitPayload = async (payload: string, source: "camera" | "manual") => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setSubmitting(true);
+    try {
+      const res = await apiRequest("POST", "/api/pos/qr-scan", { payload, source });
+      const data = await res.json();
+      onResult(data);
+      onOpenChange(false);
+    } catch (e: any) {
+      let message = e?.message || "Failed to process code";
+      try {
+        const parsed = JSON.parse(message.replace(/^\d+:\s*/, ""));
+        if (parsed?.error) message = parsed.error;
+      } catch {}
+      toast({ title: "Scan failed", description: message, variant: "destructive" });
+    } finally {
+      processingRef.current = false;
+      setSubmitting(false);
+    }
+  };
+
+  const startScanner = async () => {
+    try {
+      setScanning(true);
+      await new Promise((r) => setTimeout(r, 50));
+      const scanner = new Html5Qrcode("pos-qr-reader");
+      scannerRef.current = scanner;
+      await scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        async (decodedText) => {
+          await stopScanner();
+          await submitPayload(decodedText, "camera");
+        },
+        () => {},
+      );
+    } catch (e: any) {
+      setScanning(false);
+      toast({
+        title: "Camera unavailable",
+        description: "Could not access the camera. You can enter the code manually below.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (!open) {
+      stopScanner();
+      setManualCode("");
+    }
+    return () => {
+      stopScanner();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open]);
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Scan QR Code</DialogTitle>
+          <DialogDescription>
+            Scan a discount or blogger QR code with the camera, or type the discount code manually.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            {scanning ? (
+              <div className="space-y-2">
+                <div id="pos-qr-reader" className="w-full rounded-md overflow-hidden" />
+                <Button variant="outline" className="w-full" onClick={stopScanner} data-testid="button-stop-scan">
+                  Stop camera
+                </Button>
+              </div>
+            ) : (
+              <Button className="w-full" onClick={startScanner} disabled={submitting} data-testid="button-start-scan">
+                <QrCode className="h-4 w-4 mr-2" />
+                Scan with camera
+              </Button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Separator className="flex-1" />
+            <span className="text-xs text-muted-foreground">OR</span>
+            <Separator className="flex-1" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="manual-code">Enter code manually</Label>
+            <div className="flex gap-2">
+              <Input
+                id="manual-code"
+                value={manualCode}
+                onChange={(e) => setManualCode(e.target.value)}
+                placeholder="e.g. SUMMER20"
+                data-testid="input-manual-code"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && manualCode.trim()) {
+                    submitPayload(manualCode.trim(), "manual");
+                  }
+                }}
+              />
+              <Button
+                onClick={() => submitPayload(manualCode.trim(), "manual")}
+                disabled={!manualCode.trim() || submitting}
+                data-testid="button-apply-manual-code"
+              >
+                {submitting ? "Checking..." : "Apply"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 interface CartItemAddon {
   id: string;
@@ -163,6 +319,8 @@ export default function POS() {
   const [itemQuantity, setItemQuantity] = useState(1);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [pendingOrderData, setPendingOrderData] = useState<any>(null);
+  const [scanDialogOpen, setScanDialogOpen] = useState(false);
+  const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
 
   const { data: menuItems = [], isLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
@@ -345,6 +503,7 @@ export default function POS() {
       setTableNumber("");
       setSelectedDeliveryAppId(null);
       setEarningsDecreaseApplied(false);
+      setAppliedDiscount(null);
 
       // Invalidate queries immediately
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
@@ -580,10 +739,19 @@ export default function POS() {
   };
 
   // Calculate base subtotal (items with mark-up applied)
-  const baseSubtotal = cartItems.reduce(
+  const rawBaseSubtotal = cartItems.reduce(
     (sum, item) => sum + calculateItemTotal(item),
     0,
   );
+
+  // Discount from a scanned/entered marketing code, applied to the item subtotal
+  const discountAmount = appliedDiscount
+    ? appliedDiscount.discountType === "percent"
+      ? Math.min(rawBaseSubtotal, (rawBaseSubtotal * parseFloat(appliedDiscount.discountValue || "0")) / 100)
+      : Math.min(rawBaseSubtotal, parseFloat(appliedDiscount.discountValue || "0"))
+    : 0;
+
+  const baseSubtotal = rawBaseSubtotal - discountAmount;
 
   // The cart stores VAT-exclusive base prices (item.basePrice). The customer
   // pays the VAT-inclusive price on the delivery app, and the subsidy tiers
@@ -666,6 +834,25 @@ export default function POS() {
     });
   };
 
+  const handleScanResult = (result: any) => {
+    if (result?.type === "discount_code" && result.discountCode) {
+      setAppliedDiscount(result.discountCode);
+      toast({
+        title: "Discount applied",
+        description: `Code ${result.discountCode.code}: ${
+          result.discountCode.discountType === "percent"
+            ? `${parseFloat(result.discountCode.discountValue).toFixed(0)}% off`
+            : `${parseFloat(result.discountCode.discountValue).toFixed(2)} ${t.sar} off`
+        }`,
+      });
+    } else if (result?.type === "blogger" && result.blogger) {
+      toast({
+        title: "Blogger scan recorded",
+        description: `${result.blogger.name}${result.blogger.handle ? ` (@${result.blogger.handle})` : ""} — total scans: ${result.scanCount}`,
+      });
+    }
+  };
+
   const handleCheckout = () => {
     if (cartItems.length === 0) {
       toast({
@@ -696,6 +883,8 @@ export default function POS() {
         addons: item.addons,
       })),
       baseSubtotal: baseSubtotal.toFixed(2),
+      discountCode: appliedDiscount ? appliedDiscount.code : undefined,
+      discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : undefined,
       deliveryCommission:
         deliveryCommission > 0 ? deliveryCommission.toFixed(2) : undefined,
       deliveryCommissionRate: selectedDeliveryApp
@@ -1102,6 +1291,36 @@ export default function POS() {
                     {(selectedDeliveryApp ? deliveryGross : baseSubtotal).toFixed(2)} {t.sar}
                   </span>
                 </div>
+                {appliedDiscount && discountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-muted-foreground" data-testid="text-discount-mobile">
+                    <span className="flex items-center gap-1">
+                      <Ticket className="h-3.5 w-3.5" />
+                      {appliedDiscount.code}
+                      <button
+                        type="button"
+                        onClick={() => setAppliedDiscount(null)}
+                        className="ml-1 text-destructive"
+                        data-testid="button-remove-discount-mobile"
+                        aria-label="Remove discount"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
+                    <span className="font-mono">
+                      -{discountAmount.toFixed(2)} {t.sar}
+                    </span>
+                  </div>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setScanDialogOpen(true)}
+                  data-testid="button-scan-qr-mobile"
+                >
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Scan QR / Discount Code
+                </Button>
                 {selectedDeliveryApp && deliveryCommission > 0 && (
                   <div className="flex justify-between text-sm text-muted-foreground" data-testid="text-commission">
                     <span>
@@ -1520,6 +1739,7 @@ export default function POS() {
             </div>
           </div>
         )}
+      <QrScanDialog open={scanDialogOpen} onOpenChange={setScanDialogOpen} onResult={handleScanResult} />
       </div>
       </TooltipProvider>
     );
@@ -1816,6 +2036,36 @@ export default function POS() {
                 {(selectedDeliveryApp ? deliveryGross : baseSubtotal).toFixed(2)} {t.sar}
               </span>
             </div>
+            {appliedDiscount && discountAmount > 0 && (
+              <div className="flex justify-between text-muted-foreground" data-testid="text-discount-desktop">
+                <span className="flex items-center gap-1">
+                  <Ticket className="h-4 w-4" />
+                  {appliedDiscount.code}
+                  <button
+                    type="button"
+                    onClick={() => setAppliedDiscount(null)}
+                    className="ml-1 text-destructive"
+                    data-testid="button-remove-discount-desktop"
+                    aria-label="Remove discount"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </span>
+                <span className="font-mono">
+                  -{discountAmount.toFixed(2)} {t.sar}
+                </span>
+              </div>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => setScanDialogOpen(true)}
+              data-testid="button-scan-qr-desktop"
+            >
+              <QrCode className="h-4 w-4 mr-2" />
+              Scan QR / Discount Code
+            </Button>
             {selectedDeliveryApp && deliveryCommission > 0 && (
               <div className="flex justify-between text-muted-foreground" data-testid="text-commission-desktop">
                 <span>
@@ -2413,6 +2663,8 @@ export default function POS() {
           )}
         </DialogContent>
       </Dialog>
+
+      <QrScanDialog open={scanDialogOpen} onOpenChange={setScanDialogOpen} onResult={handleScanResult} />
     </div>
     </TooltipProvider>
   );

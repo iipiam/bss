@@ -3983,7 +3983,45 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const restaurantId = req.session.user!.restaurantId!;
       const createdBy = req.session.user!.id;
       const data = insertOrderSchema.parse({ ...req.body, restaurantId, createdBy });
-      
+
+      // Server-authoritative discount validation: never trust client-provided
+      // discountCode/discountAmount. Re-validate the code and recompute the
+      // discount from the order items; usage is only consumed here (not at scan).
+      let appliedDiscountCodeId: string | null = null;
+      if (data.discountCode) {
+        const code = await storage.getMarketingDiscountCodeByCode(restaurantId, data.discountCode);
+        if (!code || !code.active) {
+          return res.status(400).json({ error: "Discount code is invalid or inactive" });
+        }
+        if (code.expiresAt && new Date(code.expiresAt) < new Date()) {
+          return res.status(400).json({ error: "Discount code has expired" });
+        }
+        if (code.usageCap !== null && code.usageCap !== undefined && code.usageCount >= code.usageCap) {
+          return res.status(400).json({ error: "Discount code usage limit reached" });
+        }
+        const itemsForDiscount = Array.isArray(data.items) ? (data.items as any[]) : [];
+        let itemsSubtotal = itemsForDiscount.reduce((sum, item) => {
+          const addons = Array.isArray(item.addons)
+            ? item.addons.reduce((a: number, ad: any) => a + (Number(ad?.price) || 0), 0)
+            : 0;
+          return sum + ((Number(item.price) || 0) + addons) * (Number(item.quantity) || 0);
+        }, 0);
+        if (data.deliveryAppId) {
+          const app = await storage.getDeliveryApp(data.deliveryAppId);
+          if (app && app.restaurantId === restaurantId) {
+            itemsSubtotal *= 1 + (parseFloat(app.markUp || "0") / 100);
+          }
+        }
+        const value = parseFloat(code.discountValue || "0");
+        const serverDiscount = code.discountType === "percent"
+          ? Math.min(itemsSubtotal, (itemsSubtotal * value) / 100)
+          : Math.min(itemsSubtotal, value);
+        data.discountAmount = (Math.round(serverDiscount * 100) / 100).toFixed(2);
+        appliedDiscountCodeId = code.id;
+      } else {
+        data.discountAmount = "0";
+      }
+
       const { orderProcessingService } = await import("./orderProcessingService");
       const orderItems = Array.isArray(data.items) ? data.items.map((item: any) => ({
         id: item.id,
@@ -4007,7 +4045,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       
       const order = await storage.createOrder(data);
-      
+
+      if (appliedDiscountCodeId) {
+        storage.incrementDiscountCodeUsage(appliedDiscountCodeId, restaurantId)
+          .catch((err) => console.error("Failed to increment discount code usage:", err));
+      }
+
       try {
         if (prepResult.stockRequirements) {
           await orderProcessingService.finalizeOrderWithInventory(
@@ -8664,7 +8707,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const xml = generateUnsignedInvoiceXml(zatcaData);
       
       res.setHeader('Content-Type', 'application/xml');
-      res.setHeader('Content-Disposition', `attachment; filename=invoice-${invoice.invoiceNumber}.xml`);
+      // ZATCA file naming convention: {VAT}_{YYYYMMDDTHHMMSS}_{invoiceNumber}.xml
+      // (invoice number with special characters replaced by dashes)
+      const vatForFile = (restaurant.taxNumber || "300000000000003").replace(/\D/g, "");
+      const tsForFile = `${issueDate.replace(/-/g, "")}T${issueTime.replace(/:/g, "")}`;
+      const invNumForFile = invoice.invoiceNumber.replace(/[^A-Za-z0-9]/g, "-");
+      res.setHeader('Content-Disposition', `attachment; filename=${vatForFile}_${tsForFile}_${invNumForFile}.xml`);
       res.send(xml);
     } catch (error) {
       console.error("Invoice XML download error:", error);
@@ -20596,6 +20644,133 @@ ${phaseSchedules.length > 0 ? `
     const ok = await storage.deleteMarketingDiscountCode(req.params.id, restaurantId);
     if (!ok) return res.status(404).json({ error: "Discount code not found" });
     res.status(204).send();
+  });
+
+  // QR scan counts for discount codes + bloggers (Marketing dashboards)
+  app.get("/api/marketing/qr-scans/stats", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const counts = await storage.getMarketingQrScanCounts(restaurantId);
+      res.json(counts);
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || "Failed to fetch scan stats" });
+    }
+  });
+
+  // Blogger commission tiers (list all for the tenant, used by Bloggers tab)
+  app.get("/api/marketing/commission-tiers", requireAuth, requireRestaurant, requirePermission('marketing'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const tiers = await storage.getAllBloggerCommissionTiers(restaurantId);
+      res.json(tiers);
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || "Failed to fetch commission tiers" });
+    }
+  });
+
+  const commissionTiersBodySchema = z.object({
+    tiers: z.array(z.object({
+      fromScans: z.number().int().min(1),
+      toScans: z.number().int().min(1).nullable(),
+      ratePerScan: z.union([z.number().min(0), z.string()]).transform((v) => String(v)),
+    })).max(50),
+  });
+
+  app.put("/api/marketing/blogger-profiles/:id/commission-tiers", requireAuth, requireRestaurant, requireAction('marketing', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const blogger = await storage.getBloggerProfile(req.params.id, restaurantId);
+      if (!blogger) return res.status(404).json({ error: "Blogger not found" });
+      const { tiers } = commissionTiersBodySchema.parse(req.body);
+      // Sort by fromScans and validate ranges do not overlap
+      const sorted = [...tiers].sort((a, b) => a.fromScans - b.fromScans);
+      for (let i = 0; i < sorted.length; i++) {
+        const t = sorted[i];
+        if (t.toScans !== null && t.toScans < t.fromScans) {
+          return res.status(400).json({ error: "Tier 'to' must be greater than or equal to 'from'" });
+        }
+        if (i > 0) {
+          const prev = sorted[i - 1];
+          if (prev.toScans === null || t.fromScans <= prev.toScans) {
+            return res.status(400).json({ error: "Commission tiers must not overlap" });
+          }
+        }
+      }
+      const saved = await storage.setBloggerCommissionTiers(restaurantId, req.params.id, sorted);
+      res.json(saved);
+    } catch (e: any) {
+      if (e instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid commission tiers", details: e.errors });
+      }
+      res.status(500).json({ error: e?.message || "Failed to save commission tiers" });
+    }
+  });
+
+  // POS QR scan / manual code entry.
+  // Accepts either a scanned QR payload ("BSS-DC:<code>" or "BSS-BL:<bloggerId>")
+  // or a manually typed discount code. Records the scan event and returns the
+  // matched discount code or blogger. Gated by orders/add (POS operators).
+  app.post("/api/pos/qr-scan", requireAuth, requireRestaurant, requireAction('orders', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const bodySchema = z.object({
+        payload: z.string().min(1).max(500),
+        source: z.enum(["camera", "manual"]).default("camera"),
+      });
+      const { payload, source } = bodySchema.parse(req.body);
+
+      let type: "discount_code" | "blogger";
+      let key: string;
+      if (payload.startsWith("BSS-DC:")) {
+        type = "discount_code";
+        key = payload.slice(7).trim();
+      } else if (payload.startsWith("BSS-BL:")) {
+        type = "blogger";
+        key = payload.slice(7).trim();
+      } else {
+        // Manual entry defaults to a discount code
+        type = "discount_code";
+        key = payload.trim();
+      }
+      if (!key) return res.status(400).json({ error: "Empty code" });
+
+      if (type === "discount_code") {
+        const code = await storage.getMarketingDiscountCodeByCode(restaurantId, key);
+        if (!code) return res.status(404).json({ error: "Discount code not found" });
+        if (!code.active) return res.status(400).json({ error: "Discount code is not active" });
+        if (code.expiresAt && new Date(code.expiresAt) < new Date()) {
+          return res.status(400).json({ error: "Discount code has expired" });
+        }
+        if (code.usageCap !== null && code.usageCap !== undefined && code.usageCount >= code.usageCap) {
+          return res.status(400).json({ error: "Discount code usage limit reached" });
+        }
+        await storage.createMarketingQrScan({ restaurantId, targetType: "discount_code", targetId: code.id, source, orderId: null });
+        return res.json({
+          type: "discount_code",
+          discountCode: {
+            id: code.id,
+            code: code.code,
+            discountType: code.discountType,
+            discountValue: code.discountValue,
+          },
+        });
+      } else {
+        const blogger = await storage.getBloggerProfile(key, restaurantId);
+        if (!blogger) return res.status(404).json({ error: "Blogger not found" });
+        await storage.createMarketingQrScan({ restaurantId, targetType: "blogger", targetId: blogger.id, source, orderId: null });
+        const scanCount = await storage.getMarketingQrScanCount(restaurantId, "blogger", blogger.id);
+        return res.json({
+          type: "blogger",
+          blogger: { id: blogger.id, name: blogger.name, handle: blogger.handle },
+          scanCount,
+        });
+      }
+    } catch (e: any) {
+      if (e instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid scan payload", details: e.errors });
+      }
+      res.status(500).json({ error: e?.message || "Failed to process scan" });
+    }
   });
 
   // Broadcast Templates

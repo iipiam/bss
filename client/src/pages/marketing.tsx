@@ -83,7 +83,15 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { AlertTriangle, Save, ShieldAlert, Search } from "lucide-react";
+import { AlertTriangle, Save, ShieldAlert, Search, Coins } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import jsPDF from "jspdf";
 import { toCanvas as htiToCanvas } from "html-to-image";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -375,6 +383,90 @@ export default function Marketing() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/marketing/discount-codes"] });
       toast({ title: t.codeDeleted });
+    },
+  });
+
+  // ---- QR scan tracking + blogger commission tiers ----
+  const { data: qrScanStats = [] } = useQuery<Array<{ targetType: string; targetId: string; count: number }>>({
+    queryKey: ["/api/marketing/qr-scans/stats"],
+  });
+  const { data: allCommissionTiers = [] } = useQuery<Array<{ id: string; bloggerId: string; fromScans: number; toScans: number | null; ratePerScan: string; sortOrder: number }>>({
+    queryKey: ["/api/marketing/commission-tiers"],
+  });
+  const scanCountFor = (targetType: string, targetId: string) =>
+    qrScanStats.find((s) => s.targetType === targetType && s.targetId === targetId)?.count ?? 0;
+
+  // Cumulative commission: e.g. tiers 1-20 @ 1 SAR, 21-50 @ 2 SAR
+  const commissionFor = (bloggerId: string, scans: number) => {
+    const tiers = allCommissionTiers
+      .filter((tr) => tr.bloggerId === bloggerId)
+      .sort((a, b) => a.fromScans - b.fromScans);
+    let total = 0;
+    for (const tier of tiers) {
+      if (scans < tier.fromScans) break;
+      const upper = tier.toScans === null ? scans : Math.min(scans, tier.toScans);
+      const n = upper - tier.fromScans + 1;
+      if (n > 0) total += n * parseFloat(tier.ratePerScan || "0");
+    }
+    return total;
+  };
+
+  const downloadQrPng = async (payload: string, filename: string) => {
+    try {
+      const dataUrl = await QRCode.toDataURL(payload, { width: 512, margin: 2 });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (e: any) {
+      toast({ title: t.error, description: e?.message || "Failed to generate QR", variant: "destructive" });
+    }
+  };
+
+  // Tier editor dialog
+  const [tierDialogBlogger, setTierDialogBlogger] = useState<{ id: string; name: string } | null>(null);
+  const [tierRows, setTierRows] = useState<Array<{ fromScans: string; toScans: string; ratePerScan: string }>>([]);
+  const openTierEditor = (blogger: { id: string; name: string }) => {
+    const existing = allCommissionTiers
+      .filter((tr) => tr.bloggerId === blogger.id)
+      .sort((a, b) => a.fromScans - b.fromScans);
+    setTierRows(
+      existing.length > 0
+        ? existing.map((tr) => ({
+            fromScans: String(tr.fromScans),
+            toScans: tr.toScans === null ? "" : String(tr.toScans),
+            ratePerScan: tr.ratePerScan,
+          }))
+        : [{ fromScans: "1", toScans: "", ratePerScan: "" }],
+    );
+    setTierDialogBlogger(blogger);
+  };
+  const saveTiersMutation = useMutation({
+    mutationFn: async () => {
+      if (!tierDialogBlogger) return;
+      const tiers = tierRows
+        .filter((r) => r.fromScans !== "" && r.ratePerScan !== "")
+        .map((r) => ({
+          fromScans: Math.max(1, Math.round(Number(r.fromScans) || 1)),
+          toScans: r.toScans === "" ? null : Math.max(1, Math.round(Number(r.toScans) || 1)),
+          ratePerScan: String(Number(r.ratePerScan) || 0),
+        }));
+      return apiRequest("PUT", `/api/marketing/blogger-profiles/${tierDialogBlogger.id}/commission-tiers`, { tiers });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/commission-tiers"] });
+      setTierDialogBlogger(null);
+      toast({ title: "Commission tiers saved" });
+    },
+    onError: (e: any) => {
+      let message = e?.message || "Failed to save tiers";
+      try {
+        const parsed = JSON.parse(String(message).replace(/^\d+:\s*/, ""));
+        if (parsed?.error) message = parsed.error;
+      } catch {}
+      toast({ title: t.error, description: message, variant: "destructive" });
     },
   });
 
@@ -2279,6 +2371,9 @@ export default function Marketing() {
                 {bloggerFiles.map((b) => {
                   const { er } = computeER(b);
                   const rating = erRating(er, ratingLabels);
+                  const scans = scanCountFor("blogger", b.id);
+                  const commission = commissionFor(b.id, scans);
+                  const hasTiers = allCommissionTiers.some((tr) => tr.bloggerId === b.id);
                   return (
                     <div
                       key={b.id}
@@ -2304,12 +2399,52 @@ export default function Marketing() {
                         </div>
                         {b.notes && <div className="text-xs text-muted-foreground mt-1 italic">{b.notes}</div>}
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3 flex-wrap">
                         <div className="text-end">
                           <div className="text-xs text-muted-foreground">ER</div>
                           <div className={`text-lg font-bold ${rating.text}`}>{fmt(er)}%</div>
                         </div>
+                        <div className="text-end">
+                          <div className="text-xs text-muted-foreground">QR Scans</div>
+                          <div className="text-lg font-bold" data-testid={`text-blogger-scans-${b.id}`}>
+                            {scans}
+                          </div>
+                        </div>
+                        <div className="text-end">
+                          <div className="text-xs text-muted-foreground">Commission</div>
+                          <div className="text-lg font-bold text-emerald-600 dark:text-emerald-400" data-testid={`text-blogger-commission-${b.id}`}>
+                            {hasTiers ? `${fmt(commission)} SAR` : "—"}
+                          </div>
+                        </div>
                         <Badge className={`${rating.color} text-white`}>{rating.label}</Badge>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Download QR"
+                              onClick={() => downloadQrPng(`BSS-BL:${b.id}`, `blogger-${(b.name || "qr").replace(/\s+/g, "-")}.png`)}
+                              data-testid={`button-qr-blogger-${b.id}`}
+                            >
+                              <QrCode className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Download QR code</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Commission tiers"
+                              onClick={() => openTierEditor({ id: b.id, name: b.name })}
+                              data-testid={`button-tiers-blogger-${b.id}`}
+                            >
+                              <Coins className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>Commission tiers</TooltipContent>
+                        </Tooltip>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -2331,6 +2466,86 @@ export default function Marketing() {
               </CardContent>
             </Card>
           )}
+
+          <Dialog open={!!tierDialogBlogger} onOpenChange={(open) => !open && setTierDialogBlogger(null)}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Commission Tiers — {tierDialogBlogger?.name}</DialogTitle>
+                <DialogDescription>
+                  Set how much this blogger earns per QR scan. Example: scans 1–20 pay 1 SAR each, scans 21–50 pay 2 SAR each. Leave "To" empty for no upper limit.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-2">
+                <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 text-xs text-muted-foreground">
+                  <span>From scan</span>
+                  <span>To scan</span>
+                  <span>SAR per scan</span>
+                  <span></span>
+                </div>
+                {tierRows.map((row, i) => (
+                  <div key={i} className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 items-center">
+                    <Input
+                      type="number"
+                      min="1"
+                      value={row.fromScans}
+                      onChange={(e) => setTierRows(tierRows.map((r, j) => (j === i ? { ...r, fromScans: e.target.value } : r)))}
+                      data-testid={`input-tier-from-${i}`}
+                    />
+                    <Input
+                      type="number"
+                      min="1"
+                      placeholder="∞"
+                      value={row.toScans}
+                      onChange={(e) => setTierRows(tierRows.map((r, j) => (j === i ? { ...r, toScans: e.target.value } : r)))}
+                      data-testid={`input-tier-to-${i}`}
+                    />
+                    <Input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={row.ratePerScan}
+                      onChange={(e) => setTierRows(tierRows.map((r, j) => (j === i ? { ...r, ratePerScan: e.target.value } : r)))}
+                      data-testid={`input-tier-rate-${i}`}
+                    />
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      aria-label="Remove tier"
+                      onClick={() => setTierRows(tierRows.filter((_, j) => j !== i))}
+                      data-testid={`button-remove-tier-${i}`}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const last = tierRows[tierRows.length - 1];
+                    const nextFrom = last && last.toScans !== "" ? String((Number(last.toScans) || 0) + 1) : "";
+                    setTierRows([...tierRows, { fromScans: nextFrom, toScans: "", ratePerScan: "" }]);
+                  }}
+                  data-testid="button-add-tier"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add tier
+                </Button>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setTierDialogBlogger(null)} data-testid="button-cancel-tiers">
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => saveTiersMutation.mutate()}
+                  disabled={saveTiersMutation.isPending}
+                  data-testid="button-save-tiers"
+                >
+                  {saveTiersMutation.isPending ? "Saving..." : "Save tiers"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* ===================== Discounts ===================== */}
@@ -2426,6 +2641,7 @@ export default function Marketing() {
                       <TableHead>{t.value}</TableHead>
                       <TableHead>{t.expiresAt}</TableHead>
                       <TableHead>{t.used} / {t.usageCap}</TableHead>
+                      <TableHead>QR Scans</TableHead>
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
@@ -2459,7 +2675,24 @@ export default function Marketing() {
                         <TableCell>
                           {(c.usageCount ?? 0)} / {c.usageCap ?? t.noLimit}
                         </TableCell>
+                        <TableCell data-testid={`text-scans-${c.id}`}>
+                          {scanCountFor("discount_code", c.id)}
+                        </TableCell>
                         <TableCell>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                aria-label="Download QR"
+                                data-testid={`button-qr-discount-${c.id}`}
+                                onClick={() => downloadQrPng(`BSS-DC:${c.code}`, `discount-${c.code}.png`)}
+                              >
+                                <QrCode className="h-4 w-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Download QR code</TooltipContent>
+                          </Tooltip>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <Button

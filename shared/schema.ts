@@ -276,6 +276,8 @@ export const orders = pgTable("orders", {
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
   paymentMethod: text("payment_method").notNull().default("Cash"),
+  discountCode: text("discount_code"), // marketing discount code applied at POS (if any)
+  discountAmount: decimal("discount_amount", { precision: 10, scale: 2 }).notNull().default("0"),
   paymentStatus: text("payment_status").default("Unpaid"), // Track payment status separately: Unpaid, Paid, Refunded
   moyasarPaymentId: text("moyasar_payment_id"), // Link to Moyasar payment if applicable
   status: text("status").notNull().default("Pending"),
@@ -2300,6 +2302,37 @@ export const marketingDiscountCodes = pgTable("marketing_discount_codes", {
 export const insertMarketingDiscountCodeSchema = createInsertSchema(marketingDiscountCodes).omit({ id: true, createdAt: true, usageCount: true });
 export type InsertMarketingDiscountCode = z.infer<typeof insertMarketingDiscountCodeSchema>;
 export type MarketingDiscountCode = typeof marketingDiscountCodes.$inferSelect;
+
+// Marketing - QR Scan Events (tracks every scan of a discount-code or blogger QR) - MULTI-TENANT
+export const marketingQrScans = pgTable("marketing_qr_scans", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  targetType: text("target_type").notNull(), // 'discount_code' | 'blogger'
+  targetId: varchar("target_id").notNull(), // marketingDiscountCodes.id or bloggerProfiles.id
+  source: text("source").notNull().default("camera"), // 'camera' | 'manual'
+  orderId: varchar("order_id"), // POS order the scan was attached to (if any)
+  scannedAt: timestamp("scanned_at").notNull().defaultNow(),
+}, (table) => ({
+  restaurantTargetIdx: index("marketing_qr_scans_restaurant_target_idx").on(table.restaurantId, table.targetType, table.targetId),
+}));
+export const insertMarketingQrScanSchema = createInsertSchema(marketingQrScans).omit({ id: true, scannedAt: true });
+export type InsertMarketingQrScan = z.infer<typeof insertMarketingQrScanSchema>;
+export type MarketingQrScan = typeof marketingQrScans.$inferSelect;
+
+// Blogger Commission Tiers (user-defined per-scan commission ranges) - MULTI-TENANT
+// Example: scans 1-20 => 1 SAR each, scans 21-50 => 2 SAR each.
+export const bloggerCommissionTiers = pgTable("blogger_commission_tiers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  bloggerId: varchar("blogger_id").references(() => bloggerProfiles.id, { onDelete: "cascade" }).notNull(),
+  fromScans: integer("from_scans").notNull(),
+  toScans: integer("to_scans"), // null = open-ended (and above)
+  ratePerScan: decimal("rate_per_scan", { precision: 12, scale: 2 }).notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+export const insertBloggerCommissionTierSchema = createInsertSchema(bloggerCommissionTiers).omit({ id: true });
+export type InsertBloggerCommissionTier = z.infer<typeof insertBloggerCommissionTierSchema>;
+export type BloggerCommissionTier = typeof bloggerCommissionTiers.$inferSelect;
 
 // Marketing - WhatsApp Broadcast Templates (MULTI-TENANT)
 export const marketingBroadcastTemplates = pgTable("marketing_broadcast_templates", {
