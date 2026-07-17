@@ -1,0 +1,49 @@
+I have a ZATCA Phase 2 e-invoicing integration (Node.js/Express backend + React frontend).
+I have corrected versions of 3 files in the _fixes folder. Apply them EXACTLY as provided —
+do not rewrite, "improve", reformat, or rename anything in them, and do not change any
+exported function names or signatures.
+
+1. Replace the ZATCA SDK wrapper with _fixes/sdk.ts
+   - Target: the backend file that runs the ZATCA Java SDK (it currently imports
+     execSync from child_process and references zatca-einvoicing-sdk-238-R3.4.7.jar).
+   - Key fixes it contains (do not revert them): execFileSync instead of shell command
+     strings, NO "--globalVersion" argument (it is not a valid fatoora CLI option),
+     FIRST_INVOICE_PIH constant, and CSR flags -nonprod (sandbox) / -sim (simulation) /
+     none (production).
+
+2. Replace the invoice XML builder/signer with _fixes/zatca-invoice-signer.ts
+   - Target: the backend file that imports { extractPublicKeyBase64,
+     getCertificateIssuerSerial, extractCertificateSignatureBytes,
+     extractCertificateBase64Body } from "./crypto" and builds the UBL invoice XML.
+   - CRITICAL: the whitespace inside its template literals is part of the ZATCA
+     invoice hash. Do not reformat, trim, or prettify this file.
+   - It must keep: InvoiceTypeCode name exactly 7 digits ("0100000"/"0200000"),
+     certificate hash = base64 of the RAW SHA-256 bytes of the DER certificate,
+     invoice hash computed over the signed-XML layout, and the main export
+     generateSignedInvoiceXml(data, credentials).
+   - If service.ts (or any other file) imports a differently-named function from the
+     old signer, add an alias export with the old name pointing to
+     generateSignedInvoiceXml instead of changing call sites — and tell me which
+     names you aliased.
+
+3. Replace the ZATCA settings page with _fixes/ZatcaSettingsPage.tsx
+   - Target: the React page component named ZatcaSettingsPage.
+
+4. Verify crypto.ts (do NOT rewrite it unless something is missing). It must export:
+   extractPublicKeyBase64, extractCertificateSignatureBytes, extractCertificateBase64Body,
+   and getCertificateIssuerSerial returning { issuerName, serialNumber } with the
+   serial number as a DECIMAL string (not hex).
+
+5. Dependencies and environment:
+   - Install: @xmldom/xmldom, xpath, xml-crypto (backend invoice signing needs them).
+   - Make sure a Java JDK/JRE (11-17) is installed in the Replit environment and the
+     `java` command works in the shell — the ZATCA Java SDK cannot run without it.
+   - Confirm the folder zatca-sdk/zatca-einvoicing-sdk-Java-238-R3.4.7 exists at the
+     project root and contains Apps/zatca-einvoicing-sdk-238-R3.4.7.jar. The code
+     resolves it from process.cwd(), so the app must always start from project root.
+
+6. After replacing, run the app and verify:
+   - No TypeScript/build errors.
+   - The ZATCA settings page loads and shows the onboarding steps.
+   - In the server logs, confirm the SDK bridge initializes (jar found, java found).
+Then report back exactly which files you changed and any aliases you added.
