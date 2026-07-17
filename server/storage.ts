@@ -6707,6 +6707,11 @@ export const storage = new DatabaseStorage();
       ADD COLUMN IF NOT EXISTS weekly_schedule JSONB
     `);
     console.log('[Migration] Settings column verified/added: weekly_schedule');
+
+    // Salary settlement: transaction invoice + linked bill
+    await pool.query(`ALTER TABLE salaries ADD COLUMN IF NOT EXISTS invoice_image TEXT`);
+    await pool.query(`ALTER TABLE salaries ADD COLUMN IF NOT EXISTS bill_id VARCHAR(255)`);
+    console.log('[Migration] Salaries columns verified/added: invoice_image, bill_id');
     
     // Create device_serial_numbers table if it doesn't exist (for ZATCA compliance)
     await pool.query(`

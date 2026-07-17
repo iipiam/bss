@@ -1222,7 +1222,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         restaurantId,
         paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : undefined,
       };
-      const data = insertSalarySchema.parse(bodyWithDate);
+      const data = insertSalarySchema.omit({ invoiceImage: true, billId: true }).parse(bodyWithDate);
       console.log("[SALARY] Parsed data:", JSON.stringify(data, null, 2));
       const salary = await storage.createSalary(data);
       res.status(201).json(salary);
@@ -1242,7 +1242,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!existing || existing.restaurantId !== restaurantId) {
         return res.status(404).json({ error: "Salary not found" });
       }
-      const data = sanitizePatchBody(req.body, insertSalarySchema.partial());
+      const data = sanitizePatchBody(req.body, insertSalarySchema.omit({ invoiceImage: true, billId: true }).partial());
       const salary = await storage.updateSalary(req.params.id, data);
       res.json(salary);
     } catch (error: any) {
@@ -1315,7 +1315,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         restaurantId,
         paymentDate: req.body.paymentDate ? new Date(req.body.paymentDate) : undefined,
       };
-      const data = insertShopBillSchema.parse(bodyWithDate);
+      const data = insertShopBillSchema.omit({ invoiceImage: true }).parse(bodyWithDate);
       const bill = await storage.createShopBill(data);
       
       // Broadcast real-time update for Operating Expenses tracking
@@ -1351,7 +1351,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (bodyWithDate.paymentDate === undefined) {
         delete bodyWithDate.paymentDate;
       }
-      const data = sanitizePatchBody(bodyWithDate, insertShopBillSchema.partial());
+      const data = sanitizePatchBody(bodyWithDate, insertShopBillSchema.omit({ invoiceImage: true }).partial());
       const bill = await storage.updateShopBill(req.params.id, restaurantId, data);
       
       // Broadcast real-time update for Operating Expenses tracking
@@ -1662,10 +1662,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: "Bill not found" });
       }
 
-      // Delete old invoice if exists
+      // Delete old invoice if exists (only within the invoice upload directory)
       if (existing.invoiceImage) {
-        const oldPath = path.join(process.cwd(), existing.invoiceImage);
-        if (fs.existsSync(oldPath)) {
+        const invoiceDir = path.resolve(process.cwd(), "uploads", "shop-bill-invoices");
+        const oldPath = path.resolve(process.cwd(), existing.invoiceImage);
+        if (oldPath.startsWith(invoiceDir + path.sep) && fs.existsSync(oldPath)) {
           fs.unlinkSync(oldPath);
         }
       }
@@ -1699,7 +1700,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: "No invoice attached to this bill" });
       }
 
-      const filePath = path.join(process.cwd(), bill.invoiceImage);
+      const billInvoiceDir = path.resolve(process.cwd(), "uploads", "shop-bill-invoices");
+      const filePath = path.resolve(process.cwd(), bill.invoiceImage);
+      if (!filePath.startsWith(billInvoiceDir + path.sep)) {
+        return res.status(400).json({ error: "Invalid invoice path" });
+      }
       if (!fs.existsSync(filePath)) {
         return res.status(404).json({ error: "Invoice file not found on disk" });
       }
@@ -1737,9 +1742,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: "No invoice attached to this bill" });
       }
 
-      // Delete file from disk
-      const filePath = path.join(process.cwd(), bill.invoiceImage);
-      if (fs.existsSync(filePath)) {
+      // Delete file from disk (only within the invoice upload directory)
+      const invoiceDir = path.resolve(process.cwd(), "uploads", "shop-bill-invoices");
+      const filePath = path.resolve(process.cwd(), bill.invoiceImage);
+      if (filePath.startsWith(invoiceDir + path.sep) && fs.existsSync(filePath)) {
         fs.unlinkSync(filePath);
       }
 
@@ -1751,6 +1757,120 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("[SHOP BILLS] Invoice delete error:", error);
       res.status(500).json({ error: "Failed to delete invoice" });
+    }
+  });
+
+  // Settle a salary: mark paid, optionally attach transaction invoice, and create a paid shop bill
+  app.post("/api/shop/salaries/:id/settle", requireAuth, requireRestaurant, requireAction('bills', 'edit'), uploadShopBillInvoice.single('invoice'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const salary = await storage.getSalary(req.params.id);
+      if (!salary || salary.restaurantId !== restaurantId) {
+        if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        return res.status(404).json({ error: "Salary not found" });
+      }
+
+      let invoicePath: string | undefined;
+      if (req.file) {
+        // Delete old invoice if exists (only within the invoice upload directory)
+        if (salary.invoiceImage) {
+          const invoiceUploadDir = path.resolve(process.cwd(), "uploads", "shop-bill-invoices");
+          const oldPath = path.resolve(process.cwd(), salary.invoiceImage);
+          if (oldPath.startsWith(invoiceUploadDir + path.sep) && fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+        }
+        invoicePath = `uploads/shop-bill-invoices/${req.file.filename}`;
+      }
+
+      const paymentDate = salary.paymentDate ? new Date(salary.paymentDate) : new Date();
+      const paymentMonth = `${paymentDate.getFullYear()}-${String(paymentDate.getMonth() + 1).padStart(2, '0')}`;
+
+      // Create or update the linked paid shop bill
+      let billId = salary.billId || null;
+      let existingBill = billId ? await storage.getShopBill(billId) : undefined;
+      if (!existingBill || existingBill.restaurantId !== restaurantId) {
+        // Reconcile with a generated salary bill for the same employee and month (avoid duplicates)
+        const allBills = await storage.getShopBills(restaurantId);
+        existingBill = allBills.find(b =>
+          b.billType === "salary" &&
+          b.status !== "paid" &&
+          b.paymentMonth === paymentMonth &&
+          (b.employeeName || "").trim().toLowerCase() === salary.employeeName.trim().toLowerCase()
+        );
+      }
+      if (existingBill && existingBill.restaurantId === restaurantId) {
+        billId = existingBill.id;
+        const updated = await storage.updateShopBill(existingBill.id, restaurantId, {
+          status: "paid",
+          amount: salary.amount,
+          ...(invoicePath ? { invoiceImage: invoicePath } : {}),
+        });
+        billId = updated?.id || billId;
+      } else {
+        const bill = await storage.createShopBill({
+          restaurantId,
+          billType: "salary",
+          amount: salary.amount,
+          paymentDate,
+          paymentPeriod: "monthly",
+          status: "paid",
+          description: `Salary settlement - ${salary.employeeName} (${salary.position})`,
+          employeeName: salary.employeeName,
+          paymentMonth,
+          ...(invoicePath ? { invoiceImage: invoicePath } : {}),
+          ...(salary.branchId ? { branchId: salary.branchId } : {}),
+        });
+        billId = bill.id;
+      }
+
+      const updatedSalary = await storage.updateSalary(salary.id, {
+        status: "paid",
+        billId,
+        ...(invoicePath ? { invoiceImage: invoicePath } : {}),
+      });
+
+      console.log(`[SALARIES] Settled salary ${salary.id} for ${salary.employeeName}, bill ${billId}${invoicePath ? ', invoice attached' : ''}`);
+      res.json({ salary: updatedSalary, billId });
+    } catch (error) {
+      console.error("[SALARIES] Settlement error:", error);
+      if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      res.status(500).json({ error: "Failed to settle salary" });
+    }
+  });
+
+  // Download/view transaction invoice for a salary
+  app.get("/api/shop/salaries/:id/invoice", requireAuth, requireRestaurant, requirePermission('bills'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const salary = await storage.getSalary(req.params.id);
+      if (!salary || salary.restaurantId !== restaurantId) {
+        return res.status(404).json({ error: "Salary not found" });
+      }
+      if (!salary.invoiceImage) {
+        return res.status(404).json({ error: "No invoice attached to this salary" });
+      }
+      const invoiceDir = path.resolve(process.cwd(), "uploads", "shop-bill-invoices");
+      const filePath = path.resolve(process.cwd(), salary.invoiceImage);
+      if (!filePath.startsWith(invoiceDir + path.sep)) {
+        return res.status(400).json({ error: "Invalid invoice path" });
+      }
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: "Invoice file not found on disk" });
+      }
+      const ext = path.extname(filePath).toLowerCase();
+      const mimeTypes: Record<string, string> = {
+        '.pdf': 'application/pdf',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.webp': 'image/webp',
+      };
+      res.setHeader('Content-Type', mimeTypes[ext] || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `inline; filename="salary-invoice${ext}"`);
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error("[SALARIES] Invoice download error:", error);
+      res.status(500).json({ error: "Failed to download invoice" });
     }
   });
 

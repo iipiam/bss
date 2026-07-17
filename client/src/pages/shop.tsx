@@ -15,7 +15,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertSalarySchema, insertShopBillSchema, type Salary, type ShopBill } from "@shared/schema";
 import { z } from "zod";
-import { Plus, Pencil, Trash2, DollarSign, FileText, Search, Sparkles, Upload, Download, FolderOpen, Eye, X, RefreshCw } from "lucide-react";
+import { Plus, Pencil, Trash2, DollarSign, FileText, Search, Sparkles, Upload, Download, FolderOpen, Eye, X, RefreshCw, CheckCircle2, Paperclip } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +53,8 @@ export default function Shop() {
   const [salarySearch, setSalarySearch] = useState("");
   const [billSearch, setBillSearch] = useState("");
   const [generateSalariesDialogOpen, setGenerateSalariesDialogOpen] = useState(false);
+  const [settleSalaryTarget, setSettleSalaryTarget] = useState<Salary | null>(null);
+  const [settleInvoiceFile, setSettleInvoiceFile] = useState<File | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -257,6 +259,37 @@ export default function Shop() {
     },
     onError: () => {
       toast({ title: t.salaryError, variant: "destructive" });
+    },
+  });
+
+  const settleSalaryMutation = useMutation({
+    mutationFn: async ({ salaryId, file }: { salaryId: string; file: File | null }) => {
+      const formData = new FormData();
+      if (file) {
+        formData.append("invoice", file);
+      }
+      const response = await fetch(`/api/shop/salaries/${salaryId}/settle`, {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Settlement failed");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/salaries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
+      setSettleSalaryTarget(null);
+      setSettleInvoiceFile(null);
+      toast({
+        title: isRTL ? "تمت تسوية الراتب" : "Salary settled",
+        description: isRTL ? "تم وضع الراتب كمدفوع وإضافته إلى الفواتير المدفوعة." : "Salary marked as paid and added to paid bills.",
+      });
+    },
+    onError: () => {
+      toast({ title: isRTL ? "فشلت تسوية الراتب" : "Failed to settle salary", variant: "destructive" });
     },
   });
 
@@ -690,7 +723,39 @@ export default function Shop() {
                           {salary.status === "paid" ? t.paid : t.pending}
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-wrap gap-2">
+                        {salary.status !== "paid" && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                aria-label={isRTL ? "تسوية الراتب" : "Settle salary"}
+                                onClick={() => { setSettleInvoiceFile(null); setSettleSalaryTarget(salary); }}
+                                data-testid={`button-settle-salary-${salary.id}`}
+                              >
+                                <CheckCircle2 className="w-4 h-4 text-green-600" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{isRTL ? "تسوية الراتب وإرفاق فاتورة المعاملة" : "Settle salary and attach transaction invoice"}</TooltipContent>
+                          </Tooltip>
+                        )}
+                        {salary.invoiceImage && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                aria-label={isRTL ? "عرض فاتورة المعاملة" : "View transaction invoice"}
+                                onClick={() => window.open(`/api/shop/salaries/${salary.id}/invoice`, "_blank")}
+                                data-testid={`button-view-salary-invoice-${salary.id}`}
+                              >
+                                <Paperclip className="w-4 h-4" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>{isRTL ? "عرض فاتورة المعاملة" : "View transaction invoice"}</TooltipContent>
+                          </Tooltip>
+                        )}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button size="icon" variant="ghost" aria-label={t.edit} onClick={() => handleEditSalary(salary)} data-testid={`button-edit-salary-${salary.id}`}>
@@ -723,6 +788,63 @@ export default function Shop() {
               )}
             </CardContent>
           </Card>
+
+          <Dialog open={!!settleSalaryTarget} onOpenChange={(open) => { if (!open) { setSettleSalaryTarget(null); setSettleInvoiceFile(null); } }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{isRTL ? "تسوية الراتب" : "Settle Salary"}</DialogTitle>
+                <DialogDescription>
+                  {isRTL
+                    ? "سيتم وضع الراتب كمدفوع وإضافته إلى الفواتير المدفوعة. يمكنك إرفاق فاتورة المعاملة (اختياري)."
+                    : "The salary will be marked as paid and added to paid bills. You can attach the transaction invoice (optional)."}
+                </DialogDescription>
+              </DialogHeader>
+              {settleSalaryTarget && (
+                <div className="space-y-4">
+                  <div className="p-4 border rounded-md space-y-1">
+                    <div className="font-medium" data-testid="text-settle-employee-name">{settleSalaryTarget.employeeName}</div>
+                    <div className="text-sm text-muted-foreground">{settleSalaryTarget.position}</div>
+                    <div className="font-bold" data-testid="text-settle-amount">{parseFloat(settleSalaryTarget.amount).toFixed(2)} {t.currency}</div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">{isRTL ? "فاتورة المعاملة (PDF أو صورة)" : "Transaction invoice (PDF or image)"}</label>
+                    <Input
+                      type="file"
+                      accept=".pdf,.jpg,.jpeg,.png,.gif,.webp,application/pdf,image/*"
+                      onChange={(e) => setSettleInvoiceFile(e.target.files?.[0] || null)}
+                      data-testid="input-settle-invoice-file"
+                    />
+                    {settleInvoiceFile && (
+                      <div className="text-sm text-muted-foreground flex items-center gap-2" data-testid="text-settle-invoice-filename">
+                        <Paperclip className="w-4 h-4" />
+                        {settleInvoiceFile.name}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => { setSettleSalaryTarget(null); setSettleInvoiceFile(null); }}
+                      data-testid="button-cancel-settle"
+                    >
+                      {t.cancel}
+                    </Button>
+                    <Button
+                      type="button"
+                      onClick={() => settleSalaryMutation.mutate({ salaryId: settleSalaryTarget.id, file: settleInvoiceFile })}
+                      disabled={settleSalaryMutation.isPending}
+                      data-testid="button-confirm-settle"
+                    >
+                      {settleSalaryMutation.isPending
+                        ? (isRTL ? "جارٍ التسوية..." : "Settling...")
+                        : (isRTL ? "تأكيد التسوية" : "Confirm Settlement")}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         <TabsContent value="bills" className="space-y-4">

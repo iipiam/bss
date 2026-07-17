@@ -636,6 +636,8 @@ export const salaries = pgTable("salaries", {
   paymentDate: timestamp("payment_date").notNull(),
   status: text("status").notNull().default("pending"), // "pending", "paid"
   notes: text("notes"),
+  invoiceImage: text("invoice_image"), // Path to uploaded transaction invoice image/PDF
+  billId: varchar("bill_id"), // Linked shop bill created on settlement
   branchId: varchar("branch_id").references(() => branches.id),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
