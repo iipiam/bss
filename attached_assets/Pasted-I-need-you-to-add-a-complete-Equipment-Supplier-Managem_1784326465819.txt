@@ -1,0 +1,376 @@
+I need you to add a complete Equipment Supplier Management module to BSS. This module already exists as a fully functional standalone front-end (HTML/CSS/JS). Your job is to port it into BSS as a proper full-stack module: PostgreSQL tables, Express REST API, and a React/EJS front-end page that integrates with the existing BSS navigation, auth, and styling.
+
+
+What the Supplier Manager Does
+
+It manages equipment rental companies (suppliers) used for construction projects. Each supplier record stores:
+
+Core Supplier Fields
+
+company_name        TEXT NOT NULL
+contact_name        TEXT NOT NULL
+phone               TEXT NOT NULL
+whatsapp            TEXT
+email               TEXT
+website             TEXT
+city                TEXT NOT NULL
+coverage            TEXT          -- operating cities
+cr_number           TEXT NOT NULL  -- Commercial Registration (10 digits)
+cr_expiry           DATE
+vat_number          TEXT NOT NULL  -- Saudi VAT number (starts with 3, 15 digits)
+bank_name           TEXT NOT NULL
+bank_account_name   TEXT NOT NULL
+iban                TEXT NOT NULL  -- SA format
+payment_method      TEXT
+payment_terms       TEXT
+tax_invoice         TEXT
+fuel                TEXT          -- who pays fuel
+breakdown           TEXT          -- breakdown rate/responsibility
+min_rental          TEXT
+notice              TEXT          -- advance booking notice
+cancellation        TEXT          -- cancellation penalty
+insurance           TEXT
+notes               TEXT
+status              TEXT          -- 'complete' | 'partial' | 'draft' (computed)
+completion_score    INTEGER       -- 0-100 (computed)
+created_at          TIMESTAMPTZ DEFAULT now()
+updated_at          TIMESTAMPTZ DEFAULT now()
+
+Equipment Sub-records (one-to-many)
+
+Each supplier has a list of equipment they rent out:
+
+supplier_id   UUID REFERENCES suppliers(id) ON DELETE CASCADE
+name          TEXT NOT NULL       -- e.g. 'حفارة', 'رافعة (كرين)'
+available     BOOLEAN DEFAULT true
+hourly_rate   DECIMAL(10,2)       -- SAR/hour
+daily_rate    DECIMAL(10,2)       -- SAR/day
+weekly_rate   DECIMAL(10,2)       -- SAR/week
+has_driver    BOOLEAN DEFAULT false
+condition     TEXT                -- 'جديد' | 'جيد' | 'متوسط'
+sort_order    INTEGER DEFAULT 0
+
+Payment Installments (one-to-many)
+
+supplier_id   UUID REFERENCES suppliers(id) ON DELETE CASCADE
+label         TEXT NOT NULL       -- description e.g. 'دفعة أولى — حفارة'
+amount        DECIMAL(12,2) NOT NULL
+due_date      DATE NOT NULL
+status        TEXT DEFAULT 'pending'  -- 'pending' | 'paid' | 'overdue'
+paid_date     DATE
+created_at    TIMESTAMPTZ DEFAULT now()
+
+Documents (one-to-many)
+
+supplier_id   UUID REFERENCES suppliers(id) ON DELETE CASCADE
+doc_key       TEXT NOT NULL   -- 'iban_cert' | 'cr_cert' | 'vat_cert' | 'lic1' | 'lic2'
+file_name     TEXT NOT NULL
+file_type     TEXT NOT NULL   -- MIME type
+file_size     INTEGER
+storage_path  TEXT            -- path in file system or S3 key
+uploaded_at   TIMESTAMPTZ DEFAULT now()
+
+
+Note: In the standalone front-end, documents are stored as base64 in localStorage. In BSS, store them as files on disk (or S3) and keep only the path in the DB. Use multer for uploads.
+
+
+
+Equipment Documents (one-to-many)
+
+supplier_id   UUID REFERENCES suppliers(id) ON DELETE CASCADE
+equipment_id  UUID REFERENCES supplier_equipment(id) ON DELETE CASCADE
+doc_key       TEXT NOT NULL   -- 'photo' | 'licence' | 'assurance' | 'driver_photo'
+file_name     TEXT NOT NULL
+file_type     TEXT NOT NULL
+file_size     INTEGER
+storage_path  TEXT
+uploaded_at   TIMESTAMPTZ DEFAULT now()
+
+Rental Contracts (one-to-many)
+
+Auto-generated when a rental agreement PDF is created:
+
+supplier_id       UUID REFERENCES suppliers(id) ON DELETE CASCADE
+equipment_name    TEXT NOT NULL
+start_date        DATE NOT NULL
+end_date          DATE NOT NULL
+location          TEXT
+reference_number  TEXT          -- auto: 'RNT-' + nanoid(6)
+created_at        TIMESTAMPTZ DEFAULT now()
+
+
+Completion Score Logic
+
+Compute completion_score (0–100) and status on every save:
+
+score = 0
+
+// 50 pts from 9 required fields (each = 5.56 pts)
+required = [company_name, contact_name, phone, cr_number, vat_number,
+            bank_name, bank_account_name, iban, city]
+score += (filled_required_fields / 9) * 50
+
+// 20 pts from equipment (up to 4 available items, each = 5 pts)
+score += min(20, available_equipment_count * 5)
+
+// 30 pts from mandatory documents (each = 10 pts)
+mandatory_docs = ['iban_cert', 'cr_cert', 'vat_cert']
+score += uploaded_mandatory_docs * 10
+
+status = score == 100 ? 'complete' : score > 0 ? 'partial' : 'draft'
+
+
+Supplier Performance Score (for Reports/Rankings)
+
+score = 0
+
+// 1. Completion (0–30)
+score += completion_score * 0.30
+
+// 2. Equipment breadth (0–20)
+available_eq = count of available equipment
+score += min(20, (available_eq / total_eq_types) * 20)
+
+// 3. Pricing competitiveness (0–25)
+// Has at least one equipment with a daily_rate set = 25 pts
+if (any equipment has daily_rate > 0): score += 25
+
+// 4. Documents (0–15): 3 pts per uploaded doc (5 slots max)
+score += uploaded_doc_count * 3
+
+// 5. Payments (0–10): ratio of paid installments
+if (total_installments > 0): score += (paid_installments / total_installments) * 10
+
+
+REST API Endpoints to Create
+
+Base path: /api/suppliers
+
+GET    /api/suppliers                    -- list all, with query ?filter=complete|partial|draft&search=
+GET    /api/suppliers/:id                -- single supplier with all relations
+POST   /api/suppliers                    -- create
+PUT    /api/suppliers/:id                -- update
+DELETE /api/suppliers/:id                -- delete
+
+GET    /api/suppliers/:id/equipment      -- list equipment
+POST   /api/suppliers/:id/equipment      -- add equipment row
+PUT    /api/suppliers/:id/equipment/:eid -- update equipment row
+DELETE /api/suppliers/:id/equipment/:eid -- delete equipment row
+
+GET    /api/suppliers/:id/payments       -- list installments
+POST   /api/suppliers/:id/payments       -- add installment
+PUT    /api/suppliers/:id/payments/:pid  -- update (mark paid etc.)
+DELETE /api/suppliers/:id/payments/:pid  -- delete installment
+
+POST   /api/suppliers/:id/documents      -- upload doc (multer, field: doc_key)
+DELETE /api/suppliers/:id/documents/:did -- delete doc + file
+
+POST   /api/suppliers/:id/equipment/:eid/documents  -- upload eq doc
+DELETE /api/suppliers/:id/equipment/:eid/documents/:did
+
+GET    /api/suppliers/:id/rentals        -- list rental contracts
+POST   /api/suppliers/:id/rentals        -- create rental record
+
+GET    /api/suppliers/reports/summary    -- KPIs: totals, avg score, city breakdown
+GET    /api/suppliers/reports/rankings   -- all suppliers with scores, sorted
+GET    /api/suppliers/reports/pricing    -- price comparison per equipment type
+
+GET    /api/suppliers/alerts             -- overdue/due-soon payments + ending rentals
+
+All endpoints require existing BSS auth middleware. Return JSON. Use existing BSS error handling pattern.
+
+
+Front-End Page
+
+Create a new page in BSS at /suppliers (or /dashboard/suppliers — match BSS's existing route structure).
+
+The page must integrate with BSS's existing:
+
+
+Navigation sidebar (add "موردو المعدات / Suppliers" menu item with 🏗️ icon)
+Auth session (only logged-in users)
+Header/layout wrapper
+Toast notification system
+Any existing CSS framework or design system
+
+
+Page Features (replicate the standalone app's UX)
+
+1. Supplier List (default view)
+
+
+Toggle: Card grid / Table list
+Filter pills: All / Complete / Partial / Draft
+Search input: real-time filter by company name or contact
+Supplier card: company name, contact, city, equipment count, completion ring (CSS SVG), status badge
+"+ New Supplier" button
+
+
+2. Add/Edit Form (modal or separate page)
+
+Four sections:
+
+
+Identity & Contact: company name★, contact★, phone★, WhatsApp, email, website, city★, coverage
+Legal & Banking: CR number★, CR expiry, VAT number★, bank name★, account holder★, IBAN★, payment method, payment terms, tax invoice
+Equipment & Rates: dynamic table (add/remove rows), each row: name (from global list or custom), available Y/N, hourly/daily/weekly rates, driver Y/N, condition
+Contract Terms: fuel, breakdown, min rental, notice, cancellation, insurance, notes
+
+
+Validation: all 9 ★ fields required before save.
+
+3. Supplier Detail Page (tabs)
+
+Tab 1 — Profile
+All supplier data displayed in labeled sections. Edit button, Export PDF button, Export Excel button.
+
+Tab 2 — Payments
+Summary cards: Total / Paid / Remaining (SAR).
+Table: label, amount, due date, status chip (Paid ✓ green / Pending amber / Overdue red).
+Add installment form. Mark Paid button. Delete button.
+Overdue detection: compare due_date to today's date server-side or client-side.
+
+Tab 3 — Documents
+5 document slots:
+
+
+IBAN Bank Certificate ★ required
+Commercial Registration ★ required
+VAT Certificate ★ required
+Rental Licence (optional)
+Additional Document (optional)
+
+
+Each slot: upload button (drag & drop or click), preview button, delete button.
+File types: PDF, JPG, PNG, WEBP. Max 5MB.
+
+Tab 4 — Equipment Documents
+Per equipment item: 4 upload slots (Photo, Licence, Insurance, Driver Photo).
+
+Tab 5 — Rental Contract
+Form: my company name, start date, end date, location, rate unit (daily/hourly/weekly).
+Equipment checkboxes with rates shown.
+Generate button → produce PDF agreement → auto-save rental record.
+
+4. Equipment Manager Page/Modal
+
+Manage the global equipment name list. Add, edit, delete, drag-to-reorder.
+This list is used as autocomplete options in the equipment table.
+
+5. Reports Dashboard
+
+
+4 KPI cards: avg score, total paid SAR, total equipment available, pending SAR
+Bar charts: supplier scores, city distribution, equipment coverage
+Price comparison table per equipment type
+Export report as PDF
+
+
+6. Tracking/Alerts Panel (sidebar badge or notification bell)
+
+Real-time alerts from /api/suppliers/alerts:
+
+
+Overdue payment installments (past due_date)
+Payments due within 7 days
+Rental contracts ending within 7 days
+Recently ended contracts
+
+
+Badge count on nav item. Click-through to supplier detail.
+
+
+Global Equipment Names
+
+Seed the database with these default names (allow admin to add more):
+
+حفارة, لودر (بوكلين), رافعة (كرين), خلاطة خرسانة, ضاغط هواء,
+جنريتور كهرباء, سقالات, مضخة خرسانة, شاحنة قلابة, مضخة مياه
+
+Store in a equipment_types table:
+
+id          UUID PRIMARY KEY DEFAULT gen_random_uuid()
+name        TEXT NOT NULL UNIQUE
+sort_order  INTEGER DEFAULT 0
+created_by  UUID REFERENCES users(id)
+created_at  TIMESTAMPTZ DEFAULT now()
+
+
+Files to Create
+
+/src
+├── routes/
+│   └── suppliers.ts          -- all /api/suppliers/* routes
+├── controllers/
+│   └── supplierController.ts -- business logic
+├── models/
+│   └── supplierModel.ts      -- DB queries (use existing DB client)
+├── middleware/
+│   └── upload.ts             -- multer config for doc uploads
+├── migrations/
+│   └── YYYYMMDD_create_suppliers.sql  -- all tables above
+└── views/ (or pages/ or components/ — match BSS structure)
+    └── suppliers/
+        ├── index              -- list page
+        ├── detail             -- profile + tabs
+        ├── form               -- add/edit
+        ├── eqmgr              -- equipment names manager
+        └── reports            -- analytics dashboard
+
+
+Bilingual Support
+
+BSS may already have an i18n system. If so, add keys for all supplier module strings in both Arabic and English. If not, use the same t(key) pattern from the standalone app — the full STRINGS dictionary (306 keys in both AR and EN) can be extracted from supplier_manager.html.
+
+Key UI strings needed at minimum:
+
+
+All section/field labels (company_name → "اسم الشركة" / "Company Name")
+Status labels: complete/partial/draft
+Tab labels: profile, payments, documents, equipment docs, rental contract
+Alert labels: overdue, due soon, active, ended
+Toast messages: saved, deleted, uploaded, error
+
+
+
+ZATCA Considerations
+
+If BSS already tracks customers and invoices for ZATCA Phase 2, you may want to:
+
+
+Link supplier payments to ZATCA tax invoices (the tax_invoice field in the supplier form is a Y/N flag indicating whether the supplier issues official tax invoices)
+CR number and VAT number fields align with ZATCA seller identity fields — validation rules: CR = 10 digits, VAT = 15 digits starting with 3
+
+
+
+Implementation Priority
+
+
+Database migrations (all tables)
+REST API routes + controller (CRUD for suppliers + equipment)
+Supplier list page with card grid
+Add/Edit form
+Supplier detail with 5 tabs
+Document upload (multer + file storage)
+Payments tab with overdue detection
+Rental contract generation (can reuse the HTML template from the standalone app)
+Reports dashboard
+Equipment manager
+Alerts/tracking API + nav badge
+
+
+
+Reference
+
+The complete working standalone implementation is in supplier_manager.html (204KB). You can read it to extract:
+
+
+The exact agreement PDF HTML template (function generateAgreement)
+The supplier card HTML (function supCard)
+The completion ring SVG (function ringSVG)
+The scoring algorithm (function scoreSupplier)
+The full bilingual STRINGS dictionary
+The Excel export HTML table template (function exportSupplierExcel)
+
+
+All business logic, validation rules, and UI patterns are already implemented and tested in that file.

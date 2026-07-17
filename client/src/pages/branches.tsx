@@ -20,7 +20,7 @@ import { useDeviceLayout } from "@/lib/mobileLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useBusinessType } from "@/hooks/useBusinessType";
 
-type BranchFormValues = z.infer<typeof insertBranchSchema> & {
+type BranchFormValues = Omit<z.infer<typeof insertBranchSchema>, "staff"> & {
   staff: string;
 };
 

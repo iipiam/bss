@@ -59,6 +59,7 @@ export type CateringT = {
 
   // Actions
   downloadPdf: string;
+  pdfFailed: string;
   sendEmail: string;
   sendWhatsApp: string;
   emailSent: string;
@@ -196,6 +197,7 @@ const en: CateringT = {
   saturday: "Saturday",
 
   downloadPdf: "Download PDF",
+  pdfFailed: "Failed to generate PDF",
   sendEmail: "Send Email",
   sendWhatsApp: "Send via WhatsApp",
   emailSent: "Email sent successfully",
@@ -329,6 +331,7 @@ const ar: CateringT = {
   saturday: "السبت",
 
   downloadPdf: "تحميل PDF",
+  pdfFailed: "فشل إنشاء ملف PDF",
   sendEmail: "إرسال بريد إلكتروني",
   sendWhatsApp: "إرسال عبر واتساب",
   emailSent: "تم إرسال البريد الإلكتروني بنجاح",

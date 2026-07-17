@@ -5578,12 +5578,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createServiceProject(project: InsertServiceProject): Promise<ServiceProject> {
-    const [created] = await db.insert(serviceProjects).values(project).returning();
+    const [created] = await db.insert(serviceProjects).values(project as any).returning();
     return created;
   }
 
   async updateServiceProject(id: string, restaurantId: string, project: Partial<InsertServiceProject>): Promise<ServiceProject | undefined> {
-    const [updated] = await db.update(serviceProjects).set(project).where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId))).returning();
+    const [updated] = await db.update(serviceProjects).set(project as any).where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId))).returning();
     return updated;
   }
 
@@ -6046,11 +6046,11 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
   async createProjectMeeting(meeting: InsertProjectMeeting): Promise<ProjectMeeting> {
-    const [result] = await db.insert(projectMeetings).values(meeting).returning();
+    const [result] = await db.insert(projectMeetings).values(meeting as any).returning();
     return result;
   }
   async updateProjectMeeting(id: string, restaurantId: string, data: Partial<InsertProjectMeeting>): Promise<ProjectMeeting | undefined> {
-    const [result] = await db.update(projectMeetings).set(data)
+    const [result] = await db.update(projectMeetings).set(data as any)
       .where(and(eq(projectMeetings.id, id), eq(projectMeetings.restaurantId, restaurantId))).returning();
     return result;
   }
@@ -6094,7 +6094,7 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
   async createProductMeeting(meeting: InsertProductMeeting): Promise<ProductMeeting> {
-    const [result] = await db.insert(productMeetings).values(meeting).returning();
+    const [result] = await db.insert(productMeetings).values(meeting as any).returning();
     return result;
   }
   async updateProductMeeting(id: string, restaurantId: string, data: Partial<InsertProductMeeting>): Promise<ProductMeeting | undefined> {

@@ -258,9 +258,9 @@ export default function ContractorsPage() {
       notes: data.notes || null,
     };
     if (editingContractor) {
-      updateContractorMutation.mutate({ ...payload, id: editingContractor.id });
+      updateContractorMutation.mutate({ ...data, id: editingContractor.id });
     } else {
-      createContractorMutation.mutate(payload);
+      createContractorMutation.mutate(data);
     }
   };
 

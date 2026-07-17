@@ -233,7 +233,7 @@ export default function CateringContractsPage() {
       const url = `${baseUrl}?lang=${encodeURIComponent(language)}&mode=${mode}`;
       const phone = formatPhoneForWhatsApp(c.clientPhone);
       const isQuote = mode === 'quotation';
-      const msg = language === 'ar'
+      const msg = language === 'Arabic'
         ? (isQuote
             ? `مرحبا ${c.clientName}،\nنرفق لكم عرض سعر التموين رقم ${c.contractNumber}.\nالقيمة النهائية: ${parseFloat(c.finalValue || '0').toFixed(2)} ${t.sar}\n\nعرض السعر (PDF):\n${url}\n\nنتطلع لتعاونكم.`
             : `مرحبا ${c.clientName}،\nعقد التموين رقم ${c.contractNumber} جاهز.\nالقيمة النهائية: ${parseFloat(c.finalValue || '0').toFixed(2)} ${t.sar}\n\nتحميل العقد (PDF):\n${url}\n\nشكرا.`)

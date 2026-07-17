@@ -64,7 +64,7 @@ async function seedITAccounts() {
         fullName: account.fullName,
         email: account.email,
         role: "admin",
-        permissions: IT_PERMISSIONS,
+        permissions: IT_PERMISSIONS as any,
         active: true,
         devicePreference: "laptop",
       });

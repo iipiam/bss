@@ -219,9 +219,9 @@ export default function Valuations() {
       areaUnit: data.areaUnit || "sqm",
     };
     if (editingValuation) {
-      updateMutation.mutate({ ...payload, id: editingValuation.id });
+      updateMutation.mutate({ ...data, id: editingValuation.id });
     } else {
-      createMutation.mutate(payload);
+      createMutation.mutate(data);
     }
   };
 

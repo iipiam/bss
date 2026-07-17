@@ -4,3 +4,4 @@
 - [ZATCA fatoora CLI quirks](zatca-sdk-wrapper-quirks.md) — nonzero-exit -help, env CSR flags, tolerant label parsing, QR from XML not stdout, base64(hex) cert hash.
 - [ZATCA hash chain & signing lock](zatca-hash-chain.md) — per-restaurant lock around ICV/PIH/sign/submit; PIH is base64(hex-string); Riyadh (+3) timestamps.
 - [BSS VM deployment](bss-vm-deployment.md) — self-managed VM at /home/BSS via pm2 + git; repeatable deploy steps and ecosystem.config.cjs/.env requirements.
+- [TypeScript check quirks](typescript-check-quirks.md) — tsc via node_modules/.bin, reinstall packages when node_modules corrupt, clear tsbuildinfo after tsconfig changes, AST-only edits to translations.ts.

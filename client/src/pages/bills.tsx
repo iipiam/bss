@@ -35,7 +35,7 @@ export default function Bills() {
 
   const archiveMutation = useMutation({
     mutationFn: async ({ id, archived }: { id: string; archived: boolean }) => {
-      return await apiRequest(`/api/shop/bills/${id}/archive`, "PATCH", { archived });
+      return await apiRequest("PATCH", `/api/shop/bills/${id}/archive`, { archived });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
@@ -55,8 +55,8 @@ export default function Bills() {
 
   const generateSalariesMutation = useMutation({
     mutationFn: async (paymentMonth: string): Promise<{ created: number; skipped: number }> => {
-      const response = await apiRequest("/api/shop/bills/generate-salaries", "POST", { paymentMonth });
-      return response as { created: number; skipped: number };
+      const response = await apiRequest("POST", "/api/shop/bills/generate-salaries", { paymentMonth });
+      return (await response.json()) as { created: number; skipped: number };
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });

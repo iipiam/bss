@@ -567,9 +567,9 @@ export default function CompanyProfilePage() {
                 <div>
                   <Label className="mb-2 block font-semibold">{L.brandColors}</Label>
                   <div className="grid grid-cols-1 gap-3">
-                    <ColorField label={L.primary} value={form.primaryColor} onChange={(v) => update("primaryColor", v)} testId="primary" />
-                    <ColorField label={L.secondary} value={form.secondaryColor} onChange={(v) => update("secondaryColor", v)} testId="secondary" />
-                    <ColorField label={L.accent} value={form.accentColor} onChange={(v) => update("accentColor", v)} testId="accent" />
+                    <ColorField label={L.primary} value={form.primaryColor || "#2563eb"} onChange={(v) => update("primaryColor", v)} testId="primary" />
+                    <ColorField label={L.secondary} value={form.secondaryColor || "#0f172a"} onChange={(v) => update("secondaryColor", v)} testId="secondary" />
+                    <ColorField label={L.accent} value={form.accentColor || "#f59e0b"} onChange={(v) => update("accentColor", v)} testId="accent" />
                   </div>
                   <div className="mt-3">
                     <Label className="text-xs text-muted-foreground mb-2 block">{isRTL ? "إعدادات لونية مسبقة" : "Color Presets"}</Label>
@@ -926,7 +926,7 @@ export default function CompanyProfilePage() {
 }
 
 // ============== LIVE PREVIEW COMPONENT ==============
-function ProfilePreview({ form, fontCss, L }: { form: ProfileForm; fontCss: string; L: typeof LABELS.en }) {
+function ProfilePreview({ form, fontCss, L }: { form: ProfileForm; fontCss: string; L: typeof LABELS.en | typeof LABELS.ar }) {
   const isAr = form.language === "ar";
   const name = (isAr && form.companyNameAr) ? form.companyNameAr : (form.companyName || (isAr ? "اسم شركتك" : "Your Company Name"));
   const tagline = (isAr ? form.taglineAr : form.tagline) || form.tagline;

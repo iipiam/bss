@@ -599,9 +599,9 @@ export default function ServiceCatalog() {
       estimatedDuration: data.estimatedDuration || null,
     };
     if (editingService) {
-      updateServiceMutation.mutate({ ...payload, id: editingService.id });
+      updateServiceMutation.mutate({ ...data, id: editingService.id });
     } else {
-      createServiceMutation.mutate(payload);
+      createServiceMutation.mutate(data);
     }
   };
 

@@ -261,9 +261,9 @@ export default function Contracts() {
       notes: data.notes || null,
     };
     if (editingContract) {
-      updateContractMutation.mutate({ ...payload, id: editingContract.id });
+      updateContractMutation.mutate({ ...data, id: editingContract.id });
     } else {
-      createContractMutation.mutate(payload);
+      createContractMutation.mutate(data);
     }
   };
 

@@ -1,6 +1,14 @@
 import type { Language } from "./translations";
 
 export type RealEstateT = {
+  exportPdf: string;
+  exportExcel: string;
+  invoiceUploaded: string;
+  viewInvoice: string;
+  invoiceAttachment: string;
+  uploadInvoiceHint: string;
+  gridView: string;
+  listView: string;
   // Breadcrumb / shared
   propertyManagement: string;
   loading: string;
@@ -352,6 +360,14 @@ export type RealEstateT = {
 };
 
 const en: RealEstateT = {
+  exportPdf: "Export PDF",
+  exportExcel: "Export Excel",
+  invoiceUploaded: "Invoice uploaded",
+  viewInvoice: "View invoice",
+  invoiceAttachment: "Invoice attachment",
+  uploadInvoiceHint: "Upload an invoice image or PDF (max 10MB)",
+  gridView: "Grid view",
+  listView: "List view",
   propertyManagement: "Property Management",
   loading: "Loading…",
   noData: "No data",
@@ -684,6 +700,14 @@ const en: RealEstateT = {
 };
 
 const ar: RealEstateT = {
+  exportPdf: "تصدير PDF",
+  exportExcel: "تصدير Excel",
+  invoiceUploaded: "تم رفع الفاتورة",
+  viewInvoice: "عرض الفاتورة",
+  invoiceAttachment: "مرفق الفاتورة",
+  uploadInvoiceHint: "ارفع صورة الفاتورة أو ملف PDF (بحد أقصى 10 ميجابايت)",
+  gridView: "عرض شبكي",
+  listView: "عرض قائمة",
   propertyManagement: "إدارة الأملاك",
   loading: "جارٍ التحميل…",
   noData: "لا توجد بيانات",

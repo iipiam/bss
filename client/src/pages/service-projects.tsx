@@ -340,9 +340,9 @@ export default function ServiceProjects() {
       notes: data.notes || null,
     };
     if (editingProject) {
-      updateProjectMutation.mutate({ ...payload, id: editingProject.id });
+      updateProjectMutation.mutate({ ...data, id: editingProject.id });
     } else {
-      createProjectMutation.mutate(payload);
+      createProjectMutation.mutate(data);
     }
   };
 

@@ -213,15 +213,15 @@ export function canonicalizeInvoiceXml(xmlContent: string): string {
   });
 
   const toRemove: any[] = [];
-  for (const n of select("//ext:UBLExtensions", doc) as any[]) toRemove.push(n);
-  for (const n of select("//cac:Signature", doc) as any[]) toRemove.push(n);
-  for (const n of select("//cac:AdditionalDocumentReference[cbc:ID='QR']", doc) as any[]) toRemove.push(n);
+  for (const n of select("//ext:UBLExtensions", doc as any) as any[]) toRemove.push(n);
+  for (const n of select("//cac:Signature", doc as any) as any[]) toRemove.push(n);
+  for (const n of select("//cac:AdditionalDocumentReference[cbc:ID='QR']", doc as any) as any[]) toRemove.push(n);
   for (const n of toRemove) {
     if (n && n.parentNode) n.parentNode.removeChild(n);
   }
 
-  const invoiceEl = (select("/inv:Invoice", doc) as any[])[0]
-    || (select("/*[local-name()='Invoice']", doc) as any[])[0];
+  const invoiceEl = (select("/inv:Invoice", doc as any) as any[])[0]
+    || (select("/*[local-name()='Invoice']", doc as any) as any[])[0];
   if (!invoiceEl) throw new Error("Invoice root element not found");
 
   const c14n = new C14nCanonicalization();

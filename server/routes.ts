@@ -5964,7 +5964,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         email,
         role: "admin" as const,
         active: true,
-        permissions: IT_PERMISSIONS,
+        // IT accounts bypass per-permission checks (requireITAccount), so the
+        // legacy flat permission map is stored as-is.
+        permissions: IT_PERMISSIONS as any,
         devicePreference: "laptop" as const,
       };
       
@@ -6676,8 +6678,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
           if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
         } else {
-          yearlyPrice = Math.round(getPlanPricing('yearly', _br, _bt, restaurant.restaurantType).grossAmount);
-          monthlyRate = Math.round(getPlanPricing('monthly', _br, _bt, restaurant.restaurantType).grossAmount);
+          yearlyPrice = Math.round(getPlanPricing('yearly', _br, _bt, restaurant.type).grossAmount);
+          monthlyRate = Math.round(getPlanPricing('monthly', _br, _bt, restaurant.type).grossAmount);
         }
         const chargedAmount = monthlyRate * monthsUsed;
         
@@ -6813,7 +6815,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       
       // Calculate new subscription amount
-      const pricing = getPlanPricing(plan as SubscriptionPlan, branches, (restaurant.businessType || 'restaurant') as BusinessType, restaurant.restaurantType);
+      const pricing = getPlanPricing(plan as SubscriptionPlan, branches, (restaurant.businessType || 'restaurant') as BusinessType, restaurant.type);
       const totalAmount = pricing.grossAmount;
       
       console.log(`[SUBSCRIPTION UPDATE] User ${userId} updating to ${plan} plan with ${branches} branches, amount: ${totalAmount} SAR`);
@@ -6980,7 +6982,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           const serialNumber = await storage.getNextSubscriptionInvoiceSerialNumber();
           
           // Calculate pricing details
-          const pricing = getPlanPricing(newPlan as SubscriptionPlan, newBranchesCount, (restaurant.businessType || 'restaurant') as BusinessType, restaurant.restaurantType);
+          const pricing = getPlanPricing(newPlan as SubscriptionPlan, newBranchesCount, (restaurant.businessType || 'restaurant') as BusinessType, restaurant.type);
           const additionalBranches = Math.max(0, newBranchesCount - 1);
           const additionalBranchesPrice = pricing.perBranchPrice * additionalBranches;
           
@@ -12663,8 +12665,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         if (restaurant.subscriptionPlan === "premium") yearlyPrice = 2990;
         if (restaurant.subscriptionPlan === "enterprise") yearlyPrice = 4990;
       } else {
-        yearlyPrice = Math.round(getPlanPricing('yearly', _br2, _bt2, restaurant.restaurantType).grossAmount);
-        monthlyRate = Math.round(getPlanPricing('monthly', _br2, _bt2, restaurant.restaurantType).grossAmount);
+        yearlyPrice = Math.round(getPlanPricing('yearly', _br2, _bt2, restaurant.type).grossAmount);
+        monthlyRate = Math.round(getPlanPricing('monthly', _br2, _bt2, restaurant.type).grossAmount);
       }
       const chargedAmount = monthlyRate * monthsUsed;
       
@@ -13929,6 +13931,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           id: restaurants.id,
           name: restaurants.name,
           businessType: restaurants.businessType,
+          type: restaurants.type,
           subscriptionPlan: restaurants.subscriptionPlan,
           subscriptionStartDate: restaurants.subscriptionStartDate,
           subscriptionEndDate: restaurants.subscriptionEndDate,
@@ -13980,7 +13983,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         // Get plan pricing
         const businessType = rest.businessType as 'restaurant' | 'factory' | 'real_estate';
         const planType = rest.subscriptionPlan as 'weekly' | 'monthly' | 'yearly';
-        const pricing = getPlanPricing(planType, 1, businessType, rest.restaurantType);
+        const pricing = getPlanPricing(planType, 1, businessType, rest.type);
         
         // Calculate monthly rate based on plan
         let monthlyRate = 199;  // Fixed monthly rate for early cancellation
@@ -16211,7 +16214,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             kind: 'dossier',
             fileName: `project-dossier-${p.projectNumber}.pdf`,
             mimeType: 'application/pdf',
-            createdAt: p.updatedAt || p.createdAt,
+            createdAt: p.createdAt,
             source: 'live' as const,
             projectName: p.name,
             projectNumber: p.projectNumber,
@@ -16223,7 +16226,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             kind: 'agreement',
             fileName: `project-agreement-${p.projectNumber}.pdf`,
             mimeType: 'application/pdf',
-            createdAt: p.updatedAt || p.createdAt,
+            createdAt: p.createdAt,
             source: 'live' as const,
             projectName: p.name,
             projectNumber: p.projectNumber,
@@ -17073,6 +17076,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       } catch {}
       const esc = (v: any) => String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]!));
       const sar = (n: any) => (parseFloat(String(n)) || 0).toFixed(2);
+      const settlementVat = (await storage.getRestaurant(restaurantId))?.taxNumber || null;
       const created = new Date(s.createdAt).toLocaleDateString('en-GB');
       const payMethodLabel = (m: string) => ({
         cash: 'Cash / نقدًا', bank_transfer: 'Bank Transfer / تحويل بنكي', other: 'Other / أخرى',
@@ -17108,7 +17112,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             ${company?.companyAddress ? `<div class="meta">${esc(company.companyAddress)}</div>` : ''}
             ${company?.companyPhone ? `<div class="meta">Tel: ${esc(company.companyPhone)}</div>` : ''}
             ${company?.companyEmail ? `<div class="meta">Email: ${esc(company.companyEmail)}</div>` : ''}
-            ${company?.companyVatNumber ? `<div class="meta">VAT: ${esc(company.companyVatNumber)}</div>` : ''}
+            ${settlementVat ? `<div class="meta">VAT: ${esc(settlementVat)}</div>` : ''}
           </div>
           <div style="text-align:right">
             <h1>Settlement Voucher</h1>
@@ -21146,7 +21150,7 @@ ${phaseSchedules.length > 0 ? `
   try {
     const { registerRealEstateRoutes } = await import("./realEstateRoutes");
     const { startRealEstateCron } = await import("./realEstateCron");
-    registerRealEstateRoutes(app, requireAuth, requireRestaurant, requirePermission, requireAction);
+    registerRealEstateRoutes(app, requireAuth, requireRestaurant, (perm: string) => requirePermission(perm as any), ((perm: string, action: any) => requireAction(perm as any, action)) as any);
     startRealEstateCron();
     console.log("[realEstate] routes registered + cron started");
   } catch (err) {

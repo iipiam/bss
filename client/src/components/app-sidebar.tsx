@@ -342,7 +342,7 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        {isAdmin && accountType !== 'it' && (
+        {isAdmin() && accountType !== 'it' && (
           <SidebarGroup>
             <SidebarGroupLabel className="text-xs font-bold tracking-wider">
               {t.adminTools}
