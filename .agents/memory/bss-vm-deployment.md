@@ -16,6 +16,8 @@ repo-root `deploy.sh` and `DEPLOYMENT.md` — trust them over this note if they 
 
 **Rollback:** `git reset --hard <prev-commit> && ./deploy.sh`.
 
+**PDF engine:** all server PDFs render via headless Chromium (Puppeteer). Blank downloaded PDFs on prod = browser launch failure on the VM. `deploy.sh` now runs `node scripts/check-pdf-engine.mjs` (self-heals via `npx puppeteer browsers install chrome` → apt chromium-browser; aborts deploy otherwise; `--no-pdf-check` to skip). `PUPPETEER_CACHE_DIR` pinned to repo `.puppeteer-cache/` and inherited by pm2 `--update-env`.
+
 **Gotchas:**
 - `db:push` fails on destructive change → run `npm run db:push` from a workstation with prompts, resolve, re-run `./deploy.sh`.
 - "column/relation does not exist" after deploy → schema behind code; re-run `./deploy.sh` (or `npm run db:push`) then `pm2 restart BSS --update-env`.

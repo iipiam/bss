@@ -376,6 +376,8 @@ export default function ITTutorial() {
                   { note: tr("Full deploy: pull → install → migrate → build → restart.", "نشر كامل: سحب ← تثبيت ← ترحيل ← بناء ← إعادة تشغيل."), cmd: "./deploy.sh" },
                   { note: tr("Config-only change (skip the build).", "تغيير إعدادات فقط (تخطّ البناء)."), cmd: "./deploy.sh --no-build" },
                   { note: tr("Schema unchanged (skip db:push).", "المخطط لم يتغير (تخطّ db:push)."), cmd: "./deploy.sh --no-migrate" },
+                  { note: tr("Deploy even if the PDF engine check fails (NOT recommended — PDF downloads will be blank).", "انشر حتى لو فشل فحص محرك PDF (غير موصى به — ستكون ملفات PDF فارغة)."), cmd: "./deploy.sh --no-pdf-check" },
+                  { note: tr("Test the PDF engine (headless Chromium) manually.", "اختبر محرك PDF (كروميوم بدون واجهة) يدوياً."), cmd: "node scripts/check-pdf-engine.mjs" },
                 ]} />
               </CardContent>
             </Card>
@@ -497,6 +499,11 @@ export default function ITTutorial() {
                   q: tr("\"column does not exist\" after deploying", "\"العمود غير موجود\" بعد النشر"),
                   a: tr("The production schema is behind the code. Re-run ./deploy.sh (it runs npm run db:push), or run npm run db:push manually, then pm2 restart BSS --update-env.",
                     "مخطط الإنتاج متأخر عن الكود. أعد تشغيل ./deploy.sh (ينفّذ npm run db:push)، أو شغّل npm run db:push يدوياً، ثم pm2 restart BSS --update-env."),
+                },
+                {
+                  q: tr("PDF downloads come back blank or broken", "ملفات PDF المحمّلة فارغة أو تالفة"),
+                  a: tr("The server renders PDFs with headless Chromium (Puppeteer). A blank file means the browser failed to launch on the VM. Run node scripts/check-pdf-engine.mjs to diagnose, then fix with sudo apt-get install -y chromium-browser (or npx puppeteer browsers install chrome), then pm2 restart BSS --update-env. Re-running ./deploy.sh performs this check and self-heals automatically.",
+                    "يولّد الخادم ملفات PDF باستخدام كروميوم بدون واجهة (Puppeteer). الملف الفارغ يعني فشل تشغيل المتصفح على الخادم. شغّل node scripts/check-pdf-engine.mjs للتشخيص، ثم أصلح بـ sudo apt-get install -y chromium-browser (أو npx puppeteer browsers install chrome)، ثم pm2 restart BSS --update-env. إعادة تشغيل ./deploy.sh تجري هذا الفحص وتصلحه تلقائياً."),
                 },
                 {
                   q: tr("App is down after deploy", "التطبيق متوقف بعد النشر"),

@@ -13,10 +13,12 @@ set -euo pipefail
 
 SKIP_BUILD=0
 SKIP_MIGRATE=0
+SKIP_PDF_CHECK=0
 for arg in "$@"; do
   case "$arg" in
-    --no-build)   SKIP_BUILD=1 ;;
-    --no-migrate) SKIP_MIGRATE=1 ;;
+    --no-build)     SKIP_BUILD=1 ;;
+    --no-migrate)   SKIP_MIGRATE=1 ;;
+    --no-pdf-check) SKIP_PDF_CHECK=1 ;;
     *) echo "Unknown flag: $arg"; exit 1 ;;
   esac
 done
@@ -82,6 +84,50 @@ if [[ -f package-lock.json ]]; then
 else
   log "Installing dependencies (npm install) — no package-lock.json found"
   npm install
+fi
+
+# ---------------------------------------------------------------------------
+# PDF engine (Chromium/Chrome for Puppeteer)
+# All invoice/report/quotation PDF endpoints render through a headless browser.
+# If no working browser exists on this VM, every PDF download comes back as a
+# blank/broken file. This step verifies the engine and self-heals if possible.
+# ---------------------------------------------------------------------------
+# Keep Puppeteer's downloaded Chrome inside the repo so it survives user/home
+# changes and is inherited by pm2 via --update-env.
+export PUPPETEER_CACHE_DIR="${PUPPETEER_CACHE_DIR:-$(pwd)/.puppeteer-cache}"
+
+if [[ "$SKIP_PDF_CHECK" -eq 0 ]]; then
+  log "Checking PDF engine (headless Chromium)"
+  if node scripts/check-pdf-engine.mjs; then
+    ok "PDF engine working"
+  else
+    log "PDF engine broken — attempting to download Chrome via Puppeteer"
+    npx puppeteer browsers install chrome || true
+    if node scripts/check-pdf-engine.mjs; then
+      ok "PDF engine fixed (Puppeteer-managed Chrome)"
+    else
+      log "Still failing — likely missing system libraries. Trying apt (needs passwordless sudo)"
+      if sudo -n true 2>/dev/null; then
+        sudo -n apt-get update -y || true
+        # chromium-browser pulls in every shared library Chrome needs.
+        sudo -n apt-get install -y chromium-browser || sudo -n apt-get install -y chromium || true
+      else
+        echo "    (no passwordless sudo — skipping apt attempt)"
+      fi
+      if node scripts/check-pdf-engine.mjs; then
+        ok "PDF engine fixed (system Chromium)"
+      else
+        fail "PDF engine is broken: no working Chromium/Chrome on this VM.
+    Fix manually with ONE of:
+      sudo apt-get install -y chromium-browser
+      npx puppeteer browsers install chrome --install-deps   (needs sudo for deps)
+    Then re-run ./deploy.sh. To deploy anyway with PDFs broken (NOT recommended):
+      ./deploy.sh --no-pdf-check"
+      fi
+    fi
+  fi
+else
+  log "Skipping PDF engine check (--no-pdf-check) — PDF downloads may be broken"
 fi
 
 # ---------------------------------------------------------------------------

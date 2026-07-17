@@ -99,21 +99,52 @@ That script does, in order:
 1. Sources `.env` and verifies `DATABASE_URL` is set.
 2. `git pull --ff-only` (aborts if the working tree is dirty).
 3. `npm ci` (or `npm install` if no lockfile).
-4. `npm run db:push` — pushes the latest Drizzle schema to RDS. *(The app
+4. **PDF engine check** — runs `node scripts/check-pdf-engine.mjs`, which
+   launches headless Chromium and renders a test PDF. Every invoice, report,
+   and quotation PDF depends on this. If it fails, the script self-heals:
+   first `npx puppeteer browsers install chrome` (downloaded into
+   `.puppeteer-cache/` in the repo), then — if passwordless sudo is available —
+   `apt-get install -y chromium-browser` to pull in missing system libraries.
+   If it still fails, the deploy aborts with manual fix instructions. The
+   `PUPPETEER_CACHE_DIR` env var is exported so PM2 inherits it via
+   `--update-env`.
+5. `npm run db:push` — pushes the latest Drizzle schema to RDS. *(The app
    also runs idempotent `CREATE TABLE IF NOT EXISTS` migrations at boot for
    the tables added in recent releases, so a partial `db:push` won't crash
    the server.)*
-5. `npm run build` (Vite + esbuild).
-6. Removes any stale PM2 processes whose name is not `BSS`, then
+6. `npm run build` (Vite + esbuild).
+7. Removes any stale PM2 processes whose name is not `BSS`, then
    `pm2 restart BSS --update-env` (or starts it if missing).
-7. `pm2 save`.
-8. Waits 4 s and runs `curl http://127.0.0.1:5000/` — fails loudly if the app
+8. `pm2 save`.
+9. Waits 4 s and runs `curl http://127.0.0.1:5000/` — fails loudly if the app
    did not come up, and prints the last 40 log lines so you can see why.
 
 Skip flags (rarely needed):
 
 - `./deploy.sh --no-build` — config-only change, reuse `dist/`.
 - `./deploy.sh --no-migrate` — schema unchanged, skip `db:push`.
+- `./deploy.sh --no-pdf-check` — deploy even if the PDF engine is broken
+  (NOT recommended — all PDF downloads will fail as blank files).
+
+### PDF downloads come back blank / empty
+
+The server renders PDFs with headless Chromium (Puppeteer). A blank or broken
+downloaded file means the browser failed to launch on the VM. Diagnose with:
+
+```bash
+cd ~/bss && node scripts/check-pdf-engine.mjs
+pm2 logs BSS --lines 40 --nostream   # look for "Browser launch failed"
+```
+
+Fix with ONE of:
+
+```bash
+sudo apt-get install -y chromium-browser        # easiest — installs all libs
+npx puppeteer browsers install chrome           # no sudo, may lack system libs
+```
+
+Then `pm2 restart BSS --update-env` (or just re-run `./deploy.sh`, which now
+performs this check automatically).
 
 ---
 
