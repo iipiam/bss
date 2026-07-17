@@ -136,7 +136,7 @@ export default function SuppliersPage() {
       for (const k of ["whatsapp", "email", "website", "coverage", "paymentMethod", "paymentTerms", "taxInvoice", "fuel", "breakdown", "minRental", "notice", "cancellation", "insurance", "notes"])
         if (!payload[k]) payload[k] = null;
       payload.crExpiry = form.crExpiry ? new Date(form.crExpiry) : null;
-      payload.equipment = eqRows.map((r, i) => ({
+      payload.equipment = eqRows.filter(r => r.name.trim()).map((r, i) => ({
         ...r, sortOrder: i,
         hourlyRate: r.hourlyRate || null, dailyRate: r.dailyRate || null, weeklyRate: r.weeklyRate || null,
         condition: r.condition || null,
@@ -578,15 +578,12 @@ export default function SuppliersPage() {
             <div>
               <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
                 <h3 className="font-semibold">{L("Equipment & Rates", "المعدات والأسعار")}</h3>
-                <Button size="sm" variant="outline" onClick={() => setEqRows([...eqRows, { name: eqTypes[0]?.name || "", available: true, hourlyRate: "", dailyRate: "", weeklyRate: "", hasDriver: false, condition: "" }])} data-testid="button-add-equipment-row"><Plus className="w-4 h-4" />{L("Add Row", "إضافة صف")}</Button>
+                <Button size="sm" variant="outline" onClick={() => setEqRows([...eqRows, { name: "", available: true, hourlyRate: "", dailyRate: "", weeklyRate: "", hasDriver: false, condition: "" }])} data-testid="button-add-equipment-row"><Plus className="w-4 h-4" />{L("Add Row", "إضافة صف")}</Button>
               </div>
               <div className="space-y-2">
                 {eqRows.map((r, i) => (
                   <div key={i} className="grid grid-cols-2 md:grid-cols-8 gap-2 items-center border rounded-md p-2">
-                    <Select value={r.name} onValueChange={v => setEqRows(eqRows.map((x, j) => j === i ? { ...x, name: v } : x))}>
-                      <SelectTrigger className="md:col-span-2" data-testid={`select-eq-name-${i}`}><SelectValue placeholder={L("Equipment", "المعدة")} /></SelectTrigger>
-                      <SelectContent>{eqTypes.map(t => <SelectItem key={t.id} value={t.name}>{t.name}</SelectItem>)}</SelectContent>
-                    </Select>
+                    <Input className="md:col-span-2" list={`eq-type-suggestions`} placeholder={L("Equipment name", "اسم المعدة")} value={r.name} onChange={e => setEqRows(eqRows.map((x, j) => j === i ? { ...x, name: e.target.value } : x))} data-testid={`input-eq-name-${i}`} />
                     <Input placeholder={L("Hour", "ساعة")} type="number" value={r.hourlyRate ?? ""} onChange={e => setEqRows(eqRows.map((x, j) => j === i ? { ...x, hourlyRate: e.target.value } : x))} data-testid={`input-eq-hour-${i}`} />
                     <Input placeholder={L("Day", "يوم")} type="number" value={r.dailyRate ?? ""} onChange={e => setEqRows(eqRows.map((x, j) => j === i ? { ...x, dailyRate: e.target.value } : x))} data-testid={`input-eq-day-${i}`} />
                     <Input placeholder={L("Week", "أسبوع")} type="number" value={r.weeklyRate ?? ""} onChange={e => setEqRows(eqRows.map((x, j) => j === i ? { ...x, weeklyRate: e.target.value } : x))} data-testid={`input-eq-week-${i}`} />
@@ -596,6 +593,10 @@ export default function SuppliersPage() {
                   </div>
                 ))}
               </div>
+              <datalist id="eq-type-suggestions">
+                {eqTypes.map(t => <option key={t.id} value={t.name} />)}
+              </datalist>
+              <p className="text-xs text-muted-foreground mt-1">{L("Type any equipment name freely — suggestions are optional.", "اكتب اسم أي معدة بحرية — الاقتراحات اختيارية.")}</p>
             </div>
             <div>
               <h3 className="font-semibold mb-2">{L("Contract Terms", "شروط التعاقد")}</h3>
