@@ -1,0 +1,39 @@
+=== SAFETY RULES (read first) ===
+1. Create a checkpoint/commit BEFORE changing anything, so I can roll back.
+2. Change only what's needed for these fixes. Do NOT redesign the database
+   schema, rename API routes, or refactor unrelated files — the frontend and
+   other pages depend on the current shapes.
+3. Do NOT switch anything to the production environment. Keep sandbox.
+4. Work file-by-file and run the build after each file so I can see where
+   failures come from.
+
+=== SECURITY (non-negotiable) ===
+5. Never log private keys, CSID tokens, secrets, or OTPs — not even partially.
+   Check the existing logging and remove any that do.
+6. The settings API must keep masking sensitive fields (e.g. "[CONFIGURED]")
+   in responses. Verify this still works after your changes.
+7. Never commit .env or any file containing real credentials.
+
+=== SERVICE LAYER CORRECTNESS (inspect, fix only if broken) ===
+8. Invoice IssueDate/IssueTime must be Asia/Riyadh time (UTC+3), NOT server
+   time — Replit servers run on UTC, and ZATCA rejects wrong timestamps.
+9. ZATCA base URLs must be per-environment: developer-portal (sandbox),
+   simulation, core (production). Basic auth header =
+   base64(binarySecurityToken + ":" + secret). Standard invoices go to
+   clearance, simplified invoices go to reporting.
+10. HASH CHAIN INTEGRITY: invoiceCounter and lastHashedInvoice must update
+    atomically per restaurant (DB transaction or mutex). Two invoices signed
+    at the same time must never share the same PIH or reuse an ICV number.
+11. Once an invoice is signed and submission was attempted, a retry must
+    resend the SAME signed XML — never re-sign or regenerate it (that would
+    change its hash and break the chain).
+12. Submit invoices to ZATCA sequentially, not in parallel bursts.
+13. Compliance CSIDs expire after ~1 hour — store the receipt timestamp and
+    never reuse an expired one.
+
+=== DONE CRITERIA ===
+14. npm run build passes with zero errors.
+15. App starts, ZATCA settings page loads, CSR generation (Step 1) works in
+    sandbox without errors.
+16. Give me a final report: files changed, anything you intentionally left
+    alone, and anything that needs my decision.

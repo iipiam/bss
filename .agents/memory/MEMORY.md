@@ -1,4 +1,5 @@
 - [ZATCA invoice type code](zatca-invoice-type-code.md) — KSA-2 7-char transaction code (NNPNESB) + BT-3 doc type rules for invoice/credit/debit notes.
 - [ZATCA credit/debit reason (KSA-10)](zatca-credit-debit-reason.md) — reason MUST be cbc:InstructionNote inside cac:PaymentMeans (per ZATCA SDK samples + BR-KSA-17); a header cbc:Note is rejected. Note: grep mangles UBL tag names in output.
 - [ZATCA QR tags 6 & 7 encoding](zatca-qr-tag6-encoding.md) — Phase-2 QR tags 6 (hash) & 7 (signature) must be base64 STRINGS, not decoded bytes; tags 8/9 stay raw bytes; mismatch hits simplified invoices only.
+- [ZATCA fatoora CLI quirks](zatca-sdk-wrapper-quirks.md) — nonzero-exit -help, env CSR flags, tolerant label parsing, QR from XML not stdout, base64(hex) cert hash.
 - [BSS VM deployment](bss-vm-deployment.md) — self-managed VM at /home/BSS via pm2 + git; repeatable deploy steps and ecosystem.config.cjs/.env requirements.

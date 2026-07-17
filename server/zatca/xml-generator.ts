@@ -77,14 +77,11 @@ function formatDecimal(value: number, decimals: number = 2): string {
   return rounded.toFixed(decimals);
 }
 
+// Never invent or pad a VAT number — only strip non-digit characters. A VAT
+// number that is wrong after stripping must fail ZATCA validation loudly
+// rather than be silently replaced with a fabricated one.
 export function formatVatNumber(vatNumber: string): string {
-  const digitsOnly = vatNumber.replace(/\D/g, "");
-  if (digitsOnly.length === 15 && digitsOnly.startsWith("3") && digitsOnly.endsWith("3")) return digitsOnly;
-  if (digitsOnly.length === 10) return "3" + digitsOnly + "0003";
-  if (digitsOnly.length > 0 && digitsOnly.length < 13) {
-    return "3" + digitsOnly.padStart(13, "0") + "3";
-  }
-  return "300000000000003";
+  return (vatNumber || "").replace(/\D/g, "");
 }
 
 function generateTlvData(tag: number, value: string | Buffer): Buffer {
@@ -286,8 +283,7 @@ export function signInvoice(xmlContent: string, privateKey: string): string {
   try {
     return signEcdsaSha256(privateKey, xmlContent);
   } catch (error) {
-    console.error("Signature generation failed:", error);
-    return "";
+    throw new Error(`ZATCA signature generation failed: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
 
@@ -321,22 +317,39 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   const formattedVat = formatVatNumber(sellerInfo.vatNumber);
 
   const defaultPIH = "NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==";
-  const pihValue = previousInvoiceHash || defaultPIH;
+  // PIH must always be stored in the XML as base64. If a caller hands us a
+  // 64-char hex SHA-256 (legacy storage format), convert it to base64 of the
+  // hex string — the same convention ZATCA uses for the first-invoice PIH.
+  let pihValue = previousInvoiceHash || defaultPIH;
+  if (/^[0-9a-fA-F]{64}$/.test(pihValue)) {
+    pihValue = Buffer.from(pihValue.toLowerCase(), "utf8").toString("base64");
+  }
 
   let invoiceLinesXml = "";
   let calculatedSubtotal = 0;
   let calculatedVat = 0;
+  // Per tax category+percent accumulation for the header TaxSubtotal blocks.
+  const taxGroups = new Map<string, { category: string; percent: number; taxable: number; tax: number }>();
+  const round2 = (v: number) => Math.round((Math.abs(v) + Number.EPSILON) * 100) / 100 * (Math.sign(v) || 1);
 
   for (let i = 0; i < items.length; i++) {
     const item = items[i];
     const itemVatRate = item.taxPercent ?? 15;
+    const itemCategory = item.taxCategory || "S";
     const itemDiscount = Number((item as any).discount) || 0;
     const grossExtension = item.quantity * item.unitPrice;
-    const lineExtension = Math.max(0, grossExtension - itemDiscount);
-    const lineTax = lineExtension * (itemVatRate / 100);
+    // Round each line's extension and tax to 2 decimals BEFORE summing, so
+    // header totals equal the sum of the rounded line amounts.
+    const lineExtension = round2(Math.max(0, grossExtension - itemDiscount));
+    const lineTax = round2(lineExtension * (itemVatRate / 100));
     const lineTotal = lineExtension + lineTax;
     calculatedSubtotal += lineExtension;
     calculatedVat += lineTax;
+    const groupKey = `${itemCategory}|${itemVatRate}`;
+    const group = taxGroups.get(groupKey) || { category: itemCategory, percent: itemVatRate, taxable: 0, tax: 0 };
+    group.taxable += lineExtension;
+    group.tax += lineTax;
+    taxGroups.set(groupKey, group);
     const lineDiscountXml = itemDiscount > 0 ? `
     <cac:AllowanceCharge>
       <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
@@ -371,6 +384,23 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   const finalSubtotal = formatDecimal(calculatedSubtotal);
   const finalVat = formatDecimal(calculatedVat);
   const finalTotal = formatDecimal(calculatedSubtotal + calculatedVat);
+
+  // One TaxSubtotal per tax category/percent actually used by the lines.
+  let taxSubtotalsXml = "";
+  for (const group of Array.from(taxGroups.values())) {
+    taxSubtotalsXml += `
+    <cac:TaxSubtotal>
+      <cbc:TaxableAmount currencyID="SAR">${formatDecimal(group.taxable)}</cbc:TaxableAmount>
+      <cbc:TaxAmount currencyID="SAR">${formatDecimal(group.tax)}</cbc:TaxAmount>
+      <cac:TaxCategory>
+        <cbc:ID schemeAgencyID="6" schemeID="UN/ECE 5305">${group.category}</cbc:ID>
+        <cbc:Percent>${formatDecimal(group.percent)}</cbc:Percent>
+        <cac:TaxScheme>
+          <cbc:ID schemeAgencyID="6" schemeID="UN/ECE 5153">VAT</cbc:ID>
+        </cac:TaxScheme>
+      </cac:TaxCategory>
+    </cac:TaxSubtotal>`;
+  }
 
   const buyerName = buyerInfo?.name || "NA";
   const buyerStreet = buyerInfo?.streetName || "-";
@@ -489,17 +519,9 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
   </cac:PaymentMeans>
   <cac:TaxTotal>
     <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
-    <cac:TaxSubtotal>
-      <cbc:TaxableAmount currencyID="SAR">${finalSubtotal}</cbc:TaxableAmount>
-      <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>
-      <cac:TaxCategory>
-        <cbc:ID schemeAgencyID="6" schemeID="UN/ECE 5305">S</cbc:ID>
-        <cbc:Percent>15</cbc:Percent>
-        <cac:TaxScheme>
-          <cbc:ID schemeAgencyID="6" schemeID="UN/ECE 5153">VAT</cbc:ID>
-        </cac:TaxScheme>
-      </cac:TaxCategory>
-    </cac:TaxSubtotal>
+  </cac:TaxTotal>
+  <cac:TaxTotal>
+    <cbc:TaxAmount currencyID="SAR">${finalVat}</cbc:TaxAmount>${taxSubtotalsXml}
   </cac:TaxTotal>
   <cac:LegalMonetaryTotal>
     <cbc:LineExtensionAmount currencyID="SAR">${finalSubtotal}</cbc:LineExtensionAmount>

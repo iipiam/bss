@@ -53,8 +53,31 @@ interface ZatcaSettings {
   onboardingStatus: string;
   lastHashedInvoice: string | null;
   invoiceCounter: number;
+  complianceCsidReceivedAt: string | null;
+  isEnabled: boolean;
   credentialsCorrupted?: boolean;
 }
+
+// Only these fields may be edited from this page. Server-managed fields
+// (onboardingStatus, invoiceCounter, lastHashedInvoice, id, ...) must never
+// be POSTed back.
+const EDITABLE_SETTINGS_FIELDS = [
+  "environment",
+  "csrCommonName",
+  "csrOrganizationName",
+  "csrOrganizationIdentifier",
+  "csrOrganizationUnitName",
+  "csrCountryName",
+  "csrSerialNumber",
+  "csrInvoiceType",
+  "streetName",
+  "buildingNumber",
+  "citySubdivision",
+  "city",
+  "postalZone",
+  "countryCode",
+  "crNumber",
+] as const;
 
 interface InvoiceZatcaStatus {
   id: string;
@@ -279,8 +302,9 @@ export default function ZatcaSettingsPage() {
       queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
       const reqId = data.requestId || data.complianceRequestId;
       if (reqId) {
-        setComplianceRequestId(reqId);
+        setComplianceRequestId(String(reqId));
       }
+      setOtp("");
       toast({
         title: t.success || "Success",
         description: t.onboardingSuccess || "Successfully onboarded to ZATCA. Compliance CSID received.",
@@ -487,7 +511,13 @@ export default function ZatcaSettingsPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    saveMutation.mutate(formData);
+    const editableData: Partial<ZatcaSettings> = {};
+    for (const field of EDITABLE_SETTINGS_FIELDS) {
+      if (formData[field] !== undefined) {
+        (editableData as any)[field] = formData[field];
+      }
+    }
+    saveMutation.mutate(editableData);
   };
 
   if (authLoading || restaurantsLoading) {
@@ -586,6 +616,15 @@ export default function ZatcaSettingsPage() {
                 countryCode: "SA",
                 csrInvoiceType: "1100",
                 onboardingStatus: "not_started"
+              });
+              setOtp("");
+              setComplianceRequestId("");
+              setManualCredentials({
+                privateKey: "",
+                complianceCsid: "",
+                complianceCsidSecret: "",
+                productionCsid: "",
+                productionCsidSecret: "",
               });
             }}
           >
@@ -974,7 +1013,8 @@ export default function ZatcaSettingsPage() {
                     <Input
                       id="otp"
                       value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      inputMode="numeric"
                       placeholder="123456"
                       maxLength={6}
                       data-testid="input-otp"
@@ -983,7 +1023,7 @@ export default function ZatcaSettingsPage() {
                   </div>
                   <Button
                     onClick={() => onboardMutation.mutate()}
-                    disabled={onboardMutation.isPending || !settings?.csr || !otp}
+                    disabled={onboardMutation.isPending || !settings?.csr || otp.length !== 6}
                     className="mt-6"
                     data-testid="button-request-compliance"
                   >
@@ -1059,7 +1099,9 @@ export default function ZatcaSettingsPage() {
                   <AlertDescription>{(t as any).complianceChecksInfoDescription || "This will submit test invoices (Standard B2B and Simplified B2C) to ZATCA using your Compliance CSID to verify your integration is working correctly."}</AlertDescription>
                 </Alert>
                 {settings?.complianceCsidReceivedAt && (() => {
-                  const ageMinutes = (Date.now() - new Date(settings.complianceCsidReceivedAt).getTime()) / 60000;
+                  const receivedTime = new Date(settings.complianceCsidReceivedAt).getTime();
+                  if (isNaN(receivedTime)) return null;
+                  const ageMinutes = (Date.now() - receivedTime) / 60000;
                   if (ageMinutes > 50) {
                     return (
                       <Alert variant="destructive">
@@ -1113,7 +1155,8 @@ export default function ZatcaSettingsPage() {
                     <Input
                       id="complianceRequestId"
                       value={complianceRequestId}
-                      onChange={(e) => setComplianceRequestId(e.target.value)}
+                      onChange={(e) => setComplianceRequestId(e.target.value.replace(/\D/g, ""))}
+                      inputMode="numeric"
                       placeholder={t.enterComplianceRequestId || "From step 2"}
                       data-testid="input-compliance-request-id"
                     />
@@ -1214,14 +1257,14 @@ export default function ZatcaSettingsPage() {
                               <Button 
                                 variant="outline" 
                                 size="icon"
-                                aria-label={t.download}
+                                aria-label={t.download || "Download"}
                                 onClick={downloadPrivateKey}
                                 data-testid="button-download-private-key"
                               >
                                 <Download className="h-4 w-4" />
                               </Button>
                             </TooltipTrigger>
-                            <TooltipContent>{t.download}</TooltipContent>
+                            <TooltipContent>{t.download || "Download"}</TooltipContent>
                           </Tooltip>
                         </div>
                         <p className="text-xs text-muted-foreground">

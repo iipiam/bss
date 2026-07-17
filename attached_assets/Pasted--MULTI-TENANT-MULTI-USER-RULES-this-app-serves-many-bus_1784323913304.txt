@@ -1,0 +1,48 @@
+=== MULTI-TENANT / MULTI-USER RULES (this app serves many businesses) ===
+
+1. ISOLATION IS ABSOLUTE
+   - Every ZATCA record (settings, credentials, invoices, counters) is scoped
+     by restaurantId. User A of restaurant X must NEVER read or write data of
+     restaurant Y.
+   - Enforce this on the SERVER on every /api/zatca/* route — the frontend
+     check (isITAccount) is not security. Reject requests whose restaurantId
+     does not belong to the authenticated user (403).
+   - Never log or return another tenant's credentials, invoices, or errors.
+
+2. CERTIFICATE MODEL: [choose ONE and state it in your report]
+   Option A (one POS per restaurant): keep one certificate + counter per
+     restaurant, and add a per-restaurant sign lock (mutex/DB transaction) so
+     two users can never sign invoices concurrently.
+   Option B (multiple devices per restaurant): create a devices table — each
+     device has its own CSR, certificate, private key, ICV counter and
+     lastInvoiceHash. Every invoice stores the deviceId that signed it.
+     Onboarding runs per device, not per restaurant.
+
+3. CONCURRENCY (applies to BOTH options)
+   - Signing + counter increment + lastInvoiceHash update must happen in ONE
+     atomic step (DB transaction with row lock, or a per-device mutex).
+   - Two simultaneous invoice requests must serialize: second one waits, then
+     uses the updated counter and hash.
+   - Retried submissions never touch the counter — the invoice keeps its
+     original ICV, hash and signed XML.
+
+4. PER-TENANT DATA
+   - VAT number, CR number, address, certificate, environment (sandbox/
+     simulation/production) are all per restaurant — never read them from
+     another tenant or from a global config.
+   - Each tenant onboards separately with its own OTP from its own Fatoora
+     portal account.
+   - Saudi timezone (Asia/Riyadh) applies to all tenants.
+
+5. FAILURE ISOLATION
+   - A broken ZATCA setup for restaurant X (expired CSID, bad credentials)
+     must not block invoicing for restaurant Y. Errors stay tenant-scoped.
+   - The retry-pending job processes one tenant's queue at a time,
+     sequentially per device.
+
+6. VERIFY BEFORE FINISHING
+   - Simulate two concurrent invoice requests for the same restaurant:
+     they must get consecutive ICVs and a valid unbroken hash chain.
+   - Prove with a test that user of restaurant A gets 403 when calling the
+     ZATCA APIs with restaurant B's id.
+   - Report which certificate model (A or B) you implemented.
