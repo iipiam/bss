@@ -54,6 +54,9 @@
     "@types/nodemailer": "^7.0.3",
     "@types/puppeteer": "^5.4.7",
     "@types/qrcode": "^1.5.6",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.2.0",
     "@xmldom/xmldom": "^0.9.10",
     "arabic-reshaper": "^1.1.0",
@@ -102,6 +105,7 @@
     "tailwindcss-animate": "^1.0.7",
     "tsx": "^4.21.0",
     "tw-animate-css": "^1.2.5",
+    "typescript": "^5.9.3",
     "vaul": "^1.1.2",
     "vite": "^7.3.2",
     "wouter": "^3.3.5",
@@ -120,11 +124,7 @@
     "@types/node": "^20.16.11",
     "@types/passport": "^1.0.16",
     "@types/passport-local": "^1.0.38",
-    "@types/react": "^18.3.11",
-    "@types/react-dom": "^18.3.1",
-    "@types/ws": "^8.5.13",
-    "drizzle-kit": "^0.31.10",
-    "typescript": "^5.6.3"
+    "drizzle-kit": "^0.31.10"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"
