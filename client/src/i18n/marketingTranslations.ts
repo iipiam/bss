@@ -73,6 +73,18 @@ export type MarketingT = {
   selectFromCatalog: string;
   noCatalogProducts: string;
   linkedFromCatalogToast: string;
+  selectFromProducts: string;
+  basedOnProducts: string;
+  currentSnapshotDescProducts: string;
+  basedOnCatalogProducts: string;
+  currentSnapshotDescServices: string;
+  selectFromProperties: string;
+  noProperties: string;
+  linkedFromPropertyToast: string;
+  basedOnProperties: string;
+  avgPropertyValue: string;
+  avgPurchasePrice: string;
+  currentSnapshotDescRealEstate: string;
   productName: string;
   sellingPrice: string; sellingPriceHelp: string;
   variableCost: string; variableCostHelp: string;
@@ -367,6 +379,18 @@ const en: MarketingT = {
   selectFromCatalog: "Select from Service Catalog Products",
   noCatalogProducts: "No products in Service Catalog",
   linkedFromCatalogToast: "Product linked from Service Catalog",
+  selectFromProducts: "Select from Products",
+  basedOnProducts: "Based on {n} products",
+  currentSnapshotDescProducts: "Live averages from your current products, material/inventory costs, and monthly bills.",
+  basedOnCatalogProducts: "Based on {n} catalog products",
+  currentSnapshotDescServices: "Live figures from your service catalog and monthly bills.",
+  selectFromProperties: "Select from Properties",
+  noProperties: "No properties found",
+  linkedFromPropertyToast: "Property linked with rent and value",
+  basedOnProperties: "Based on {n} properties",
+  avgPropertyValue: "Avg Property Value",
+  avgPurchasePrice: "Avg Purchase Price",
+  currentSnapshotDescRealEstate: "Live averages from your property portfolio and monthly bills.",
   productName: "Product name",
   sellingPrice: "Selling Price / Unit",
   sellingPriceHelp: "Price you charge for one unit.",
@@ -659,6 +683,18 @@ const ar: MarketingT = {
   selectFromCatalog: "اختر من منتجات كتالوج الخدمات",
   noCatalogProducts: "لا توجد منتجات في كتالوج الخدمات",
   linkedFromCatalogToast: "تم ربط المنتج من كتالوج الخدمات",
+  selectFromProducts: "اختر من المنتجات",
+  basedOnProducts: "بناءً على {n} منتجاً",
+  currentSnapshotDescProducts: "متوسطات حية من منتجاتك الحالية وتكاليف المواد/المخزون والفواتير الشهرية.",
+  basedOnCatalogProducts: "بناءً على {n} منتجاً من الكتالوج",
+  currentSnapshotDescServices: "أرقام حية من كتالوج الخدمات والفواتير الشهرية.",
+  selectFromProperties: "اختر من العقارات",
+  noProperties: "لا توجد عقارات",
+  linkedFromPropertyToast: "تم ربط العقار مع الإيجار والقيمة",
+  basedOnProperties: "بناءً على {n} عقاراً",
+  avgPropertyValue: "متوسط قيمة العقار",
+  avgPurchasePrice: "متوسط سعر الشراء",
+  currentSnapshotDescRealEstate: "متوسطات حية من محفظتك العقارية والفواتير الشهرية.",
   productName: "اسم المنتج",
   sellingPrice: "سعر البيع / الوحدة",
   sellingPriceHelp: "السعر الذي تتقاضاه عن الوحدة الواحدة.",

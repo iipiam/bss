@@ -96,6 +96,7 @@ import jsPDF from "jspdf";
 import { toCanvas as htiToCanvas } from "html-to-image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
+import { useBusinessType } from "@/hooks/useBusinessType";
 import { getMarketingT } from "@/i18n/marketingTranslations";
 
 const LS_KEY = "bss_marketing_toolkit_v1";
@@ -343,11 +344,22 @@ export default function Marketing() {
     } catch {}
   }, [products, swot, canvas, influencers, bloggerFiles, calcCurrency, calcCpm, calcSponsorFollowers, calcSponsorEr, roiInputs, earningsInputs]);
 
-  // ---- Menu / cost data from BSS ----
-  const { data: menuItems = [] } = useQuery<MenuItem[]>({ queryKey: ["/api/menu"] });
-  const { data: serviceProductsList = [] } = useQuery<Array<{ id: string; name: string }>>({ queryKey: ["/api/service-products"] });
-  const { data: recipes = [] } = useQuery<Recipe[]>({ queryKey: ["/api/recipes"] });
-  const { data: inventory = [] } = useQuery<InventoryItem[]>({ queryKey: ["/api/inventory"] });
+  // ---- Business-type-aware cost data from BSS ----
+  // Restaurant → menu items; Factory → products (same API, different labels);
+  // Service businesses → service catalog; Real estate → properties.
+  const { isRestaurant, isFactory, isRealEstate, isServiceBusiness } = useBusinessType();
+  const usesMenu = isRestaurant || isFactory;
+  const { data: menuItems = [] } = useQuery<MenuItem[]>({ queryKey: ["/api/menu"], enabled: usesMenu });
+  const { data: serviceProductsList = [] } = useQuery<Array<{ id: string; name: string }>>({
+    queryKey: ["/api/service-products"],
+    enabled: isServiceBusiness,
+  });
+  const { data: propertiesList = [] } = useQuery<Array<{ id: string; name: string; purchasePrice: number | null; currentValue: number | null }>>({
+    queryKey: ["/api/properties"],
+    enabled: isRealEstate,
+  });
+  const { data: recipes = [] } = useQuery<Recipe[]>({ queryKey: ["/api/recipes"], enabled: usesMenu });
+  const { data: inventory = [] } = useQuery<InventoryItem[]>({ queryKey: ["/api/inventory"], enabled: usesMenu });
   const { data: shopBills = [] } = useQuery<ShopBill[]>({ queryKey: ["/api/shop/bills"] });
 
   // ====== Marketing Tools state ======
@@ -700,7 +712,30 @@ export default function Marketing() {
     return 0;
   };
 
+  // Snapshot adapts to business type:
+  // - Restaurant/Factory: avg selling price + avg variable cost from menu/products
+  // - Real estate: avg current value + avg purchase price from properties
+  // - Service businesses: catalog count only (no per-unit price in the catalog)
   const currentSnapshot = useMemo(() => {
+    if (isRealEstate) {
+      if (propertiesList.length === 0) {
+        return { avgSellingPrice: 0, avgVariableCost: 0, count: 0 };
+      }
+      let valueSum = 0;
+      let purchaseSum = 0;
+      for (const p of propertiesList) {
+        valueSum += Number(p.currentValue) || 0;
+        purchaseSum += Number(p.purchasePrice) || 0;
+      }
+      return {
+        avgSellingPrice: valueSum / propertiesList.length,
+        avgVariableCost: purchaseSum / propertiesList.length,
+        count: propertiesList.length,
+      };
+    }
+    if (isServiceBusiness) {
+      return { avgSellingPrice: 0, avgVariableCost: 0, count: serviceProductsList.length };
+    }
     if (menuItems.length === 0) {
       return { avgSellingPrice: 0, avgVariableCost: 0, count: 0 };
     }
@@ -715,7 +750,27 @@ export default function Marketing() {
       avgVariableCost: costSum / menuItems.length,
       count: menuItems.length,
     };
-  }, [menuItems, recipes, inventory]);
+  }, [menuItems, recipes, inventory, isRealEstate, isServiceBusiness, propertiesList, serviceProductsList]);
+
+  // Business-type-aware labels for the financial snapshot
+  const finSnapshotDesc = isRealEstate
+    ? t.currentSnapshotDescRealEstate
+    : isServiceBusiness
+      ? t.currentSnapshotDescServices
+      : isFactory
+        ? t.currentSnapshotDescProducts
+        : t.currentSnapshotDesc;
+  const finBasedOnLabel = (n: number) =>
+    (isRealEstate
+      ? t.basedOnProperties
+      : isServiceBusiness
+        ? t.basedOnCatalogProducts
+        : isFactory
+          ? t.basedOnProducts
+          : t.basedOnMenuItems
+    ).replace("{n}", String(n));
+  const finAvgPriceLabel = isRealEstate ? t.avgPropertyValue : t.avgSellingPriceUnit;
+  const finAvgCostLabel = isRealEstate ? t.avgPurchasePrice : t.avgVariableCostUnit;
 
   const addProductFromMenu = (menuItemId: string) => {
     const mi = menuItems.find((m) => m.id === menuItemId);
@@ -764,6 +819,32 @@ export default function Marketing() {
       };
       setProducts((arr) => [...arr, linked]);
       toast({ title: t.linkedFromCatalogToast, description: sp.name });
+    } catch (e: any) {
+      toast({ title: t.error, description: String(e?.message || e), variant: "destructive" });
+    }
+  };
+
+  const addProductFromProperty = async (propertyId: string) => {
+    const prop = propertiesList.find((p) => p.id === propertyId);
+    if (!prop) return;
+    try {
+      const res = await apiRequest("GET", `/api/properties/${propertyId}`);
+      const detail = await res.json();
+      const units: Array<{ monthlyRent?: number }> = detail.units || [];
+      const rentSum = units.reduce((s, u) => s + (Number(u.monthlyRent) || 0), 0);
+      const avgRent = units.length > 0 ? rentSum / units.length : 0;
+      const linked: FinProduct = {
+        id: crypto.randomUUID(),
+        name: prop.name,
+        sellingPrice: Math.round(avgRent),
+        variableCost: 0,
+        fixedCosts: Math.round(monthlyFixedCosts),
+        initialCapital: Number(detail.purchasePrice) || Number(detail.currentValue) || 20000,
+        monthlyUnits: units.length || 1,
+        growthRate: 2,
+      };
+      setProducts((arr) => [...arr, linked]);
+      toast({ title: t.linkedFromPropertyToast, description: prop.name });
     } catch (e: any) {
       toast({ title: t.error, description: String(e?.message || e), variant: "destructive" });
     }
@@ -1583,10 +1664,10 @@ export default function Marketing() {
                 <CardDescription>{t.finDesc}</CardDescription>
               </div>
               <div className="flex gap-2 flex-wrap items-center">
-                {menuItems.length > 0 && (
+                {usesMenu && menuItems.length > 0 && (
                   <Select value="" onValueChange={(v) => v && addProductFromMenu(v)}>
                     <SelectTrigger className="w-[220px] h-9" data-testid="select-menu-item">
-                      <SelectValue placeholder={t.selectFromMenu} />
+                      <SelectValue placeholder={isFactory ? t.selectFromProducts : t.selectFromMenu} />
                     </SelectTrigger>
                     <SelectContent>
                       {menuItems.map((mi) => (
@@ -1597,22 +1678,42 @@ export default function Marketing() {
                     </SelectContent>
                   </Select>
                 )}
-                <Select value="" onValueChange={(v) => v && addProductFromCatalog(v)}>
-                  <SelectTrigger className="w-[260px] h-9" data-testid="select-catalog-product">
-                    <SelectValue placeholder={t.selectFromCatalog} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {serviceProductsList.length === 0 ? (
-                      <div className="px-2 py-1.5 text-sm text-muted-foreground">{t.noCatalogProducts}</div>
-                    ) : (
-                      serviceProductsList.map((sp) => (
-                        <SelectItem key={sp.id} value={sp.id} data-testid={`option-catalog-product-${sp.id}`}>
-                          {sp.name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
+                {isServiceBusiness && (
+                  <Select value="" onValueChange={(v) => v && addProductFromCatalog(v)}>
+                    <SelectTrigger className="w-[260px] h-9" data-testid="select-catalog-product">
+                      <SelectValue placeholder={t.selectFromCatalog} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {serviceProductsList.length === 0 ? (
+                        <div className="px-2 py-1.5 text-sm text-muted-foreground">{t.noCatalogProducts}</div>
+                      ) : (
+                        serviceProductsList.map((sp) => (
+                          <SelectItem key={sp.id} value={sp.id} data-testid={`option-catalog-product-${sp.id}`}>
+                            {sp.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
+                {isRealEstate && (
+                  <Select value="" onValueChange={(v) => v && addProductFromProperty(v)}>
+                    <SelectTrigger className="w-[240px] h-9" data-testid="select-property">
+                      <SelectValue placeholder={t.selectFromProperties} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {propertiesList.length === 0 ? (
+                        <div className="px-2 py-1.5 text-sm text-muted-foreground">{t.noProperties}</div>
+                      ) : (
+                        propertiesList.map((pr) => (
+                          <SelectItem key={pr.id} value={pr.id} data-testid={`option-property-${pr.id}`}>
+                            {pr.name}
+                          </SelectItem>
+                        ))
+                      )}
+                    </SelectContent>
+                  </Select>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
@@ -1622,7 +1723,7 @@ export default function Marketing() {
                       {
                         ...newProduct(),
                         name: `Product ${arr.length + 1}`,
-                        ...(currentSnapshot.count > 0
+                        ...(usesMenu && currentSnapshot.count > 0
                           ? {
                               sellingPrice: Math.round(currentSnapshot.avgSellingPrice * 100) / 100,
                               variableCost: Math.round(currentSnapshot.avgVariableCost * 100) / 100,
@@ -1646,28 +1747,28 @@ export default function Marketing() {
             <CardContent>
               <div className="mb-3">
                 <div className="font-semibold">{t.currentSnapshotTitle}</div>
-                <div className="text-sm text-muted-foreground">{t.currentSnapshotDesc}</div>
+                <div className="text-sm text-muted-foreground">{finSnapshotDesc}</div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div className="rounded-md border p-3">
-                  <div className="text-xs text-muted-foreground">{t.avgSellingPriceUnit}</div>
+                  <div className="text-xs text-muted-foreground">{finAvgPriceLabel}</div>
                   <div className="text-lg font-bold" data-testid="stat-current-avg-selling-price">
-                    {currentSnapshot.count > 0 ? fmt(currentSnapshot.avgSellingPrice) : "—"}
+                    {currentSnapshot.count > 0 && !isServiceBusiness ? fmt(currentSnapshot.avgSellingPrice) : "—"}
                   </div>
                   {currentSnapshot.count > 0 && (
                     <div className="text-xs text-muted-foreground">
-                      {t.basedOnMenuItems.replace("{n}", String(currentSnapshot.count))}
+                      {finBasedOnLabel(currentSnapshot.count)}
                     </div>
                   )}
                 </div>
                 <div className="rounded-md border p-3">
-                  <div className="text-xs text-muted-foreground">{t.avgVariableCostUnit}</div>
+                  <div className="text-xs text-muted-foreground">{finAvgCostLabel}</div>
                   <div className="text-lg font-bold" data-testid="stat-current-avg-variable-cost">
-                    {currentSnapshot.count > 0 ? fmt(currentSnapshot.avgVariableCost) : "—"}
+                    {currentSnapshot.count > 0 && !isServiceBusiness ? fmt(currentSnapshot.avgVariableCost) : "—"}
                   </div>
                   {currentSnapshot.count > 0 && (
                     <div className="text-xs text-muted-foreground">
-                      {t.basedOnMenuItems.replace("{n}", String(currentSnapshot.count))}
+                      {finBasedOnLabel(currentSnapshot.count)}
                     </div>
                   )}
                 </div>
