@@ -2510,10 +2510,10 @@ export default function Marketing() {
           </Card>
 
           {/* Hidden investor summary for PDF capture */}
+          <div className="fixed -left-[10000px] top-0" aria-hidden="true">
           <div
             id="pdf-section-investor"
-            className="fixed -left-[10000px] top-0 w-[900px] bg-background p-6 space-y-4"
-            aria-hidden="true"
+            className="w-[900px] bg-background p-6 space-y-4"
           >
             <div>
               <div className="text-2xl font-bold">{t.finInvestorSummary}</div>
@@ -2583,6 +2583,7 @@ export default function Marketing() {
                 </div>
               </div>
             )}
+          </div>
           </div>
         </TabsContent>
 

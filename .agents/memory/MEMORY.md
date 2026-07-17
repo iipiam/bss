@@ -3,5 +3,6 @@
 - [ZATCA QR tags 6 & 7 encoding](zatca-qr-tag6-encoding.md) — Phase-2 QR tags 6 (hash) & 7 (signature) must be base64 STRINGS, not decoded bytes; tags 8/9 stay raw bytes; mismatch hits simplified invoices only.
 - [ZATCA fatoora CLI quirks](zatca-sdk-wrapper-quirks.md) — nonzero-exit -help, env CSR flags, tolerant label parsing, QR from XML not stdout, base64(hex) cert hash.
 - [ZATCA hash chain & signing lock](zatca-hash-chain.md) — per-restaurant lock around ICV/PIH/sign/submit; PIH is base64(hex-string); Riyadh (+3) timestamps.
+- [html-to-image off-screen capture](html-to-image-offscreen-capture.md) — never capture the fixed/off-screen element itself; wrap it and capture a static inner div, or the canvas is blank/black.
 - [BSS VM deployment](bss-vm-deployment.md) — self-managed VM at /home/BSS via pm2 + git; repeatable deploy steps and ecosystem.config.cjs/.env requirements.
 - [TypeScript check quirks](typescript-check-quirks.md) — tsc via node_modules/.bin, reinstall packages when node_modules corrupt, clear tsbuildinfo after tsconfig changes, AST-only edits to translations.ts.
