@@ -1,0 +1,31 @@
+A. Business prerequisites (before touching any code)
+Valid 15-digit Saudi VAT number (starts and ends with 3) — it goes into the CSR as the organization identifier.
+Active Fatoora portal account (fatoora.zatca.gov.sa) for that taxpayer — this is where you generate the OTP and manage devices.
+Commercial Registration (CR) number and full national address (street, building number, district, city, 5-digit postal code).
+Decision on environment per restaurant: sandbox (developer-portal) → simulation → production. Test in sandbox first, always.
+Correct invoice-type choice on the CSR: 1100 (B2B + B2C), 1000 (B2B only), 0100 (B2C only). Your app may only issue what the CSR declares.
+B. Device & server requirements
+Each POS device onboards individually — own CSR, certificate, ICV counter, hash chain. Device serial in ZATCA format: 1-XXX|2-XXX|3-<uuid>.
+Java 11–17 installed on the server with java on PATH (required by ZATCA's SDK for CSR generation).
+ZATCA SDK folder present at project root with the jar inside — and the app always started from project root (paths resolve from process.cwd()).
+Server clock synced (NTP) and invoice timestamps generated in Asia/Riyadh — UTC timestamps are a top rejection cause.
+Outbound HTTPS access to gw-fatoora.zatca.gov.sa from the server.
+Secure key storage: private key never logged, never in API responses, never in client code.
+C. The linking sequence itself (all must succeed, in order)
+CSR generated correctly — no spaces in common name, correct flags (-nonprod sandbox / -sim simulation / none production).
+Valid OTP from the Fatoora portal — single-use, short-lived; request the Compliance CSID immediately after getting it.
+Compliance CSID used within ~1 hour — it expires; if it lapses, restart with a new OTP.
+All compliance checks passed — test invoices for every type your CSR allows: standard, simplified, plus credit and debit notes for each. One failure = no production CSID.
+Production CSID requested with the exact compliance request ID and the compliance credentials.
+D. Invoice-level rules that must hold from day one
+UBL 2.1 XML, ProfileID = reporting:1.0, SAR currency, 2-decimal per-line rounding.
+Correct crypto: secp256k1 ECDSA, XAdES-BES, hash = SHA-256 of the signed XML after removing UBLExtensions/signature/QR (whitespace included), cert hash = base64 of raw digest bytes, InvoiceTypeCode name exactly 7 digits.
+Hash chain + ICV: atomic counter, correct first-invoice PIH, never modify a signed invoice.
+QR (TLV tags 1–9) on simplified invoices, printed on the receipt.
+Flow discipline: standard invoices cleared before issuing; simplified reported within 24h; submissions sequential, not parallel.
+E. The rejection causes you've already hit (now fixed)
+"0".repeat(64) as first PIH → must be the official NWZlY2Vi… value
+9-digit InvoiceTypeCode name → must be 7
+base64(hex(hash)) certificate digest → must be base64(raw bytes)
+Shell-string Java commands and the invalid --globalVersion flag → all removed
+UTC instead of Riyadh time → fixed by rule B.9
