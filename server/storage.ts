@@ -178,6 +178,14 @@ import {
   type BloggerProfile,
   type InsertBloggerProfile,
   influencerProfiles,
+  marketingFinSnapshots,
+  type MarketingFinSnapshot,
+  type InsertMarketingFinSnapshot,
+  marketingFinScenarios,
+  type MarketingFinScenario,
+  type InsertMarketingFinScenario,
+  marketingFinSettings,
+  type MarketingFinSettings,
   equipmentSuppliers,
   type EquipmentSupplier,
   type InsertEquipmentSupplier,
@@ -757,6 +765,14 @@ export interface IStorage {
   createInfluencerProfile(p: InsertInfluencerProfile): Promise<InfluencerProfile>;
   updateInfluencerProfile(id: string, restaurantId: string, data: Partial<InsertInfluencerProfile>): Promise<InfluencerProfile | undefined>;
   deleteInfluencerProfile(id: string, restaurantId: string): Promise<boolean>;
+  getMarketingFinSnapshots(restaurantId: string): Promise<MarketingFinSnapshot[]>;
+  createMarketingFinSnapshot(s: InsertMarketingFinSnapshot): Promise<MarketingFinSnapshot>;
+  deleteMarketingFinSnapshot(id: string, restaurantId: string): Promise<boolean>;
+  getMarketingFinScenarios(restaurantId: string): Promise<MarketingFinScenario[]>;
+  createMarketingFinScenario(s: InsertMarketingFinScenario): Promise<MarketingFinScenario>;
+  deleteMarketingFinScenario(id: string, restaurantId: string): Promise<boolean>;
+  getMarketingFinSettings(restaurantId: string): Promise<MarketingFinSettings | undefined>;
+  upsertMarketingFinSettings(restaurantId: string, data: { minMarginPct?: string; maxBreakEvenUnits?: string; alertsEnabled?: boolean }): Promise<MarketingFinSettings>;
   getBloggerProfiles(restaurantId: string): Promise<BloggerProfile[]>;
   createBloggerProfile(p: InsertBloggerProfile): Promise<BloggerProfile>;
   updateBloggerProfile(id: string, restaurantId: string, data: Partial<InsertBloggerProfile>): Promise<BloggerProfile | undefined>;
@@ -6181,6 +6197,51 @@ export class DatabaseStorage implements IStorage {
     const result = await db.delete(influencerProfiles)
       .where(and(eq(influencerProfiles.id, id), eq(influencerProfiles.restaurantId, restaurantId))).returning();
     return result.length > 0;
+  }
+
+  // Marketing Financial Analysis (snapshots / scenarios / settings)
+  async getMarketingFinSnapshots(restaurantId: string): Promise<MarketingFinSnapshot[]> {
+    return db.select().from(marketingFinSnapshots)
+      .where(eq(marketingFinSnapshots.restaurantId, restaurantId))
+      .orderBy(marketingFinSnapshots.createdAt);
+  }
+  async createMarketingFinSnapshot(s: InsertMarketingFinSnapshot): Promise<MarketingFinSnapshot> {
+    const [result] = await db.insert(marketingFinSnapshots).values(s).returning();
+    return result;
+  }
+  async deleteMarketingFinSnapshot(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(marketingFinSnapshots)
+      .where(and(eq(marketingFinSnapshots.id, id), eq(marketingFinSnapshots.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+  async getMarketingFinScenarios(restaurantId: string): Promise<MarketingFinScenario[]> {
+    return db.select().from(marketingFinScenarios)
+      .where(eq(marketingFinScenarios.restaurantId, restaurantId))
+      .orderBy(desc(marketingFinScenarios.createdAt));
+  }
+  async createMarketingFinScenario(s: InsertMarketingFinScenario): Promise<MarketingFinScenario> {
+    const [result] = await db.insert(marketingFinScenarios).values(s as any).returning();
+    return result;
+  }
+  async deleteMarketingFinScenario(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(marketingFinScenarios)
+      .where(and(eq(marketingFinScenarios.id, id), eq(marketingFinScenarios.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+  async getMarketingFinSettings(restaurantId: string): Promise<MarketingFinSettings | undefined> {
+    const [result] = await db.select().from(marketingFinSettings)
+      .where(eq(marketingFinSettings.restaurantId, restaurantId));
+    return result;
+  }
+  async upsertMarketingFinSettings(restaurantId: string, data: { minMarginPct?: string; maxBreakEvenUnits?: string; alertsEnabled?: boolean }): Promise<MarketingFinSettings> {
+    const existing = await this.getMarketingFinSettings(restaurantId);
+    if (existing) {
+      const [updated] = await db.update(marketingFinSettings).set(data)
+        .where(eq(marketingFinSettings.restaurantId, restaurantId)).returning();
+      return updated;
+    }
+    const [created] = await db.insert(marketingFinSettings).values({ restaurantId, ...data }).returning();
+    return created;
   }
 
   // Equipment Suppliers

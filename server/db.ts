@@ -205,6 +205,48 @@ export const db = drizzle(pool, { schema });
       "meal_subscriptions.delivery_log",
       `ALTER TABLE meal_subscriptions ADD COLUMN IF NOT EXISTS delivery_log jsonb NOT NULL DEFAULT '[]'::jsonb`,
     ],
+    [
+      "marketing_fin_snapshots",
+      `CREATE TABLE IF NOT EXISTS marketing_fin_snapshots (
+         id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+         restaurant_id varchar NOT NULL REFERENCES restaurants(id),
+         product_name text NOT NULL,
+         gross_margin_pct numeric(8,2) NOT NULL DEFAULT 0,
+         break_even_units numeric(12,2) NOT NULL DEFAULT 0,
+         break_even_revenue numeric(14,2) NOT NULL DEFAULT 0,
+         monthly_profit numeric(14,2) NOT NULL DEFAULT 0,
+         roi_pct numeric(10,2) NOT NULL DEFAULT 0,
+         created_at timestamp NOT NULL DEFAULT now()
+       )`,
+    ],
+    [
+      "idx_mkt_fin_snapshots_restaurant",
+      `CREATE INDEX IF NOT EXISTS idx_mkt_fin_snapshots_restaurant ON marketing_fin_snapshots (restaurant_id)`,
+    ],
+    [
+      "marketing_fin_scenarios",
+      `CREATE TABLE IF NOT EXISTS marketing_fin_scenarios (
+         id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+         restaurant_id varchar NOT NULL REFERENCES restaurants(id),
+         name text NOT NULL,
+         data jsonb NOT NULL DEFAULT '[]'::jsonb,
+         created_at timestamp NOT NULL DEFAULT now()
+       )`,
+    ],
+    [
+      "idx_mkt_fin_scenarios_restaurant",
+      `CREATE INDEX IF NOT EXISTS idx_mkt_fin_scenarios_restaurant ON marketing_fin_scenarios (restaurant_id)`,
+    ],
+    [
+      "marketing_fin_settings",
+      `CREATE TABLE IF NOT EXISTS marketing_fin_settings (
+         id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+         restaurant_id varchar NOT NULL UNIQUE REFERENCES restaurants(id),
+         min_margin_pct numeric(5,2) NOT NULL DEFAULT 20,
+         max_break_even_units numeric(12,2) NOT NULL DEFAULT 1000,
+         alerts_enabled boolean NOT NULL DEFAULT true
+       )`,
+    ],
   ];
 
   for (const [label, ddl] of steps) {

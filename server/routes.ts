@@ -9,7 +9,7 @@ import { sanitizePatchBody } from "./utils";
 import { generateCompanyProfilePDF } from "./company-profile-pdf";
 import { generateBusinessCardPDF } from "./business-card-pdf";
 import { amountToWords, percentageToWords } from "./lib/numberToWords";
-import { insertCompanyProfileSchema, insertInfluencerProfileSchema, insertBloggerProfileSchema } from "@shared/schema";
+import { insertCompanyProfileSchema, insertInfluencerProfileSchema, insertBloggerProfileSchema, insertMarketingFinSnapshotSchema, insertMarketingFinScenarioSchema } from "@shared/schema";
 import { logActivity } from "./activityLogger";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
 import { hasAnyPermission } from "@shared/permissions";
@@ -21089,6 +21089,188 @@ ${phaseSchedules.length > 0 ? `
     if (!ok) return res.status(404).json({ error: "Not found" });
     res.status(204).send();
   });
+  // ===== Marketing Financial Analysis (Business & Financial Analysis tab) =====
+  // Actuals per item: last 30 days of real revenue/units, business-type aware.
+  app.get("/api/marketing/fin/actuals", requireAuth, requireMarketing(), async (req, res) => {
+    try {
+      const restaurantId = marketingScope(req);
+      if (restaurantId === IT_MARKETING_RESTAURANT_ID) {
+        return res.json({ periodDays: 30, items: [] });
+      }
+      const restaurant = await storage.getRestaurant(restaurantId);
+      if (!restaurant) return res.json({ periodDays: 30, items: [] });
+      const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const byName = new Map<string, { name: string; units: number; revenue: number }>();
+      const add = (name: string, units: number, revenue: number) => {
+        const key = name.trim().toLowerCase();
+        if (!key) return;
+        const cur = byName.get(key) || { name: name.trim(), units: 0, revenue: 0 };
+        cur.units += units;
+        cur.revenue += revenue;
+        byName.set(key, cur);
+      };
+      const bt = restaurant.businessType;
+      if (bt === "restaurant" || bt === "factory") {
+        const orderList = await storage.getOrders({ restaurantId, dateRange: { start: since } });
+        for (const o of orderList) {
+          if (o.status === "Cancelled") continue;
+          for (const it of (o.items || []) as Array<{ name: string; quantity: number; price: number }>) {
+            const qty = Number(it.quantity) || 0;
+            const price = Number(it.price) || 0;
+            add(it.name || "", qty, qty * price);
+          }
+        }
+      } else if (bt === "real_estate") {
+        const contractList = await storage.getContracts(restaurantId);
+        for (const c of contractList) {
+          if (c.status !== "active" && c.status !== "completed") continue;
+          const refDate = c.startDate ? new Date(c.startDate) : c.createdAt ? new Date(c.createdAt) : null;
+          if (!refDate || refDate < since) continue;
+          add(c.propertyName || "", 1, Number(c.value) || 0);
+        }
+      } else {
+        // Service businesses: approved projects created in the window
+        const projects = await storage.getServiceProjects(restaurantId);
+        for (const p of projects) {
+          if (p.approvalStatus !== "approved") continue;
+          if (p.createdAt && new Date(p.createdAt) < since) continue;
+          add(p.name || "", 1, Number(p.estimatedBudget) || 0);
+        }
+      }
+      res.json({ periodDays: 30, businessType: bt, items: Array.from(byName.values()) });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || "Failed to load actuals" });
+    }
+  });
+
+  // Aggregated monthly fixed costs from bills + salaries with breakdown
+  app.get("/api/marketing/fin/fixed-costs", requireAuth, requireMarketing(), async (req, res) => {
+    try {
+      const restaurantId = marketingScope(req);
+      if (restaurantId === IT_MARKETING_RESTAURANT_ID) {
+        return res.json({ total: 0, bills: 0, salaries: 0, billsCount: 0, salariesCount: 0 });
+      }
+      const factor: Record<string, number> = {
+        "one-time": 0, weekly: 4.33, monthly: 1, quarterly: 1 / 3, "semi-annually": 1 / 6, yearly: 1 / 12,
+      };
+      const [bills, salaryList] = await Promise.all([
+        storage.getShopBills(restaurantId),
+        storage.getSalaries(restaurantId),
+      ]);
+      let billsTotal = 0;
+      let billsCount = 0;
+      for (const b of bills) {
+        if (b.archived || b.billType === "salary") continue;
+        const monthly = (parseFloat(b.amount) || 0) * (factor[b.paymentPeriod] ?? 1);
+        if (monthly > 0) { billsTotal += monthly; billsCount++; }
+      }
+      // Salaries: latest amount per employee = recurring monthly cost
+      const latestByEmployee = new Map<string, { amount: number; date: number }>();
+      for (const s of salaryList) {
+        const key = (s.employeeName || "").trim().toLowerCase();
+        if (!key) continue;
+        const dateVal = s.paymentDate ? new Date(s.paymentDate).getTime() : 0;
+        const cur = latestByEmployee.get(key);
+        if (!cur || dateVal > cur.date) {
+          latestByEmployee.set(key, { amount: parseFloat(s.amount) || 0, date: dateVal });
+        }
+      }
+      let salariesTotal = 0;
+      for (const v of Array.from(latestByEmployee.values())) salariesTotal += v.amount;
+      res.json({
+        total: Math.round((billsTotal + salariesTotal) * 100) / 100,
+        bills: Math.round(billsTotal * 100) / 100,
+        salaries: Math.round(salariesTotal * 100) / 100,
+        billsCount,
+        salariesCount: latestByEmployee.size,
+      });
+    } catch (err: any) {
+      res.status(500).json({ error: err?.message || "Failed to load fixed costs" });
+    }
+  });
+
+  // Snapshots
+  app.get("/api/marketing/fin/snapshots", requireAuth, requireMarketing(), async (req, res) => {
+    const restaurantId = marketingScope(req);
+    if (restaurantId === IT_MARKETING_RESTAURANT_ID) return res.json([]);
+    res.json(await storage.getMarketingFinSnapshots(restaurantId));
+  });
+  app.post("/api/marketing/fin/snapshots", requireAuth, requireMarketing('add'), async (req, res) => {
+    try {
+      const restaurantId = marketingScope(req);
+      if (restaurantId === IT_MARKETING_RESTAURANT_ID) {
+        return res.status(400).json({ error: "Not available for IT accounts" });
+      }
+      const data = insertMarketingFinSnapshotSchema.parse({ ...req.body, restaurantId });
+      res.json(await storage.createMarketingFinSnapshot(data));
+    } catch (err: any) {
+      res.status(400).json({ error: err?.message || "Invalid data" });
+    }
+  });
+  app.delete("/api/marketing/fin/snapshots/:id", requireAuth, requireMarketing('delete'), async (req, res) => {
+    const restaurantId = marketingScope(req);
+    const ok = await storage.deleteMarketingFinSnapshot(req.params.id, restaurantId);
+    if (!ok) return res.status(404).json({ error: "Not found" });
+    res.status(204).send();
+  });
+
+  // Scenarios
+  app.get("/api/marketing/fin/scenarios", requireAuth, requireMarketing(), async (req, res) => {
+    const restaurantId = marketingScope(req);
+    if (restaurantId === IT_MARKETING_RESTAURANT_ID) return res.json([]);
+    res.json(await storage.getMarketingFinScenarios(restaurantId));
+  });
+  app.post("/api/marketing/fin/scenarios", requireAuth, requireMarketing('add'), async (req, res) => {
+    try {
+      const restaurantId = marketingScope(req);
+      if (restaurantId === IT_MARKETING_RESTAURANT_ID) {
+        return res.status(400).json({ error: "Not available for IT accounts" });
+      }
+      const data = insertMarketingFinScenarioSchema.parse({ ...req.body, restaurantId });
+      res.json(await storage.createMarketingFinScenario(data));
+    } catch (err: any) {
+      res.status(400).json({ error: err?.message || "Invalid data" });
+    }
+  });
+  app.delete("/api/marketing/fin/scenarios/:id", requireAuth, requireMarketing('delete'), async (req, res) => {
+    const restaurantId = marketingScope(req);
+    const ok = await storage.deleteMarketingFinScenario(req.params.id, restaurantId);
+    if (!ok) return res.status(404).json({ error: "Not found" });
+    res.status(204).send();
+  });
+
+  // Alert threshold settings
+  app.get("/api/marketing/fin/settings", requireAuth, requireMarketing(), async (req, res) => {
+    const restaurantId = marketingScope(req);
+    if (restaurantId === IT_MARKETING_RESTAURANT_ID) {
+      return res.json({ minMarginPct: "20", maxBreakEvenUnits: "1000", alertsEnabled: true });
+    }
+    const settings = await storage.getMarketingFinSettings(restaurantId);
+    res.json(settings || { minMarginPct: "20", maxBreakEvenUnits: "1000", alertsEnabled: true });
+  });
+  app.put("/api/marketing/fin/settings", requireAuth, requireMarketing('add'), async (req, res) => {
+    try {
+      const restaurantId = marketingScope(req);
+      if (restaurantId === IT_MARKETING_RESTAURANT_ID) {
+        return res.status(400).json({ error: "Not available for IT accounts" });
+      }
+      const schema = z.object({
+        minMarginPct: z.coerce.number().min(0).max(100).optional(),
+        maxBreakEvenUnits: z.coerce.number().min(0).optional(),
+        alertsEnabled: z.boolean().optional(),
+      });
+      const body = schema.parse(req.body);
+      const updated = await storage.upsertMarketingFinSettings(restaurantId, {
+        ...(body.minMarginPct !== undefined ? { minMarginPct: String(body.minMarginPct) } : {}),
+        ...(body.maxBreakEvenUnits !== undefined ? { maxBreakEvenUnits: String(body.maxBreakEvenUnits) } : {}),
+        ...(body.alertsEnabled !== undefined ? { alertsEnabled: body.alertsEnabled } : {}),
+      });
+      res.json(updated);
+    } catch (err: any) {
+      res.status(400).json({ error: err?.message || "Invalid data" });
+    }
+  });
+
   app.get("/api/marketing/influencer-profiles/pdf", requireAuth, requireMarketing(), async (req, res) => {
     try {
       const restaurantId = marketingScope(req);

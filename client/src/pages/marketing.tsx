@@ -28,7 +28,11 @@ import type {
   MarketingDiscountCode,
   MarketingBroadcastTemplate,
   InfluencerProfile,
+  MarketingFinSnapshot,
+  MarketingFinScenario,
 } from "@shared/schema";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -858,6 +862,215 @@ export default function Marketing() {
 
   const removeProduct = (id: string) =>
     setProducts((arr) => (arr.length > 1 ? arr.filter((p) => p.id !== id) : arr));
+
+  // ===== Business & Financial Analysis upgrades =====
+  const finTabActive = activeTab === "financial";
+  const { data: finActuals } = useQuery<{ periodDays: number; items: Array<{ name: string; units: number; revenue: number }> }>({
+    queryKey: ["/api/marketing/fin/actuals"],
+    enabled: finTabActive,
+  });
+  const { data: finFixedCosts } = useQuery<{ total: number; bills: number; salaries: number; billsCount: number; salariesCount: number }>({
+    queryKey: ["/api/marketing/fin/fixed-costs"],
+    enabled: finTabActive,
+  });
+  const { data: finSnapshotsList = [] } = useQuery<MarketingFinSnapshot[]>({
+    queryKey: ["/api/marketing/fin/snapshots"],
+    enabled: finTabActive,
+  });
+  const { data: finScenariosList = [] } = useQuery<MarketingFinScenario[]>({
+    queryKey: ["/api/marketing/fin/scenarios"],
+    enabled: finTabActive,
+  });
+  const { data: finSettings } = useQuery<{ minMarginPct: string; maxBreakEvenUnits: string; alertsEnabled: boolean }>({
+    queryKey: ["/api/marketing/fin/settings"],
+    enabled: finTabActive,
+  });
+
+  const actualFor = (name: string) =>
+    (finActuals?.items || []).find((a) => a.name.trim().toLowerCase() === name.trim().toLowerCase());
+
+  const autoFillFixedCosts = () => {
+    if (!finFixedCosts || finFixedCosts.total <= 0) return;
+    const total = Math.round(finFixedCosts.total);
+    setProducts((arr) => arr.map((p) => ({ ...p, fixedCosts: total })));
+    toast({
+      title: t.finAutoFilledToast,
+      description: `${t.finFromBills}: ${fmt(finFixedCosts.bills)} (${finFixedCosts.billsCount}) • ${t.finFromSalaries}: ${fmt(finFixedCosts.salaries)} (${finFixedCosts.salariesCount})`,
+    });
+  };
+
+  // What-if sliders (percent adjustments, applied to a selected product)
+  const [whatIfProductId, setWhatIfProductId] = useState<string>("");
+  const [whatIf, setWhatIf] = useState({ price: 0, varCost: 0, fixed: 0, volume: 0 });
+  const whatIfProduct = products.find((p) => p.id === whatIfProductId) || products[0];
+  const whatIfCalc = useMemo(() => {
+    if (!whatIfProduct) return null;
+    const adj: FinProduct = {
+      ...whatIfProduct,
+      sellingPrice: whatIfProduct.sellingPrice * (1 + whatIf.price / 100),
+      variableCost: whatIfProduct.variableCost * (1 + whatIf.varCost / 100),
+      fixedCosts: whatIfProduct.fixedCosts * (1 + whatIf.fixed / 100),
+      monthlyUnits: whatIfProduct.monthlyUnits * (1 + whatIf.volume / 100),
+    };
+    return { base: computeFin(whatIfProduct), adj: computeFin(adj) };
+  }, [whatIfProduct, whatIf]);
+
+  // Target profit pricing
+  const [targetProductId, setTargetProductId] = useState<string>("");
+  const [targetProfit, setTargetProfit] = useState<number>(10000);
+  const targetProduct = products.find((p) => p.id === targetProductId) || products[0];
+  const targetCalc = useMemo(() => {
+    if (!targetProduct) return null;
+    // Required price at current volume: (target + fixed + varCost*units) / units
+    const units = targetProduct.monthlyUnits;
+    const requiredPrice = units > 0 ? (targetProfit + targetProduct.fixedCosts + targetProduct.variableCost * units) / units : NaN;
+    // Required volume at current price: (target + fixed) / contribution
+    const contribution = targetProduct.sellingPrice - targetProduct.variableCost;
+    const requiredVolume = contribution > 0 ? (targetProfit + targetProduct.fixedCosts) / contribution : NaN;
+    return { requiredPrice, requiredVolume };
+  }, [targetProduct, targetProfit]);
+
+  // Scenarios
+  const [scenarioName, setScenarioName] = useState("");
+  const [activeScenarioName, setActiveScenarioName] = useState<string | null>(null);
+  const saveScenarioMut = useMutation({
+    mutationFn: async () =>
+      apiRequest("POST", "/api/marketing/fin/scenarios", { name: scenarioName.trim(), data: products }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/fin/scenarios"] });
+      toast({ title: t.finScenarioSavedToast });
+      setScenarioName("");
+    },
+    onError: (e: any) => toast({ title: t.error, description: String(e?.message || e), variant: "destructive" }),
+  });
+  const deleteScenarioMut = useMutation({
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/marketing/fin/scenarios/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/marketing/fin/scenarios"] }),
+  });
+  const loadScenario = (sc: MarketingFinScenario) => {
+    const data = sc.data as unknown as FinProduct[];
+    if (Array.isArray(data) && data.length) {
+      setProducts(data);
+      setActiveScenarioName(sc.name);
+      toast({ title: t.finScenarioLoadedToast, description: sc.name });
+    }
+  };
+  const scenarioSummary = (sc: MarketingFinScenario) => {
+    const data = (sc.data as unknown as FinProduct[]) || [];
+    let profit = 0;
+    let marginSum = 0;
+    for (const p of data) {
+      const c = computeFin(p);
+      profit += c.monthlyProfit;
+      marginSum += c.grossMarginPct;
+    }
+    return { profit, avgMargin: data.length ? marginSum / data.length : 0, count: data.length };
+  };
+
+  // Snapshots
+  const saveSnapshotMut = useMutation({
+    mutationFn: async () => {
+      for (const { p, calc } of computed) {
+        await apiRequest("POST", "/api/marketing/fin/snapshots", {
+          productName: p.name,
+          grossMarginPct: String(Math.round(calc.grossMarginPct * 100) / 100),
+          breakEvenUnits: String(Math.round(calc.breakEvenUnits)),
+          breakEvenRevenue: String(Math.round(calc.breakEvenRevenue * 100) / 100),
+          monthlyProfit: String(Math.round(calc.monthlyProfit * 100) / 100),
+          roiPct: String(Math.round(calc.roiPct * 100) / 100),
+        });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/fin/snapshots"] });
+      toast({ title: t.finSnapshotSavedToast });
+    },
+    onError: (e: any) => toast({ title: t.error, description: String(e?.message || e), variant: "destructive" }),
+  });
+  const deleteSnapshotMut = useMutation({
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/marketing/fin/snapshots/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/marketing/fin/snapshots"] }),
+  });
+  const [trendProduct, setTrendProduct] = useState<string>("");
+  const snapshotProductNames = useMemo(
+    () => Array.from(new Set(finSnapshotsList.map((s) => s.productName))),
+    [finSnapshotsList],
+  );
+  const trendData = useMemo(() => {
+    const name = trendProduct || snapshotProductNames[0];
+    if (!name) return [];
+    return finSnapshotsList
+      .filter((s) => s.productName === name)
+      .sort((a, b) => new Date(a.createdAt as any).getTime() - new Date(b.createdAt as any).getTime())
+      .map((s) => ({
+        date: new Date(s.createdAt as any).toLocaleDateString(),
+        profit: parseFloat(s.monthlyProfit) || 0,
+        margin: parseFloat(s.grossMarginPct) || 0,
+      }));
+  }, [finSnapshotsList, trendProduct, snapshotProductNames]);
+
+  // Alert thresholds
+  const [thresholdForm, setThresholdForm] = useState({ minMarginPct: "20", maxBreakEvenUnits: "1000", alertsEnabled: true });
+  useEffect(() => {
+    if (finSettings) {
+      setThresholdForm({
+        minMarginPct: String(parseFloat(finSettings.minMarginPct) || 20),
+        maxBreakEvenUnits: String(parseFloat(finSettings.maxBreakEvenUnits) || 1000),
+        alertsEnabled: finSettings.alertsEnabled !== false,
+      });
+    }
+  }, [finSettings]);
+  const saveThresholdsMut = useMutation({
+    mutationFn: async () =>
+      apiRequest("PUT", "/api/marketing/fin/settings", {
+        minMarginPct: parseFloat(thresholdForm.minMarginPct) || 0,
+        maxBreakEvenUnits: parseFloat(thresholdForm.maxBreakEvenUnits) || 0,
+        alertsEnabled: thresholdForm.alertsEnabled,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/fin/settings"] });
+      toast({ title: t.finThresholdsSavedToast });
+    },
+    onError: (e: any) => toast({ title: t.error, description: String(e?.message || e), variant: "destructive" }),
+  });
+  const finAlerts = useMemo(() => {
+    if (!thresholdForm.alertsEnabled) return [];
+    const minMargin = parseFloat(thresholdForm.minMarginPct) || 0;
+    const maxBE = parseFloat(thresholdForm.maxBreakEvenUnits) || Infinity;
+    const list: Array<{ product: string; message: string }> = [];
+    for (const { p, calc } of computed) {
+      if (calc.grossMarginPct < minMargin) {
+        list.push({ product: p.name, message: `${t.finAlertLowMargin} (${fmt(calc.grossMarginPct)}% < ${minMargin}%)` });
+      }
+      if (maxBE > 0 && isFinite(maxBE) && calc.breakEvenUnits > maxBE) {
+        list.push({ product: p.name, message: `${t.finAlertHighBreakEven} (${fmt(calc.breakEvenUnits, 0)} > ${maxBE})` });
+      }
+    }
+    return list;
+  }, [computed, thresholdForm, t]);
+
+  // Investor summary totals
+  const finTotals = useMemo(() => {
+    let profit = 0;
+    let marginSum = 0;
+    for (const { calc } of computed) {
+      profit += calc.monthlyProfit;
+      marginSum += calc.grossMarginPct;
+    }
+    return { profit, avgMargin: computed.length ? marginSum / computed.length : 0 };
+  }, [computed]);
+
+  const downloadInvestorPDF = async () => {
+    setActiveTab("financial");
+    await wait(450);
+    const el = document.getElementById("pdf-section-investor");
+    if (!el) return;
+    try {
+      await captureElementToPDF(el, `investor_summary_${Date.now()}.pdf`, t.finInvestorSummary);
+    } catch (err: any) {
+      toast({ title: t.error, description: String(err?.message || err) });
+    }
+  };
 
   const loadExample = () => {
     setProducts([exampleProduct()]);
@@ -1738,6 +1951,23 @@ export default function Marketing() {
                   <Plus className="h-4 w-4 me-2" />
                   {t.addProduct}
                 </Button>
+                {finFixedCosts && finFixedCosts.total > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" variant="outline" onClick={autoFillFixedCosts} data-testid="button-autofill-fixed-costs">
+                        <Coins className="h-4 w-4 me-2" />
+                        {t.finAutoFillCosts}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {t.finFromBills}: {fmt(finFixedCosts.bills)} • {t.finFromSalaries}: {fmt(finFixedCosts.salaries)}
+                    </TooltipContent>
+                  </Tooltip>
+                )}
+                <Button size="sm" variant="outline" onClick={downloadInvestorPDF} data-testid="button-download-investor-pdf">
+                  <FileText className="h-4 w-4 me-2" />
+                  {t.finDownloadInvestorPdf}
+                </Button>
                 <Button size="sm" onClick={downloadFinancialPDF} data-testid="button-download-financial-pdf">
                   <Download className="h-4 w-4 me-2" />
                   PDF
@@ -1863,6 +2093,50 @@ export default function Marketing() {
                   ))}
                 </div>
 
+                {(() => {
+                  const actual = actualFor(p.name);
+                  const plannedRevenue = p.sellingPrice * p.monthlyUnits;
+                  return (
+                    <div className="rounded-md border p-3">
+                      <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
+                        <div className="font-semibold text-sm flex items-center gap-2">
+                          <BarChart3 className="h-4 w-4 text-blue-500" />
+                          {t.finActualVsPlanned}
+                        </div>
+                        <div className="text-xs text-muted-foreground">{t.finLast30Days}</div>
+                      </div>
+                      {actual ? (
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                          <div>
+                            <div className="text-xs text-muted-foreground">{t.finActualUnits}</div>
+                            <div className="font-bold" data-testid={`stat-actual-units-${p.id}`}>{fmt(actual.units, 0)}</div>
+                            <div className="text-xs text-muted-foreground">{t.finPlannedUnits}: {fmt(p.monthlyUnits, 0)}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">{t.finActualRevenue}</div>
+                            <div className="font-bold" data-testid={`stat-actual-revenue-${p.id}`}>{fmt(actual.revenue)}</div>
+                            <div className="text-xs text-muted-foreground">{t.finPlannedRevenue}: {fmt(plannedRevenue)}</div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">{t.finVariance} ({t.finUnits})</div>
+                            <div className={`font-bold ${actual.units >= p.monthlyUnits ? "text-green-600" : "text-red-600"}`} data-testid={`stat-variance-units-${p.id}`}>
+                              {actual.units >= p.monthlyUnits ? "+" : ""}{fmt(actual.units - p.monthlyUnits, 0)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-muted-foreground">{t.finVariance} ({t.finRevenue})</div>
+                            <div className={`font-bold ${actual.revenue >= plannedRevenue ? "text-green-600" : "text-red-600"}`} data-testid={`stat-variance-revenue-${p.id}`}>
+                              {actual.revenue >= plannedRevenue ? "+" : ""}{fmt(actual.revenue - plannedRevenue)}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground">{t.finNoActualData}</div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 <div className="h-64 w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={calc.chart}>
@@ -1893,6 +2167,423 @@ export default function Marketing() {
               </CardContent>
             </Card>
           ))}
+
+          {/* What-If Analysis */}
+          {whatIfProduct && whatIfCalc && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <TrendingUp className="h-5 w-5 text-violet-500" />
+                    {t.finWhatIf}
+                  </CardTitle>
+                  <CardDescription>{t.finWhatIfDesc}</CardDescription>
+                </div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {products.length > 1 && (
+                    <Select value={whatIfProduct.id} onValueChange={setWhatIfProductId}>
+                      <SelectTrigger className="w-[200px]" data-testid="select-whatif-product">
+                        <SelectValue placeholder={t.finSelectProduct} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {products.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                  <Button size="sm" variant="outline" onClick={() => setWhatIf({ price: 0, varCost: 0, fixed: 0, volume: 0 })} data-testid="button-whatif-reset">
+                    <RotateCcw className="h-4 w-4 me-2" />
+                    {t.finResetSliders}
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  {(
+                    [
+                      ["price", t.finPriceAdj],
+                      ["varCost", t.finVarCostAdj],
+                      ["fixed", t.finFixedCostAdj],
+                      ["volume", t.finVolumeAdj],
+                    ] as const
+                  ).map(([k, label]) => (
+                    <div key={k}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span>{label}</span>
+                        <span className="font-semibold">{whatIf[k] > 0 ? "+" : ""}{whatIf[k]}%</span>
+                      </div>
+                      <Slider
+                        min={-50}
+                        max={50}
+                        step={1}
+                        value={[whatIf[k]]}
+                        onValueChange={([v]) => setWhatIf((s) => ({ ...s, [k]: v }))}
+                        data-testid={`slider-whatif-${k}`}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  {(
+                    [
+                      [t.grossMargin, `${fmt(whatIfCalc.base.grossMarginPct)}%`, `${fmt(whatIfCalc.adj.grossMarginPct)}%`, whatIfCalc.adj.grossMarginPct >= whatIfCalc.base.grossMarginPct],
+                      [t.breakEvenUnits, fmt(whatIfCalc.base.breakEvenUnits, 0), fmt(whatIfCalc.adj.breakEvenUnits, 0), whatIfCalc.adj.breakEvenUnits <= whatIfCalc.base.breakEvenUnits],
+                      [t.monthlyProfit, fmt(whatIfCalc.base.monthlyProfit), fmt(whatIfCalc.adj.monthlyProfit), whatIfCalc.adj.monthlyProfit >= whatIfCalc.base.monthlyProfit],
+                      [t.roiAnnual, `${fmt(whatIfCalc.base.roiPct)}%`, `${fmt(whatIfCalc.adj.roiPct)}%`, whatIfCalc.adj.roiPct >= whatIfCalc.base.roiPct],
+                    ] as const
+                  ).map(([label, base, adj, good]) => (
+                    <div key={label as string} className="rounded-md border p-3">
+                      <div className="text-xs text-muted-foreground">{label}</div>
+                      <div className="text-xs text-muted-foreground line-through">{base}</div>
+                      <div className={`text-lg font-bold ${good ? "text-green-600" : "text-red-600"}`}>{adj}</div>
+                      <div className="text-xs text-muted-foreground">{t.finAdjusted}</div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Target Profit Pricing */}
+          {targetProduct && targetCalc && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
+                <div>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Target className="h-5 w-5 text-emerald-500" />
+                    {t.finTargetPricing}
+                  </CardTitle>
+                </div>
+                {products.length > 1 && (
+                  <Select value={targetProduct.id} onValueChange={setTargetProductId}>
+                    <SelectTrigger className="w-[200px]" data-testid="select-target-product">
+                      <SelectValue placeholder={t.finSelectProduct} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </CardHeader>
+              <CardContent className="grid md:grid-cols-3 gap-3">
+                <div>
+                  <Label className="text-xs">{t.finTargetProfit}</Label>
+                  <Input
+                    type="number"
+                    value={targetProfit}
+                    onChange={(e) => setTargetProfit(parseFloat(e.target.value) || 0)}
+                    data-testid="input-target-profit"
+                  />
+                </div>
+                <div className="rounded-md border p-3">
+                  <div className="text-xs text-muted-foreground">{t.finRequiredPrice} ({t.finAtCurrentVolume})</div>
+                  <div className="text-lg font-bold" data-testid="stat-required-price">
+                    {isFinite(targetCalc.requiredPrice) ? fmt(targetCalc.requiredPrice) : t.finNotAchievable}
+                  </div>
+                </div>
+                <div className="rounded-md border p-3">
+                  <div className="text-xs text-muted-foreground">{t.finRequiredVolume} ({t.finAtCurrentPrice})</div>
+                  <div className="text-lg font-bold" data-testid="stat-required-volume">
+                    {isFinite(targetCalc.requiredVolume) ? fmt(targetCalc.requiredVolume, 0) : t.finNotAchievable}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Scenarios */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Layers className="h-5 w-5 text-cyan-500" />
+                {t.finScenarios}
+                {activeScenarioName && (
+                  <Badge variant="secondary" data-testid="badge-active-scenario">{t.finActiveScenario}: {activeScenarioName}</Badge>
+                )}
+              </CardTitle>
+              <CardDescription>{t.finScenariosDesc}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex gap-2 flex-wrap">
+                <Input
+                  className="max-w-xs"
+                  placeholder={t.finScenarioName}
+                  value={scenarioName}
+                  onChange={(e) => setScenarioName(e.target.value)}
+                  data-testid="input-scenario-name"
+                />
+                <Button
+                  size="sm"
+                  onClick={() => saveScenarioMut.mutate()}
+                  disabled={!scenarioName.trim() || saveScenarioMut.isPending}
+                  data-testid="button-save-scenario"
+                >
+                  <Save className="h-4 w-4 me-2" />
+                  {t.finSaveScenario}
+                </Button>
+              </div>
+              {finScenariosList.length === 0 ? (
+                <div className="text-sm text-muted-foreground">{t.finNoScenarios}</div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t.finScenarioName}</TableHead>
+                      <TableHead>{t.finProductsCount}</TableHead>
+                      <TableHead>{t.finTotalMonthlyProfit}</TableHead>
+                      <TableHead>{t.finAvgMargin}</TableHead>
+                      <TableHead></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {finScenariosList.map((sc) => {
+                      const s = scenarioSummary(sc);
+                      return (
+                        <TableRow key={sc.id} data-testid={`row-scenario-${sc.id}`}>
+                          <TableCell className="font-medium">{sc.name}</TableCell>
+                          <TableCell>{s.count}</TableCell>
+                          <TableCell className={s.profit >= 0 ? "text-green-600" : "text-red-600"}>{fmt(s.profit)}</TableCell>
+                          <TableCell>{fmt(s.avgMargin)}%</TableCell>
+                          <TableCell>
+                            <div className="flex gap-1 justify-end">
+                              <Button size="sm" variant="outline" onClick={() => loadScenario(sc)} data-testid={`button-load-scenario-${sc.id}`}>
+                                {t.finLoadScenario}
+                              </Button>
+                              <Button size="icon" variant="ghost" onClick={() => deleteScenarioMut.mutate(sc.id)} data-testid={`button-delete-scenario-${sc.id}`}>
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Snapshot History */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <BarChart3 className="h-5 w-5 text-orange-500" />
+                  {t.finSnapshots}
+                </CardTitle>
+                <CardDescription>{t.finSnapshotsDesc}</CardDescription>
+              </div>
+              <Button size="sm" onClick={() => saveSnapshotMut.mutate()} disabled={saveSnapshotMut.isPending} data-testid="button-save-snapshot">
+                <Save className="h-4 w-4 me-2" />
+                {t.finSaveSnapshot}
+              </Button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {finSnapshotsList.length === 0 ? (
+                <div className="text-sm text-muted-foreground">{t.finNoSnapshots}</div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Label className="text-xs">{t.finTrendChart}</Label>
+                    <Select value={trendProduct || snapshotProductNames[0] || ""} onValueChange={setTrendProduct}>
+                      <SelectTrigger className="w-[220px]" data-testid="select-trend-product">
+                        <SelectValue placeholder={t.finSelectProduct} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {snapshotProductNames.map((n) => (
+                          <SelectItem key={n} value={n}>{n}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {trendData.length > 0 && (
+                    <div className="h-56 w-full">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <LineChart data={trendData}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 11 }} />
+                          <RTooltip />
+                          <Legend />
+                          <Line type="monotone" dataKey="profit" stroke="#f59e0b" strokeWidth={2} name={t.monthlyProfit} />
+                          <Line type="monotone" dataKey="margin" stroke="#8b5cf6" strokeWidth={2} name={t.grossMargin} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>{t.finDate}</TableHead>
+                        <TableHead>{t.productName}</TableHead>
+                        <TableHead>{t.grossMargin}</TableHead>
+                        <TableHead>{t.breakEvenUnits}</TableHead>
+                        <TableHead>{t.monthlyProfit}</TableHead>
+                        <TableHead>{t.roiAnnual}</TableHead>
+                        <TableHead></TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {finSnapshotsList.slice(0, 20).map((s) => (
+                        <TableRow key={s.id} data-testid={`row-snapshot-${s.id}`}>
+                          <TableCell className="text-xs">{new Date(s.createdAt as any).toLocaleDateString()}</TableCell>
+                          <TableCell className="font-medium">{s.productName}</TableCell>
+                          <TableCell>{fmt(parseFloat(s.grossMarginPct) || 0)}%</TableCell>
+                          <TableCell>{fmt(parseFloat(s.breakEvenUnits) || 0, 0)}</TableCell>
+                          <TableCell>{fmt(parseFloat(s.monthlyProfit) || 0)}</TableCell>
+                          <TableCell>{fmt(parseFloat(s.roiPct) || 0)}%</TableCell>
+                          <TableCell>
+                            <Button size="icon" variant="ghost" onClick={() => deleteSnapshotMut.mutate(s.id)} data-testid={`button-delete-snapshot-${s.id}`}>
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Alerts */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                <ShieldAlert className="h-5 w-5 text-red-500" />
+                {t.finAlerts}
+              </CardTitle>
+              <CardDescription>{t.finAlertsDesc}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-4 gap-3 items-end">
+                <div>
+                  <Label className="text-xs">{t.finMinMargin}</Label>
+                  <Input
+                    type="number"
+                    value={thresholdForm.minMarginPct}
+                    onChange={(e) => setThresholdForm((s) => ({ ...s, minMarginPct: e.target.value }))}
+                    data-testid="input-min-margin"
+                  />
+                </div>
+                <div>
+                  <Label className="text-xs">{t.finMaxBreakEvenUnits}</Label>
+                  <Input
+                    type="number"
+                    value={thresholdForm.maxBreakEvenUnits}
+                    onChange={(e) => setThresholdForm((s) => ({ ...s, maxBreakEvenUnits: e.target.value }))}
+                    data-testid="input-max-break-even"
+                  />
+                </div>
+                <div className="flex items-center gap-2 pb-2">
+                  <Switch
+                    checked={thresholdForm.alertsEnabled}
+                    onCheckedChange={(v) => setThresholdForm((s) => ({ ...s, alertsEnabled: v }))}
+                    data-testid="switch-alerts-enabled"
+                  />
+                  <Label className="text-xs">{t.finAlertsEnabled}</Label>
+                </div>
+                <Button size="sm" onClick={() => saveThresholdsMut.mutate()} disabled={saveThresholdsMut.isPending} data-testid="button-save-thresholds">
+                  <Save className="h-4 w-4 me-2" />
+                  {t.finSaveThresholds}
+                </Button>
+              </div>
+              {thresholdForm.alertsEnabled && (
+                finAlerts.length === 0 ? (
+                  <div className="text-sm text-green-600" data-testid="text-no-alerts">{t.finNoAlerts}</div>
+                ) : (
+                  <div className="space-y-2">
+                    {finAlerts.map((a, i) => (
+                      <div key={i} className="flex items-center gap-2 rounded-md border border-red-200 dark:border-red-900 p-2 text-sm" data-testid={`alert-fin-${i}`}>
+                        <AlertTriangle className="h-4 w-4 text-red-500 shrink-0" />
+                        <span className="font-semibold">{a.product}:</span>
+                        <span>{a.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                )
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Hidden investor summary for PDF capture */}
+          <div
+            id="pdf-section-investor"
+            className="fixed -left-[10000px] top-0 w-[900px] bg-background p-6 space-y-4"
+            aria-hidden="true"
+          >
+            <div>
+              <div className="text-2xl font-bold">{t.finInvestorSummary}</div>
+              <div className="text-sm text-muted-foreground">{t.finInvestorSummaryDesc}</div>
+            </div>
+            <div className="rounded-md border p-4">
+              <div className="font-semibold mb-2">{t.finKeyMetrics}</div>
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <div className="text-xs text-muted-foreground">{t.finTotalMonthlyProfit}</div>
+                  <div className="text-lg font-bold">{fmt(finTotals.profit)}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">{t.finAvgMargin}</div>
+                  <div className="text-lg font-bold">{fmt(finTotals.avgMargin)}%</div>
+                </div>
+                <div>
+                  <div className="text-xs text-muted-foreground">{t.finProductsCount}</div>
+                  <div className="text-lg font-bold">{products.length}</div>
+                </div>
+              </div>
+            </div>
+            <div className="rounded-md border p-4">
+              <div className="font-semibold mb-2">{t.finTitle}</div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-left text-muted-foreground">
+                    <th className="py-1">{t.productName}</th>
+                    <th className="py-1">{t.grossMargin}</th>
+                    <th className="py-1">{t.breakEvenUnits}</th>
+                    <th className="py-1">{t.monthlyProfit}</th>
+                    <th className="py-1">{t.roiAnnual}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {computed.map(({ p, calc }) => (
+                    <tr key={p.id}>
+                      <td className="py-1 font-medium">{p.name}</td>
+                      <td className="py-1">{fmt(calc.grossMarginPct)}%</td>
+                      <td className="py-1">{fmt(calc.breakEvenUnits, 0)}</td>
+                      <td className="py-1">{fmt(calc.monthlyProfit)}</td>
+                      <td className="py-1">{fmt(calc.roiPct)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {(swot.strengths || swot.weaknesses || swot.opportunities || swot.threats) && (
+              <div className="rounded-md border p-4">
+                <div className="font-semibold mb-2">SWOT</div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><span className="font-semibold">{t.strengths}: </span>{swot.strengths || "—"}</div>
+                  <div><span className="font-semibold">{t.weaknesses}: </span>{swot.weaknesses || "—"}</div>
+                  <div><span className="font-semibold">{t.opportunities}: </span>{swot.opportunities || "—"}</div>
+                  <div><span className="font-semibold">{t.threats}: </span>{swot.threats || "—"}</div>
+                </div>
+              </div>
+            )}
+            {(canvas.valuePropositions || canvas.customerSegments || canvas.revenueStreams) && (
+              <div className="rounded-md border p-4">
+                <div className="font-semibold mb-2">{t.businessModelCanvas}</div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div><span className="font-semibold">{t.valuePropositions}: </span>{canvas.valuePropositions || "—"}</div>
+                  <div><span className="font-semibold">{t.customerSegments}: </span>{canvas.customerSegments || "—"}</div>
+                  <div><span className="font-semibold">{t.revenueStreams}: </span>{canvas.revenueStreams || "—"}</div>
+                  <div><span className="font-semibold">{t.channels}: </span>{canvas.channels || "—"}</div>
+                </div>
+              </div>
+            )}
+          </div>
         </TabsContent>
 
         {/* ===================== Bloggers ===================== */}

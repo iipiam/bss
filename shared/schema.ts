@@ -2741,3 +2741,46 @@ export const equipmentTypes = pgTable("equipment_types", {
 export const insertEquipmentTypeSchema = createInsertSchema(equipmentTypes).omit({ id: true, createdAt: true });
 export type InsertEquipmentType = z.infer<typeof insertEquipmentTypeSchema>;
 export type EquipmentType = typeof equipmentTypes.$inferSelect;
+
+// Marketing - Financial Analysis Snapshots (dated metric history per product)
+export const marketingFinSnapshots = pgTable("marketing_fin_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  productName: text("product_name").notNull(),
+  grossMarginPct: decimal("gross_margin_pct", { precision: 8, scale: 2 }).notNull().default("0"),
+  breakEvenUnits: decimal("break_even_units", { precision: 12, scale: 2 }).notNull().default("0"),
+  breakEvenRevenue: decimal("break_even_revenue", { precision: 14, scale: 2 }).notNull().default("0"),
+  monthlyProfit: decimal("monthly_profit", { precision: 14, scale: 2 }).notNull().default("0"),
+  roiPct: decimal("roi_pct", { precision: 10, scale: 2 }).notNull().default("0"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_mkt_fin_snapshots_restaurant").on(table.restaurantId)]);
+export const insertMarketingFinSnapshotSchema = createInsertSchema(marketingFinSnapshots).omit({ id: true, createdAt: true });
+export type InsertMarketingFinSnapshot = z.infer<typeof insertMarketingFinSnapshotSchema>;
+export type MarketingFinSnapshot = typeof marketingFinSnapshots.$inferSelect;
+
+// Marketing - Financial Analysis Scenarios (named saved sets of the analysis)
+export const marketingFinScenarios = pgTable("marketing_fin_scenarios", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  name: text("name").notNull(),
+  data: jsonb("data").notNull().$type<Array<{
+    id: string; name: string; sellingPrice: number; variableCost: number;
+    fixedCosts: number; initialCapital: number; monthlyUnits: number; growthRate: number;
+  }>>().default([]),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_mkt_fin_scenarios_restaurant").on(table.restaurantId)]);
+export const insertMarketingFinScenarioSchema = createInsertSchema(marketingFinScenarios).omit({ id: true, createdAt: true });
+export type InsertMarketingFinScenario = z.infer<typeof insertMarketingFinScenarioSchema>;
+export type MarketingFinScenario = typeof marketingFinScenarios.$inferSelect;
+
+// Marketing - Financial Analysis Settings (alert thresholds, one row per tenant)
+export const marketingFinSettings = pgTable("marketing_fin_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull().unique(),
+  minMarginPct: decimal("min_margin_pct", { precision: 5, scale: 2 }).notNull().default("20"),
+  maxBreakEvenUnits: decimal("max_break_even_units", { precision: 12, scale: 2 }).notNull().default("1000"),
+  alertsEnabled: boolean("alerts_enabled").notNull().default(true),
+});
+export const insertMarketingFinSettingsSchema = createInsertSchema(marketingFinSettings).omit({ id: true });
+export type InsertMarketingFinSettings = z.infer<typeof insertMarketingFinSettingsSchema>;
+export type MarketingFinSettings = typeof marketingFinSettings.$inferSelect;

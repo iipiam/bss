@@ -270,6 +270,72 @@ export type MarketingT = {
   downloadQr: string;
   qrSize: string;
   invalidUrl: string;
+
+  // Financial analysis upgrades
+  finActualVsPlanned: string;
+  finLast30Days: string;
+  finActualUnits: string;
+  finActualRevenue: string;
+  finPlannedUnits: string;
+  finPlannedRevenue: string;
+  finVariance: string;
+  finNoActualData: string;
+  finAutoFillCosts: string;
+  finFromBills: string;
+  finFromSalaries: string;
+  finAutoFilledToast: string;
+  finApplyToProducts: string;
+  finWhatIf: string;
+  finWhatIfDesc: string;
+  finPriceAdj: string;
+  finVarCostAdj: string;
+  finFixedCostAdj: string;
+  finVolumeAdj: string;
+  finResetSliders: string;
+  finAdjusted: string;
+  finTargetPricing: string;
+  finTargetProfit: string;
+  finRequiredPrice: string;
+  finRequiredVolume: string;
+  finAtCurrentVolume: string;
+  finAtCurrentPrice: string;
+  finNotAchievable: string;
+  finScenarios: string;
+  finScenariosDesc: string;
+  finScenarioName: string;
+  finSaveScenario: string;
+  finLoadScenario: string;
+  finScenarioSavedToast: string;
+  finScenarioLoadedToast: string;
+  finActiveScenario: string;
+  finNoScenarios: string;
+  finTotalMonthlyProfit: string;
+  finAvgMargin: string;
+  finProductsCount: string;
+  finSnapshots: string;
+  finSnapshotsDesc: string;
+  finSaveSnapshot: string;
+  finSnapshotSavedToast: string;
+  finTrendChart: string;
+  finNoSnapshots: string;
+  finSelectProduct: string;
+  finAlerts: string;
+  finAlertsDesc: string;
+  finMinMargin: string;
+  finMaxBreakEvenUnits: string;
+  finAlertsEnabled: string;
+  finAlertLowMargin: string;
+  finAlertHighBreakEven: string;
+  finNoAlerts: string;
+  finSaveThresholds: string;
+  finThresholdsSavedToast: string;
+  finInvestorSummary: string;
+  finInvestorSummaryDesc: string;
+  finKeyMetrics: string;
+  finDownloadInvestorPdf: string;
+  finUnits: string;
+  finRevenue: string;
+  finDate: string;
 };
 
 const en: MarketingT = {
@@ -580,6 +646,71 @@ const en: MarketingT = {
   calcStoriesRevenue: "Stories Revenue",
   calcMonthlyTotal: "Monthly Total",
   calcYearlyProjection: "Yearly Projection",
+
+  finActualVsPlanned: "Actual vs Planned",
+  finLast30Days: "Last 30 days of real data",
+  finActualUnits: "Actual Units",
+  finActualRevenue: "Actual Revenue",
+  finPlannedUnits: "Planned Units",
+  finPlannedRevenue: "Planned Revenue",
+  finVariance: "Variance",
+  finNoActualData: "No matching sales data found for this name in the last 30 days",
+  finAutoFillCosts: "Auto-fill Fixed Costs",
+  finFromBills: "From bills",
+  finFromSalaries: "From salaries",
+  finAutoFilledToast: "Fixed costs filled from your bills and salaries",
+  finApplyToProducts: "Applied to all products",
+  finWhatIf: "What-If Analysis",
+  finWhatIfDesc: "Move the sliders to test changes without touching your real numbers",
+  finPriceAdj: "Price",
+  finVarCostAdj: "Variable Cost",
+  finFixedCostAdj: "Fixed Costs",
+  finVolumeAdj: "Sales Volume",
+  finResetSliders: "Reset",
+  finAdjusted: "Adjusted",
+  finTargetPricing: "Target Profit Pricing",
+  finTargetProfit: "Target Monthly Profit",
+  finRequiredPrice: "Required Price",
+  finRequiredVolume: "Required Volume",
+  finAtCurrentVolume: "at current volume",
+  finAtCurrentPrice: "at current price",
+  finNotAchievable: "Not achievable",
+  finScenarios: "Scenarios",
+  finScenariosDesc: "Save named versions of your analysis (e.g. optimistic / realistic / pessimistic) and compare them",
+  finScenarioName: "Scenario name",
+  finSaveScenario: "Save Scenario",
+  finLoadScenario: "Load",
+  finScenarioSavedToast: "Scenario saved",
+  finScenarioLoadedToast: "Scenario loaded",
+  finActiveScenario: "Active scenario",
+  finNoScenarios: "No saved scenarios yet",
+  finTotalMonthlyProfit: "Total Monthly Profit",
+  finAvgMargin: "Avg. Margin",
+  finProductsCount: "Products",
+  finSnapshots: "Snapshot History",
+  finSnapshotsDesc: "Save today's key numbers and watch how they change over time",
+  finSaveSnapshot: "Save Snapshot",
+  finSnapshotSavedToast: "Snapshot saved",
+  finTrendChart: "Trend over time",
+  finNoSnapshots: "No snapshots yet — save one to start tracking",
+  finSelectProduct: "Select product",
+  finAlerts: "Alerts",
+  finAlertsDesc: "Get warned when a product falls below your standards",
+  finMinMargin: "Minimum margin %",
+  finMaxBreakEvenUnits: "Maximum break-even units",
+  finAlertsEnabled: "Alerts enabled",
+  finAlertLowMargin: "margin is below the minimum",
+  finAlertHighBreakEven: "break-even units are above the maximum",
+  finNoAlerts: "All products meet your thresholds",
+  finSaveThresholds: "Save Thresholds",
+  finThresholdsSavedToast: "Thresholds saved",
+  finInvestorSummary: "Investor Summary",
+  finInvestorSummaryDesc: "One-page overview combining your business canvas, SWOT and key financials",
+  finKeyMetrics: "Key Financial Metrics",
+  finDownloadInvestorPdf: "Investor PDF",
+  finUnits: "Units",
+  finRevenue: "Revenue",
+  finDate: "Date",
 };
 
 const ar: MarketingT = {
@@ -883,6 +1014,71 @@ const ar: MarketingT = {
   calcStoriesRevenue: "إيرادات القصص",
   calcMonthlyTotal: "الإجمالي الشهري",
   calcYearlyProjection: "التوقع السنوي",
+
+  finActualVsPlanned: "الفعلي مقابل المخطط",
+  finLast30Days: "آخر 30 يومًا من البيانات الفعلية",
+  finActualUnits: "الوحدات الفعلية",
+  finActualRevenue: "الإيراد الفعلي",
+  finPlannedUnits: "الوحدات المخططة",
+  finPlannedRevenue: "الإيراد المخطط",
+  finVariance: "الانحراف",
+  finNoActualData: "لا توجد بيانات مبيعات مطابقة لهذا الاسم خلال آخر 30 يومًا",
+  finAutoFillCosts: "تعبئة التكاليف الثابتة تلقائيًا",
+  finFromBills: "من الفواتير",
+  finFromSalaries: "من الرواتب",
+  finAutoFilledToast: "تمت تعبئة التكاليف الثابتة من الفواتير والرواتب",
+  finApplyToProducts: "تم التطبيق على جميع المنتجات",
+  finWhatIf: "تحليل ماذا لو",
+  finWhatIfDesc: "حرّك المؤشرات لاختبار التغييرات دون تعديل أرقامك الفعلية",
+  finPriceAdj: "السعر",
+  finVarCostAdj: "التكلفة المتغيرة",
+  finFixedCostAdj: "التكاليف الثابتة",
+  finVolumeAdj: "حجم المبيعات",
+  finResetSliders: "إعادة تعيين",
+  finAdjusted: "بعد التعديل",
+  finTargetPricing: "التسعير حسب الربح المستهدف",
+  finTargetProfit: "الربح الشهري المستهدف",
+  finRequiredPrice: "السعر المطلوب",
+  finRequiredVolume: "الكمية المطلوبة",
+  finAtCurrentVolume: "عند الكمية الحالية",
+  finAtCurrentPrice: "عند السعر الحالي",
+  finNotAchievable: "غير قابل للتحقيق",
+  finScenarios: "السيناريوهات",
+  finScenariosDesc: "احفظ نسخًا مسماة من تحليلك (متفائل / واقعي / متشائم) وقارن بينها",
+  finScenarioName: "اسم السيناريو",
+  finSaveScenario: "حفظ السيناريو",
+  finLoadScenario: "تحميل",
+  finScenarioSavedToast: "تم حفظ السيناريو",
+  finScenarioLoadedToast: "تم تحميل السيناريو",
+  finActiveScenario: "السيناريو النشط",
+  finNoScenarios: "لا توجد سيناريوهات محفوظة بعد",
+  finTotalMonthlyProfit: "إجمالي الربح الشهري",
+  finAvgMargin: "متوسط الهامش",
+  finProductsCount: "المنتجات",
+  finSnapshots: "سجل اللقطات",
+  finSnapshotsDesc: "احفظ أرقام اليوم الرئيسية وراقب تغيّرها مع الوقت",
+  finSaveSnapshot: "حفظ لقطة",
+  finSnapshotSavedToast: "تم حفظ اللقطة",
+  finTrendChart: "الاتجاه عبر الزمن",
+  finNoSnapshots: "لا توجد لقطات بعد — احفظ واحدة لبدء التتبع",
+  finSelectProduct: "اختر المنتج",
+  finAlerts: "التنبيهات",
+  finAlertsDesc: "احصل على تحذير عندما ينخفض منتج عن معاييرك",
+  finMinMargin: "الحد الأدنى للهامش %",
+  finMaxBreakEvenUnits: "الحد الأقصى لوحدات التعادل",
+  finAlertsEnabled: "التنبيهات مفعّلة",
+  finAlertLowMargin: "الهامش أقل من الحد الأدنى",
+  finAlertHighBreakEven: "وحدات التعادل أعلى من الحد الأقصى",
+  finNoAlerts: "جميع المنتجات ضمن الحدود المطلوبة",
+  finSaveThresholds: "حفظ الحدود",
+  finThresholdsSavedToast: "تم حفظ الحدود",
+  finInvestorSummary: "ملخص المستثمر",
+  finInvestorSummaryDesc: "صفحة واحدة تجمع نموذج العمل وتحليل SWOT وأهم المؤشرات المالية",
+  finKeyMetrics: "المؤشرات المالية الرئيسية",
+  finDownloadInvestorPdf: "PDF المستثمر",
+  finUnits: "الوحدات",
+  finRevenue: "الإيراد",
+  finDate: "التاريخ",
 };
 
 // Native translations for the marketing-tools (Task #8) keys for the remaining
