@@ -194,6 +194,14 @@ export const db = drizzle(pool, { schema });
       `ALTER TABLE meal_subscriptions ADD COLUMN IF NOT EXISTS delivery_hours jsonb NOT NULL DEFAULT '{}'::jsonb`,
     ],
     [
+      "meal_subscriptions.discount_type",
+      `ALTER TABLE meal_subscriptions ADD COLUMN IF NOT EXISTS discount_type text NOT NULL DEFAULT 'percent'`,
+    ],
+    [
+      "meal_subscriptions.discount_value",
+      `ALTER TABLE meal_subscriptions ADD COLUMN IF NOT EXISTS discount_value numeric(10,2) NOT NULL DEFAULT 0`,
+    ],
+    [
       "meal_subscriptions.delivery_log",
       `ALTER TABLE meal_subscriptions ADD COLUMN IF NOT EXISTS delivery_log jsonb NOT NULL DEFAULT '[]'::jsonb`,
     ],

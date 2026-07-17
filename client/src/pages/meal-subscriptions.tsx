@@ -112,6 +112,8 @@ const subscriptionFormSchema = z.object({
   endDate: z.string().optional(),
   numberOfDays: z.coerce.number().min(1, "Minimum 1 day").optional(),
   amount: z.string().min(1, "Amount is required"),
+  discountType: z.enum(["percent", "fixed"]).default("percent"),
+  discountValue: z.string().default("0"),
   paymentStatus: z.enum(["paid", "pending", "partial"]),
   status: z.enum(["active", "paused", "expired", "cancelled"]).default("active"),
   notes: z.string().optional(),
@@ -249,6 +251,8 @@ export default function MealSubscriptionsPage() {
       endDate: "",
       numberOfDays: undefined,
       amount: "",
+      discountType: "percent",
+      discountValue: "0",
       paymentStatus: "pending",
       status: "active",
       notes: "",
@@ -399,6 +403,8 @@ export default function MealSubscriptionsPage() {
       endDate: "",
       numberOfDays: undefined,
       amount: "",
+      discountType: "percent",
+      discountValue: "0",
       paymentStatus: "pending",
       status: "active",
       notes: "",
@@ -434,6 +440,8 @@ export default function MealSubscriptionsPage() {
       endDate: sub.endDate ? new Date(sub.endDate).toISOString().split("T")[0] : "",
       numberOfDays: sub.numberOfDays || undefined,
       amount: sub.amount?.toString() || "",
+      discountType: sub.discountType === "fixed" ? "fixed" : "percent",
+      discountValue: sub.discountValue?.toString() || "0",
       paymentStatus: asPaymentStatus(sub.paymentStatus),
       status: asSubscriptionStatus(sub.status),
       notes: sub.notes || "",
@@ -449,10 +457,18 @@ export default function MealSubscriptionsPage() {
     }
   };
 
+  const getNetAmount = (sub: { amount?: string | null; discountType?: string | null; discountValue?: string | null }) => {
+    const gross = parseFloat(sub.amount || "0") || 0;
+    const dv = parseFloat(sub.discountValue || "0") || 0;
+    if (dv <= 0) return gross;
+    const discount = sub.discountType === "fixed" ? dv : gross * (dv / 100);
+    return Math.max(0, gross - discount);
+  };
+
   const activeCount = subscriptions.filter((s) => s.status === "active").length;
   const monthlyRev = subscriptions
     .filter((s) => s.status === "active")
-    .reduce((sum, s) => sum + parseFloat(s.amount || "0"), 0);
+    .reduce((sum, s) => sum + getNetAmount(s), 0);
 
   const filteredSubscriptions = subscriptions.filter((s) => {
     if (statusFilter !== "all" && s.status !== statusFilter) return false;
@@ -607,7 +623,7 @@ export default function MealSubscriptionsPage() {
       }
       const scheduleUrl = `${window.location.origin}/api/meal-subscriptions/${sub.id}/schedule-pdf`;
       const daysInfo = sub.numberOfDays ? `\n${t.numberOfDays || "Number of Days"}: ${sub.numberOfDays}` : '';
-      const message = `*${t.mealSubscriptions}*\n\n${sub.subscriberName},\n\n${t.planType}: ${getPlanLabel(sub.planType)}\n${t.mealTime}: ${mealTimesStr}${mealsBlock}${daysInfo}\n${t.subscriptionAmount}: ${parseFloat(sub.amount || '0').toFixed(2)} SAR\n\n${scheduleUrl}`;
+      const message = `*${t.mealSubscriptions}*\n\n${sub.subscriberName},\n\n${t.planType}: ${getPlanLabel(sub.planType)}\n${t.mealTime}: ${mealTimesStr}${mealsBlock}${daysInfo}\n${t.subscriptionAmount}: ${getNetAmount(sub).toFixed(2)} SAR\n\n${scheduleUrl}`;
       openWhatsAppWithMessage(sub.subscriberPhone, message);
     });
   };
@@ -907,7 +923,17 @@ export default function MealSubscriptionsPage() {
                         <CalendarCheck className="h-3 w-3 text-muted-foreground" />
                         {getPlanLabel(sub.planType)}
                       </span>
-                      <span className="font-semibold">{parseFloat(sub.amount || "0").toFixed(2)} SAR{sub.numberOfDays ? ` (${sub.numberOfDays} ${t.days || "days"})` : ""}</span>
+                      <span className="font-semibold" data-testid={`text-net-amount-${sub.id}`}>
+                        {parseFloat(sub.discountValue || "0") > 0 && (
+                          <span className="line-through text-muted-foreground font-normal mr-1">{parseFloat(sub.amount || "0").toFixed(2)}</span>
+                        )}
+                        {getNetAmount(sub).toFixed(2)} SAR{sub.numberOfDays ? ` (${sub.numberOfDays} ${t.days || "days"})` : ""}
+                        {parseFloat(sub.discountValue || "0") > 0 && (
+                          <span className="text-green-600 font-normal ml-1">
+                            (-{sub.discountType === "fixed" ? `${parseFloat(sub.discountValue || "0").toFixed(2)} SAR` : `${parseFloat(sub.discountValue || "0").toFixed(0)}%`})
+                          </span>
+                        )}
+                      </span>
                       <span className="flex items-center gap-1">
                         <Wallet className="h-3 w-3 text-muted-foreground" />
                         <span className={`font-semibold ${parseFloat(sub.creditBalance || "0") <= 0 ? "text-destructive" : "text-green-600"}`}>
@@ -1280,6 +1306,55 @@ export default function MealSubscriptionsPage() {
                         {hasCalc && (
                           <p className="text-xs text-muted-foreground" data-testid="text-amount-calc">
                             {mealsPerDay.toFixed(2)} SAR × {numDays} {t.days || "days"} = {(mealsPerDay * numDays).toFixed(2)} SAR
+                          </p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="discountType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{isRTL ? 'نوع الخصم' : 'Discount Type'}<InfoTip>{isRTL ? 'نسبة مئوية أو مبلغ ثابت يُخصم من المبلغ.' : 'Percentage or fixed amount deducted from the total.'}</InfoTip></FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-discount-type">
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="percent">{isRTL ? 'نسبة مئوية (%)' : 'Percentage (%)'}</SelectItem>
+                          <SelectItem value="fixed">{isRTL ? 'مبلغ ثابت (SAR)' : 'Fixed Amount (SAR)'}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="discountValue"
+                  render={({ field }) => {
+                    const gross = parseFloat(form.watch("amount") || "0") || 0;
+                    const dv = parseFloat(field.value || "0") || 0;
+                    const dt = form.watch("discountType");
+                    const discount = dv > 0 ? (dt === "fixed" ? dv : gross * (dv / 100)) : 0;
+                    const net = Math.max(0, gross - discount);
+                    return (
+                      <FormItem>
+                        <FormLabel>{isRTL ? 'قيمة الخصم' : 'Discount'}</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" min="0" {...field} data-testid="input-discount-value" />
+                        </FormControl>
+                        {dv > 0 && gross > 0 && (
+                          <p className="text-xs text-muted-foreground" data-testid="text-discount-net">
+                            {isRTL ? 'الصافي بعد الخصم' : 'Net after discount'}: {net.toFixed(2)} SAR
                           </p>
                         )}
                         <FormMessage />

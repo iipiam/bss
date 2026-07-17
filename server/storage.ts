@@ -7353,7 +7353,13 @@ export const storage = new DatabaseStorage();
     await pool.query(`
       ALTER TABLE meal_subscriptions ADD COLUMN IF NOT EXISTS number_of_days INTEGER
     `);
-    console.log('[Migration] Meal subscriptions columns verified/added: delivery_log, delivery_hours, credit_balance, number_of_days');
+    await pool.query(`
+      ALTER TABLE meal_subscriptions ADD COLUMN IF NOT EXISTS discount_type TEXT NOT NULL DEFAULT 'percent'
+    `);
+    await pool.query(`
+      ALTER TABLE meal_subscriptions ADD COLUMN IF NOT EXISTS discount_value DECIMAL(10,2) NOT NULL DEFAULT 0
+    `);
+    console.log('[Migration] Meal subscriptions columns verified/added: delivery_log, delivery_hours, credit_balance, number_of_days, discount_type, discount_value');
 
     // Service Catalog (for service business types)
     await pool.query(`

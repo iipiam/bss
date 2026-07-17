@@ -19123,6 +19123,14 @@ ${phaseSchedules.length > 0 ? `
     }
   });
 
+  const mealSubNetAmount = (amount: string | number | null | undefined, discountType?: string | null, discountValue?: string | number | null): number => {
+    const gross = parseFloat(String(amount ?? '0')) || 0;
+    const dv = parseFloat(String(discountValue ?? '0')) || 0;
+    if (dv <= 0) return gross;
+    const discount = discountType === 'fixed' ? dv : gross * (dv / 100);
+    return Math.max(0, gross - discount);
+  };
+
   app.post("/api/meal-subscriptions", requireAuth, requireRestaurant, requireAction('mealSubscriptions', 'add'), async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
@@ -19130,20 +19138,21 @@ ${phaseSchedules.length > 0 ? `
       if (safeBody.startDate && typeof safeBody.startDate === 'string') safeBody.startDate = new Date(safeBody.startDate);
       if (safeBody.endDate && typeof safeBody.endDate === 'string') safeBody.endDate = new Date(safeBody.endDate);
       if (!safeBody.creditBalance && safeBody.amount) {
-        safeBody.creditBalance = safeBody.amount;
+        safeBody.creditBalance = mealSubNetAmount(safeBody.amount, safeBody.discountType, safeBody.discountValue).toFixed(2);
       }
       const subscription = await storage.createMealSubscription({ ...safeBody, restaurantId });
-      if (subscription.paymentStatus === 'paid' && parseFloat(subscription.amount || '0') > 0) {
+      const netCreate = mealSubNetAmount(subscription.amount, subscription.discountType, subscription.discountValue);
+      if (subscription.paymentStatus === 'paid' && netCreate > 0) {
         try {
-          const subtotal = parseFloat(subscription.amount || '0') / 1.15;
-          const tax = parseFloat(subscription.amount || '0') - subtotal;
+          const subtotal = netCreate / 1.15;
+          const tax = netCreate - subtotal;
           await storage.createTransaction({
             restaurantId,
             transactionId: `MSUB-${subscription.id.substring(0, 8)}-${Date.now()}`,
             itemCount: Array.isArray(subscription.mealSelections) ? (subscription.mealSelections as Array<unknown>).length : 1,
             subtotal: subtotal.toFixed(2),
             tax: tax.toFixed(2),
-            total: parseFloat(subscription.amount || '0').toFixed(2),
+            total: netCreate.toFixed(2),
             paymentMethod: 'Meal Subscription',
           });
         } catch (txError) {
@@ -19164,26 +19173,32 @@ ${phaseSchedules.length > 0 ? `
       if (safeBody.startDate && typeof safeBody.startDate === 'string') safeBody.startDate = new Date(safeBody.startDate);
       if (safeBody.endDate && typeof safeBody.endDate === 'string') safeBody.endDate = new Date(safeBody.endDate);
       const existingSub = await storage.getMealSubscription(req.params.id, restaurantId);
-      if (safeBody.amount && existingSub) {
-        const oldAmount = parseFloat(existingSub.amount || "0");
-        const newAmount = parseFloat(safeBody.amount);
+      const discountChanged = safeBody.discountType !== undefined || safeBody.discountValue !== undefined;
+      if ((safeBody.amount || discountChanged) && existingSub) {
+        const oldNet = mealSubNetAmount(existingSub.amount, existingSub.discountType, existingSub.discountValue);
+        const newNet = mealSubNetAmount(
+          safeBody.amount ?? existingSub.amount,
+          safeBody.discountType ?? existingSub.discountType,
+          safeBody.discountValue ?? existingSub.discountValue,
+        );
         const oldCredit = parseFloat(existingSub.creditBalance || "0");
-        const spent = oldAmount - oldCredit;
-        safeBody.creditBalance = Math.max(0, newAmount - spent).toFixed(2);
+        const spent = oldNet - oldCredit;
+        safeBody.creditBalance = Math.max(0, newNet - spent).toFixed(2);
       }
       const subscription = await storage.updateMealSubscription(req.params.id, restaurantId, safeBody);
       if (!subscription) return res.status(404).json({ message: "Subscription not found" });
-      if (safeBody.paymentStatus === 'paid' && existingSub?.paymentStatus !== 'paid' && parseFloat(subscription.amount || '0') > 0) {
+      const netUpdate = mealSubNetAmount(subscription.amount, subscription.discountType, subscription.discountValue);
+      if (safeBody.paymentStatus === 'paid' && existingSub?.paymentStatus !== 'paid' && netUpdate > 0) {
         try {
-          const subtotal = parseFloat(subscription.amount || '0') / 1.15;
-          const tax = parseFloat(subscription.amount || '0') - subtotal;
+          const subtotal = netUpdate / 1.15;
+          const tax = netUpdate - subtotal;
           await storage.createTransaction({
             restaurantId,
             transactionId: `MSUB-${subscription.id.substring(0, 8)}-${Date.now()}`,
             itemCount: Array.isArray(subscription.mealSelections) ? (subscription.mealSelections as Array<unknown>).length : 1,
             subtotal: subtotal.toFixed(2),
             tax: tax.toFixed(2),
-            total: parseFloat(subscription.amount || '0').toFixed(2),
+            total: netUpdate.toFixed(2),
             paymentMethod: 'Meal Subscription',
           });
         } catch (txError) {
