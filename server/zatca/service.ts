@@ -1,7 +1,7 @@
 import { storage } from "../storage";
 import { generateZatcaInvoiceXml, generateUnsignedInvoiceXml, generateInvoiceHash, generateInvoiceHashHex, canonicalizeInvoiceXml, type ZatcaInvoiceData } from "./xml-generator";
 import { generateZatcaQRCode, generateUUID, signWithECDSA, formatIssueDate, formatIssueTime, formatTimestamp, hashSHA256Hex, extractPublicKeyBase64, getCertificateIssuerSerial, extractCertificateSignatureBytes, normalizeCertificateToPem, extractCertificateBase64Body } from "./crypto";
-import { ZatcaApiClient, submitInvoiceToZatca, type ZatcaConfig } from "./api-client";
+import { ZatcaApiClient, submitInvoiceToZatca, extractZatcaStatus, type ZatcaConfig } from "./api-client";
 import { signInvoiceWithSDK, generateCSRWithSDK, validateInvoiceWithSDK, isSDKAvailable } from "./sdk-wrapper";
 import QRCode from "qrcode";
 
@@ -910,7 +910,9 @@ export async function runComplianceChecks(
 
     // Normalize ZATCA status (capitalized: "Cleared"/"Reported"/"Not Cleared"/
     // "Not Reported"/"Accepted with Warnings") to lowercase before comparing.
-    const normalizedComplianceStatus = response.data?.status?.toLowerCase();
+    // The field differs per endpoint (clearanceStatus / reportingStatus /
+    // status), so use the canonical extractor.
+    const normalizedComplianceStatus = extractZatcaStatus(response.data);
     const complianceRejected =
       normalizedComplianceStatus === "not cleared" ||
       normalizedComplianceStatus === "not reported" ||

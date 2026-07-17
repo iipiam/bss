@@ -58,6 +58,16 @@ interface InvoiceResponse {
   };
 }
 
+// ZATCA responses carry the invoice status in different fields depending on
+// the endpoint: `clearanceStatus` (clearance API for standard invoices),
+// `reportingStatus` (reporting API for simplified invoices), or a generic
+// `status`. Return a single lowercase canonical value, or undefined.
+export function extractZatcaStatus(data: Partial<InvoiceResponse> | undefined | null): string | undefined {
+  if (!data) return undefined;
+  const raw = data.clearanceStatus || data.reportingStatus || data.status;
+  return typeof raw === "string" && raw.trim() ? raw.trim().toLowerCase() : undefined;
+}
+
 const ZATCA_URLS = {
   sandbox: "https://gw-fatoora.zatca.gov.sa/e-invoicing/developer-portal",
   simulation: "https://gw-fatoora.zatca.gov.sa/e-invoicing/simulation",
@@ -334,9 +344,11 @@ export async function submitInvoiceToZatca(
   }
 
   // ZATCA returns the status with capital letters: "Cleared", "Reported",
-  // "Not Cleared", "Not Reported", "Accepted with Warnings". Always normalize
+  // "Not Cleared", "Not Reported", "Accepted with Warnings". Depending on the
+  // endpoint the field is `clearanceStatus` (clearance API), `reportingStatus`
+  // (reporting API), or `status`. Extract one canonical value and normalize
   // to lowercase before comparing.
-  const rawStatus = data.status?.toLowerCase() || "pending";
+  const rawStatus = extractZatcaStatus(data) || "pending";
 
   // ZATCA returns HTTP 202 with the invoice cleared/reported "with warnings".
   // The response body still contains validationResults; surface as warning
