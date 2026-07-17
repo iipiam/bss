@@ -1,0 +1,109 @@
+Fix my ZATCA Phase 2 e-invoicing integration. It currently fails on every ZATCA
+operation. Work autonomously: find the relevant files by their content, apply ALL
+fixes below, then verify with a self-test. Do not stop to ask me questions unless
+you are truly blocked.
+
+=== FILE 1: The ZATCA Java SDK wrapper ===
+Find the backend file that shells out to the ZATCA Java SDK (it imports execSync
+from child_process and references zatca-einvoicing-sdk-...jar). Fix these bugs:
+
+1. It builds commands as a string ("java " + args.join(" ")) and runs execSync.
+   Any space in a path breaks every command. Rewrite to use execFileSync("java",
+   argsArray) — no shell, no quoting.
+2. It passes a "--globalVersion" argument to the jar. That is NOT a valid fatoora
+   CLI option and the jar exits with an error on unknown options. Remove it.
+3. For the first invoice it writes "0".repeat(64) as the previous-invoice-hash
+   (pih.txt). That is invalid. The official first-invoice PIH (ZATCA rule
+   BR-KSA-26) is exactly:
+   NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==
+   (base64 of the hex string of SHA-256("0")). Use it as a named constant.
+4. CSR generation must support 3 environments with the official CLI flags:
+   sandbox -> -nonprod, simulation -> -sim, production -> no flag.
+5. The SDK prints most errors to stdout, but failures currently return only
+   stderr. Include stdout in returned error messages.
+6. Make the "INVOICE HASH = ..." and "QR Code = ..." output parsing tolerant
+   (allow "=" or ":", any case). Extract the QR from the signed XML's
+   EmbeddedDocumentBinaryObject (the one after <cbc:ID>QR</cbc:ID>) when present.
+7. Return a clear error if `java` is not on PATH. Write private-key temp files
+   with mode 0600.
+
+=== FILE 2: The invoice XML builder/signer ===
+Find the backend file that imports { extractPublicKeyBase64,
+getCertificateIssuerSerial, extractCertificateSignatureBytes,
+extractCertificateBase64Body } from "./crypto" and builds the UBL invoice XML.
+Fix these bugs:
+
+1. InvoiceTypeCode name attribute must be EXACTLY 7 digits: "0100000" for
+   standard invoices, "0200000" for simplified. The current code produces 9
+   digits — that fails ZATCA validation.
+2. The certificate hash for xades:CertDigest must be base64 of the RAW 32
+   SHA-256 bytes of the DER certificate. The current code base64-encodes the
+   hex string — wrong.
+3. The invoice hash (ds:DigestValue for URI="") MUST equal what ZATCA
+   recomputes: take the FINAL signed XML, remove <ext:UBLExtensions>,
+   <cac:Signature>, and the AdditionalDocumentReference with <cbc:ID>QR</cbc:ID>,
+   C14N-canonicalize, SHA-256, base64. The whitespace left behind by those
+   removals is part of the hashed bytes — so build the final signed-XML layout
+   first (with empty signing values), hash that, then fill in the signature
+   values. Do not hash a separately-built "unsigned" string unless its
+   whitespace provably produces the identical canonical form.
+4. The header must contain TWO <cac:TaxTotal> blocks: first one with only
+   <cbc:TaxAmount>, then one with <cbc:TaxAmount> plus one <cac:TaxSubtotal>
+   per tax category/percent actually used by the lines (not a hardcoded S/15).
+   Round each line's extension and tax to 2 decimals before summing.
+5. formatVatNumber must never invent a number (it currently returns
+   "300000000000003" for invalid input). It should only strip non-digits.
+6. The signing function must throw on error, never return an empty string.
+7. QR code: TLV with 1-byte tag + 1-byte length. Tag 6 = invoice hash as its
+   base64 string, tag 7 = signature as its base64 string, tag 8 = raw public
+   key bytes, tag 9 = raw certificate signature bytes.
+8. Signature must be standard ZATCA XAdES-BES: ds:Signature Id="signature";
+   SignedInfo with reference URI="" (invoice digest) and a typed reference
+   URI="#xades-signed-properties"; SignatureValue = ECDSA (DER, base64) over
+   the canonicalized SignedInfo; KeyInfo with the X509Certificate; ds:Object
+   with xades:QualifyingProperties -> SignedProperties Id="xades-signed-properties"
+   (SigningTime, CertDigest, IssuerSerial with DECIMAL serial). Sign the
+   canonicalized SignedInfo built from the same inner XML that appears in the
+   final document (C14N preserves whitespace — they must match byte-for-byte).
+9. CRITICAL: do not reformat/prettify this file's XML template literals —
+   the whitespace is cryptographically significant.
+
+=== FILE 3: The ZATCA settings page (React) ===
+Find the page component named ZatcaSettingsPage. Fix:
+1. The ZatcaSettings interface is missing complianceCsidReceivedAt and
+   isEnabled — add them (the code already uses them; this is a TS error).
+2. The settings save handler POSTs the whole form state, including
+   server-managed fields (onboardingStatus, invoiceCounter, lastHashedInvoice,
+   id). It must send ONLY the editable fields: environment, csrCommonName,
+   csrOrganizationName, csrOrganizationIdentifier, csrOrganizationUnitName,
+   csrCountryName, csrSerialNumber, csrInvoiceType, streetName, buildingNumber,
+   citySubdivision, city, postalZone, countryCode, crNumber.
+3. Switching the selected restaurant must also clear: otp, complianceRequestId,
+   and the manual-credential form.
+4. OTP input: digits only, and the Request CSID button requires all 6 digits.
+   Clear the OTP after successful onboarding.
+5. Compliance request ID input: digits only.
+6. Make the CSID-expiry block null-safe; give t.download a "Download" fallback.
+
+=== ENVIRONMENT ===
+1. Ensure a Java JDK/JRE (11-17) is installed in this Replit environment and
+   `java -version` works in the shell — the ZATCA SDK needs it.
+2. Ensure folder zatca-sdk/zatca-einvoicing-sdk-Java-238-R3.4.7 exists at the
+   project root with Apps/zatca-einvoicing-sdk-238-R3.4.7.jar inside. The code
+   resolves it from process.cwd(), so the app must always start from the
+   project root.
+3. Ensure npm packages @xmldom/xmldom, xpath, xml-crypto are installed.
+
+=== SELF-TEST (required before you finish) ===
+Write a temporary script that: generates a self-signed secp256k1 cert (openssl
+in shell is fine), builds + signs a sample simplified invoice with 2 items
+(one with Arabic in its name), then asserts ALL of:
+  a) hash of the signed XML (after the removal rules) == the embedded digest;
+  b) the ECDSA SignatureValue verifies against the cert's public key over the
+     canonicalized SignedInfo;
+  c) the QR base64 TLV-decodes into exactly tags 1-9, tag 6 == invoice hash,
+     tag 7 == SignatureValue;
+  d) a credit note with a hex previousInvoiceHash produces PIH converted to
+     base64 and InvoiceTypeCode 381 with a 7-digit name.
+Run it, show me the results, then delete the temporary script.
+Finally, report every file you changed and why, in a short list.

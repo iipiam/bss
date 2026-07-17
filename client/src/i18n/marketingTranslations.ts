@@ -59,6 +59,12 @@ export type MarketingT = {
 
   finTitle: string;
   finDesc: string;
+  currentSnapshotTitle: string;
+  currentSnapshotDesc: string;
+  avgSellingPriceUnit: string;
+  avgVariableCostUnit: string;
+  currentMonthlyFixedCosts: string;
+  basedOnMenuItems: string;
   addProduct: string;
   selectFromMenu: string;
   selectMenuItemPlaceholder: string;
@@ -347,6 +353,12 @@ const en: MarketingT = {
 
   finTitle: "Business & Financial Analysis",
   finDesc: "Break-even, ROI, payback period, and 24-month cumulative profit — calculated in real time.",
+  currentSnapshotTitle: "Current Business Snapshot",
+  currentSnapshotDesc: "Live averages from your current menu, recipes/inventory costs, and monthly bills.",
+  avgSellingPriceUnit: "Avg Selling Price / Unit",
+  avgVariableCostUnit: "Avg Variable Cost / Unit",
+  currentMonthlyFixedCosts: "Monthly Fixed Costs",
+  basedOnMenuItems: "Based on {n} menu items",
   addProduct: "Add Product",
   selectFromMenu: "Select from Menu",
   selectMenuItemPlaceholder: "Choose a menu item…",
@@ -633,6 +645,12 @@ const ar: MarketingT = {
 
   finTitle: "التحليل التجاري والمالي",
   finDesc: "نقطة التعادل، العائد على الاستثمار، فترة الاسترداد، والربح التراكمي لـ ٢٤ شهراً — محسوبة فوراً.",
+  currentSnapshotTitle: "لمحة عن الوضع الحالي للنشاط",
+  currentSnapshotDesc: "متوسطات حية من قائمتك الحالية وتكاليف الوصفات/المخزون والفواتير الشهرية.",
+  avgSellingPriceUnit: "متوسط سعر البيع / الوحدة",
+  avgVariableCostUnit: "متوسط التكلفة المتغيرة / الوحدة",
+  currentMonthlyFixedCosts: "التكاليف الثابتة الشهرية",
+  basedOnMenuItems: "بناءً على {n} صنفاً من القائمة",
   addProduct: "إضافة منتج",
   selectFromMenu: "اختر من القائمة",
   selectMenuItemPlaceholder: "اختر صنفًا من القائمة…",

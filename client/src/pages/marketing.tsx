@@ -700,6 +700,23 @@ export default function Marketing() {
     return 0;
   };
 
+  const currentSnapshot = useMemo(() => {
+    if (menuItems.length === 0) {
+      return { avgSellingPrice: 0, avgVariableCost: 0, count: 0 };
+    }
+    let priceSum = 0;
+    let costSum = 0;
+    for (const mi of menuItems) {
+      priceSum += parseFloat(mi.price) || 0;
+      costSum += computeVariableCost(mi);
+    }
+    return {
+      avgSellingPrice: priceSum / menuItems.length,
+      avgVariableCost: costSum / menuItems.length,
+      count: menuItems.length,
+    };
+  }, [menuItems, recipes, inventory]);
+
   const addProductFromMenu = (menuItemId: string) => {
     const mi = menuItems.find((m) => m.id === menuItemId);
     if (!mi) return;
@@ -1599,7 +1616,22 @@ export default function Marketing() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => setProducts((arr) => [...arr, { ...newProduct(), name: `Product ${arr.length + 1}` }])}
+                  onClick={() =>
+                    setProducts((arr) => [
+                      ...arr,
+                      {
+                        ...newProduct(),
+                        name: `Product ${arr.length + 1}`,
+                        ...(currentSnapshot.count > 0
+                          ? {
+                              sellingPrice: Math.round(currentSnapshot.avgSellingPrice * 100) / 100,
+                              variableCost: Math.round(currentSnapshot.avgVariableCost * 100) / 100,
+                            }
+                          : {}),
+                        ...(monthlyFixedCosts > 0 ? { fixedCosts: Math.round(monthlyFixedCosts) } : {}),
+                      },
+                    ])
+                  }
                   data-testid="button-add-product"
                 >
                   <Plus className="h-4 w-4 me-2" />
@@ -1611,6 +1643,42 @@ export default function Marketing() {
                 </Button>
               </div>
             </CardHeader>
+            <CardContent>
+              <div className="mb-3">
+                <div className="font-semibold">{t.currentSnapshotTitle}</div>
+                <div className="text-sm text-muted-foreground">{t.currentSnapshotDesc}</div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-md border p-3">
+                  <div className="text-xs text-muted-foreground">{t.avgSellingPriceUnit}</div>
+                  <div className="text-lg font-bold" data-testid="stat-current-avg-selling-price">
+                    {currentSnapshot.count > 0 ? fmt(currentSnapshot.avgSellingPrice) : "—"}
+                  </div>
+                  {currentSnapshot.count > 0 && (
+                    <div className="text-xs text-muted-foreground">
+                      {t.basedOnMenuItems.replace("{n}", String(currentSnapshot.count))}
+                    </div>
+                  )}
+                </div>
+                <div className="rounded-md border p-3">
+                  <div className="text-xs text-muted-foreground">{t.avgVariableCostUnit}</div>
+                  <div className="text-lg font-bold" data-testid="stat-current-avg-variable-cost">
+                    {currentSnapshot.count > 0 ? fmt(currentSnapshot.avgVariableCost) : "—"}
+                  </div>
+                  {currentSnapshot.count > 0 && (
+                    <div className="text-xs text-muted-foreground">
+                      {t.basedOnMenuItems.replace("{n}", String(currentSnapshot.count))}
+                    </div>
+                  )}
+                </div>
+                <div className="rounded-md border p-3">
+                  <div className="text-xs text-muted-foreground">{t.currentMonthlyFixedCosts}</div>
+                  <div className="text-lg font-bold" data-testid="stat-current-monthly-fixed-costs">
+                    {fmt(monthlyFixedCosts)}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
           </Card>
 
           {computed.map(({ p, calc }, idx) => (
