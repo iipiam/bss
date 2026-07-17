@@ -2483,6 +2483,8 @@ export interface Translations {
   cateringContracts?: string;
   investmentAgreementTemplates?: string;
   marketing?: string;
+  equipmentSuppliers?: string;
+  companyProfile?: string;
   ourClients?: string;
   addPartner?: string;
   partnerName?: string;
@@ -5355,6 +5357,8 @@ export const translations: Record<Language, Translations> = {
     mealsPerDay: 'meals/day',
     cateringContracts: 'Catering Contracts',
     marketing: 'Marketing',
+    equipmentSuppliers: 'Suppliers',
+    companyProfile: 'Company Profile',
     ourClients: 'Our Clients',
     addPartner: 'Add Partner',
     partnerName: 'Partner Name',
@@ -8204,6 +8208,8 @@ export const translations: Record<Language, Translations> = {
     mealsPerDay: 'وجبة/يوم',
     cateringContracts: 'عقود التموين',
     marketing: 'التسويق',
+    equipmentSuppliers: 'الموردون',
+    companyProfile: 'ملف الشركة',
     ourClients: 'عملاؤنا',
     addPartner: 'إضافة عميل',
     partnerName: 'اسم العميل',
@@ -11393,6 +11399,8 @@ export const translations: Record<Language, Translations> = {
     mealsPerDay: 'meals/day',
     cateringContracts: 'Catering Contracts',
     marketing: 'Marketing',
+    equipmentSuppliers: 'Lieferanten',
+    companyProfile: 'Firmenprofil',
     serviceProducts: 'Products',
     serviceProductsDescription: 'Bundle items, services, and tasks into reusable products that can be applied to projects.',
     addProduct: 'Add Product',
@@ -14244,6 +14252,8 @@ export const translations: Record<Language, Translations> = {
     mealsPerDay: 'meals/day',
     cateringContracts: 'Catering Contracts',
     marketing: 'Marketing',
+    equipmentSuppliers: '供应商',
+    companyProfile: '公司简介',
     serviceProducts: 'Products',
     serviceProductsDescription: 'Bundle items, services, and tasks into reusable products that can be applied to projects.',
     addProduct: 'Add Product',
@@ -17095,6 +17105,8 @@ export const translations: Record<Language, Translations> = {
     mealsPerDay: 'meals/day',
     cateringContracts: 'Catering Contracts',
     marketing: 'Marketing',
+    equipmentSuppliers: 'সরবরাহকারী',
+    companyProfile: 'কোম্পানির প্রোফাইল',
     serviceProducts: 'Products',
     serviceProductsDescription: 'Bundle items, services, and tasks into reusable products that can be applied to projects.',
     addProduct: 'Add Product',
@@ -19946,6 +19958,8 @@ export const translations: Record<Language, Translations> = {
     mealsPerDay: 'meals/day',
     cateringContracts: 'Catering Contracts',
     marketing: 'Marketing',
+    equipmentSuppliers: 'Fornitori',
+    companyProfile: 'Profilo Aziendale',
     serviceProducts: 'Products',
     serviceProductsDescription: 'Bundle items, services, and tasks into reusable products that can be applied to projects.',
     addProduct: 'Add Product',
@@ -22782,6 +22796,8 @@ export const translations: Record<Language, Translations> = {
     mealsPerDay: 'meals/day',
     cateringContracts: 'Catering Contracts',
     marketing: 'Marketing',
+    equipmentSuppliers: 'आपूर्तिकर्ता',
+    companyProfile: 'कंपनी प्रोफ़ाइल',
     serviceProducts: 'Products',
     serviceProductsDescription: 'Bundle items, services, and tasks into reusable products that can be applied to projects.',
     addProduct: 'Add Product',
@@ -25618,6 +25634,8 @@ export const translations: Record<Language, Translations> = {
     mealsPerDay: 'meals/day',
     cateringContracts: 'Catering Contracts',
     marketing: 'Marketing',
+    equipmentSuppliers: 'سپلائرز',
+    companyProfile: 'کمپنی پروفائل',
     serviceProducts: 'Products',
     serviceProductsDescription: 'Bundle items, services, and tasks into reusable products that can be applied to projects.',
     addProduct: 'Add Product',
@@ -28398,6 +28416,8 @@ export const translations: Record<Language, Translations> = {
     mealsPerDay: 'meals/day',
     cateringContracts: 'Catering Contracts',
     marketing: 'Marketing',
+    equipmentSuppliers: 'Proveedores',
+    companyProfile: 'Perfil de la Empresa',
     serviceProducts: 'Products',
     serviceProductsDescription: 'Bundle items, services, and tasks into reusable products that can be applied to projects.',
     addProduct: 'Add Product',
@@ -31178,6 +31198,8 @@ export const translations: Record<Language, Translations> = {
     mealsPerDay: 'meals/day',
     cateringContracts: 'Catering Contracts',
     marketing: 'Marketing',
+    equipmentSuppliers: 'Mga Supplier',
+    companyProfile: 'Profile ng Kumpanya',
     serviceProducts: 'Products',
     serviceProductsDescription: 'Bundle items, services, and tasks into reusable products that can be applied to projects.',
     addProduct: 'Add Product',
