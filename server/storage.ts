@@ -178,6 +178,27 @@ import {
   type BloggerProfile,
   type InsertBloggerProfile,
   influencerProfiles,
+  equipmentSuppliers,
+  type EquipmentSupplier,
+  type InsertEquipmentSupplier,
+  supplierEquipment,
+  type SupplierEquipment,
+  type InsertSupplierEquipment,
+  supplierPayments,
+  type SupplierPayment,
+  type InsertSupplierPayment,
+  supplierDocuments,
+  type SupplierDocument,
+  type InsertSupplierDocument,
+  supplierEquipmentDocuments,
+  type SupplierEquipmentDocument,
+  type InsertSupplierEquipmentDocument,
+  supplierRentals,
+  type SupplierRental,
+  type InsertSupplierRental,
+  equipmentTypes,
+  type EquipmentType,
+  type InsertEquipmentType,
   type QuotationDecision,
   type InsertQuotationDecision,
   quotationDecisions,
@@ -740,6 +761,37 @@ export interface IStorage {
   createBloggerProfile(p: InsertBloggerProfile): Promise<BloggerProfile>;
   updateBloggerProfile(id: string, restaurantId: string, data: Partial<InsertBloggerProfile>): Promise<BloggerProfile | undefined>;
   deleteBloggerProfile(id: string, restaurantId: string): Promise<boolean>;
+
+  // Equipment Suppliers
+  getEquipmentSuppliers(restaurantId: string): Promise<EquipmentSupplier[]>;
+  getEquipmentSupplier(id: string, restaurantId: string): Promise<EquipmentSupplier | undefined>;
+  createEquipmentSupplier(s: InsertEquipmentSupplier): Promise<EquipmentSupplier>;
+  updateEquipmentSupplier(id: string, restaurantId: string, data: Partial<InsertEquipmentSupplier> & { status?: string; completionScore?: number }): Promise<EquipmentSupplier | undefined>;
+  deleteEquipmentSupplier(id: string, restaurantId: string): Promise<boolean>;
+  getSupplierEquipment(supplierId: string, restaurantId: string): Promise<SupplierEquipment[]>;
+  createSupplierEquipment(e: InsertSupplierEquipment): Promise<SupplierEquipment>;
+  updateSupplierEquipment(id: string, restaurantId: string, data: Partial<InsertSupplierEquipment>): Promise<SupplierEquipment | undefined>;
+  deleteSupplierEquipment(id: string, restaurantId: string): Promise<boolean>;
+  getSupplierPayments(supplierId: string, restaurantId: string): Promise<SupplierPayment[]>;
+  getAllSupplierPayments(restaurantId: string): Promise<SupplierPayment[]>;
+  createSupplierPayment(p: InsertSupplierPayment): Promise<SupplierPayment>;
+  updateSupplierPayment(id: string, restaurantId: string, data: Partial<InsertSupplierPayment>): Promise<SupplierPayment | undefined>;
+  deleteSupplierPayment(id: string, restaurantId: string): Promise<boolean>;
+  getSupplierDocuments(supplierId: string, restaurantId: string): Promise<SupplierDocument[]>;
+  getSupplierDocument(id: string, restaurantId: string): Promise<SupplierDocument | undefined>;
+  createSupplierDocument(d: InsertSupplierDocument): Promise<SupplierDocument>;
+  deleteSupplierDocument(id: string, restaurantId: string): Promise<SupplierDocument | undefined>;
+  getSupplierEquipmentDocuments(supplierId: string, restaurantId: string): Promise<SupplierEquipmentDocument[]>;
+  getSupplierEquipmentDocument(id: string, restaurantId: string): Promise<SupplierEquipmentDocument | undefined>;
+  createSupplierEquipmentDocument(d: InsertSupplierEquipmentDocument): Promise<SupplierEquipmentDocument>;
+  deleteSupplierEquipmentDocument(id: string, restaurantId: string): Promise<SupplierEquipmentDocument | undefined>;
+  getSupplierRentals(supplierId: string, restaurantId: string): Promise<SupplierRental[]>;
+  getAllSupplierRentals(restaurantId: string): Promise<SupplierRental[]>;
+  createSupplierRental(r: InsertSupplierRental & { referenceNumber: string }): Promise<SupplierRental>;
+  getEquipmentTypes(restaurantId: string): Promise<EquipmentType[]>;
+  createEquipmentType(t: InsertEquipmentType): Promise<EquipmentType>;
+  updateEquipmentType(id: string, restaurantId: string, data: Partial<InsertEquipmentType>): Promise<EquipmentType | undefined>;
+  deleteEquipmentType(id: string, restaurantId: string): Promise<boolean>;
 
   // Service Products (bundles)
   getServiceProducts(restaurantId: string): Promise<ServiceProduct[]>;
@@ -6131,6 +6183,148 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  // Equipment Suppliers
+  async getEquipmentSuppliers(restaurantId: string): Promise<EquipmentSupplier[]> {
+    return db.select().from(equipmentSuppliers)
+      .where(eq(equipmentSuppliers.restaurantId, restaurantId))
+      .orderBy(desc(equipmentSuppliers.createdAt));
+  }
+  async getEquipmentSupplier(id: string, restaurantId: string): Promise<EquipmentSupplier | undefined> {
+    const [result] = await db.select().from(equipmentSuppliers)
+      .where(and(eq(equipmentSuppliers.id, id), eq(equipmentSuppliers.restaurantId, restaurantId)));
+    return result;
+  }
+  async createEquipmentSupplier(s: InsertEquipmentSupplier): Promise<EquipmentSupplier> {
+    const [result] = await db.insert(equipmentSuppliers).values(s as any).returning();
+    return result;
+  }
+  async updateEquipmentSupplier(id: string, restaurantId: string, data: Partial<InsertEquipmentSupplier> & { status?: string; completionScore?: number }): Promise<EquipmentSupplier | undefined> {
+    const { restaurantId: _r, ...safe } = data as any;
+    const [result] = await db.update(equipmentSuppliers).set({ ...safe, updatedAt: new Date() })
+      .where(and(eq(equipmentSuppliers.id, id), eq(equipmentSuppliers.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async deleteEquipmentSupplier(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(equipmentSuppliers)
+      .where(and(eq(equipmentSuppliers.id, id), eq(equipmentSuppliers.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+  async getSupplierEquipment(supplierId: string, restaurantId: string): Promise<SupplierEquipment[]> {
+    return db.select().from(supplierEquipment)
+      .where(and(eq(supplierEquipment.supplierId, supplierId), eq(supplierEquipment.restaurantId, restaurantId)))
+      .orderBy(supplierEquipment.sortOrder);
+  }
+  async createSupplierEquipment(e: InsertSupplierEquipment): Promise<SupplierEquipment> {
+    const [result] = await db.insert(supplierEquipment).values(e as any).returning();
+    return result;
+  }
+  async updateSupplierEquipment(id: string, restaurantId: string, data: Partial<InsertSupplierEquipment>): Promise<SupplierEquipment | undefined> {
+    const { restaurantId: _r, supplierId: _s, ...safe } = data as any;
+    const [result] = await db.update(supplierEquipment).set(safe)
+      .where(and(eq(supplierEquipment.id, id), eq(supplierEquipment.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async deleteSupplierEquipment(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(supplierEquipment)
+      .where(and(eq(supplierEquipment.id, id), eq(supplierEquipment.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+  async getSupplierPayments(supplierId: string, restaurantId: string): Promise<SupplierPayment[]> {
+    return db.select().from(supplierPayments)
+      .where(and(eq(supplierPayments.supplierId, supplierId), eq(supplierPayments.restaurantId, restaurantId)))
+      .orderBy(supplierPayments.dueDate);
+  }
+  async getAllSupplierPayments(restaurantId: string): Promise<SupplierPayment[]> {
+    return db.select().from(supplierPayments)
+      .where(eq(supplierPayments.restaurantId, restaurantId))
+      .orderBy(supplierPayments.dueDate);
+  }
+  async createSupplierPayment(p: InsertSupplierPayment): Promise<SupplierPayment> {
+    const [result] = await db.insert(supplierPayments).values(p as any).returning();
+    return result;
+  }
+  async updateSupplierPayment(id: string, restaurantId: string, data: Partial<InsertSupplierPayment>): Promise<SupplierPayment | undefined> {
+    const { restaurantId: _r, supplierId: _s, ...safe } = data as any;
+    const [result] = await db.update(supplierPayments).set(safe)
+      .where(and(eq(supplierPayments.id, id), eq(supplierPayments.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async deleteSupplierPayment(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(supplierPayments)
+      .where(and(eq(supplierPayments.id, id), eq(supplierPayments.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+  async getSupplierDocuments(supplierId: string, restaurantId: string): Promise<SupplierDocument[]> {
+    return db.select().from(supplierDocuments)
+      .where(and(eq(supplierDocuments.supplierId, supplierId), eq(supplierDocuments.restaurantId, restaurantId)));
+  }
+  async getSupplierDocument(id: string, restaurantId: string): Promise<SupplierDocument | undefined> {
+    const [result] = await db.select().from(supplierDocuments)
+      .where(and(eq(supplierDocuments.id, id), eq(supplierDocuments.restaurantId, restaurantId)));
+    return result;
+  }
+  async createSupplierDocument(d: InsertSupplierDocument): Promise<SupplierDocument> {
+    const [result] = await db.insert(supplierDocuments).values(d as any).returning();
+    return result;
+  }
+  async deleteSupplierDocument(id: string, restaurantId: string): Promise<SupplierDocument | undefined> {
+    const [result] = await db.delete(supplierDocuments)
+      .where(and(eq(supplierDocuments.id, id), eq(supplierDocuments.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async getSupplierEquipmentDocuments(supplierId: string, restaurantId: string): Promise<SupplierEquipmentDocument[]> {
+    return db.select().from(supplierEquipmentDocuments)
+      .where(and(eq(supplierEquipmentDocuments.supplierId, supplierId), eq(supplierEquipmentDocuments.restaurantId, restaurantId)));
+  }
+  async getSupplierEquipmentDocument(id: string, restaurantId: string): Promise<SupplierEquipmentDocument | undefined> {
+    const [result] = await db.select().from(supplierEquipmentDocuments)
+      .where(and(eq(supplierEquipmentDocuments.id, id), eq(supplierEquipmentDocuments.restaurantId, restaurantId)));
+    return result;
+  }
+  async createSupplierEquipmentDocument(d: InsertSupplierEquipmentDocument): Promise<SupplierEquipmentDocument> {
+    const [result] = await db.insert(supplierEquipmentDocuments).values(d as any).returning();
+    return result;
+  }
+  async deleteSupplierEquipmentDocument(id: string, restaurantId: string): Promise<SupplierEquipmentDocument | undefined> {
+    const [result] = await db.delete(supplierEquipmentDocuments)
+      .where(and(eq(supplierEquipmentDocuments.id, id), eq(supplierEquipmentDocuments.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async getSupplierRentals(supplierId: string, restaurantId: string): Promise<SupplierRental[]> {
+    return db.select().from(supplierRentals)
+      .where(and(eq(supplierRentals.supplierId, supplierId), eq(supplierRentals.restaurantId, restaurantId)))
+      .orderBy(desc(supplierRentals.createdAt));
+  }
+  async getAllSupplierRentals(restaurantId: string): Promise<SupplierRental[]> {
+    return db.select().from(supplierRentals)
+      .where(eq(supplierRentals.restaurantId, restaurantId))
+      .orderBy(desc(supplierRentals.createdAt));
+  }
+  async createSupplierRental(r: InsertSupplierRental & { referenceNumber: string }): Promise<SupplierRental> {
+    const [result] = await db.insert(supplierRentals).values(r as any).returning();
+    return result;
+  }
+  async getEquipmentTypes(restaurantId: string): Promise<EquipmentType[]> {
+    return db.select().from(equipmentTypes)
+      .where(eq(equipmentTypes.restaurantId, restaurantId))
+      .orderBy(equipmentTypes.sortOrder);
+  }
+  async createEquipmentType(t: InsertEquipmentType): Promise<EquipmentType> {
+    const [result] = await db.insert(equipmentTypes).values(t as any).returning();
+    return result;
+  }
+  async updateEquipmentType(id: string, restaurantId: string, data: Partial<InsertEquipmentType>): Promise<EquipmentType | undefined> {
+    const { restaurantId: _r, ...safe } = data as any;
+    const [result] = await db.update(equipmentTypes).set(safe)
+      .where(and(eq(equipmentTypes.id, id), eq(equipmentTypes.restaurantId, restaurantId))).returning();
+    return result;
+  }
+  async deleteEquipmentType(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(equipmentTypes)
+      .where(and(eq(equipmentTypes.id, id), eq(equipmentTypes.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
   // Blogger Profiles
   async getBloggerProfiles(restaurantId: string): Promise<BloggerProfile[]> {
     return db.select().from(bloggerProfiles)
@@ -6712,6 +6906,108 @@ export const storage = new DatabaseStorage();
     await pool.query(`ALTER TABLE salaries ADD COLUMN IF NOT EXISTS invoice_image TEXT`);
     await pool.query(`ALTER TABLE salaries ADD COLUMN IF NOT EXISTS bill_id VARCHAR(255)`);
     console.log('[Migration] Salaries columns verified/added: invoice_image, bill_id');
+
+    // Project discount support
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS discount_type TEXT`);
+    await pool.query(`ALTER TABLE service_projects ADD COLUMN IF NOT EXISTS discount_value DECIMAL(12,2)`);
+    console.log('[Migration] service_projects columns verified/added: discount_type, discount_value');
+
+    // Equipment Supplier Management tables
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS equipment_suppliers (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR NOT NULL REFERENCES restaurants(id),
+        company_name TEXT NOT NULL,
+        contact_name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        whatsapp TEXT, email TEXT, website TEXT,
+        city TEXT NOT NULL,
+        coverage TEXT,
+        cr_number TEXT NOT NULL,
+        cr_expiry TIMESTAMP,
+        vat_number TEXT NOT NULL,
+        bank_name TEXT NOT NULL,
+        bank_account_name TEXT NOT NULL,
+        iban TEXT NOT NULL,
+        payment_method TEXT, payment_terms TEXT, tax_invoice TEXT,
+        fuel TEXT, breakdown TEXT, min_rental TEXT, notice TEXT, cancellation TEXT, insurance TEXT, notes TEXT,
+        status TEXT NOT NULL DEFAULT 'draft',
+        completion_score INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT now(),
+        updated_at TIMESTAMP NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_equipment_suppliers_restaurant ON equipment_suppliers(restaurant_id);
+      CREATE TABLE IF NOT EXISTS supplier_equipment (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR NOT NULL REFERENCES restaurants(id),
+        supplier_id VARCHAR NOT NULL REFERENCES equipment_suppliers(id) ON DELETE CASCADE,
+        name TEXT NOT NULL,
+        available BOOLEAN NOT NULL DEFAULT true,
+        hourly_rate DECIMAL(10,2), daily_rate DECIMAL(10,2), weekly_rate DECIMAL(10,2),
+        has_driver BOOLEAN NOT NULL DEFAULT false,
+        condition TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0
+      );
+      CREATE INDEX IF NOT EXISTS idx_supplier_equipment_supplier ON supplier_equipment(supplier_id);
+      CREATE TABLE IF NOT EXISTS supplier_payments (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR NOT NULL REFERENCES restaurants(id),
+        supplier_id VARCHAR NOT NULL REFERENCES equipment_suppliers(id) ON DELETE CASCADE,
+        label TEXT NOT NULL,
+        amount DECIMAL(12,2) NOT NULL,
+        due_date TIMESTAMP NOT NULL,
+        status TEXT NOT NULL DEFAULT 'pending',
+        paid_date TIMESTAMP,
+        created_at TIMESTAMP NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_supplier_payments_supplier ON supplier_payments(supplier_id);
+      CREATE TABLE IF NOT EXISTS supplier_documents (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR NOT NULL REFERENCES restaurants(id),
+        supplier_id VARCHAR NOT NULL REFERENCES equipment_suppliers(id) ON DELETE CASCADE,
+        doc_key TEXT NOT NULL,
+        file_name TEXT NOT NULL,
+        file_type TEXT NOT NULL,
+        file_size INTEGER,
+        storage_path TEXT NOT NULL,
+        uploaded_at TIMESTAMP NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_supplier_documents_supplier ON supplier_documents(supplier_id);
+      CREATE TABLE IF NOT EXISTS supplier_equipment_documents (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR NOT NULL REFERENCES restaurants(id),
+        supplier_id VARCHAR NOT NULL REFERENCES equipment_suppliers(id) ON DELETE CASCADE,
+        equipment_id VARCHAR NOT NULL REFERENCES supplier_equipment(id) ON DELETE CASCADE,
+        doc_key TEXT NOT NULL,
+        file_name TEXT NOT NULL,
+        file_type TEXT NOT NULL,
+        file_size INTEGER,
+        storage_path TEXT NOT NULL,
+        uploaded_at TIMESTAMP NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_supplier_eq_docs_equipment ON supplier_equipment_documents(equipment_id);
+      CREATE TABLE IF NOT EXISTS supplier_rentals (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR NOT NULL REFERENCES restaurants(id),
+        supplier_id VARCHAR NOT NULL REFERENCES equipment_suppliers(id) ON DELETE CASCADE,
+        equipment_name TEXT NOT NULL,
+        start_date TIMESTAMP NOT NULL,
+        end_date TIMESTAMP NOT NULL,
+        location TEXT,
+        reference_number TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_supplier_rentals_supplier ON supplier_rentals(supplier_id);
+      CREATE TABLE IF NOT EXISTS equipment_types (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR NOT NULL REFERENCES restaurants(id),
+        name TEXT NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS idx_equipment_types_restaurant ON equipment_types(restaurant_id);
+    `);
+    console.log('[Migration] Equipment Supplier tables verified/created: equipment_suppliers, supplier_equipment, supplier_payments, supplier_documents, supplier_equipment_documents, supplier_rentals, equipment_types');
     
     // Create device_serial_numbers table if it doesn't exist (for ZATCA compliance)
     await pool.query(`

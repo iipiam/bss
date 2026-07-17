@@ -137,6 +137,7 @@ export function AppSidebar() {
     { title: (t as any).maintenance || "Maintenance", url: "/real-estate/maintenance", icon: ClipboardList, testId: "real-estate-maintenance", gradient: "from-blue-500 to-cyan-500", permission: 'propertyManagement', businessTypes: ['real_estate'] },
     { title: t.projects || "Projects", url: "/service-projects", icon: Briefcase, testId: "service-projects", gradient: "from-blue-500 to-indigo-500", permission: 'projects', businessTypes: ['design_services', 'installation_services', 'it_services'] },
     { title: t.quotations || "Quotations", url: "/quotations", icon: FileSpreadsheet, testId: "quotations", gradient: "from-emerald-500 to-teal-500", permission: 'quotations', businessTypes: ['design_services', 'installation_services', 'it_services'] },
+    { title: (t as any).equipmentSuppliers || "Suppliers", url: "/suppliers", icon: Truck, testId: "suppliers", gradient: "from-amber-500 to-orange-500", permission: 'procurement', businessTypes: ['design_services', 'installation_services', 'it_services'] },
   ];
 
   const allManagement: MenuItem[] = [

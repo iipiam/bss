@@ -1753,6 +1753,8 @@ export const serviceProjects = pgTable("service_projects", {
   endDate: timestamp("end_date"),
   estimatedBudget: decimal("estimated_budget", { precision: 12, scale: 2 }),
   actualCost: decimal("actual_cost", { precision: 12, scale: 2 }),
+  discountType: text("discount_type"), // "percent" | "fixed" | null
+  discountValue: decimal("discount_value", { precision: 12, scale: 2 }),
   contractorId: varchar("contractor_id").references(() => contractors.id),
   phaseLeads: jsonb("phase_leads").$type<Record<string, { type: 'employee' | 'contractor'; id: string }>>().default({}),
   phaseMetadata: jsonb("phase_metadata").$type<Record<string, { name?: string; status?: string }>>().default({}),
@@ -2603,3 +2605,137 @@ export const propertyNotifications = pgTable("property_notifications", {
 export const insertPropertyNotificationSchema = createInsertSchema(propertyNotifications).omit({ id: true, createdAt: true });
 export type InsertPropertyNotification = z.infer<typeof insertPropertyNotificationSchema>;
 export type PropertyNotification = typeof propertyNotifications.$inferSelect;
+
+// ============ Equipment Supplier Management (MULTI-TENANT) ============
+export const equipmentSuppliers = pgTable("equipment_suppliers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  companyName: text("company_name").notNull(),
+  contactName: text("contact_name").notNull(),
+  phone: text("phone").notNull(),
+  whatsapp: text("whatsapp"),
+  email: text("email"),
+  website: text("website"),
+  city: text("city").notNull(),
+  coverage: text("coverage"),
+  crNumber: text("cr_number").notNull(),
+  crExpiry: timestamp("cr_expiry"),
+  vatNumber: text("vat_number").notNull(),
+  bankName: text("bank_name").notNull(),
+  bankAccountName: text("bank_account_name").notNull(),
+  iban: text("iban").notNull(),
+  paymentMethod: text("payment_method"),
+  paymentTerms: text("payment_terms"),
+  taxInvoice: text("tax_invoice"),
+  fuel: text("fuel"),
+  breakdown: text("breakdown"),
+  minRental: text("min_rental"),
+  notice: text("notice"),
+  cancellation: text("cancellation"),
+  insurance: text("insurance"),
+  notes: text("notes"),
+  status: text("status").notNull().default("draft"), // 'complete' | 'partial' | 'draft' (computed)
+  completionScore: integer("completion_score").notNull().default(0), // 0-100 (computed)
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => [index("idx_equipment_suppliers_restaurant").on(table.restaurantId)]);
+export const insertEquipmentSupplierSchema = createInsertSchema(equipmentSuppliers).omit({ id: true, createdAt: true, updatedAt: true, status: true, completionScore: true }).extend({
+  crExpiry: z.coerce.date().nullable().optional(),
+});
+export type InsertEquipmentSupplier = z.infer<typeof insertEquipmentSupplierSchema>;
+export type EquipmentSupplier = typeof equipmentSuppliers.$inferSelect;
+
+export const supplierEquipment = pgTable("supplier_equipment", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  supplierId: varchar("supplier_id").references(() => equipmentSuppliers.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  available: boolean("available").notNull().default(true),
+  hourlyRate: decimal("hourly_rate", { precision: 10, scale: 2 }),
+  dailyRate: decimal("daily_rate", { precision: 10, scale: 2 }),
+  weeklyRate: decimal("weekly_rate", { precision: 10, scale: 2 }),
+  hasDriver: boolean("has_driver").notNull().default(false),
+  condition: text("condition"),
+  sortOrder: integer("sort_order").notNull().default(0),
+}, (table) => [index("idx_supplier_equipment_supplier").on(table.supplierId)]);
+export const insertSupplierEquipmentSchema = createInsertSchema(supplierEquipment).omit({ id: true });
+export type InsertSupplierEquipment = z.infer<typeof insertSupplierEquipmentSchema>;
+export type SupplierEquipment = typeof supplierEquipment.$inferSelect;
+
+export const supplierPayments = pgTable("supplier_payments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  supplierId: varchar("supplier_id").references(() => equipmentSuppliers.id, { onDelete: "cascade" }).notNull(),
+  label: text("label").notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  dueDate: timestamp("due_date").notNull(),
+  status: text("status").notNull().default("pending"), // 'pending' | 'paid' | 'overdue'
+  paidDate: timestamp("paid_date"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_supplier_payments_supplier").on(table.supplierId)]);
+export const insertSupplierPaymentSchema = createInsertSchema(supplierPayments).omit({ id: true, createdAt: true }).extend({
+  dueDate: z.coerce.date(),
+  paidDate: z.coerce.date().nullable().optional(),
+});
+export type InsertSupplierPayment = z.infer<typeof insertSupplierPaymentSchema>;
+export type SupplierPayment = typeof supplierPayments.$inferSelect;
+
+export const supplierDocuments = pgTable("supplier_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  supplierId: varchar("supplier_id").references(() => equipmentSuppliers.id, { onDelete: "cascade" }).notNull(),
+  docKey: text("doc_key").notNull(), // 'iban_cert' | 'cr_cert' | 'vat_cert' | 'lic1' | 'lic2'
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size"),
+  storagePath: text("storage_path").notNull(),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
+}, (table) => [index("idx_supplier_documents_supplier").on(table.supplierId)]);
+export const insertSupplierDocumentSchema = createInsertSchema(supplierDocuments).omit({ id: true, uploadedAt: true });
+export type InsertSupplierDocument = z.infer<typeof insertSupplierDocumentSchema>;
+export type SupplierDocument = typeof supplierDocuments.$inferSelect;
+
+export const supplierEquipmentDocuments = pgTable("supplier_equipment_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  supplierId: varchar("supplier_id").references(() => equipmentSuppliers.id, { onDelete: "cascade" }).notNull(),
+  equipmentId: varchar("equipment_id").references(() => supplierEquipment.id, { onDelete: "cascade" }).notNull(),
+  docKey: text("doc_key").notNull(), // 'photo' | 'licence' | 'assurance' | 'driver_photo'
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size"),
+  storagePath: text("storage_path").notNull(),
+  uploadedAt: timestamp("uploaded_at").notNull().defaultNow(),
+}, (table) => [index("idx_supplier_eq_docs_equipment").on(table.equipmentId)]);
+export const insertSupplierEquipmentDocumentSchema = createInsertSchema(supplierEquipmentDocuments).omit({ id: true, uploadedAt: true });
+export type InsertSupplierEquipmentDocument = z.infer<typeof insertSupplierEquipmentDocumentSchema>;
+export type SupplierEquipmentDocument = typeof supplierEquipmentDocuments.$inferSelect;
+
+export const supplierRentals = pgTable("supplier_rentals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  supplierId: varchar("supplier_id").references(() => equipmentSuppliers.id, { onDelete: "cascade" }).notNull(),
+  equipmentName: text("equipment_name").notNull(),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date").notNull(),
+  location: text("location"),
+  referenceNumber: text("reference_number"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_supplier_rentals_supplier").on(table.supplierId)]);
+export const insertSupplierRentalSchema = createInsertSchema(supplierRentals).omit({ id: true, createdAt: true, referenceNumber: true }).extend({
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date(),
+});
+export type InsertSupplierRental = z.infer<typeof insertSupplierRentalSchema>;
+export type SupplierRental = typeof supplierRentals.$inferSelect;
+
+export const equipmentTypes = pgTable("equipment_types", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  name: text("name").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_equipment_types_restaurant").on(table.restaurantId)]);
+export const insertEquipmentTypeSchema = createInsertSchema(equipmentTypes).omit({ id: true, createdAt: true });
+export type InsertEquipmentType = z.infer<typeof insertEquipmentTypeSchema>;
+export type EquipmentType = typeof equipmentTypes.$inferSelect;

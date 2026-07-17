@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -26,7 +27,7 @@ import {
   User, MapPin, Clock, FileText, CheckCircle, Layers, Receipt,
   ShoppingCart, CreditCard, ListTodo, Zap, AlertTriangle, Download, RefreshCw,
   FileSignature, MessageCircle, ShieldCheck, ShieldX, PlayCircle, CheckSquare, PackageCheck,
-  Lightbulb, Target, GitBranch, Activity, ClipboardList, Video, Users, Link2,
+  Lightbulb, Target, GitBranch, Activity, ClipboardList, Video, Users, Link2, Percent,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -214,6 +215,9 @@ export default function ProjectDetail() {
   const [svcOpen, setSvcOpen] = useState(false);
   const [billOpen, setBillOpen] = useState(false);
   const [applyProductOpen, setApplyProductOpen] = useState(false);
+  const [discountOpen, setDiscountOpen] = useState(false);
+  const [discountTypeInput, setDiscountTypeInput] = useState<string>("percent");
+  const [discountValueInput, setDiscountValueInput] = useState<string>("");
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [procOpen, setProcOpen] = useState(false);
   const [payOpen, setPayOpen] = useState(false);
@@ -388,6 +392,18 @@ export default function ProjectDetail() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/service-projects", projectId] });
       toast({ title: (t as any).phaseLeadUpdated || "Phase Lead updated" });
+    },
+    onError: (e: any) => toast({ title: t.error, description: e.message, variant: "destructive" }),
+  });
+  const discountMut = useMutation({
+    mutationFn: async (payload: { discountType: string | null; discountValue: string | null }) => {
+      return await apiRequest("PATCH", `/api/service-projects/${projectId}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/service-projects", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/service-projects"] });
+      setDiscountOpen(false);
+      toast({ title: isAr ? "تم تحديث الخصم" : "Discount updated" });
     },
     onError: (e: any) => toast({ title: t.error, description: e.message, variant: "destructive" }),
   });
@@ -792,6 +808,14 @@ export default function ProjectDetail() {
   const totalServicesOnly = services.reduce((s, x) => s + parseFloat(x.totalPrice || "0"), 0);
   const totalItemsSelling = projectItemsList.reduce((s, it) => s + (parseFloat((it.sellingPrice as any) || "0") || 0), 0);
   const totalServices = totalServicesOnly + totalItemsSelling;
+  const projDiscountValue = parseFloat((project as any)?.discountValue || "0") || 0;
+  const projDiscountType = (project as any)?.discountType as string | null;
+  const discountAmount = projDiscountType === "percent" && projDiscountValue > 0
+    ? totalServices * (Math.min(projDiscountValue, 100) / 100)
+    : projDiscountType === "fixed" && projDiscountValue > 0
+      ? Math.min(projDiscountValue, totalServices)
+      : 0;
+  const netServices = totalServices - discountAmount;
   const totalBills = bills.reduce((s, x) => s + parseFloat(x.amount || "0"), 0);
   const totalProc = procurements.reduce((s, x) => s + parseFloat(x.totalPrice || "0"), 0);
   const totalPayments = payments.reduce((s, x) => s + parseFloat(x.amount || "0"), 0);
@@ -1011,7 +1035,7 @@ export default function ProjectDetail() {
 
         <TabsContent value="overview" className="space-y-6">
           <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 4, tablet: 2, mobile: 2 })}`}>
-            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Layers className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalServicesValue || "Services Value"}</p><InfoTip>{language === 'Arabic' ? 'إجمالي قيمة الخدمات المضافة للمشروع.' : 'Total billable value of services on this project.'}</InfoTip></div><p className="text-2xl font-bold" data-testid="text-total-services">{fmtNum(String(totalServices))} SAR</p></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Layers className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalServicesValue || "Services Value"}</p><InfoTip>{language === 'Arabic' ? 'إجمالي قيمة الخدمات المضافة للمشروع.' : 'Total billable value of services on this project.'}</InfoTip><Button variant="ghost" size="icon" className="ml-auto" onClick={() => { setDiscountTypeInput(projDiscountType || "percent"); setDiscountValueInput(projDiscountValue > 0 ? String(projDiscountValue) : ""); setDiscountOpen(true); }} data-testid="button-edit-discount" aria-label={isAr ? "تعديل الخصم" : "Edit discount"}><Percent className="h-3.5 w-3.5" /></Button></div><p className="text-2xl font-bold" data-testid="text-total-services">{fmtNum(String(netServices))} SAR</p>{discountAmount > 0 && <p className="text-xs text-muted-foreground mt-1" data-testid="text-discount-detail"><span className="line-through">{fmtNum(String(totalServices))} SAR</span>{" · "}{isAr ? "خصم" : "Discount"} {projDiscountType === "percent" ? `${projDiscountValue}%` : `${fmtNum(String(discountAmount))} SAR`}</p>}</CardContent></Card>
             <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Receipt className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalBillsAmount || "Total Bills"}</p><InfoTip>{language === 'Arabic' ? 'مجموع جميع فواتير المشروع.' : 'Sum of all bills recorded for this project.'}</InfoTip></div><p className="text-2xl font-bold" data-testid="text-total-bills">{fmtNum(String(totalBills))} SAR</p></CardContent></Card>
             <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><ShoppingCart className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalProcurements || "Procurements"}</p><InfoTip>{language === 'Arabic' ? 'إجمالي تكلفة المشتريات للمشروع.' : 'Total cost of items procured for this project.'}</InfoTip></div><p className="text-2xl font-bold" data-testid="text-total-procurements">{fmtNum(String(totalProc))} SAR</p></CardContent></Card>
             <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><CreditCard className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.paymentProgress || "Payment Progress"}</p><InfoTip>{language === 'Arabic' ? 'نسبة المبالغ المحصلة من إجمالي جدول الدفعات.' : 'Share of scheduled payments already collected.'}</InfoTip></div><p className="text-2xl font-bold" data-testid="text-payment-progress">{paymentProgress.toFixed(0)}%</p><Progress value={paymentProgress} className="mt-2" /></CardContent></Card>
@@ -2774,6 +2798,63 @@ export default function ProjectDetail() {
               <Button variant="outline" onClick={() => setApplyProductOpen(false)} data-testid="button-cancel-apply-product">{t.cancel}</Button>
               <Button disabled={!selectedProductId || applyProductMutation.isPending} onClick={() => applyProductMutation.mutate(selectedProductId)} data-testid="button-confirm-apply-product">
                 {t.applyProduct || "Apply"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={discountOpen} onOpenChange={setDiscountOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{isAr ? "خصم المشروع" : "Project Discount"}</DialogTitle>
+            <DialogDescription>{isAr ? "طبق خصمًا بنسبة مئوية أو مبلغ ثابت على إجمالي قيمة خدمات المشروع." : "Apply a percentage or fixed-amount discount to this project's total services value."}</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>{isAr ? "نوع الخصم" : "Discount Type"}</Label>
+              <Select value={discountTypeInput} onValueChange={setDiscountTypeInput}>
+                <SelectTrigger data-testid="select-discount-type"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="percent">{isAr ? "نسبة مئوية (%)" : "Percentage (%)"}</SelectItem>
+                  <SelectItem value="fixed">{isAr ? "مبلغ ثابت (ريال)" : "Fixed Amount (SAR)"}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{isAr ? "قيمة الخصم" : "Discount Value"}</Label>
+              <Input
+                type="number"
+                min="0"
+                max={discountTypeInput === "percent" ? "100" : undefined}
+                step="0.01"
+                value={discountValueInput}
+                onChange={(e) => setDiscountValueInput(e.target.value)}
+                placeholder={discountTypeInput === "percent" ? (isAr ? "مثال: 10" : "e.g. 10") : (isAr ? "مثال: 500" : "e.g. 500")}
+                data-testid="input-discount-value"
+              />
+              {discountValueInput && parseFloat(discountValueInput) > 0 && (
+                <p className="text-xs text-muted-foreground" data-testid="text-discount-preview">
+                  {isAr ? "الصافي بعد الخصم: " : "Net after discount: "}
+                  {fmtNum(String(discountTypeInput === "percent"
+                    ? totalServices * (1 - Math.min(parseFloat(discountValueInput), 100) / 100)
+                    : Math.max(totalServices - parseFloat(discountValueInput), 0)))} SAR
+                </p>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 flex-wrap">
+              {projDiscountType && projDiscountValue > 0 && (
+                <Button variant="destructive" disabled={discountMut.isPending} onClick={() => discountMut.mutate({ discountType: null, discountValue: null })} data-testid="button-remove-discount">
+                  {isAr ? "إزالة الخصم" : "Remove Discount"}
+                </Button>
+              )}
+              <Button variant="outline" onClick={() => setDiscountOpen(false)} data-testid="button-cancel-discount">{t.cancel}</Button>
+              <Button
+                disabled={discountMut.isPending || !discountValueInput || parseFloat(discountValueInput) <= 0 || (discountTypeInput === "percent" && parseFloat(discountValueInput) > 100)}
+                onClick={() => discountMut.mutate({ discountType: discountTypeInput, discountValue: discountValueInput })}
+                data-testid="button-save-discount"
+              >
+                {t.save || (isAr ? "حفظ" : "Save")}
               </Button>
             </div>
           </div>

@@ -16135,6 +16135,29 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       if (data.startDate) data.startDate = new Date(data.startDate);
       if (data.endDate) data.endDate = new Date(data.endDate);
+      // Validate discount fields if provided
+      if (data.discountType !== undefined || data.discountValue !== undefined) {
+        const dType = data.discountType ?? null;
+        const dValRaw = data.discountValue ?? null;
+        if (dType === null || dValRaw === null || dValRaw === "" ) {
+          // Clearing the discount
+          data.discountType = null;
+          data.discountValue = null;
+        } else {
+          if (dType !== "percent" && dType !== "fixed") {
+            return res.status(400).json({ message: "discountType must be 'percent' or 'fixed'" });
+          }
+          const dVal = parseFloat(String(dValRaw));
+          if (!isFinite(dVal) || dVal < 0) {
+            return res.status(400).json({ message: "discountValue must be a non-negative number" });
+          }
+          if (dType === "percent" && dVal > 100) {
+            return res.status(400).json({ message: "Percentage discount cannot exceed 100" });
+          }
+          data.discountType = dType;
+          data.discountValue = dVal.toFixed(2);
+        }
+      }
       // Snapshot prev phaseLeads for ledger comparison.
       let prevLeads: Record<string, { type: string; id: string }> = {};
       if (data.phaseLeads !== undefined) {
@@ -18806,10 +18829,23 @@ ${phaseSchedules.length > 0 ? `
       const fmtDate = (d: any) => d ? new Date(d).toLocaleDateString('en-GB') : '-';
       const fmtMoney = (n: number) => `${n.toFixed(2)} SAR`;
 
-      const vatAmount = totalAmount * 0.15;
-      const totalWithVat = totalAmount + vatAmount;
+      // Apply project-level discount before VAT
+      const discountValue = parseFloat((project as any).discountValue || '0') || 0;
+      const discountType = (project as any).discountType as string | null;
+      let discountAmount = 0;
+      if (discountType === 'percent' && discountValue > 0) {
+        discountAmount = totalAmount * (Math.min(discountValue, 100) / 100);
+      } else if (discountType === 'fixed' && discountValue > 0) {
+        discountAmount = Math.min(discountValue, totalAmount);
+      }
+      const netAmount = totalAmount - discountAmount;
+      const vatAmount = netAmount * 0.15;
+      const totalWithVat = netAmount + vatAmount;
 
       const replacements: Record<string, string> = {
+        '{{grossAmount}}': fmtMoney(totalAmount),
+        '{{discountAmount}}': fmtMoney(discountAmount),
+        '{{netAmount}}': fmtMoney(netAmount),
         '{{clientName}}': project.clientName || '',
         '{{clientPhone}}': project.clientPhone || '',
         '{{clientEmail}}': project.clientEmail || '',
@@ -21275,6 +21311,15 @@ ${phaseSchedules.length > 0 ? `
     console.log("[realEstate] routes registered + cron started");
   } catch (err) {
     console.error("[realEstate] failed to register module:", err);
+  }
+
+  // ===== Equipment Supplier Management =====
+  try {
+    const { registerSupplierRoutes } = await import("./supplierRoutes");
+    registerSupplierRoutes(app, requireAuth, requireRestaurant, (perm: string) => requirePermission(perm as any), ((perm: string, action: any) => requireAction(perm as any, action)) as any);
+    console.log("[suppliers] routes registered");
+  } catch (err) {
+    console.error("[suppliers] failed to register module:", err);
   }
 
   return httpServer;

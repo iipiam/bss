@@ -100,6 +100,7 @@ const Contracts = lazy(() => import("@/pages/contracts"));
 const Valuations = lazy(() => import("@/pages/valuations"));
 const ServiceProjects = lazy(() => import("@/pages/service-projects"));
 const Quotations = lazy(() => import("@/pages/quotations"));
+const Suppliers = lazy(() => import("@/pages/suppliers"));
 const ServiceCatalogPage = lazy(() => import("@/pages/service-catalog"));
 const Contractors = lazy(() => import("@/pages/contractors"));
 const ProjectDetail = lazy(() => import("@/pages/project-detail"));
@@ -215,6 +216,7 @@ function Router() {
         <Route path="/service-projects/:id" component={ProjectDetail} />
         <Route path="/service-projects" component={ServiceProjects} />
         <Route path="/quotations" component={Quotations} />
+        <Route path="/suppliers" component={Suppliers} />
         <Route path="/service-catalog" component={ServiceCatalogPage} />
         <Route path="/contractors" component={Contractors} />
         <Route path="/company-settings" component={CompanySettingsPage} />
