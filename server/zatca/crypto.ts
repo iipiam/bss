@@ -239,7 +239,6 @@ export function generateCSR(
     const csrBase64 = Buffer.from(csrPem).toString("base64");
     
     console.log(`[ZATCA CSR] PEM length: ${csrPem.length}, base64(PEM) length: ${csrBase64.length}`);
-    console.log(`[ZATCA CSR] First 60 chars: ${csrBase64.substring(0, 60)}...`);
     
     return {
       csr: csrBase64,
@@ -584,16 +583,25 @@ export function verifySignature(
   }
 }
 
+// ZATCA requires invoice IssueDate/IssueTime in Saudi local time
+// (Asia/Riyadh, fixed UTC+3, no DST). Servers run on UTC, so shift
+// before formatting.
+const RIYADH_OFFSET_MS = 3 * 60 * 60 * 1000;
+
+function toRiyadhTime(date: Date): Date {
+  return new Date(date.getTime() + RIYADH_OFFSET_MS);
+}
+
 export function formatTimestamp(date: Date = new Date()): string {
-  return date.toISOString().replace("Z", "");
+  return toRiyadhTime(date).toISOString().replace("Z", "");
 }
 
 export function formatIssueDate(date: Date = new Date()): string {
-  return date.toISOString().split("T")[0];
+  return toRiyadhTime(date).toISOString().split("T")[0];
 }
 
 export function formatIssueTime(date: Date = new Date()): string {
-  const timeStr = date.toISOString().split("T")[1];
+  const timeStr = toRiyadhTime(date).toISOString().split("T")[1];
   return timeStr.substring(0, 8);
 }
 

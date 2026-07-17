@@ -8,6 +8,32 @@ import QRCode from "qrcode";
 const USE_SDK = isSDKAvailable();
 console.log(`[ZATCA] SDK available: ${USE_SDK}`);
 
+// Per-restaurant signing lock. The ICV counter, PIH (previous invoice hash)
+// and lastInvoiceHash form a chain: two invoices signed concurrently for the
+// same restaurant must serialize so they get consecutive counters and each
+// links to the other's hash. The lock also serializes submission to ZATCA
+// (no parallel bursts). Locks are per tenant, so one restaurant's signing
+// never blocks another's.
+const signLocks = new Map<string, Promise<void>>();
+
+async function withSignLock<T>(restaurantId: string, fn: () => Promise<T>): Promise<T> {
+  const previous = signLocks.get(restaurantId) || Promise.resolve();
+  let release!: () => void;
+  const current = new Promise<void>((resolve) => { release = resolve; });
+  const tail = previous.then(() => current);
+  signLocks.set(restaurantId, tail);
+  await previous;
+  try {
+    return await fn();
+  } finally {
+    release();
+    // Only delete if no newer waiter has replaced our tail entry.
+    if (signLocks.get(restaurantId) === tail) {
+      signLocks.delete(restaurantId);
+    }
+  }
+}
+
 interface ManualSigningResult {
   signedXml: string;
   invoiceHash: string;
@@ -111,6 +137,14 @@ interface ZatcaProcessResult {
 }
 
 export async function processInvoiceForZatca(
+  params: ProcessInvoiceParams
+): Promise<ZatcaProcessResult> {
+  // Serialize per restaurant: counter increment, PIH read, signing,
+  // lastInvoiceHash update and ZATCA submission happen as one atomic step.
+  return withSignLock(params.restaurantId, () => processInvoiceForZatcaUnlocked(params));
+}
+
+async function processInvoiceForZatcaUnlocked(
   params: ProcessInvoiceParams
 ): Promise<ZatcaProcessResult> {
   const settings = await storage.getZatcaSettings(params.restaurantId);
@@ -405,6 +439,18 @@ export async function retryPendingInvoices(restaurantId: string): Promise<{
   succeeded: number;
   failed: number;
 }> {
+  // Same per-restaurant lock as live signing: retries submit sequentially
+  // and never interleave with a concurrent signing run for this tenant.
+  // Retries NEVER re-sign or touch the counter — they resend the exact
+  // signed XML and hash stored at original signing time.
+  return withSignLock(restaurantId, () => retryPendingInvoicesUnlocked(restaurantId));
+}
+
+async function retryPendingInvoicesUnlocked(restaurantId: string): Promise<{
+  processed: number;
+  succeeded: number;
+  failed: number;
+}> {
   const settings = await storage.getZatcaSettings(restaurantId);
   const csid = settings?.productionCsid || settings?.complianceCsid;
   const csidSecret = settings?.productionCsidSecret || settings?.complianceCsidSecret;
@@ -502,7 +548,7 @@ export async function onboardToZatca(
     return { success: false, message: "CSR not generated. Please generate CSR first." };
   }
 
-  console.log(`[ZATCA Service] CSR from DB length: ${settings.csr.length}, first 60 chars: ${settings.csr.substring(0, 60)}...`);
+  console.log(`[ZATCA Service] CSR from DB length: ${settings.csr.length}`);
 
   const cleanCsr = settings.csr.trim();
 
@@ -529,7 +575,7 @@ export async function onboardToZatca(
     console.log(`[ZATCA Service] Converted CSR length: ${csrToSend.length}`);
   }
 
-  console.log(`[ZATCA Service] CSR to send length: ${csrToSend.length}, first 40 chars: ${csrToSend.substring(0, 40)}...`);
+  console.log(`[ZATCA Service] CSR to send length: ${csrToSend.length}`);
 
   const config: ZatcaConfig = {
     environment: settings.environment as "sandbox" | "simulation" | "production",

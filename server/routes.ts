@@ -15307,7 +15307,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!/^\d{6}$/.test(otp)) {
         return res.status(400).json({ error: `OTP must be exactly 6 digits. Received "${otp}" (${otp.length} chars). Generate a fresh OTP from fatoora.zatca.gov.sa and paste only the digits.` });
       }
-      console.log(`[ZATCA Onboard] OTP received (${otp.length} chars): ${otp.substring(0, 2)}****`);
+      console.log(`[ZATCA Onboard] OTP received (${otp.length} chars)`);
       
       const settings = await storage.getZatcaSettings(targetRestaurantId);
       if (!settings) {

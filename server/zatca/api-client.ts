@@ -92,7 +92,7 @@ export class ZatcaApiClient {
   private getAuthHeader(): string {
     const cleanCsid = this.csid.replace(/[\r\n\s]/g, '');
     const cleanSecret = this.csidSecret.replace(/[\r\n\s]/g, '');
-    console.log(`[ZATCA Auth] CSID length: ${cleanCsid.length}, first 20: ${cleanCsid.substring(0, 20)}..., Secret length: ${cleanSecret.length}`);
+    console.log(`[ZATCA Auth] CSID length: ${cleanCsid.length}, Secret length: ${cleanSecret.length}`);
     const credentials = Buffer.from(`${cleanCsid}:${cleanSecret}`).toString("base64");
     return `Basic ${credentials}`;
   }
@@ -121,7 +121,7 @@ export class ZatcaApiClient {
       console.log(`[ZATCA API] ${method} ${url}`);
       if (bodyStr && endpoint === "/compliance") {
         const bodyObj = body as Record<string, string>;
-        console.log(`[ZATCA API] CSR field length: ${bodyObj.csr?.length || 0}, first 60: ${bodyObj.csr?.substring(0, 60)}...`);
+        console.log(`[ZATCA API] CSR field length: ${bodyObj.csr?.length || 0}`);
       }
       
       const response = await fetch(url, {
