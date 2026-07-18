@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { db } from "./db";
-import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport, generateInvestorStatementPDF, generateBssAnalysisStatementPDF, generateRefundClearanceInvoice, getBrowser, generateMealSubscriptionSchedulePDF } from "./invoice";
+import { generateZATCAInvoice, generateSubscriptionInvoice, generateMonthlyVatReport, generateInvestorStatementPDF, generateBssAnalysisStatementPDF, generateRefundClearanceInvoice, getBrowser, generateMealSubscriptionSchedulePDF, buildLogoHTML } from "./invoice";
 import { PasswordResetMailer } from "./email";
 import { sanitizePatchBody } from "./utils";
 import { generateCompanyProfilePDF } from "./company-profile-pdf";
@@ -3386,6 +3386,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 </head>
 <body>
   <div class="header">
+    ${buildLogoHTML((await storage.getSettings(restaurantId))?.logoPath || undefined)}
     <h1>${escapeHtml(restaurant?.name || '')}</h1>
     <div class="subtitle">${L('Investment Agreement', 'اتفاقية استثمار')}</div>
   </div>
@@ -7651,6 +7652,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           <body>
             <div class="container">
               <div class="header">
+                ${buildLogoHTML(settings?.logoPath || undefined)}
                 <h1>${settings?.restaurantName || 'Restaurant Management System'}</h1>
                 <p class="subtitle">Tax Invoice / فاتورة ضريبية</p>
               </div>
@@ -8439,6 +8441,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const pdfBuffer = await generateFinancialStatementPDF({
         companyName: settings?.restaurantName || "BlindSpot System (BSS)",
         companyVAT: settings?.vatNumber || "",
+        logoPath: settings?.logoPath || undefined,
         year,
         period,
         yearlyData,
@@ -8550,6 +8553,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const pdfBuffer = await generateExpensesPDF({
         companyName: settings?.restaurantName || "BlindSpot System (BSS)",
         companyVAT: settings?.vatNumber || "",
+        logoPath: settings?.logoPath || undefined,
         year,
         totalExpenses,
         inventoryValue,
@@ -8618,6 +8622,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const pdfBuffer = await generateIncomeStatementPDF({
         companyName: settings?.restaurantName || "BlindSpot System (BSS)",
         companyVAT: settings?.vatNumber || "",
+        logoPath: settings?.logoPath || undefined,
         year,
         revenue: totalRevenue,
         cogs,
@@ -8671,6 +8676,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const pdfBuffer = await generateBalanceSheetPDF({
         companyName: settings?.restaurantName || "BlindSpot System (BSS)",
         companyVAT: settings?.vatNumber || "",
+        logoPath: settings?.logoPath || undefined,
         year,
         cashAndRevenue: totalRevenue,
         inventoryValue,
@@ -8724,6 +8730,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const pdfBuffer = await generateCashFlowPDF({
         companyName: settings?.restaurantName || "BlindSpot System (BSS)",
         companyVAT: settings?.vatNumber || "",
+        logoPath: settings?.logoPath || undefined,
         year,
         netIncome,
         inventoryAdjustments: inventoryValue,
@@ -8772,6 +8779,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const pdfBuffer = await generateEquityStatementPDF({
         companyName: settings?.restaurantName || "BlindSpot System (BSS)",
         companyVAT: settings?.vatNumber || "",
+        logoPath: settings?.logoPath || undefined,
         year,
         beginningEquity,
         netIncome,
@@ -17465,6 +17473,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       </style></head><body>
         <div class="header">
           <div>
+            ${buildLogoHTML(company?.companyLogo || undefined, { align: 'left', maxHeight: 60 })}
             <h1>${esc(company?.companyName || 'Company')}</h1>
             ${company?.companyAddress ? `<div class="meta">${esc(company.companyAddress)}</div>` : ''}
             ${company?.companyPhone ? `<div class="meta">Tel: ${esc(company.companyPhone)}</div>` : ''}
@@ -17646,7 +17655,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     });
   }
   const esc = (s: any) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
-  const pdfShell = (title: string, body: string) => `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(title)}</title>
+  const pdfShell = (title: string, body: string, logoPath?: string | null) => `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${esc(title)}</title>
     <style>
       body { font-family: Arial, sans-serif; padding: 28px; font-size: 12px; color: #1a202c; }
       h1 { color: #1a365d; margin: 0 0 4px 0; font-size: 22px; }
@@ -17667,7 +17676,18 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       .row { display: flex; gap: 16px; flex-wrap: wrap; margin: 4px 0; font-size: 11px; color: #4a5568; }
       .row strong { color: #1a202c; }
       .footer { margin-top: 24px; border-top: 1px solid #e2e8f0; padding-top: 8px; color: #718096; font-size: 10px; text-align: center; }
-    </style></head><body>${body}<div class="footer">BlindSpot System (BSS) — ${new Date().toLocaleString('en-GB')}</div></body></html>`;
+    </style></head><body>${buildLogoHTML(logoPath || undefined, { align: 'left', maxHeight: 60 })}${body}<div class="footer">BlindSpot System (BSS) — ${new Date().toLocaleString('en-GB')}</div></body></html>`;
+
+  const resolvePdfLogo = async (restaurantId: string): Promise<string | undefined> => {
+    try {
+      const company = await storage.getCompanySettings(restaurantId);
+      if (company?.companyLogo) return company.companyLogo;
+      const settings = await storage.getSettings(restaurantId);
+      return settings?.logoPath || undefined;
+    } catch {
+      return undefined;
+    }
+  };
 
   app.get("/api/projects/:projectId/client-requirements/pdf", requireAuth, async (req, res) => {
     try {
@@ -17692,7 +17712,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       `;
       const browser = await launchChromium();
       const page = await browser.newPage();
-      await page.setContent(pdfShell(`Client Requirements - ${project.name}`, body), { waitUntil: 'networkidle0' });
+      await page.setContent(pdfShell(`Client Requirements - ${project.name}`, body, await resolvePdfLogo(restaurantId)), { waitUntil: 'networkidle0' });
       const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' } });
       await browser.close();
       res.setHeader('Content-Type', 'application/pdf');
@@ -17743,7 +17763,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       `;
       const browser = await launchChromium();
       const page = await browser.newPage();
-      await page.setContent(pdfShell(`Meetings - ${project.name}`, body), { waitUntil: 'networkidle0' });
+      await page.setContent(pdfShell(`Meetings - ${project.name}`, body, await resolvePdfLogo(restaurantId)), { waitUntil: 'networkidle0' });
       const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' } });
       await browser.close();
       res.setHeader('Content-Type', 'application/pdf');
@@ -17766,7 +17786,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       `;
       const browser = await launchChromium();
       const page = await browser.newPage();
-      await page.setContent(pdfShell(`Meeting - ${m.title}`, body), { waitUntil: 'networkidle0' });
+      await page.setContent(pdfShell(`Meeting - ${m.title}`, body, await resolvePdfLogo(restaurantId)), { waitUntil: 'networkidle0' });
       const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' } });
       await browser.close();
       res.setHeader('Content-Type', 'application/pdf');
@@ -17885,7 +17905,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       `;
       const browser = await launchChromium();
       const page = await browser.newPage();
-      await page.setContent(pdfShell(`Client Requirements - ${product.name}`, body), { waitUntil: 'networkidle0' });
+      await page.setContent(pdfShell(`Client Requirements - ${product.name}`, body, await resolvePdfLogo(restaurantId)), { waitUntil: 'networkidle0' });
       const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' } });
       await browser.close();
       res.setHeader('Content-Type', 'application/pdf');
@@ -17908,7 +17928,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       `;
       const browser = await launchChromium();
       const page = await browser.newPage();
-      await page.setContent(pdfShell(`Meetings - ${product.name}`, body), { waitUntil: 'networkidle0' });
+      await page.setContent(pdfShell(`Meetings - ${product.name}`, body, await resolvePdfLogo(restaurantId)), { waitUntil: 'networkidle0' });
       const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' } });
       await browser.close();
       res.setHeader('Content-Type', 'application/pdf');
@@ -17931,7 +17951,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       `;
       const browser = await launchChromium();
       const page = await browser.newPage();
-      await page.setContent(pdfShell(`Meeting - ${m.title}`, body), { waitUntil: 'networkidle0' });
+      await page.setContent(pdfShell(`Meeting - ${m.title}`, body, await resolvePdfLogo(restaurantId)), { waitUntil: 'networkidle0' });
       const pdf = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '15mm', bottom: '15mm', left: '12mm', right: '12mm' } });
       await browser.close();
       res.setHeader('Content-Type', 'application/pdf');
@@ -18291,6 +18311,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         <body>
           <div class="header">
             <div class="company-info">
+              ${buildLogoHTML(companyInfo?.companyLogo || undefined, { align: 'left', maxHeight: 60, marginBottom: 6 })}
               <h1>${escapeHtml(companyInfo?.companyName) || 'Company Name'}</h1>
               ${companyInfo?.companyAddress ? `<p>${escapeHtml(companyInfo.companyAddress)}</p>` : ''}
               ${companyInfo?.companyPhone ? `<p>Tel: ${escapeHtml(companyInfo.companyPhone)}</p>` : ''}
@@ -18618,6 +18639,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         <body>
           <div class="header">
             <div class="company-info">
+              ${buildLogoHTML(companyInfo?.companyLogo || undefined, { align: 'left', maxHeight: 60, marginBottom: 6 })}
               <h1>${escapeHtml(companyInfo?.companyName) || 'Company Name'}</h1>
               ${companyInfo?.companyAddress ? `<p>${escapeHtml(companyInfo.companyAddress)}</p>` : ''}
               ${companyInfo?.companyPhone ? `<p>Tel: ${escapeHtml(companyInfo.companyPhone)}</p>` : ''}
@@ -18919,6 +18941,7 @@ tr:nth-child(even) { background: #f8fafc; }
 </style></head><body>
 <div class="header">
   <div class="company-info">
+    ${buildLogoHTML(companyInfo?.companyLogo || undefined, { align: 'left', maxHeight: 60, marginBottom: 6 })}
     <h1>${escapeHtml(companyInfo?.companyName) || 'Company Name'}</h1>
     ${companyInfo?.companyAddress ? `<p>${escapeHtml(companyInfo.companyAddress)}</p>` : ''}
     ${companyInfo?.companyPhone ? `<p>Tel: ${escapeHtml(companyInfo.companyPhone)}</p>` : ''}
@@ -19549,6 +19572,7 @@ ${phaseSchedules.length > 0 ? `
         paymentStatus: subscription.paymentStatus,
         restaurantName: restaurant?.name || 'Restaurant',
         createdAt: subscription.createdAt?.toISOString() || new Date().toISOString(),
+        logoPath: (await storage.getSettings(restaurantId))?.logoPath || undefined,
         deliveryLog: Array.isArray(subscription.deliveryLog) ? subscription.deliveryLog as Array<{ date: string; mealTime: string; deliveredAt: string }> : [],
       });
       res.setHeader('Content-Type', 'application/pdf');
@@ -19922,6 +19946,7 @@ ${phaseSchedules.length > 0 ? `
       .footer { text-align:center; margin-top:40px; padding-top:12px; border-top:1px solid #e2e8f0; color:#999; font-size:10px; }
     </style></head><body>
       <div class="header">
+        ${restaurant ? buildLogoHTML((await storage.getSettings(restaurant.id))?.logoPath || undefined) : ''}
         <h1>${escapeHtml(restaurant?.name || '')}</h1>
         <div style="color:#666;font-size:11px;margin-top:4px;">Catering Supply Contract — عقد توريد تموين</div>
       </div>
@@ -20129,6 +20154,7 @@ ${phaseSchedules.length > 0 ? `
 </head>
 <body>
   <div class="header">
+    ${restaurant ? buildLogoHTML((await storage.getSettings(restaurant.id))?.logoPath || undefined) : ''}
     <h1>${escapeHtml(restaurant?.name || '')}</h1>
     <div class="subtitle">${mode === 'quotation' ? L('Catering Quotation', 'عرض سعر تموين') : L('Catering Supply Contract', 'عقد توريد وجبات')}</div>
   </div>
@@ -21320,6 +21346,7 @@ ${phaseSchedules.length > 0 ? `
       </style></head><body>
         <div class="header">
           <div>
+            ${restaurant ? buildLogoHTML((await storage.getSettings(restaurant.id))?.logoPath || undefined, { align: 'left', maxHeight: 60 }) : ''}
             <h1>Commission Settlement Report</h1>
             <div class="ar">تقرير تسوية العمولة</div>
             <div class="sub">${esc(restaurant?.name || "")}</div>

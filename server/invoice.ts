@@ -181,6 +181,44 @@ interface InvoiceData {
 }
 
 // HTML escaping function to prevent injection
+// Shared logo embedding helper: converts an uploaded logo path
+// ("/uploads/logos/...") into an inline <img> with a base64 data URL so it
+// renders inside Puppeteer PDFs. Returns '' when there is no usable logo.
+export function buildLogoHTML(
+  logoPath?: string | null,
+  opts?: { maxWidth?: number; maxHeight?: number; align?: 'left' | 'center' | 'right'; marginBottom?: number }
+): string {
+  if (!logoPath) return '';
+  try {
+    // Data URLs (e.g. BizFlow companyLogo) can be embedded directly
+    if (/^data:image\/(png|jpe?g|webp|gif|svg\+xml);base64,[A-Za-z0-9+/=]+$/.test(logoPath)) {
+      return `
+        <div style="text-align: ${opts?.align || 'center'}; margin-bottom: ${opts?.marginBottom ?? 12}px;">
+          <img src="${logoPath}" alt="Logo" style="max-width: ${opts?.maxWidth ?? 150}px; max-height: ${opts?.maxHeight ?? 80}px; object-fit: contain;" />
+        </div>`;
+    }
+    if (logoPath.startsWith('data:')) return '';
+    // Logo is stored as "/uploads/logos/..." but files live in "public/uploads/logos/..."
+    const publicDir = path.resolve(process.cwd(), 'public');
+    const fullPath = path.resolve(publicDir, logoPath.replace(/^\/+/, ''));
+    if (!fullPath.startsWith(publicDir + path.sep)) return '';
+    const ext = path.extname(fullPath).substring(1).toLowerCase();
+    const allowedExts: Record<string, string> = { png: 'png', jpg: 'jpeg', jpeg: 'jpeg', webp: 'webp', gif: 'gif', svg: 'svg+xml' };
+    const mime = allowedExts[ext];
+    if (!mime) return '';
+    if (!existsSync(fullPath)) return '';
+    const buffer = readFileSync(fullPath);
+    const dataURL = `data:image/${mime};base64,${buffer.toString('base64')}`;
+    return `
+        <div style="text-align: ${opts?.align || 'center'}; margin-bottom: ${opts?.marginBottom ?? 12}px;">
+          <img src="${dataURL}" alt="Logo" style="max-width: ${opts?.maxWidth ?? 150}px; max-height: ${opts?.maxHeight ?? 80}px; object-fit: contain;" />
+        </div>`;
+  } catch (error) {
+    console.error('[PDF] Failed to load logo:', error);
+    return '';
+  }
+}
+
 function escapeHtml(text: string | undefined | null): string {
   if (text === undefined || text === null) {
     return '';
@@ -278,9 +316,7 @@ export async function getBrowser(): Promise<Browser> {
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
-          '--disable-software-rasterizer',
-          '--single-process',
-          '--no-zygote'
+          '--disable-software-rasterizer'
         ]
       };
 
@@ -901,6 +937,7 @@ interface FinancialStatementData {
   companyName: string;
   companyVAT: string;
   year: string;
+  logoPath?: string;
   period: "monthly" | "yearly";
   yearlyData: {
     revenue: string;
@@ -1082,6 +1119,7 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
 <body>
   <div class="pdf-container">
   <div class="header">
+    ${buildLogoHTML(data.logoPath)}
     <div class="company-name">${escapedCompanyName}</div>
     <div class="document-title">Financial Statement</div>
     <div class="year">Year ${escapedYear}</div>
@@ -1169,7 +1207,7 @@ export async function generateFinancialStatementPDF(data: FinancialStatementData
 
     return Buffer.from(pdfBuffer);
   } finally {
-    await page.close();
+    await page.close().catch(() => {});
   }
 }
 
@@ -1177,6 +1215,7 @@ interface ExpensesPDFData {
   companyName: string;
   companyVAT: string;
   year: string;
+  logoPath?: string;
   totalExpenses: number;
   inventoryValue: number;
   totalBillsAmount: number;
@@ -1403,6 +1442,7 @@ export async function generateExpensesPDF(data: ExpensesPDFData): Promise<Buffer
 <body>
   <div class="pdf-container">
   <div class="header">
+    ${buildLogoHTML(data.logoPath)}
     <div class="company-name">${escapedCompanyName}</div>
     <div class="document-title">Expenses Report</div>
     <div class="year">Year ${escapedYear}</div>
@@ -1573,7 +1613,7 @@ export async function generateExpensesPDF(data: ExpensesPDFData): Promise<Buffer
 
     return Buffer.from(pdfBuffer);
   } finally {
-    await page.close();
+    await page.close().catch(() => {});
   }
 }
 
@@ -2066,7 +2106,7 @@ export async function generateSubscriptionInvoice(data: {
 
     return Buffer.from(pdfBuffer);
   } finally {
-    await page.close();
+    await page.close().catch(() => {});
   }
 }
 
@@ -2440,7 +2480,7 @@ export async function generateMonthlyVatReport(data: {
 
     return Buffer.from(pdfBuffer);
   } finally {
-    await page.close();
+    await page.close().catch(() => {});
   }
 }
 
@@ -3627,7 +3667,7 @@ export async function generateBssAnalysisStatementPDF(data: BssAnalysisStatement
     console.log('[BssAnalysis] PDF generated successfully');
     return Buffer.from(pdfBuffer);
   } finally {
-    await page.close();
+    await page.close().catch(() => {});
   }
 }
 
@@ -4183,7 +4223,7 @@ export async function generateRefundClearanceInvoice(data: RefundClearanceData):
     console.log('[RefundClearance] PDF generated successfully');
     return Buffer.from(pdfBuffer);
   } finally {
-    await page.close();
+    await page.close().catch(() => {});
   }
 }
 
@@ -4220,7 +4260,7 @@ function getStatementArabicStyles(): string {
 }
 
 export async function generateIncomeStatementPDF(data: {
-  companyName: string; companyVAT: string; year: string;
+  companyName: string; companyVAT: string; year: string; logoPath?: string;
   revenue: number; cogs: number; grossProfit: number;
   operatingExpenses: number; operatingIncome: number; netIncome: number;
   expensesByCategory: Array<{ category: string; amount: number }>;
@@ -4232,6 +4272,7 @@ export async function generateIncomeStatementPDF(data: {
     .subtotal-row { background: #ecfdf5; font-weight: 600; }
   </style></head><body>
     <div class="header">
+      ${buildLogoHTML(data.logoPath)}
       <div class="company-name">${bidiText(data.companyName)}</div>
       <div class="document-title">Income Statement (Profit & Loss) / <span class="ar">قائمة الدخل</span></div>
       <div class="year">For the Year Ending December 31, ${escapeHtml(data.year)} / <span class="ar">للسنة المنتهية في 31 ديسمبر ${escapeHtml(data.year)}</span></div>
@@ -4260,11 +4301,11 @@ export async function generateIncomeStatementPDF(data: {
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: PDF_MARGINS });
     return Buffer.from(pdfBuffer);
-  } finally { await page.close(); }
+  } finally { await page.close().catch(() => {}); }
 }
 
 export async function generateBalanceSheetPDF(data: {
-  companyName: string; companyVAT: string; year: string;
+  companyName: string; companyVAT: string; year: string; logoPath?: string;
   cashAndRevenue: number; inventoryValue: number; totalAssets: number;
   vatPayable: number; accountsPayable: number; totalLiabilities: number;
   ownersEquity: number;
@@ -4277,6 +4318,7 @@ export async function generateBalanceSheetPDF(data: {
     .total-row-green { background: #16a34a; color: white; font-weight: 700; }
   </style></head><body>
     <div class="header">
+      ${buildLogoHTML(data.logoPath)}
       <div class="company-name">${bidiText(data.companyName)}</div>
       <div class="document-title">Balance Sheet / <span class="ar">الميزانية العمومية</span></div>
       <div class="year">As of December 31, ${escapeHtml(data.year)} / <span class="ar">كما في 31 ديسمبر ${escapeHtml(data.year)}</span></div>
@@ -4316,11 +4358,11 @@ export async function generateBalanceSheetPDF(data: {
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: PDF_MARGINS });
     return Buffer.from(pdfBuffer);
-  } finally { await page.close(); }
+  } finally { await page.close().catch(() => {}); }
 }
 
 export async function generateCashFlowPDF(data: {
-  companyName: string; companyVAT: string; year: string;
+  companyName: string; companyVAT: string; year: string; logoPath?: string;
   netIncome: number; inventoryAdjustments: number; accountsPayableChange: number;
   cashFromOperations: number; inventoryPurchases: number; cashFromInvesting: number;
   netCashFlow: number;
@@ -4333,6 +4375,7 @@ export async function generateCashFlowPDF(data: {
     .total-row { background: ${PDF_STYLES.colors.primary}; color: white; font-weight: 700; font-size: ${PDF_STYLES.fontSize.md}; }
   </style></head><body>
     <div class="header">
+      ${buildLogoHTML(data.logoPath)}
       <div class="company-name">${bidiText(data.companyName)}</div>
       <div class="document-title">Cash Flow Statement / <span class="ar">قائمة التدفقات النقدية</span></div>
       <div class="year">For the Year Ending December 31, ${escapeHtml(data.year)} / <span class="ar">للسنة المنتهية في 31 ديسمبر ${escapeHtml(data.year)}</span></div>
@@ -4360,11 +4403,11 @@ export async function generateCashFlowPDF(data: {
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: PDF_MARGINS });
     return Buffer.from(pdfBuffer);
-  } finally { await page.close(); }
+  } finally { await page.close().catch(() => {}); }
 }
 
 export async function generateEquityStatementPDF(data: {
-  companyName: string; companyVAT: string; year: string;
+  companyName: string; companyVAT: string; year: string; logoPath?: string;
   beginningEquity: number; netIncome: number; ownerInvestments: number;
   ownerWithdrawals: number; endingEquity: number;
 }): Promise<Buffer> {
@@ -4377,6 +4420,7 @@ export async function generateEquityStatementPDF(data: {
     .subtotal-row-red { background: #fef2f2; font-weight: 600; }
   </style></head><body>
     <div class="header">
+      ${buildLogoHTML(data.logoPath)}
       <div class="company-name">${bidiText(data.companyName)}</div>
       <div class="document-title">Statement of Owner's Equity / <span class="ar">قائمة حقوق الملكية</span></div>
       <div class="year">For the Year Ending December 31, ${escapeHtml(data.year)} / <span class="ar">للسنة المنتهية في 31 ديسمبر ${escapeHtml(data.year)}</span></div>
@@ -4408,7 +4452,7 @@ export async function generateEquityStatementPDF(data: {
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: PDF_MARGINS });
     return Buffer.from(pdfBuffer);
-  } finally { await page.close(); }
+  } finally { await page.close().catch(() => {}); }
 }
 
 export async function generateMealSubscriptionSchedulePDF(data: {
@@ -4428,6 +4472,7 @@ export async function generateMealSubscriptionSchedulePDF(data: {
   paymentStatus: string;
   restaurantName: string;
   createdAt: string;
+  logoPath?: string;
   deliveryLog?: Array<{ date: string; mealTime: string; deliveredAt: string }>;
 }): Promise<Buffer> {
   const dayLabels: Record<string, { en: string; ar: string }> = {
@@ -4521,6 +4566,7 @@ export async function generateMealSubscriptionSchedulePDF(data: {
     .footer{margin-top:30px;text-align:center;font-size:11px;color:#888;border-top:1px solid #e5e7eb;padding-top:15px;}
   </style></head><body>
     <div class="header">
+      ${buildLogoHTML(data.logoPath)}
       <h1>${data.restaurantName}</h1>
       <h2>Meal Subscription Schedule | جدول اشتراك الوجبات</h2>
       <p style="margin:5px 0 0;font-size:12px;color:#888;">Date | التاريخ: ${new Date(data.createdAt).toLocaleDateString('en-GB')}</p>
@@ -4571,7 +4617,7 @@ export async function generateMealSubscriptionSchedulePDF(data: {
     await page.setContent(html, { waitUntil: 'networkidle0' });
     const pdfBuffer = await page.pdf({ format: 'A4', printBackground: true, margin: PDF_MARGINS });
     return Buffer.from(pdfBuffer);
-  } finally { await page.close(); }
+  } finally { await page.close().catch(() => {}); }
 }
 
 // Cleanup function for graceful shutdown

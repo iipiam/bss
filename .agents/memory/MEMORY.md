@@ -6,6 +6,7 @@
 - [html-to-image off-screen capture](html-to-image-offscreen-capture.md) — never capture the fixed/off-screen element itself; wrap it and capture a static inner div, or the canvas is blank/black.
 - [BSS form & bill quirks](bss-form-and-bill-quirks.md) — omit restaurantId from form zod schemas or submits fail silently; shop_bills paymentPeriod is camelCase (oneTime) vs kebab enum.
 - [BSS VM deployment](bss-vm-deployment.md) — self-managed VM at /home/BSS via pm2 + git; repeatable deploy steps and ecosystem.config.cjs/.env requirements.
+- [BSS PDF logos & Puppeteer](bss-pdf-logo-and-puppeteer.md) — use buildLogoHTML for PDF logos; shared getBrowser must not use --single-process (page.close kills it, alternating 500s).
 - [Prod schema sync](prod-schema-sync.md) — server/schema-sync.sql (auto-generated, idempotent) applied at startup keeps RDS aligned; regenerate with scripts/generate-schema-sync.mjs after every schema change.
 - [Replit firewall URLs in lockfile](replit-lockfile-firewall-urls.md) — npm installs here can bake package-firewall.replit.local into package-lock.json, breaking VM installs; sed-fix before deploy.
 - [TypeScript check quirks](typescript-check-quirks.md) — tsc via node_modules/.bin, reinstall packages when node_modules corrupt, clear tsbuildinfo after tsconfig changes, AST-only edits to translations.ts.
