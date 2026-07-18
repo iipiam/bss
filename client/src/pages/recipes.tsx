@@ -41,11 +41,12 @@ const EMPTY_INVENTORY: InventoryItem[] = [];
 
 interface SortableRecipeCardProps {
   recipe: Recipe;
+  liveCost: number;
   onEdit: (recipe: Recipe) => void;
   onDelete: (recipe: Recipe) => void;
 }
 
-function SortableRecipeCard({ recipe, onEdit, onDelete }: SortableRecipeCardProps) {
+function SortableRecipeCard({ recipe, liveCost, onEdit, onDelete }: SortableRecipeCardProps) {
   const { t, isRTL } = useLanguage();
   const {
     attributes,
@@ -119,7 +120,7 @@ function SortableRecipeCard({ recipe, onEdit, onDelete }: SortableRecipeCardProp
                 </Tooltip>
               </div>
               <p className="text-sm text-muted-foreground mb-1">{t.costPerServing}</p>
-              <p className="text-2xl font-bold font-mono text-primary">{(parseFloat(recipe.cost) / (recipe.servings || 1)).toFixed(2)} SAR</p>
+              <p className="text-2xl font-bold font-mono text-primary">{(liveCost / (recipe.servings || 1)).toFixed(2)} SAR</p>
             </div>
           </div>
         </CardHeader>
@@ -278,6 +279,32 @@ export default function Recipes() {
     queryKey: ["/api/inventory"],
     refetchInterval: 5000, // Refresh every 5 seconds to keep stock levels updated
   });
+
+  // Live cost per recipe, always computed from CURRENT inventory prices
+  // (same formula as the edit dialog: unitPrice = price / quantity), so the
+  // card stays in sync even when inventory changed through paths that don't
+  // rewrite the stored recipe cost (procurement, imports, etc.).
+  const liveCosts = useMemo(() => {
+    const unitPriceById = new Map<string, number>();
+    for (const item of inventoryItems) {
+      const totalPrice = parseFloat(item.price) || 0;
+      const totalQuantity = parseFloat(item.quantity) || 0;
+      unitPriceById.set(item.id, totalQuantity > 0 ? totalPrice / totalQuantity : 0);
+    }
+    const costs = new Map<string, number>();
+    for (const recipe of recipesData) {
+      const ingredientList = (recipe.ingredients || []) as Array<{ inventoryItemId?: string; quantity: number | string; unitPrice?: number }>;
+      let total = 0;
+      for (const ing of ingredientList) {
+        const qty = parseFloat(String(ing.quantity)) || 0;
+        const livePrice = ing.inventoryItemId ? unitPriceById.get(ing.inventoryItemId) : undefined;
+        const price = livePrice !== undefined ? livePrice : (ing.unitPrice || 0);
+        total += qty * price;
+      }
+      costs.set(recipe.id, total);
+    }
+    return costs;
+  }, [inventoryItems, recipesData]);
 
   const createRecipeMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -911,7 +938,7 @@ export default function Recipes() {
         >
           <div className="grid gap-6">
             {displayedRecipes.map((recipe) => (
-              <SortableRecipeCard key={recipe.id} recipe={recipe} onEdit={handleEditRecipe} onDelete={handleDeleteClick} />
+              <SortableRecipeCard key={recipe.id} recipe={recipe} liveCost={liveCosts.get(recipe.id) ?? parseFloat(recipe.cost) ?? 0} onEdit={handleEditRecipe} onDelete={handleDeleteClick} />
             ))}
           </div>
         </SortableContext>

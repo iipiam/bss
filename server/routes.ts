@@ -262,6 +262,29 @@ const requireMarketing = (action?: 'add' | 'delete') => (req: any, res: any, nex
   return requirePermission('marketing')(req, res, next);
 };
 
+// Recalculate stored recipe costs after an inventory item's price/quantity
+// changed outside the inventory PATCH route (e.g. procurement completion),
+// then broadcast so open Recipes pages refetch immediately.
+async function recalcRecipeCostsForInventoryItem(inventoryItemId: string, restaurantId: string): Promise<void> {
+  try {
+    const item = await storage.getInventoryItem(inventoryItemId, restaurantId);
+    if (!item) return;
+    const totalPrice = parseFloat(String(item.price)) || 0;
+    const totalQuantity = parseFloat(String(item.quantity)) || 0;
+    const newUnitPrice = totalQuantity > 0 ? totalPrice / totalQuantity : 0;
+    const updatedRecipes = await storage.updateRecipeCostsForInventoryItem(inventoryItemId, restaurantId, newUnitPrice);
+    if (updatedRecipes.length > 0) {
+      broadcastNotification({
+        type: 'recipe:costUpdated',
+        restaurantId,
+        updatedRecipeIds: updatedRecipes.map(r => r.id),
+      });
+    }
+  } catch (err) {
+    console.error('[RECIPES] Failed to recalc recipe costs for inventory item', inventoryItemId, err);
+  }
+}
+
 export async function registerRoutes(app: Express, sessionParser: any): Promise<Server> {
   // Ensure the internal IT marketing workspace row exists (sentinel restaurant).
   // subscriptionStatus 'cancelled' keeps it out of IT client/business listings.
@@ -5017,6 +5040,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
               quantity: String(newQty),
               price: newTotalPrice,
             });
+            await recalcRecipeCostsForInventoryItem(newInventoryLink, restaurantId);
             console.log(`[PROCUREMENT] Status completed with inventory link - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty}, unitPrice: ${procUnitPrice})`);
           } else {
             console.warn(`[PROCUREMENT] Inventory item ${newInventoryLink} not found`);
@@ -5041,6 +5065,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
               quantity: String(newQty),
               price: newTotalPrice2,
             });
+            await recalcRecipeCostsForInventoryItem(newInventoryLink, restaurantId);
             console.log(`[PROCUREMENT] Newly linked completed procurement - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty}, unitPrice: ${procUnitPrice2})`);
           } else {
             console.warn(`[PROCUREMENT] Newly linked inventory item ${newInventoryLink} not found`);
@@ -5068,6 +5093,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
               quantity: String(newQty),
               price: newTotalPrice3,
             });
+            await recalcRecipeCostsForInventoryItem(existingProcurement.inventoryItemId, restaurantId);
             console.log(`[PROCUREMENT] Reorder received - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty}, unitPrice: ${procUnitPrice3})`);
           } else {
             console.warn(`[PROCUREMENT] Reorder inventory item ${existingProcurement.inventoryItemId} not found`);
@@ -5093,6 +5119,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
               quantity: String(newQty),
               price: newTotalPrice4,
             });
+            await recalcRecipeCostsForInventoryItem(existingProcurement.inventoryItemId!, restaurantId);
             console.log(`[PROCUREMENT] Linked inventory updated - added ${addQty} to inventory ${inventoryItem.name} (new qty: ${newQty}, unitPrice: ${procUnitPrice4})`);
           } else {
             console.warn(`[PROCUREMENT] Linked inventory item ${existingProcurement.inventoryItemId} not found`);
@@ -5282,6 +5309,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
               quantity: String(newQty),
               price: newTotalPrice5,
             });
+            await recalcRecipeCostsForInventoryItem(originalProcurement.inventoryItemId, restaurantId);
             console.log(`[PROCUREMENT] Reorder completed at creation - added ${addQty} to inventory ${inventoryItem.name} (was: ${currentQty}, now: ${newQty}, unitPrice: ${parsedUnitPrice})`);
           } else {
             console.warn(`[PROCUREMENT] Reorder inventory item ${originalProcurement.inventoryItemId} not found`);
