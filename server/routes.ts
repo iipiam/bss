@@ -3694,9 +3694,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       let recipeName = '';
       const expenseBreakdown: Array<{ billType: string; description: string; rawAmount: number; period: string; monthlyAmount: number }> = [];
       
+      // Statement period: current month. All figures below are scoped to this period.
+      const statementNow = new Date();
+      const stmtPeriodStart = new Date(statementNow.getFullYear(), statementNow.getMonth(), 1);
+      const stmtPeriodEnd = new Date(statementNow.getFullYear(), statementNow.getMonth() + 1, 0, 23, 59, 59, 999);
+      const currentPaymentMonth = `${statementNow.getFullYear()}-${String(statementNow.getMonth() + 1).padStart(2, '0')}`;
+      const inPeriod = (d: any): boolean => {
+        if (!d) return false;
+        const date = d instanceof Date ? d : new Date(d);
+        return !isNaN(date.getTime()) && date >= stmtPeriodStart && date <= stmtPeriodEnd;
+      };
+      
       // Filter orders to only include finalized/completed orders (exclude cancelled and pending)
+      // and only orders within the statement period
       const validOrderStatuses = ['Completed', 'Ready', 'Preparing', 'Paid'];
-      const finalizedOrders = orders.filter(order => validOrderStatuses.includes(order.status));
+      const finalizedOrders = orders.filter(order => validOrderStatuses.includes(order.status) && inPeriod(order.createdAt));
       
       // Check if this is a recipe-based investor
       if (investor.investorType === 'recipe' && investor.recipeId) {
@@ -3735,8 +3747,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         totalSalaries = 0;
         totalBills = 0;
       } else {
-        // Money investor: Calculate from total business net profit
-        totalRevenue = transactions.reduce((sum, t) => sum + parseFloat(t.total || "0"), 0);
+        // Money investor: Calculate from business net profit for the statement period
+        totalRevenue = transactions
+          .filter(t => inPeriod(t.createdAt))
+          .reduce((sum, t) => sum + parseFloat(t.total || "0"), 0);
         
         // Calculate COGS from finalized orders only
         finalizedOrders.forEach(order => {
@@ -3757,16 +3771,43 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         });
         
         // Calculate total salaries and recurring bills (exclude foundational & one-time)
-        totalSalaries = salaries.reduce((sum: number, s) => sum + parseFloat(s.amount || "0"), 0);
+        // Salary payments (salaries table) that are linked to a salary shop bill
+        // (billId set) are settlements of bills already counted below — skip them
+        // to avoid double-counting. Only count period-scoped standalone payments.
+        totalSalaries = salaries
+          .filter(s => !s.billId && inPeriod(s.paymentDate || s.createdAt))
+          .reduce((sum: number, s) => sum + parseFloat(s.amount || "0"), 0);
         
         // Filter out foundational and one-time bills - only include recurring operational expenses
-        const recurringBills = shopBills.filter(b => {
+        const nonFoundationalBills = shopBills.filter(b => {
           const billType = String(b.billType || '').toLowerCase();
           const paymentPeriod = String(b.paymentPeriod || '').toLowerCase();
           return billType !== 'foundational' && 
                  paymentPeriod !== 'one-time' && 
                  paymentPeriod !== 'onetime';
         });
+        
+        // Salary bills are generated as one row per month (paymentMonth), so only
+        // count the ones belonging to the statement month — otherwise the same
+        // employee's salary would be counted once for every past month.
+        // For other recurring bills (rent, utilities...), multiple rows can exist
+        // for successive payments of the same bill; keep only the most recent row
+        // per bill identity so the monthly prorated amount is counted once.
+        const salaryBillsForMonth = nonFoundationalBills.filter(b => {
+          if (String(b.billType || '').toLowerCase() !== 'salary') return false;
+          if (b.paymentMonth) return b.paymentMonth === currentPaymentMonth;
+          return inPeriod(b.paymentDate || b.createdAt);
+        });
+        const latestNonSalaryBills = new Map<string, typeof nonFoundationalBills[number]>();
+        for (const b of nonFoundationalBills) {
+          if (String(b.billType || '').toLowerCase() === 'salary') continue;
+          const key = `${String(b.billType || '').toLowerCase()}|${b.branchId || ''}|${b.employeeId || ''}|${(b.description || '').trim().toLowerCase()}|${parseFloat(b.amount || '0')}|${String(b.paymentPeriod || '').toLowerCase()}`;
+          const existing = latestNonSalaryBills.get(key);
+          const billDate = new Date(b.paymentDate || b.createdAt || 0).getTime();
+          const existingDate = existing ? new Date(existing.paymentDate || existing.createdAt || 0).getTime() : -Infinity;
+          if (!existing || billDate > existingDate) latestNonSalaryBills.set(key, b);
+        }
+        const recurringBills = [...salaryBillsForMonth, ...latestNonSalaryBills.values()];
         
         // Helper function to prorate bill amounts to monthly values
         // Quarterly bills should be divided by 3, semi-annual by 6, yearly by 12
