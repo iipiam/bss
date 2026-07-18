@@ -1441,6 +1441,7 @@ export interface Translations {
   invoiceUploaded: string;
   invoiceDeleted: string;
   invoiceUploadError: string;
+  invoiceFileMissing: string;
   invoiceDeleteError: string;
   invoiceAttached: string;
   viewInvoice: string;
@@ -4346,6 +4347,7 @@ export const translations: Record<Language, Translations> = {
     invoiceUploaded: 'Invoice uploaded successfully',
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
+    invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -7200,6 +7202,7 @@ export const translations: Record<Language, Translations> = {
     invoiceUploaded: 'تم رفع الفاتورة بنجاح',
     invoiceDeleted: 'تم حذف الفاتورة بنجاح',
     invoiceUploadError: 'فشل رفع الفاتورة',
+    invoiceFileMissing: 'ملف الفاتورة غير موجود على الخادم. يمكنك إزالته من نافذة التعديل ورفعه مرة أخرى.',
     invoiceDeleteError: 'فشل حذف الفاتورة',
     invoiceAttached: 'فاتورة',
     viewInvoice: 'عرض الفاتورة',
@@ -10048,6 +10051,7 @@ export const translations: Record<Language, Translations> = {
     invoiceUploaded: 'Invoice uploaded successfully',
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
+    invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -12898,6 +12902,7 @@ export const translations: Record<Language, Translations> = {
     invoiceUploaded: 'Invoice uploaded successfully',
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
+    invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -15752,6 +15757,7 @@ export const translations: Record<Language, Translations> = {
     invoiceUploaded: 'Invoice uploaded successfully',
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
+    invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -18606,6 +18612,7 @@ export const translations: Record<Language, Translations> = {
     invoiceUploaded: 'Invoice uploaded successfully',
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
+    invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -22769,6 +22776,7 @@ export const translations: Record<Language, Translations> = {
     invoiceUploaded: 'Invoice uploaded successfully',
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
+    invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -25608,6 +25616,7 @@ export const translations: Record<Language, Translations> = {
     invoiceUploaded: 'Invoice uploaded successfully',
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
+    invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -28391,6 +28400,7 @@ export const translations: Record<Language, Translations> = {
     invoiceUploaded: 'Invoice uploaded successfully',
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
+    invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -31174,6 +31184,7 @@ export const translations: Record<Language, Translations> = {
     invoiceUploaded: 'Invoice uploaded successfully',
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
+    invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',

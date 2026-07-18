@@ -23,7 +23,7 @@ import { insertProcurementSchema } from "@shared/schema";
 interface ProcurementInvoice extends Invoice {
   procurement?: Procurement | null;
 }
-import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw, Upload, Image, X, FileText, Eye, Download, Search, Repeat } from "lucide-react";
+import { Plus, Package, Wrench, HardHat, Computer, Calendar, User, AlertCircle, CheckCircle2, Clock, XCircle, RefreshCw, Upload, Image, X, FileText, Eye, Download, Search, Repeat, ImageOff } from "lucide-react";
 import { format } from "date-fns";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -72,6 +72,8 @@ export default function ProcurementPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [viewImageUrl, setViewImageUrl] = useState<string | null>(null);
   const [viewingProcurementId, setViewingProcurementId] = useState<string | null>(null);
+  const [viewImageError, setViewImageError] = useState(false);
+  const [failedThumbs, setFailedThumbs] = useState<Set<string>>(new Set());
   const [isReorderDialogOpen, setIsReorderDialogOpen] = useState(false);
   const [reorderItem, setReorderItem] = useState<Procurement | null>(null);
   const [reorderQuantity, setReorderQuantity] = useState<string>("");
@@ -845,6 +847,7 @@ export default function ProcurementPage() {
                             src={invoiceImage} 
                             alt="Invoice" 
                             className="h-16 w-16 object-cover rounded border"
+                            onError={(e) => { e.currentTarget.style.visibility = 'hidden'; }}
                           />
                         )}
                         <div className="flex-1">
@@ -1256,17 +1259,28 @@ export default function ProcurementPage() {
                                     </div>
                                   ) : (
                                     <div className="flex items-center gap-3 p-2 bg-muted rounded">
-                                      <img 
-                                        src={item.invoiceImage} 
-                                        alt="Invoice" 
-                                        className="h-12 w-12 object-cover rounded border cursor-pointer hover:opacity-80"
-                                        onClick={() => { setViewImageUrl(item.invoiceImage); setViewingProcurementId(item.id); }}
-                                      />
+                                      {failedThumbs.has(item.id) ? (
+                                        <div 
+                                          className="h-12 w-12 flex items-center justify-center rounded border cursor-pointer"
+                                          onClick={() => { setViewImageError(false); setViewImageUrl(item.invoiceImage); setViewingProcurementId(item.id); }}
+                                          data-testid={`thumb-invoice-missing-${item.id}`}
+                                        >
+                                          <ImageOff className="h-6 w-6 text-muted-foreground" />
+                                        </div>
+                                      ) : (
+                                        <img 
+                                          src={item.invoiceImage} 
+                                          alt="Invoice" 
+                                          className="h-12 w-12 object-cover rounded border cursor-pointer hover:opacity-80"
+                                          onClick={() => { setViewImageError(false); setViewImageUrl(item.invoiceImage); setViewingProcurementId(item.id); }}
+                                          onError={() => setFailedThumbs(prev => { const next = new Set(prev); next.add(item.id); return next; })}
+                                        />
+                                      )}
                                       <span className="text-sm text-muted-foreground">{t.invoiceImage}</span>
                                       <Button 
                                         size="sm" 
                                         variant="ghost"
-                                        onClick={() => { setViewImageUrl(item.invoiceImage); setViewingProcurementId(item.id); }}
+                                        onClick={() => { setViewImageError(false); setViewImageUrl(item.invoiceImage); setViewingProcurementId(item.id); }}
                                         data-testid={`button-view-invoice-${item.id}`}
                                       >
                                         <Eye className="h-4 w-4 mr-1" />
@@ -1353,26 +1367,38 @@ export default function ProcurementPage() {
       </Card>
 
       {/* Image Viewer Dialog */}
-      <Dialog open={!!viewImageUrl} onOpenChange={() => { setViewImageUrl(null); setViewingProcurementId(null); }}>
+      <Dialog open={!!viewImageUrl} onOpenChange={() => { setViewImageUrl(null); setViewingProcurementId(null); setViewImageError(false); }}>
         <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>{t.invoiceImage}</DialogTitle>
           </DialogHeader>
           {viewImageUrl && (
             <div className="flex flex-col items-center gap-4">
-              <img 
-                src={viewImageUrl} 
-                alt="Invoice" 
-                className="max-h-[60vh] object-contain"
-              />
-              {viewingProcurementId && (
-                <Button 
-                  onClick={() => handleInvoiceDownload(viewingProcurementId)}
-                  data-testid="button-download-invoice-viewer"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  {t.download}
-                </Button>
+              {viewImageError ? (
+                <div className="flex flex-col items-center gap-3 py-8" data-testid="text-invoice-missing">
+                  <ImageOff className="h-12 w-12 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground text-center max-w-md">
+                    {t.invoiceFileMissing}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <img 
+                    src={viewImageUrl} 
+                    alt="Invoice" 
+                    className="max-h-[60vh] object-contain"
+                    onError={() => setViewImageError(true)}
+                  />
+                  {viewingProcurementId && (
+                    <Button 
+                      onClick={() => handleInvoiceDownload(viewingProcurementId)}
+                      data-testid="button-download-invoice-viewer"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      {t.download}
+                    </Button>
+                  )}
+                </>
               )}
             </div>
           )}
