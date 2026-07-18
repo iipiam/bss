@@ -1194,6 +1194,7 @@ export interface Translations {
   inspectionTools: string;
   appDiagram: string;
   itTutorial?: string;
+  training?: string;
   businessManagementDescription: string;
   clientSubscriptions: string;
   subscriptionInvoices: string;
@@ -4092,6 +4093,7 @@ export const translations: Record<Language, Translations> = {
     inspectionTools: 'Inspection Tools',
     appDiagram: 'App Diagram',
     itTutorial: 'IT Operations Guide',
+    training: 'Training',
     businessManagementDescription: 'Manage client subscriptions, invoices, and VAT statements',
     clientSubscriptions: 'Client Subscriptions',
     subscriptionInvoices: 'Subscription Invoices',
@@ -6945,6 +6947,7 @@ export const translations: Record<Language, Translations> = {
     inspectionTools: 'أدوات الفحص',
     appDiagram: 'مخطط التطبيق',
     itTutorial: 'دليل عمليات تقنية المعلومات',
+    training: 'التدريب',
     businessManagementDescription: 'إدارة اشتراكات العملاء والفواتير وبيانات ضريبة القيمة المضافة',
     clientSubscriptions: 'اشتراكات العملاء',
     subscriptionInvoices: 'فواتير الاشتراكات',
@@ -11376,6 +11379,7 @@ export const translations: Record<Language, Translations> = {
     selectPdf: 'Select pdf',
     transactionDocumentHelp: 'Transaction document help',
     itTutorial: 'IT Operations Guide',
+    training: 'Training',
     companyFiles: 'Company files',
     companyFilesDescription: 'Company files description',
     kinzhalCertificates: 'Kinzhal certificates',
@@ -14229,6 +14233,7 @@ export const translations: Record<Language, Translations> = {
     selectPdf: 'Select pdf',
     transactionDocumentHelp: 'Transaction document help',
     itTutorial: 'IT Operations Guide',
+    training: 'Training',
     companyFiles: 'Company files',
     companyFilesDescription: 'Company files description',
     kinzhalCertificates: 'Kinzhal certificates',
@@ -17082,6 +17087,7 @@ export const translations: Record<Language, Translations> = {
     selectPdf: 'Select pdf',
     transactionDocumentHelp: 'Transaction document help',
     itTutorial: 'IT Operations Guide',
+    training: 'Training',
     companyFiles: 'Company files',
     companyFilesDescription: 'Company files description',
     kinzhalCertificates: 'Kinzhal certificates',
@@ -19935,6 +19941,7 @@ export const translations: Record<Language, Translations> = {
     selectPdf: 'Select pdf',
     transactionDocumentHelp: 'Transaction document help',
     itTutorial: 'IT Operations Guide',
+    training: 'Training',
     companyFiles: 'Company files',
     companyFilesDescription: 'Company files description',
     kinzhalCertificates: 'Kinzhal certificates',
@@ -22744,6 +22751,7 @@ export const translations: Record<Language, Translations> = {
     selectPdf: 'Select pdf',
     transactionDocumentHelp: 'Transaction document help',
     itTutorial: 'IT Operations Guide',
+    training: 'Training',
     shopFiles: 'Files',
     shopFilesDescription: 'Upload and manage business certificates',
     crCertificate: 'CR Certificate',
@@ -25582,6 +25590,7 @@ export const translations: Record<Language, Translations> = {
     selectPdf: 'Select pdf',
     transactionDocumentHelp: 'Transaction document help',
     itTutorial: 'IT Operations Guide',
+    training: 'Training',
     shopFiles: 'Files',
     shopFilesDescription: 'Upload and manage business certificates',
     crCertificate: 'CR Certificate',
@@ -28364,6 +28373,7 @@ export const translations: Record<Language, Translations> = {
     selectPdf: 'Select pdf',
     transactionDocumentHelp: 'Transaction document help',
     itTutorial: 'IT Operations Guide',
+    training: 'Training',
     shopFiles: 'Files',
     shopFilesDescription: 'Upload and manage business certificates',
     crCertificate: 'CR Certificate',
@@ -31146,6 +31156,7 @@ export const translations: Record<Language, Translations> = {
     selectPdf: 'Select pdf',
     transactionDocumentHelp: 'Transaction document help',
     itTutorial: 'IT Operations Guide',
+    training: 'Training',
     shopFiles: 'Files',
     shopFilesDescription: 'Upload and manage business certificates',
     crCertificate: 'CR Certificate',

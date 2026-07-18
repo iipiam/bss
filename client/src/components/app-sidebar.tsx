@@ -208,6 +208,7 @@ export function AppSidebar() {
     { title: t.inspectionTools || "Inspection Tools", url: "/inspection-tools", icon: Stethoscope, testId: "inspection-tools", gradient: "from-pink-500 to-rose-500" },
     { title: t.appDiagram || "App Diagram", url: "/app-diagram", icon: Network, testId: "app-diagram", gradient: "from-indigo-500 to-blue-500" },
     { title: t.itTutorial || "IT Operations Guide", url: "/it-tutorial", icon: GraduationCap, testId: "it-tutorial", gradient: "from-pink-500 to-rose-500" },
+    { title: t.training || "Training", url: "/training", icon: BookOpen, testId: "it-training", gradient: "from-amber-500 to-orange-500" },
     { title: t.marketing || "Marketing", url: "/marketing", icon: Megaphone, testId: "it-marketing", gradient: "from-fuchsia-500 to-violet-500" },
   ];
 
@@ -229,7 +230,7 @@ export function AppSidebar() {
       }
       
       // Client accounts cannot see IT-only pages
-      if (item.testId === 'it-dashboard' || item.testId === 'performance' || item.testId === 'it-account-management' || item.testId === 'business-management' || item.testId === 'inspection-tools' || item.testId === 'app-diagram') {
+      if (item.testId === 'it-dashboard' || item.testId === 'performance' || item.testId === 'it-account-management' || item.testId === 'business-management' || item.testId === 'inspection-tools' || item.testId === 'app-diagram' || item.testId === 'it-training') {
         return false;
       }
       

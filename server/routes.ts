@@ -9416,6 +9416,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // IT Training platform (static single-file app, IT accounts only)
+  app.get('/api/it/training', requireAuth, requireITAccount, async (_req, res) => {
+    try {
+      const filePath = path.join(process.cwd(), 'server', 'training.html');
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Training content not found' });
+      }
+      res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error('Error serving training page:', error);
+      res.status(500).json({ error: 'Failed to load training page' });
+    }
+  });
+
   // Authenticated endpoint to download bill invoice files (IT-only)
   // Use ?download=true query param to force download instead of inline display
   app.get('/api/it/bill-invoices/:filename', requireAuth, requireITAccount, async (req, res) => {

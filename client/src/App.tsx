@@ -72,6 +72,7 @@ const SettingsPage = lazy(() => import("@/pages/settings"));
 const Employees = lazy(() => import("@/pages/employees"));
 const Tutorial = lazy(() => import("@/pages/tutorial"));
 const ITTutorial = lazy(() => import("@/pages/it-tutorial"));
+const Training = lazy(() => import("@/pages/training"));
 const Shop = lazy(() => import("@/pages/shop"));
 const Profile = lazy(() => import("@/pages/profile"));
 const DeliveryApps = lazy(() => import("@/pages/delivery-apps"));
@@ -193,6 +194,7 @@ function Router() {
         <Route path="/password-manager" component={PasswordManager} />
         <Route path="/tutorial" component={Tutorial} />
         <Route path="/it-tutorial" component={ITTutorial} />
+        <Route path="/training" component={Training} />
         <Route path="/shop" component={Shop} />
         <Route path="/profile" component={Profile} />
         <Route path="/delivery-apps">{() => <BusinessTypeGuard allowedTypes={['restaurant']}><DeliveryApps /></BusinessTypeGuard>}</Route>
@@ -318,8 +320,8 @@ function AppContent() {
   // Handle IT account redirects using useEffect to avoid render issues
   // IT accounts can access /it-dashboard, /performance, /it-account-management, /business-management, /zatca-settings, and /support routes
   useEffect(() => {
-    const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/zatca-settings', '/inspection-tools', '/app-diagram', '/it-tutorial', '/marketing'];
-    const itOnlyRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/inspection-tools', '/app-diagram', '/it-tutorial'];
+    const allowedITRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/zatca-settings', '/inspection-tools', '/app-diagram', '/it-tutorial', '/training', '/marketing'];
+    const itOnlyRoutes = ['/it-dashboard', '/performance', '/it-account-management', '/business-management', '/inspection-tools', '/app-diagram', '/it-tutorial', '/training'];
     const isAllowedRoute = allowedITRoutes.includes(location) || location.startsWith('/support');
 
     if (accountType === 'it' && !isAllowedRoute) {
