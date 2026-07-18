@@ -3311,6 +3311,22 @@ export default function Marketing() {
                             <Button
                               variant="ghost"
                               size="icon"
+                              aria-label="Settlement PDF"
+                              asChild
+                              data-testid={`button-settlement-pdf-blogger-${b.id}`}
+                            >
+                              <a href={`/api/marketing/blogger-profiles/${b.id}/settlement-pdf`} target="_blank" rel="noopener">
+                                <FileText className="h-4 w-4" />
+                              </a>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{language === "ar" ? "تقرير تسوية العمولة (PDF)" : "Commission settlement PDF"}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
                               aria-label="Delete"
                               onClick={() => deleteBloggerFile(b.id)}
                               data-testid={`button-delete-blogger-${b.id}`}

@@ -21073,6 +21073,136 @@ ${phaseSchedules.length > 0 ? `
     }
   });
 
+  // Commission settlement PDF per blogger (bilingual EN/AR)
+  app.get("/api/marketing/blogger-profiles/:id/settlement-pdf", requireAuth, requireMarketing(), async (req, res) => {
+    try {
+      const restaurantId = marketingScope(req);
+      const blogger = await storage.getBloggerProfile(req.params.id, restaurantId);
+      if (!blogger) return res.status(404).json({ error: "Blogger not found" });
+      const tiers = (await storage.getBloggerCommissionTiers(restaurantId, req.params.id))
+        .slice().sort((a, b) => a.fromScans - b.fromScans);
+      const scans = await storage.getMarketingQrScanCount(restaurantId, "blogger", blogger.id);
+      const restaurant = await storage.getRestaurant(restaurantId);
+      const esc = (s: any) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" } as any)[c]);
+      const fmtSar = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      // Cumulative tier breakdown (same logic as the marketing page)
+      let total = 0;
+      const breakdown = tiers.map((tier) => {
+        const rate = parseFloat(tier.ratePerScan || "0");
+        let counted = 0;
+        if (scans >= tier.fromScans) {
+          const upper = tier.toScans === null ? scans : Math.min(scans, tier.toScans);
+          counted = Math.max(0, upper - tier.fromScans + 1);
+        }
+        const amount = counted * rate;
+        total += amount;
+        return { fromScans: tier.fromScans, toScans: tier.toScans, rate, counted, amount };
+      });
+
+      const tierRows = breakdown.map((b) => `
+        <tr>
+          <td>${b.fromScans} – ${b.toScans === null ? "∞" : b.toScans}</td>
+          <td style="text-align:right">${fmtSar(b.rate)}</td>
+          <td style="text-align:right">${b.counted}</td>
+          <td style="text-align:right;font-weight:bold">${fmtSar(b.amount)}</td>
+        </tr>`).join("");
+
+      const now = new Date();
+      const refNo = `BSS-CS-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}-${blogger.id.slice(0, 8).toUpperCase()}`;
+      const html = `<!doctype html><html><head><meta charset="utf-8"><style>
+        body{font-family:Arial,'Segoe UI',Tahoma,sans-serif;padding:28px;color:#111;font-size:13px}
+        h1{margin:0;font-size:22px}
+        .sub{color:#666;font-size:12px;margin-top:2px}
+        .ar{direction:rtl;font-size:12px;color:#444}
+        .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #10b981;padding-bottom:12px;margin-bottom:16px}
+        .box{background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;padding:12px;margin-bottom:14px}
+        .grid{display:flex;flex-wrap:wrap;gap:8px 24px}
+        .grid div{min-width:180px}
+        .label{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:.4px}
+        .value{font-weight:bold;font-size:13px}
+        table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+        th,td{border:1px solid #ddd;padding:6px 8px;text-align:left}
+        th{background:#f3f4f6;font-size:11px}
+        .total{display:flex;justify-content:flex-end;margin-top:12px}
+        .total-box{background:#ecfdf5;border:1px solid #10b981;border-radius:6px;padding:12px 20px;text-align:right}
+        .total-amount{font-size:22px;font-weight:bold;color:#047857}
+        .sign{display:flex;gap:40px;margin-top:44px}
+        .sign div{flex:1;border-top:1px solid #999;padding-top:6px;font-size:11px;color:#555;text-align:center}
+        .foot{margin-top:30px;font-size:10px;color:#999;text-align:center}
+        h2{font-size:14px;margin:18px 0 4px}
+      </style></head><body>
+        <div class="header">
+          <div>
+            <h1>Commission Settlement Report</h1>
+            <div class="ar">تقرير تسوية العمولة</div>
+            <div class="sub">${esc(restaurant?.name || "")}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="label">Reference / المرجع</div>
+            <div class="value">${esc(refNo)}</div>
+            <div class="label" style="margin-top:6px">Date / التاريخ</div>
+            <div class="value">${now.toLocaleDateString("en-GB")}</div>
+          </div>
+        </div>
+
+        <h2>Blogger Details / بيانات المدوِّن</h2>
+        <div class="box"><div class="grid">
+          <div><div class="label">Name / الاسم</div><div class="value">${esc(blogger.name)}</div></div>
+          <div><div class="label">Handle / المعرف</div><div class="value">${esc(blogger.handle || "—")}</div></div>
+          <div><div class="label">Platform / المنصة</div><div class="value">${esc(blogger.platform)}</div></div>
+          <div><div class="label">Niche / التخصص</div><div class="value">${esc(blogger.niche)}</div></div>
+          <div><div class="label">City / المدينة</div><div class="value">${esc(blogger.city || "—")}</div></div>
+          <div><div class="label">Phone / الجوال</div><div class="value">${esc(blogger.contactPhone || "—")}</div></div>
+          <div><div class="label">Email / البريد</div><div class="value">${esc(blogger.contactEmail || "—")}</div></div>
+          <div><div class="label">Followers / المتابعون</div><div class="value">${Number(blogger.followers).toLocaleString()}</div></div>
+        </div></div>
+
+        <h2>Commission Calculation / احتساب العمولة</h2>
+        <div class="box" style="margin-bottom:8px"><div class="grid">
+          <div><div class="label">Total QR Scans / إجمالي مسحات QR</div><div class="value" style="font-size:16px">${scans}</div></div>
+        </div></div>
+        <table>
+          <thead><tr>
+            <th>Scan Range / نطاق المسحات</th>
+            <th style="text-align:right">Rate per Scan (SAR) / السعر لكل مسحة</th>
+            <th style="text-align:right">Scans Counted / المسحات المحتسبة</th>
+            <th style="text-align:right">Amount (SAR) / المبلغ</th>
+          </tr></thead>
+          <tbody>${tierRows || '<tr><td colspan="4" style="text-align:center;color:#888">No commission tiers configured / لم يتم إعداد شرائح العمولة</td></tr>'}</tbody>
+        </table>
+
+        <div class="total"><div class="total-box">
+          <div class="label">Total Commission Due / إجمالي العمولة المستحقة</div>
+          <div class="total-amount">${fmtSar(total)} SAR</div>
+        </div></div>
+
+        <div class="sign">
+          <div>Prepared By / أعده<br/><br/></div>
+          <div>Approved By / اعتمده<br/><br/></div>
+          <div>Blogger Signature / توقيع المدوِّن<br/><br/></div>
+        </div>
+        <div class="foot">Generated by BSS — Business Management System · ${now.toLocaleString()}</div>
+      </body></html>`;
+
+      const browser = await launchChromium();
+      try {
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: "networkidle0" });
+        const pdfData = await page.pdf({ format: "A4", printBackground: true, margin: { top: "14mm", right: "12mm", bottom: "14mm", left: "12mm" } });
+        const pdfBuffer = Buffer.from(pdfData);
+        res.setHeader("Content-Type", "application/pdf");
+        const safeName = String(blogger.name || "blogger").replace(/[^\w\u0600-\u06FF-]+/g, "-").slice(0, 60);
+        res.setHeader("Content-Disposition", `attachment; filename="commission-settlement-${encodeURIComponent(safeName)}.pdf"`);
+        res.setHeader("Content-Length", String(pdfBuffer.length));
+        res.end(pdfBuffer);
+      } finally { await browser.close(); }
+    } catch (err: any) {
+      console.error("[blogger settlement pdf]", err);
+      res.status(500).json({ error: err?.message || "PDF failed" });
+    }
+  });
+
   // POS QR scan / manual code entry.
   // Accepts either a scanned QR payload ("BSS-DC:<code>" or "BSS-BL:<bloggerId>")
   // or a manually typed discount code. Records the scan event and returns the
