@@ -80,7 +80,8 @@ export default function Bills() {
     const matchesSearch = bill.billType.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (bill.description?.toLowerCase() ?? '').includes(searchTerm.toLowerCase());
     const matchesType = billTypeFilter === "all" || bill.billType === billTypeFilter;
-    const matchesStatus = statusFilter === "all" || bill.status === statusFilter;
+    const matchesStatus = statusFilter === "all" ||
+      (statusFilter === "unpaid" ? bill.status !== "paid" : bill.status === statusFilter);
     const matchesArchived = showArchived ? true : !bill.archived;
     const matchesDateRange = (!startDate || new Date(bill.paymentDate) >= new Date(startDate)) &&
       (!endDate || new Date(bill.paymentDate) <= new Date(endDate));
@@ -133,7 +134,12 @@ export default function Bills() {
   };
 
   const billTypes = ["all", "rent", "electricity", "water", "gas", "internet", "maintenance", "foundational", "salary", "other"];
-  const statuses = ["all", "pending", "paid", "overdue"];
+  const statuses = ["all", "paid", "unpaid", "pending", "overdue"];
+  const statusLabel = (status: string): string => {
+    if (status === "all") return t.all || "All";
+    if (status === "unpaid") return isRTL ? "غير مدفوعة" : "Unpaid";
+    return (t as any)[status] || status;
+  };
 
   return (
     <TooltipProvider delayDuration={150}>
@@ -281,7 +287,7 @@ export default function Bills() {
               <SelectContent>
                 {statuses.map((status) => (
                   <SelectItem key={status} value={status}>
-                    {status === "all" ? t.all || "All" : (t as any)[status] || status}
+                    {statusLabel(status)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -330,6 +336,20 @@ export default function Bills() {
             >
               <Archive className="w-4 h-4 mr-2" />
               {showArchived ? t.hideArchived || "Hide Archived" : t.showArchived || "Show Archived"}
+            </Button>
+            <Button
+              variant={statusFilter === "paid" ? "default" : "outline"}
+              onClick={() => setStatusFilter(statusFilter === "paid" ? "all" : "paid")}
+              data-testid="button-filter-paid"
+            >
+              {isRTL ? "المدفوعة" : "Paid"}
+            </Button>
+            <Button
+              variant={statusFilter === "unpaid" ? "default" : "outline"}
+              onClick={() => setStatusFilter(statusFilter === "unpaid" ? "all" : "unpaid")}
+              data-testid="button-filter-unpaid"
+            >
+              {isRTL ? "غير المدفوعة" : "Unpaid"}
             </Button>
           </div>
         </CardContent>
