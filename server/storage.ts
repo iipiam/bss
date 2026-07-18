@@ -240,6 +240,9 @@ import {
   type BloggerCommissionTier,
   type InsertBloggerCommissionTier,
   bloggerCommissionTiers,
+  type BloggerCommissionSettlement,
+  type InsertBloggerCommissionSettlement,
+  bloggerCommissionSettlements,
   type MarketingBroadcastTemplate,
   type InsertMarketingBroadcastTemplate,
   marketingBroadcastTemplates,
@@ -890,6 +893,14 @@ export interface IStorage {
   getBloggerCommissionTiers(restaurantId: string, bloggerId: string): Promise<BloggerCommissionTier[]>;
   getAllBloggerCommissionTiers(restaurantId: string): Promise<BloggerCommissionTier[]>;
   setBloggerCommissionTiers(restaurantId: string, bloggerId: string, tiers: Array<{ fromScans: number; toScans: number | null; ratePerScan: string }>): Promise<BloggerCommissionTier[]>;
+  getBloggerCommissionSettlements(restaurantId: string): Promise<BloggerCommissionSettlement[]>;
+  createBloggerCommissionSettlement(s: InsertBloggerCommissionSettlement): Promise<BloggerCommissionSettlement>;
+  payBloggerCommission(
+    restaurantId: string,
+    bloggerId: string,
+    computeEarned: (tiers: BloggerCommissionTier[], scans: number) => number,
+    billDescription: (scans: number) => string,
+  ): Promise<{ settlement: BloggerCommissionSettlement; bill: ShopBill; outstanding: number } | { error: string }>;
   createMarketingDiscountCode(code: InsertMarketingDiscountCode): Promise<MarketingDiscountCode>;
   deleteMarketingDiscountCode(id: string, restaurantId: string): Promise<boolean>;
 
@@ -6904,6 +6915,64 @@ export class DatabaseStorage implements IStorage {
       sortOrder: i,
     }));
     return db.insert(bloggerCommissionTiers).values(values).returning();
+  }
+
+  // Blogger Commission Settlements
+  async getBloggerCommissionSettlements(restaurantId: string): Promise<BloggerCommissionSettlement[]> {
+    return db.select().from(bloggerCommissionSettlements)
+      .where(eq(bloggerCommissionSettlements.restaurantId, restaurantId))
+      .orderBy(desc(bloggerCommissionSettlements.paidAt));
+  }
+  async createBloggerCommissionSettlement(s: InsertBloggerCommissionSettlement): Promise<BloggerCommissionSettlement> {
+    const [created] = await db.insert(bloggerCommissionSettlements).values(s).returning();
+    return created;
+  }
+  // Atomically pays a blogger's outstanding commission. Uses a transaction with an
+  // advisory lock on the blogger id so concurrent pay requests cannot double-pay.
+  async payBloggerCommission(
+    restaurantId: string,
+    bloggerId: string,
+    computeEarned: (tiers: BloggerCommissionTier[], scans: number) => number,
+    billDescription: (scans: number) => string,
+  ): Promise<{ settlement: BloggerCommissionSettlement; bill: ShopBill; outstanding: number } | { error: string }> {
+    return db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext(${bloggerId}))`);
+      const tiers = await tx.select().from(bloggerCommissionTiers)
+        .where(and(eq(bloggerCommissionTiers.restaurantId, restaurantId), eq(bloggerCommissionTiers.bloggerId, bloggerId)))
+        .orderBy(bloggerCommissionTiers.sortOrder);
+      const scanRows = await tx.select({ count: sql<number>`count(*)::int` }).from(marketingQrScans)
+        .where(and(
+          eq(marketingQrScans.restaurantId, restaurantId),
+          eq(marketingQrScans.targetType, "blogger"),
+          eq(marketingQrScans.targetId, bloggerId),
+        ));
+      const scans = scanRows[0]?.count ?? 0;
+      const earned = Math.round(computeEarned(tiers, scans) * 100) / 100;
+      const settled = await tx.select().from(bloggerCommissionSettlements)
+        .where(and(eq(bloggerCommissionSettlements.restaurantId, restaurantId), eq(bloggerCommissionSettlements.bloggerId, bloggerId)));
+      const alreadyPaid = settled.reduce((sum, s) => sum + parseFloat(s.amount || "0"), 0);
+      const outstanding = Math.round((earned - alreadyPaid) * 100) / 100;
+      if (outstanding <= 0) {
+        return { error: "No outstanding commission to pay for this blogger" };
+      }
+      const [bill] = await tx.insert(shopBills).values({
+        restaurantId,
+        billType: "marketing",
+        amount: outstanding.toFixed(2),
+        paymentDate: new Date(),
+        paymentPeriod: "one-time",
+        status: "paid",
+        description: billDescription(scans),
+      }).returning();
+      const [settlement] = await tx.insert(bloggerCommissionSettlements).values({
+        restaurantId,
+        bloggerId,
+        amount: outstanding.toFixed(2),
+        scansCovered: scans,
+        billId: bill.id,
+      }).returning();
+      return { settlement, bill, outstanding };
+    });
   }
 
   // Marketing - Broadcast Templates

@@ -87,7 +87,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { AlertTriangle, Save, ShieldAlert, Search, Coins } from "lucide-react";
+import { AlertTriangle, Save, ShieldAlert, Search, Coins, Banknote, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -409,6 +409,36 @@ export default function Marketing() {
   const { data: allCommissionTiers = [] } = useQuery<Array<{ id: string; bloggerId: string; fromScans: number; toScans: number | null; ratePerScan: string; sortOrder: number }>>({
     queryKey: ["/api/marketing/commission-tiers"],
   });
+  const { data: commissionSettlements = [] } = useQuery<Array<{ id: string; bloggerId: string; amount: string; scansCovered: number; paidAt: string }>>({
+    queryKey: ["/api/marketing/commission-settlements"],
+  });
+  const settledFor = (bloggerId: string) =>
+    commissionSettlements
+      .filter((s) => s.bloggerId === bloggerId)
+      .reduce((sum, s) => sum + parseFloat(s.amount || "0"), 0);
+
+  const [payDialogBlogger, setPayDialogBlogger] = useState<{ id: string; name: string; outstanding: number } | null>(null);
+  const payCommissionMutation = useMutation({
+    mutationFn: async (bloggerId: string) =>
+      apiRequest("POST", `/api/marketing/blogger-profiles/${bloggerId}/pay-commission`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/commission-settlements"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shop/bills"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/financial"] });
+      setPayDialogBlogger(null);
+      toast({ title: language === "Arabic" ? "تم دفع العمولة وتسجيلها في المصاريف" : "Commission paid and recorded in expenses" });
+    },
+    onError: (e: any) => {
+      let message = e?.message || "Failed to pay commission";
+      try {
+        const parsed = JSON.parse(String(message).replace(/^\d+:\s*/, ""));
+        if (parsed?.error) message = parsed.error;
+      } catch {}
+      setPayDialogBlogger(null);
+      toast({ title: t.error, description: message, variant: "destructive" });
+    },
+  });
+
   const scanCountFor = (targetType: string, targetId: string) =>
     qrScanStats.find((s) => s.targetType === targetType && s.targetId === targetId)?.count ?? 0;
 
@@ -3235,6 +3265,9 @@ export default function Marketing() {
                   const scans = scanCountFor("blogger", b.id);
                   const commission = commissionFor(b.id, scans);
                   const hasTiers = allCommissionTiers.some((tr) => tr.bloggerId === b.id);
+                  const settled = settledFor(b.id);
+                  const outstanding = Math.round((commission - settled) * 100) / 100;
+                  const isUnpaid = hasTiers && outstanding > 0;
                   return (
                     <div
                       key={b.id}
@@ -3277,7 +3310,38 @@ export default function Marketing() {
                             {hasTiers ? `${fmt(commission)} SAR` : "—"}
                           </div>
                         </div>
+                        {hasTiers && (
+                          <div className="text-end">
+                            <div className="text-xs text-muted-foreground">
+                              {language === "Arabic" ? "المستحق" : "Outstanding"}
+                            </div>
+                            <div className={`text-lg font-bold ${isUnpaid ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`} data-testid={`text-blogger-outstanding-${b.id}`}>
+                              {fmt(Math.max(0, outstanding))} SAR
+                            </div>
+                          </div>
+                        )}
                         <Badge className={`${rating.color} text-white`}>{rating.label}</Badge>
+                        {hasTiers && (
+                          isUnpaid ? (
+                            <Badge variant="outline" className="border-amber-500 text-amber-600 dark:text-amber-400" data-testid={`badge-commission-status-${b.id}`}>
+                              {language === "Arabic" ? "غير مدفوعة" : "Unpaid"}
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="border-emerald-500 text-emerald-600 dark:text-emerald-400" data-testid={`badge-commission-status-${b.id}`}>
+                              {language === "Arabic" ? "مدفوعة" : "Paid"}
+                            </Badge>
+                          )
+                        )}
+                        {isUnpaid && (
+                          <Button
+                            size="sm"
+                            onClick={() => setPayDialogBlogger({ id: b.id, name: b.name, outstanding })}
+                            data-testid={`button-pay-blogger-${b.id}`}
+                          >
+                            <Banknote className="h-4 w-4 mr-1" />
+                            {language === "Arabic" ? "دفع" : "Pay"}
+                          </Button>
+                        )}
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
@@ -3320,7 +3384,7 @@ export default function Marketing() {
                               </a>
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>{language === "ar" ? "تقرير تسوية العمولة (PDF)" : "Commission settlement PDF"}</TooltipContent>
+                          <TooltipContent>{language === "Arabic" ? "تقرير تسوية العمولة (PDF)" : "Commission settlement PDF"}</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -3343,6 +3407,34 @@ export default function Marketing() {
               </CardContent>
             </Card>
           )}
+
+          <Dialog open={!!payDialogBlogger} onOpenChange={(open) => !open && setPayDialogBlogger(null)}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>{language === "Arabic" ? "دفع عمولة المدوِّن" : "Pay Blogger Commission"}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <p className="text-sm">
+                  {language === "Arabic"
+                    ? `سيتم دفع ${fmt(payDialogBlogger?.outstanding || 0)} ريال إلى ${payDialogBlogger?.name} وتسجيلها كمصروف تسويق مدفوع في فواتير المتجر والقوائم المالية.`
+                    : `This will pay ${fmt(payDialogBlogger?.outstanding || 0)} SAR to ${payDialogBlogger?.name} and record it as a paid marketing expense in shop bills and financial statements.`}
+                </p>
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" onClick={() => setPayDialogBlogger(null)} data-testid="button-cancel-pay-commission">
+                    {language === "Arabic" ? "إلغاء" : "Cancel"}
+                  </Button>
+                  <Button
+                    onClick={() => payDialogBlogger && payCommissionMutation.mutate(payDialogBlogger.id)}
+                    disabled={payCommissionMutation.isPending}
+                    data-testid="button-confirm-pay-commission"
+                  >
+                    {payCommissionMutation.isPending && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
+                    {language === "Arabic" ? "تأكيد الدفع" : "Confirm Payment"}
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           <Dialog open={!!tierDialogBlogger} onOpenChange={(open) => !open && setTierDialogBlogger(null)}>
             <DialogContent className="max-w-lg">

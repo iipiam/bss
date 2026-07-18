@@ -48,6 +48,23 @@ ALTER TABLE "assignment_history" ADD COLUMN IF NOT EXISTS "role" text;
 ALTER TABLE "assignment_history" ADD COLUMN IF NOT EXISTS "action" text;
 ALTER TABLE "assignment_history" ADD COLUMN IF NOT EXISTS "task_name" text;
 ALTER TABLE "assignment_history" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
+CREATE TABLE IF NOT EXISTS "blogger_commission_settlements" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "blogger_id" varchar NOT NULL,
+  "amount" numeric(12,2) NOT NULL,
+  "scans_covered" integer NOT NULL,
+  "bill_id" varchar,
+  "paid_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "blogger_commission_settlements" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "blogger_commission_settlements" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "blogger_commission_settlements" ADD COLUMN IF NOT EXISTS "blogger_id" varchar;
+ALTER TABLE "blogger_commission_settlements" ADD COLUMN IF NOT EXISTS "amount" numeric(12,2);
+ALTER TABLE "blogger_commission_settlements" ADD COLUMN IF NOT EXISTS "scans_covered" integer;
+ALTER TABLE "blogger_commission_settlements" ADD COLUMN IF NOT EXISTS "bill_id" varchar;
+ALTER TABLE "blogger_commission_settlements" ADD COLUMN IF NOT EXISTS "paid_at" timestamp without time zone DEFAULT now() NOT NULL;
 CREATE TABLE IF NOT EXISTS "blogger_commission_tiers" (
   "id" varchar DEFAULT gen_random_uuid() NOT NULL,
   "restaurant_id" varchar NOT NULL,

@@ -2370,6 +2370,22 @@ export const insertBloggerCommissionTierSchema = createInsertSchema(bloggerCommi
 export type InsertBloggerCommissionTier = z.infer<typeof insertBloggerCommissionTierSchema>;
 export type BloggerCommissionTier = typeof bloggerCommissionTiers.$inferSelect;
 
+// Blogger Commission Settlements (records each payout; links to a paid shop bill) - MULTI-TENANT
+export const bloggerCommissionSettlements = pgTable("blogger_commission_settlements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  bloggerId: varchar("blogger_id").references(() => bloggerProfiles.id, { onDelete: "cascade" }).notNull(),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  scansCovered: integer("scans_covered").notNull(), // cumulative scan count at time of payment
+  billId: varchar("bill_id"), // linked paid shop bill (marketing cost)
+  paidAt: timestamp("paid_at").notNull().defaultNow(),
+}, (table) => ({
+  restaurantBloggerIdx: index("blogger_commission_settlements_restaurant_blogger_idx").on(table.restaurantId, table.bloggerId),
+}));
+export const insertBloggerCommissionSettlementSchema = createInsertSchema(bloggerCommissionSettlements).omit({ id: true, paidAt: true });
+export type InsertBloggerCommissionSettlement = z.infer<typeof insertBloggerCommissionSettlementSchema>;
+export type BloggerCommissionSettlement = typeof bloggerCommissionSettlements.$inferSelect;
+
 // Marketing - WhatsApp Broadcast Templates (MULTI-TENANT)
 export const marketingBroadcastTemplates = pgTable("marketing_broadcast_templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

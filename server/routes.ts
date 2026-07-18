@@ -21076,6 +21076,52 @@ ${phaseSchedules.length > 0 ? `
     }
   });
 
+  // Blogger commission settlements (payment history for the tenant)
+  app.get("/api/marketing/commission-settlements", requireAuth, requireMarketing(), async (req, res) => {
+    try {
+      const restaurantId = marketingScope(req);
+      const settlements = await storage.getBloggerCommissionSettlements(restaurantId);
+      res.json(settlements);
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || "Failed to fetch commission settlements" });
+    }
+  });
+
+  // Pay a blogger's outstanding commission: creates a paid marketing shop bill + settlement record
+  app.post("/api/marketing/blogger-profiles/:id/pay-commission", requireAuth, requireMarketing('add'), async (req, res) => {
+    try {
+      const restaurantId = marketingScope(req);
+      const blogger = await storage.getBloggerProfile(req.params.id, restaurantId);
+      if (!blogger) return res.status(404).json({ error: "Blogger not found" });
+
+      // Atomic: outstanding computation + bill + settlement happen in one transaction
+      // with an advisory lock per blogger, so concurrent requests cannot double-pay.
+      const result = await storage.payBloggerCommission(
+        restaurantId,
+        blogger.id,
+        // Cumulative commission earned to date (same logic as marketing page & settlement PDF)
+        (tiers, scans) => {
+          let earned = 0;
+          for (const tier of [...tiers].sort((a, b) => a.fromScans - b.fromScans)) {
+            if (scans < tier.fromScans) break;
+            const upper = tier.toScans === null ? scans : Math.min(scans, tier.toScans);
+            const n = upper - tier.fromScans + 1;
+            if (n > 0) earned += n * parseFloat(tier.ratePerScan || "0");
+          }
+          return earned;
+        },
+        (scans) => `Blogger commission — ${blogger.name}${blogger.handle ? ` (${blogger.handle})` : ""} — ${scans} QR scans`,
+      );
+
+      if ("error" in result) {
+        return res.status(400).json({ error: result.error });
+      }
+      res.json(result);
+    } catch (e: any) {
+      res.status(500).json({ error: e?.message || "Failed to pay commission" });
+    }
+  });
+
   // Commission settlement PDF per blogger (bilingual EN/AR)
   app.get("/api/marketing/blogger-profiles/:id/settlement-pdf", requireAuth, requireMarketing(), async (req, res) => {
     try {
