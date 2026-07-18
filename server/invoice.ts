@@ -336,6 +336,7 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
   const subtotal = parseFloat(order.subtotal);
   const tax = parseFloat(order.tax);
   const total = parseFloat(order.total);
+  const discountAmount = parseFloat((order as any).discountAmount || "0") || 0;
 
   // Handle logo embedding if logoPath is provided
   let logoHTML = '';
@@ -810,6 +811,11 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
     
     <!-- Totals -->
     <div class="totals-section">
+      ${discountAmount > 0 ? `
+      <div class="totals-row">
+        <span class="english">Discount | الخصم</span>
+        <span>-${discountAmount.toFixed(2)} SAR</span>
+      </div>` : ''}
       <div class="totals-row subtotal">
         <span class="english">Subtotal | المجموع الفرعي</span>
         <span>${subtotal.toFixed(2)} SAR</span>

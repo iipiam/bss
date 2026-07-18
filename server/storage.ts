@@ -7972,7 +7972,12 @@ export const storage = new DatabaseStorage();
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
-    console.log('[Migration] Table verified/created: blogger_profiles');
+    await pool.query(`
+      ALTER TABLE blogger_profiles
+        ADD COLUMN IF NOT EXISTS discount_type TEXT NOT NULL DEFAULT 'percent',
+        ADD COLUMN IF NOT EXISTS discount_value DECIMAL(10,2) NOT NULL DEFAULT 0
+    `);
+    console.log('[Migration] Table verified/created: blogger_profiles (with discount_type, discount_value)');
 
     // Company Profiles: marketing-ready profile per restaurant
     await pool.query(`

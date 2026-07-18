@@ -55,6 +55,7 @@ interface AppliedDiscount {
   code: string;
   discountType: string;
   discountValue: string;
+  label?: string; // friendly display name (e.g. blogger name) when code is a QR payload
 }
 
 function QrScanDialog({
@@ -846,10 +847,28 @@ export default function POS() {
         }`,
       });
     } else if (result?.type === "blogger" && result.blogger) {
-      toast({
-        title: "Blogger scan recorded",
-        description: `${result.blogger.name}${result.blogger.handle ? ` (@${result.blogger.handle})` : ""} — total scans: ${result.scanCount}`,
-      });
+      if (result.discount && parseFloat(result.discount.discountValue || "0") > 0) {
+        setAppliedDiscount({
+          id: result.blogger.id,
+          code: `BSS-BL:${result.blogger.id}`,
+          discountType: result.discount.discountType,
+          discountValue: result.discount.discountValue,
+          label: result.blogger.name,
+        });
+        toast({
+          title: "Blogger discount applied",
+          description: `${result.blogger.name}: ${
+            result.discount.discountType === "percent"
+              ? `${parseFloat(result.discount.discountValue).toFixed(0)}% off`
+              : `${parseFloat(result.discount.discountValue).toFixed(2)} ${t.sar} off`
+          } — total scans: ${result.scanCount}`,
+        });
+      } else {
+        toast({
+          title: "Blogger scan recorded",
+          description: `${result.blogger.name}${result.blogger.handle ? ` (@${result.blogger.handle})` : ""} — total scans: ${result.scanCount} (no discount configured)`,
+        });
+      }
     }
   };
 
@@ -1295,7 +1314,7 @@ export default function POS() {
                   <div className="flex justify-between text-sm text-muted-foreground" data-testid="text-discount-mobile">
                     <span className="flex items-center gap-1">
                       <Ticket className="h-3.5 w-3.5" />
-                      {appliedDiscount.code}
+                      {appliedDiscount.label || appliedDiscount.code}
                       <button
                         type="button"
                         onClick={() => setAppliedDiscount(null)}
@@ -2040,7 +2059,7 @@ export default function POS() {
               <div className="flex justify-between text-muted-foreground" data-testid="text-discount-desktop">
                 <span className="flex items-center gap-1">
                   <Ticket className="h-4 w-4" />
-                  {appliedDiscount.code}
+                  {appliedDiscount.label || appliedDiscount.code}
                   <button
                     type="button"
                     onClick={() => setAppliedDiscount(null)}

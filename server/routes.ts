@@ -4151,15 +4151,35 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // discount from the order items; usage is only consumed here (not at scan).
       let appliedDiscountCodeId: string | null = null;
       if (data.discountCode) {
-        const code = await storage.getMarketingDiscountCodeByCode(restaurantId, data.discountCode);
-        if (!code || !code.active) {
-          return res.status(400).json({ error: "Discount code is invalid or inactive" });
-        }
-        if (code.expiresAt && new Date(code.expiresAt) < new Date()) {
-          return res.status(400).json({ error: "Discount code has expired" });
-        }
-        if (code.usageCap !== null && code.usageCap !== undefined && code.usageCount >= code.usageCap) {
-          return res.status(400).json({ error: "Discount code usage limit reached" });
+        // Resolve the authoritative discount type/value from either a blogger
+        // QR (BSS-BL:<id>) or a marketing discount code.
+        let discountType: string;
+        let discountValueStr: string;
+        if (data.discountCode.startsWith("BSS-BL:")) {
+          const bloggerId = data.discountCode.slice(7).trim();
+          const blogger = await storage.getBloggerProfile(bloggerId, restaurantId);
+          if (!blogger) {
+            return res.status(400).json({ error: "Blogger QR discount is invalid" });
+          }
+          if (parseFloat(blogger.discountValue || "0") <= 0) {
+            return res.status(400).json({ error: "This blogger has no discount configured" });
+          }
+          discountType = blogger.discountType;
+          discountValueStr = blogger.discountValue;
+        } else {
+          const code = await storage.getMarketingDiscountCodeByCode(restaurantId, data.discountCode);
+          if (!code || !code.active) {
+            return res.status(400).json({ error: "Discount code is invalid or inactive" });
+          }
+          if (code.expiresAt && new Date(code.expiresAt) < new Date()) {
+            return res.status(400).json({ error: "Discount code has expired" });
+          }
+          if (code.usageCap !== null && code.usageCap !== undefined && code.usageCount >= code.usageCap) {
+            return res.status(400).json({ error: "Discount code usage limit reached" });
+          }
+          discountType = code.discountType;
+          discountValueStr = code.discountValue;
+          appliedDiscountCodeId = code.id;
         }
         const itemsForDiscount = Array.isArray(data.items) ? (data.items as any[]) : [];
         let itemsSubtotal = itemsForDiscount.reduce((sum, item) => {
@@ -4174,12 +4194,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
             itemsSubtotal *= 1 + (parseFloat(app.markUp || "0") / 100);
           }
         }
-        const value = parseFloat(code.discountValue || "0");
-        const serverDiscount = code.discountType === "percent"
+        const value = parseFloat(discountValueStr || "0");
+        const serverDiscount = discountType === "percent"
           ? Math.min(itemsSubtotal, (itemsSubtotal * value) / 100)
           : Math.min(itemsSubtotal, value);
         data.discountAmount = (Math.round(serverDiscount * 100) / 100).toFixed(2);
-        appliedDiscountCodeId = code.id;
       } else {
         data.discountAmount = "0";
       }
@@ -21305,10 +21324,14 @@ ${phaseSchedules.length > 0 ? `
         if (!blogger) return res.status(404).json({ error: "Blogger not found" });
         await storage.createMarketingQrScan({ restaurantId, targetType: "blogger", targetId: blogger.id, source, orderId: null });
         const scanCount = await storage.getMarketingQrScanCount(restaurantId, "blogger", blogger.id);
+        const bloggerDiscountValue = parseFloat(blogger.discountValue || "0");
         return res.json({
           type: "blogger",
           blogger: { id: blogger.id, name: blogger.name, handle: blogger.handle },
           scanCount,
+          discount: bloggerDiscountValue > 0
+            ? { discountType: blogger.discountType, discountValue: blogger.discountValue }
+            : null,
         });
       }
     } catch (e: any) {
@@ -21395,6 +21418,9 @@ ${phaseSchedules.length > 0 ? `
     try {
       const restaurantId = marketingScope(req);
       const data = insertBloggerProfileSchema.parse({ ...req.body, restaurantId });
+      if ((data.discountType ?? "percent") === "percent" && Number(data.discountValue ?? 0) > 100) {
+        return res.status(400).json({ error: "Percent discount cannot exceed 100" });
+      }
       const created = await storage.createBloggerProfile(data);
       res.json(created);
     } catch (err: any) {
@@ -21404,7 +21430,10 @@ ${phaseSchedules.length > 0 ? `
   app.patch("/api/marketing/blogger-profiles/:id", requireAuth, requireMarketing('add'), async (req, res) => {
     try {
       const restaurantId = marketingScope(req);
-      const data = insertBloggerProfileSchema.partial().omit({ restaurantId: true } as any).parse(req.body);
+      const data = insertBloggerProfileSchema.omit({ restaurantId: true }).partial().parse(req.body);
+      if ((data.discountType ?? "percent") === "percent" && Number(data.discountValue ?? 0) > 100) {
+        return res.status(400).json({ error: "Percent discount cannot exceed 100" });
+      }
       const updated = await storage.updateBloggerProfile(req.params.id, restaurantId, data);
       if (!updated) return res.status(404).json({ error: "Not found" });
       res.json(updated);

@@ -156,6 +156,8 @@ type BloggerFile = {
   comments: number;
   shares: number;
   saves: number;
+  discountType: string;
+  discountValue: string;
 };
 
 const newProduct = (): FinProduct => ({
@@ -204,6 +206,8 @@ const emptyBlogger = (): Omit<BloggerFile, "id" | "createdAt"> => ({
   comments: 0,
   shares: 0,
   saves: 0,
+  discountType: "percent",
+  discountValue: "0",
 });
 
 function computeFin(p: FinProduct) {
@@ -474,7 +478,11 @@ export default function Marketing() {
   // Tier editor dialog
   const [tierDialogBlogger, setTierDialogBlogger] = useState<{ id: string; name: string } | null>(null);
   const [tierRows, setTierRows] = useState<Array<{ fromScans: string; toScans: string; ratePerScan: string }>>([]);
-  const openTierEditor = (blogger: { id: string; name: string }) => {
+  const [tierDiscType, setTierDiscType] = useState<string>("percent");
+  const [tierDiscValue, setTierDiscValue] = useState<string>("");
+  const openTierEditor = (blogger: { id: string; name: string; discountType?: string; discountValue?: string }) => {
+    setTierDiscType(blogger.discountType || "percent");
+    setTierDiscValue(blogger.discountValue && parseFloat(blogger.discountValue) > 0 ? blogger.discountValue : "");
     const existing = allCommissionTiers
       .filter((tr) => tr.bloggerId === blogger.id)
       .sort((a, b) => a.fromScans - b.fromScans);
@@ -499,10 +507,15 @@ export default function Marketing() {
           toScans: r.toScans === "" ? null : Math.max(1, Math.round(Number(r.toScans) || 1)),
           ratePerScan: String(Number(r.ratePerScan) || 0),
         }));
+      await apiRequest("PATCH", `/api/marketing/blogger-profiles/${tierDialogBlogger.id}`, {
+        discountType: tierDiscType,
+        discountValue: String(Math.max(0, Number(tierDiscValue) || 0)),
+      });
       return apiRequest("PUT", `/api/marketing/blogger-profiles/${tierDialogBlogger.id}/commission-tiers`, { tiers });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/marketing/commission-tiers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/marketing/blogger-profiles"] });
       setTierDialogBlogger(null);
       toast({ title: "Commission tiers saved" });
     },
@@ -1193,6 +1206,8 @@ export default function Marketing() {
           comments: Number(b.comments) || 0,
           shares: Number(b.shares) || 0,
           saves: Number(b.saves) || 0,
+          discountType: b.discountType || "percent",
+          discountValue: b.discountValue || "0",
         })),
       );
     }
@@ -3310,6 +3325,18 @@ export default function Marketing() {
                             {hasTiers ? `${fmt(commission)} SAR` : "—"}
                           </div>
                         </div>
+                        <div className="text-end">
+                          <div className="text-xs text-muted-foreground">
+                            {language === "Arabic" ? "خصم QR" : "QR Discount"}
+                          </div>
+                          <div className="text-lg font-bold" data-testid={`text-blogger-discount-${b.id}`}>
+                            {parseFloat(b.discountValue || "0") > 0
+                              ? b.discountType === "percent"
+                                ? `${parseFloat(b.discountValue).toFixed(0)}%`
+                                : `${parseFloat(b.discountValue).toFixed(2)} SAR`
+                              : "—"}
+                          </div>
+                        </div>
                         {hasTiers && (
                           <div className="text-end">
                             <div className="text-xs text-muted-foreground">
@@ -3362,7 +3389,7 @@ export default function Marketing() {
                               variant="ghost"
                               size="icon"
                               aria-label="Commission tiers"
-                              onClick={() => openTierEditor({ id: b.id, name: b.name })}
+                              onClick={() => openTierEditor({ id: b.id, name: b.name, discountType: b.discountType, discountValue: b.discountValue })}
                               data-testid={`button-tiers-blogger-${b.id}`}
                             >
                               <Coins className="h-4 w-4" />
@@ -3444,6 +3471,36 @@ export default function Marketing() {
                   Set how much this blogger earns per QR scan. Example: scans 1–20 pay 1 SAR each, scans 21–50 pay 2 SAR each. Leave "To" empty for no upper limit.
                 </DialogDescription>
               </DialogHeader>
+              <div className="space-y-2 rounded-md border p-3">
+                <div className="text-sm font-medium">
+                  {language === "Arabic" ? "خصم العميل عند مسح رمز QR" : "Customer discount when this QR is scanned"}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {language === "Arabic"
+                    ? "عندما يمسح الكاشير رمز QR الخاص بهذا المدون، يُطبق هذا الخصم على الطلب ويظهر في الفاتورة."
+                    : "When the cashier scans this blogger's QR code at the POS, this discount is applied to the order and shown on the invoice. Leave 0 for no discount."}
+                </div>
+                <div className="grid grid-cols-[1fr_1fr] gap-2">
+                  <Select value={tierDiscType} onValueChange={setTierDiscType}>
+                    <SelectTrigger data-testid="select-blogger-discount-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="percent">{language === "Arabic" ? "نسبة مئوية %" : "Percent %"}</SelectItem>
+                      <SelectItem value="fixed">{language === "Arabic" ? "مبلغ ثابت (ريال)" : "Fixed amount (SAR)"}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    placeholder="0"
+                    value={tierDiscValue}
+                    onChange={(e) => setTierDiscValue(e.target.value)}
+                    data-testid="input-blogger-discount-value"
+                  />
+                </div>
+              </div>
               <div className="space-y-2">
                 <div className="grid grid-cols-[1fr_1fr_1fr_auto] gap-2 text-xs text-muted-foreground">
                   <span>From scan</span>

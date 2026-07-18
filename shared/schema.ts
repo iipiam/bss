@@ -2062,9 +2062,14 @@ export const bloggerProfiles = pgTable("blogger_profiles", {
   comments: integer("comments").notNull().default(0),
   shares: integer("shares").notNull().default(0),
   saves: integer("saves").notNull().default(0),
+  discountType: text("discount_type").notNull().default("percent"), // 'percent' | 'fixed' — applied when this blogger's QR is scanned at POS
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull().default("0"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
-export const insertBloggerProfileSchema = createInsertSchema(bloggerProfiles).omit({ id: true, createdAt: true });
+export const insertBloggerProfileSchema = createInsertSchema(bloggerProfiles).omit({ id: true, createdAt: true }).extend({
+  discountType: z.enum(["percent", "fixed"]).optional(),
+  discountValue: z.coerce.number().min(0).transform((n) => n.toFixed(2)).optional(),
+});
 export type InsertBloggerProfile = z.infer<typeof insertBloggerProfileSchema>;
 export type BloggerProfile = typeof bloggerProfiles.$inferSelect;
 

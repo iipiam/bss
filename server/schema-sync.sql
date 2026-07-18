@@ -99,6 +99,8 @@ CREATE TABLE IF NOT EXISTS "blogger_profiles" (
   "shares" integer DEFAULT 0 NOT NULL,
   "saves" integer DEFAULT 0 NOT NULL,
   "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "discount_type" text DEFAULT 'percent'::text NOT NULL,
+  "discount_value" numeric(10,2) DEFAULT 0 NOT NULL,
   PRIMARY KEY ("id")
 );
 ALTER TABLE "blogger_profiles" ADD COLUMN IF NOT EXISTS "id" varchar(255) DEFAULT gen_random_uuid() NOT NULL;
@@ -117,6 +119,8 @@ ALTER TABLE "blogger_profiles" ADD COLUMN IF NOT EXISTS "comments" integer DEFAU
 ALTER TABLE "blogger_profiles" ADD COLUMN IF NOT EXISTS "shares" integer DEFAULT 0 NOT NULL;
 ALTER TABLE "blogger_profiles" ADD COLUMN IF NOT EXISTS "saves" integer DEFAULT 0 NOT NULL;
 ALTER TABLE "blogger_profiles" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "blogger_profiles" ADD COLUMN IF NOT EXISTS "discount_type" text DEFAULT 'percent'::text NOT NULL;
+ALTER TABLE "blogger_profiles" ADD COLUMN IF NOT EXISTS "discount_value" numeric(10,2) DEFAULT 0 NOT NULL;
 CREATE TABLE IF NOT EXISTS "bootstrap_reset_tokens" (
   "id" varchar DEFAULT gen_random_uuid() NOT NULL,
   "token_hash" text NOT NULL,
