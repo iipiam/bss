@@ -2050,9 +2050,18 @@ export class DatabaseStorage implements IStorage {
   async updateUser(id: string, restaurantId: string, user: Partial<InsertUser>): Promise<User | undefined> {
     // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
     const { restaurantId: _, ...safeData } = user;
+    // Keep explicit nulls (e.g. branchId: null to unassign a branch, or
+    // clearing optional HR fields) — only drop undefined keys. Null values
+    // for required columns are stripped below.
     const updateData = Object.fromEntries(
-      Object.entries(safeData).filter(([_, value]) => value !== undefined && value !== null)
+      Object.entries(safeData).filter(([_, value]) => value !== undefined)
     );
+    // Never null out required columns.
+    for (const requiredKey of ["password", "username", "fullName", "role", "active", "permissions"]) {
+      if (updateData[requiredKey] === null || updateData[requiredKey] === "") {
+        delete updateData[requiredKey];
+      }
+    }
     if (Object.keys(updateData).length === 0) {
       return this.getUser(id, restaurantId);
     }
@@ -2107,23 +2116,10 @@ export class DatabaseStorage implements IStorage {
         [id],
       );
 
-      // Null out references in tenant-scoped bills (salary + audit columns).
+      // Null out the salary-bill link in shop bills (keeps the bill history,
+      // just detaches the deleted employee).
       await client.query(
-        `UPDATE bills
-            SET employee_id = NULL
-          WHERE employee_id = $1`,
-        [id],
-      );
-      await client.query(
-        `UPDATE bills
-            SET created_by = NULL
-          WHERE created_by = $1`,
-        [id],
-      );
-      await client.query(
-        `UPDATE bills
-            SET updated_by = NULL
-          WHERE updated_by = $1`,
+        'UPDATE shop_bills SET employee_id = NULL WHERE employee_id = $1',
         [id],
       );
 
@@ -2149,12 +2145,26 @@ export class DatabaseStorage implements IStorage {
         [id],
       );
 
-      // Licenses uploaded_by references (best-effort; tables may not exist on
-      // older deployments — wrap each in its own savepoint).
+      // Team chat: remove the user's membership/read state, but KEEP message
+      // history (detach the sender instead of deleting messages).
+      await client.query('DELETE FROM message_reads WHERE user_id = $1', [id]);
+      await client.query('DELETE FROM chat_conversation_preferences WHERE user_id = $1', [id]);
+      await client.query('DELETE FROM conversation_members WHERE user_id = $1', [id]);
+      await client.query('UPDATE chat_messages SET sender_id = NULL WHERE sender_id = $1', [id]);
+      await client.query('UPDATE conversations SET created_by = NULL WHERE created_by = $1', [id]);
+
+      // Remaining audit/uploader references (best-effort; some tables/columns
+      // may not exist on older deployments — wrap each in its own savepoint).
       for (const sql of [
         'UPDATE licenses SET uploaded_by = NULL WHERE uploaded_by = $1',
+        'UPDATE licenses SET created_by = NULL WHERE created_by = $1',
+        'UPDATE licenses SET updated_by = NULL WHERE updated_by = $1',
         'UPDATE it_bills SET created_by = NULL WHERE created_by = $1',
         'UPDATE it_bills SET updated_by = NULL WHERE updated_by = $1',
+        'UPDATE business_info SET updated_by = NULL WHERE updated_by = $1',
+        'UPDATE shop_files SET uploaded_by = NULL WHERE uploaded_by = $1',
+        'UPDATE company_files SET uploaded_by = NULL WHERE uploaded_by = $1',
+        'UPDATE company_bills SET created_by = NULL WHERE created_by = $1',
       ]) {
         try {
           await client.query('SAVEPOINT sp');
