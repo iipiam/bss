@@ -1513,16 +1513,6 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
   </div>
   <div class="quiz" id="flqo0"></div>
   <div class="qfb" id="flqf0"></div>
-  <div class="ai-panel">
-    <div class="ai-glow">&#10022;</div>
-    <div class="ai-dr"><div class="adr-title">Ask Claude</div><div class="adr-ctx" id="fl-ai-ctx"></div></div>
-    <div class="ai-msgs" id="flam0"><div class="ai-msg ai-msg-a">Ask me anything about this lesson.</div></div>
-    <div class="thinking hidden" id="flth0"><div class="dots"><span></span><span></span><span></span></div> Claude is thinking&#8230;</div>
-    <div class="ai-row">
-      <textarea class="ai-input" id="flai0" placeholder="Ask about this lesson&#8230;" rows="1" onkeydown="flKey(event,0)"></textarea>
-      <button type="button" class="ai-send" onclick="askFL(0)">&#8593;</button>
-    </div>
-  </div>
   <div class="l-nav">
     <button type="button" class="l-prev" id="fl-prev-btn" onclick="goFL(FL_CUR-1)" disabled>&#8592; Previous</button>
     <button type="button" class="l-next" id="fl-next-btn" onclick="flNextOrComplete()">Next Lesson &#8594;</button>
@@ -1641,16 +1631,6 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
   </div>
   <div class="quiz" id="iosqo0"></div>
   <div class="qfb" id="iosqf0"></div>
-  <div class="ai-panel">
-    <div class="ai-glow">&#10022;</div>
-    <div class="ai-dr"><div class="adr-title">Ask Claude</div><div class="adr-ctx" id="ios-ai-ctx"></div></div>
-    <div class="ai-msgs" id="iosam0"><div class="ai-msg ai-msg-a">Ask me anything about this lesson.</div></div>
-    <div class="thinking hidden" id="iosth0"><div class="dots"><span></span><span></span><span></span></div> Claude is thinking&#8230;</div>
-    <div class="ai-row">
-      <textarea class="ai-input" id="iosai0" placeholder="Ask about this lesson&#8230;" rows="1" onkeydown="iosKey(event,0)"></textarea>
-      <button type="button" class="ai-send" style="background:#c3580c" onclick="askIOS(0)">&#8593;</button>
-    </div>
-  </div>
   <div class="l-nav">
     <button type="button" class="l-prev" id="ios-prev-btn" onclick="goIOS(IOS_CUR-1)" disabled>&#8592; Previous</button>
     <button type="button" class="l-next" id="ios-next-btn" style="background:#c3580c;border-color:#c3580c" onclick="iosNextOrComplete()">Next Lesson &#8594;</button>
@@ -1793,15 +1773,6 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
 
         <div class="quiz" id="htmlqo0"></div>
         <div class="qfb" id="htmlqf0"></div>
-        <div class="ai-panel">
-          <div class="ai-glow">✦</div>
-          <div class="ai-dr">
-            <div class="ai-ask">Ask AI about this lesson</div>
-            <textarea class="ai-inp" id="html-ai-inp" rows="2" placeholder="e.g. Why does margin collapse happen in CSS?"></textarea>
-            <button type="button" class="ai-send" onclick="askHTML()">Ask ✦</button>
-          </div>
-          <div class="ai-resp" id="html-ai-resp"></div>
-        </div>
         <div class="nav-btns">
           <button type="button" class="nb prev" onclick="goHTML(HTML_CUR-1)" id="html-prev">← Prev</button>
           <button type="button" class="nb next" onclick="htmlNextOrComplete()" id="html-next">Next →</button>
@@ -1946,15 +1917,6 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
 
           <div class="quiz" id="cssqo0"></div>
           <div class="qfb" id="cssqf0"></div>
-          <div class="ai-panel">
-            <div class="ai-glow">✦</div>
-            <div class="ai-dr">
-              <div class="ai-ask">Ask AI about this lesson</div>
-              <textarea class="ai-inp" id="css-ai-inp" rows="2" placeholder="e.g. Why does specificity matter and how do I debug it?"></textarea>
-              <button type="button" class="ai-send" onclick="askCSS()">Ask ✦</button>
-            </div>
-            <div class="ai-resp" id="css-ai-resp"></div>
-          </div>
           <div class="nav-btns">
             <button type="button" class="nb prev" onclick="goCSS(CSS_CUR-1)" id="css-prev">← Prev</button>
             <button type="button" class="nb next" onclick="cssNextOrComplete()" id="css-next">Next →</button>
@@ -2093,15 +2055,6 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
 
         <div class="quiz" id="uiuxqo0"></div>
         <div class="qfb" id="uiuxqf0"></div>
-        <div class="ai-panel">
-          <div class="ai-glow">✦</div>
-          <div class="ai-dr">
-            <div class="ai-ask">Ask AI about this lesson</div>
-            <textarea class="ai-inp" id="uiux-ai-inp" rows="2" placeholder="e.g. What is the 8pt spacing grid system?"></textarea>
-            <button type="button" class="ai-send" onclick="askUX()">Ask ✦</button>
-          </div>
-          <div class="ai-resp" id="uiux-ai-resp"></div>
-        </div>
         <div class="nav-btns">
           <button type="button" class="nb prev" onclick="goUX(UIUX_CUR-1)" id="uiux-prev">← Prev</button>
           <button type="button" class="nb next" onclick="uiuxNextOrComplete()" id="uiux-next">Next →</button>
@@ -2228,15 +2181,6 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
         </div>
         <div class="quiz" id="apiqo0"></div>
         <div class="qfb" id="apiqf0"></div>
-        <div class="ai-panel">
-          <div class="ai-glow">✦</div>
-          <div class="ai-dr">
-            <div class="ai-ask">Ask AI about this lesson</div>
-            <textarea class="ai-inp" id="api-ai-inp" rows="2" placeholder="e.g. What is the difference between PUT and PATCH?"></textarea>
-            <button type="button" class="ai-send" onclick="askAPI()">Ask ✦</button>
-          </div>
-          <div class="ai-resp" id="api-ai-resp"></div>
-        </div>
         <div class="nav-btns">
           <button type="button" class="nb prev" onclick="goAPI(API_CUR-1)" id="api-prev">← Prev</button>
           <button type="button" class="nb next" onclick="apiNextOrComplete()" id="api-next">Next →</button>
@@ -2366,15 +2310,6 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
           </div>
           <div class="quiz" id="zatqo0"></div>
           <div class="qfb" id="zatqf0"></div>
-          <div class="ai-panel">
-            <div class="ai-glow">✦</div>
-            <div class="ai-dr">
-              <div class="ai-ask">Ask AI about this lesson</div>
-              <textarea class="ai-inp" id="zat-ai-inp" rows="2" placeholder="e.g. What is the difference between CCSID and PCSID?"></textarea>
-              <button type="button" class="ai-send" onclick="askZAT()">Ask ✦</button>
-            </div>
-            <div class="ai-resp" id="zat-ai-resp"></div>
-          </div>
           <div class="nav-btns">
             <button type="button" class="nb prev" onclick="goZAT(ZAT_CUR-1)" id="zat-prev">← Prev</button>
             <button type="button" class="nb next" onclick="zatNextOrComplete()" id="zat-next">Next →</button>
@@ -2505,15 +2440,6 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
         </div>
         <div class="quiz" id="tipsqo0"></div>
         <div class="qfb" id="tipsqf0"></div>
-        <div class="ai-panel">
-          <div class="ai-glow">✦</div>
-          <div class="ai-dr">
-            <div class="ai-ask">Ask AI about this lesson</div>
-            <textarea class="ai-inp" id="tips-ai-inp" rows="2" placeholder="e.g. How do I restart Node.js without downtime?"></textarea>
-            <button type="button" class="ai-send" onclick="askTIPS()">Ask ✦</button>
-          </div>
-          <div class="ai-resp" id="tips-ai-resp"></div>
-        </div>
         <div class="nav-btns">
           <button type="button" class="nb prev" onclick="goTIPS(TIPS_CUR-1)" id="tips-prev">← Prev</button>
           <button type="button" class="nb next" onclick="tipsNextOrComplete()" id="tips-next">Next →</button>
@@ -2611,7 +2537,7 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
             <div class="l-meta">
               <span class="lm" id="py-meta1"></span>
               <span class="lm" id="py-meta2"></span>
-              <span class="lm">🐍 Code + Quiz + AI Mentor</span>
+              <span class="lm">🐍 Code + Quiz</span>
             </div>
           </div>
         <div class="prose" id="pyp0">Loading&#8230;</div>
@@ -2629,18 +2555,6 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
           <div class="quiz-title">Knowledge Check</div>
           <div id="pyqo0"></div>
           <div id="pyqf0"></div>
-        </div>
-        <div class="ai-chat">
-          <div class="ai-chat-header">
-            <span class="ai-chat-title">&#129302; AI Mentor</span>
-            <span class="ai-ctx" id="py-ai-ctx"></span>
-          </div>
-          <div class="ai-msgs" id="pyam0"></div>
-          <div class="ai-thinking hidden" id="pyth0">&#129302; Thinking&#8230;</div>
-          <div class="ai-input-row">
-            <textarea class="ai-input" id="pyai0" placeholder="Ask about this lesson..." onkeydown="pyKey(event,0)" rows="1"></textarea>
-            <button type="button" class="ai-send" onclick="askPY(0)">Ask &#10022;</button>
-          </div>
         </div>
         <div class="nav-btns">
           <button type="button" class="nb prev" id="py-prev-btn" onclick="goPY(PY_CUR-1)" disabled>&#8592; Prev</button>
@@ -2735,7 +2649,7 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
             <div class="l-meta">
               <span class="lm" id="js-meta1"></span>
               <span class="lm" id="js-meta2"></span>
-              <span class="lm">⚡ Code + Quiz + AI Mentor</span>
+              <span class="lm">⚡ Code + Quiz</span>
             </div>
           </div>
         <div class="prose" id="jsp0">Loading&#8230;</div>
@@ -2753,18 +2667,6 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
           <div class="quiz-title">Knowledge Check</div>
           <div id="jsqo0"></div>
           <div id="jsqf0"></div>
-        </div>
-        <div class="ai-chat">
-          <div class="ai-chat-header">
-            <span class="ai-chat-title">&#129302; AI Mentor</span>
-            <span class="ai-ctx" id="js-ai-ctx"></span>
-          </div>
-          <div class="ai-msgs" id="jsam0"></div>
-          <div class="ai-thinking hidden" id="jsth0">&#129302; Thinking&#8230;</div>
-          <div class="ai-input-row">
-            <textarea class="ai-input" id="jsai0" placeholder="Ask about this lesson..." onkeydown="jsKey(event,0)" rows="1"></textarea>
-            <button type="button" class="ai-send" onclick="askJS(0)">Ask &#10022;</button>
-          </div>
         </div>
         <div class="nav-btns">
           <button type="button" class="nb prev" id="js-prev-btn" onclick="goJS(JS_CUR-1)" disabled>&#8592; Prev</button>
@@ -2859,7 +2761,7 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
             <div class="l-meta">
               <span class="lm" id="dk-meta1"></span>
               <span class="lm" id="dk-meta2"></span>
-              <span class="lm">🐳 Code + Quiz + AI Mentor</span>
+              <span class="lm">🐳 Code + Quiz</span>
             </div>
           </div>
         <div class="prose" id="dkp0">Loading&#8230;</div>
@@ -2877,18 +2779,6 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
           <div class="quiz-title">Knowledge Check</div>
           <div id="dkqo0"></div>
           <div id="dkqf0"></div>
-        </div>
-        <div class="ai-chat">
-          <div class="ai-chat-header">
-            <span class="ai-chat-title">&#129302; AI Mentor</span>
-            <span class="ai-ctx" id="dk-ai-ctx"></span>
-          </div>
-          <div class="ai-msgs" id="dkam0"></div>
-          <div class="ai-thinking hidden" id="dkth0">&#129302; Thinking&#8230;</div>
-          <div class="ai-input-row">
-            <textarea class="ai-input" id="dkai0" placeholder="Ask about this lesson..." onkeydown="dkKey(event,0)" rows="1"></textarea>
-            <button type="button" class="ai-send" onclick="askDK(0)">Ask &#10022;</button>
-          </div>
         </div>
         <div class="nav-btns">
           <button type="button" class="nb prev" id="dk-prev-btn" onclick="goDK(DK_CUR-1)" disabled>&#8592; Prev</button>
@@ -2969,7 +2859,7 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
             <div class="l-meta">
               <span class="lm" id="sm-meta1"></span>
               <span class="lm" id="sm-meta2"></span>
-              <span class="lm">📈 Model + Quiz + AI Mentor</span>
+              <span class="lm">📈 Model + Quiz</span>
             </div>
           </div>
         <div class="prose" id="smp0">Loading&#8230;</div>
@@ -2987,18 +2877,6 @@ a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible{
           <div class="quiz-title">Knowledge Check</div>
           <div id="smqo0"></div>
           <div id="smqf0"></div>
-        </div>
-        <div class="ai-chat">
-          <div class="ai-chat-header">
-            <span class="ai-chat-title">&#129302; AI Mentor</span>
-            <span class="ai-ctx" id="sm-ai-ctx"></span>
-          </div>
-          <div class="ai-msgs" id="smam0"></div>
-          <div class="ai-thinking hidden" id="smth0">&#129302; Thinking&#8230;</div>
-          <div class="ai-input-row">
-            <textarea class="ai-input" id="smai0" placeholder="Ask about this lesson..." onkeydown="smKey(event,0)" rows="1"></textarea>
-            <button type="button" class="ai-send" onclick="askSM(0)">Ask &#10022;</button>
-          </div>
         </div>
         <div class="nav-btns">
           <button type="button" class="nb prev" id="sm-prev-btn" onclick="goSM(SM_CUR-1)" disabled>&#8592; Prev</button>
@@ -5924,7 +5802,6 @@ function ansAPI(qIdx,optIdx){
   if(fb){fb.className='qfb show '+(correct?'ok':'bad');fb.innerHTML=(correct?'\u2713 CORRECT \u2014 ':'\u2717 INCORRECT \u2014 Answer: '+(API_QUIZ_Q[qIdx]&&API_QUIZ_Q[qIdx].opts?API_QUIZ_Q[qIdx].opts[API_CA[qIdx]]:''));}
   if(correct){API_XP+=50;apiSave();}
 }
-function askAPI(){askAI('api-ai-inp','api-ai-resp',API_CTX[API_CUR]||'API Development');}
 function apiUI(){
   var hrs=0;API_DONE.forEach(i=>{hrs+=(API_HOURS_PER[i]||3);});
   var xv=document.getElementById('api-xpv');if(xv)xv.textContent=hrs.toFixed(1).replace(/\.0$/,'');
@@ -6107,7 +5984,6 @@ function ansTIPS(qIdx,oIdx){
   }
   if(ok){TIPS_XP+=50;tipsSave();}
 }
-function askTIPS(){askAI('tips-ai-inp','tips-ai-resp',TIPS_CTX[TIPS_CUR]||'Production Tips');}
 function tipsUI(){
   var hrs=0;TIPS_DONE.forEach(i=>{hrs+=(TIPS_HOURS_PER[i]||3);});
   var xv=document.getElementById('tips-xpv');if(xv)xv.textContent=hrs.toFixed(1).replace(/\.0$/,'');
@@ -6394,41 +6270,6 @@ function ansUX(qIdx,optIdx){
   if(correct){UIUX_XP+=50;uiuxSave();}
 }
 
-/* ─── AI Ask ─── */
-function askHTML(){
-  var q=document.getElementById('html-ai-inp');
-  var r=document.getElementById('html-ai-resp');
-  if(!q||!r)return;
-  var topic=HTML_CTX[HTML_CUR]||'HTML/CSS';
-  askAI('html-ai-inp','html-ai-resp',topic);
-}
-function askUX(){
-  var q=document.getElementById('uiux-ai-inp');
-  var r=document.getElementById('uiux-ai-resp');
-  if(!q||!r)return;
-  var topic=UIUX_CTX[UIUX_CUR]||'UI/UX Design';
-  askAI('uiux-ai-inp','uiux-ai-resp',topic);
-}
-
-/* ─── Shared AI helper (if askAI not yet defined, define it) ─── */
-if(typeof askAI === 'undefined'){
-  function askAI(inpId, respId, topic){
-    var inp=document.getElementById(inpId);
-    var resp=document.getElementById(respId);
-    if(!inp||!resp||!inp.value.trim())return;
-    resp.textContent='Asking AI…';
-    fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-6',max_tokens:400,
-        messages:[{role:'user',content:'You are a coding instructor. Topic: '+topic+'. Question: '+inp.value}]
-      })
-    }).then(function(r){return r.json();})
-      .then(function(d){resp.textContent=(d.content&&d.content[0])?d.content[0].text:'No response';})
-      .catch(function(){resp.textContent='AI not available in this context.';});
-  }
-}
 
 /* ─── Progress/UI update ─── */
 function htmlUI(){
@@ -6997,37 +6838,6 @@ function runCode(edId,outId){
   }
 }
 
-async function aiAsk(idx,msgId,thinkId,inputId,ctxArr,pathLabel){
-  const inp=document.getElementById(inputId);
-  const q=inp?.value?.trim();if(!q)return;
-  inp.value='';
-  const msgs=document.getElementById(msgId);
-  const think=document.getElementById(thinkId);
-  if(!msgs||!think)return;
-  const um=document.createElement('div');um.className='ai-msg user';um.textContent=q;
-  msgs.appendChild(um);msgs.scrollTop=msgs.scrollHeight;
-  think.classList.remove('hidden');
-  try{
-    const ctx=ctxArr[idx]||pathLabel+' development';
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,
-        system:'You are a senior '+pathLabel+' instructor at Кинжал ЛТД Ко. КЛК Topic: '+ctx+'. Student is Amjad Al-Qahtani, Saudi entrepreneur (Matcha Valley cafe loyalty app, BSS POS ZATCA-compliant, STRUX construction). Expert production-level answers. **bold** key terms, `code` inline.',
-        messages:[{role:'user',content:q}]})
-    });
-    const data=await res.json();
-    think.classList.add('hidden');
-    const text=(data.content?.[0]?.text||'Could not get response.')
-      .replace(/\*\*(.+?)\*\*/g,'<strong>$1\u003C/strong>')
-      .replace(/`([^`]+)`/g,'<code>$1\u003C/code>')
-      .replace(/\n\n/g,'<br><br>').replace(/\n/g,'<br>');
-    const am=document.createElement('div');am.className='ai-msg ai';am.innerHTML=text;
-    msgs.appendChild(am);msgs.scrollTop=msgs.scrollHeight;
-  }catch(e){
-    think.classList.add('hidden');
-    const em=document.createElement('div');em.className='ai-msg ai';em.textContent='Open in Claude.ai to use AI Q&A.';msgs.appendChild(em);
-  }
-}
 
 // ── FLUTTER PATH ──
 const FL_DONE=new Set(JSON.parse(_LS.get('kz_fl_done','[]')));
@@ -7097,8 +6907,6 @@ function ansFL(qIdx,optIdx){
   if(correct&&!FL_DONE.has(qIdx)){FL_XP+=30;flSave();flUI();}
 }
 
-function askFL(idx){aiAsk(idx,'flam0','flth0','flai0',FL_CTX,'Flutter/Dart');}
-function flKey(e,idx){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askFL(idx);}}
 
 // ── iOS PATH ──
 const IOS_DONE=new Set(JSON.parse(_LS.get('kz_ios_done','[]')));
@@ -7168,8 +6976,6 @@ function ansIOS(qIdx,optIdx){
   if(correct&&!IOS_DONE.has(qIdx)){IOS_XP+=30;iosSave();iosUI();}
 }
 
-function askIOS(idx){aiAsk(idx,'iosam0','iosth0','iosai0',IOS_CTX,'iOS/Swift');}
-function iosKey(e,idx){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askIOS(idx);}}
 
 // ── TRACK / LANDING ──
 var CSS_DONE=new Set(JSON.parse(_LS.get('kz_css_done')||'[]'));var CSS_XP=parseFloat(_LS.get('kz_css_xp')||'0');var CSS_CUR=parseInt(_LS.get('kz_css_cur')||'0');var CSS_TOTAL=24;var CSS_HOURS_PER=[3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0];var CSS_LXP=CSS_HOURS_PER;var CSS_QUIZ={};var CSS_CTX=["Selectors & Specificity Deep Dive", "The Box Model & Display Types", "Flexbox \u2014 One-Dimensional Mastery", "CSS Grid \u2014 Two-Dimensional Layout", "Positioning: Static to Sticky", "CSS Custom Properties (Variables)", "Colors \u2014 oklch, color-mix, P3", "Typography & Variable Fonts", "Transitions & Animations", "Transforms: 2D & 3D", "Responsive Design & Container Queries", "CSS Architecture: BEM, CUBE, Utility", "Pseudo-classes & Pseudo-elements", "CSS Functions: calc(), clamp(), min(), max()", "Backgrounds, Gradients & Masks", "Borders, Shadows & Filters", "CSS Grid \u2014 Subgrid & Named Lines", "Stacking Contexts & z-index", "CSS Cascade Layers (@layer)", "Scroll-driven Animations & View Transitions", "RTL & Logical Properties for Arabic", "Dark Mode with prefers-color-scheme", "Print Stylesheets & @page", "CSS Performance & Critical Path"];var CSS_PROSE=["<p><strong>Selectors & Specificity</strong> determine which rule wins when several target the same element. Specificity is a 4-part score: inline styles (1,0,0,0), IDs (0,1,0,0), classes/attributes/pseudo-classes (0,0,1,0), and elements/pseudo-elements (0,0,0,1). The higher score always wins regardless of source order. <code>!important</code> overrides normal specificity but should be avoided — it breaks the cascade. Modern CSS adds <code>:is()</code>, <code>:where()</code> (zero specificity), and <code>:has()</code> the parent selector.</p>",
@@ -7225,8 +7031,6 @@ function buildQuizCSS(idx){var q=CSS_QUIZ_Q[idx];if(!q)return;CSS_QUIZ[idx]={ans
 function answerQuizCSS(li,ch){var cr=CSS_QUIZ_CA[li];CSS_QUIZ[li]={answered:true,correct:ch===cr};document.querySelectorAll('#cssqo0 .quiz-opt').forEach(function(b,i){b.disabled=true;if(i===cr)b.classList.add('correct');else if(i===ch&&ch!==cr)b.classList.add('wrong');});var fb=document.getElementById('cssqf0');if(fb){var q=CSS_QUIZ_Q[li];fb.innerHTML='<div class="qfb-inner '+(ch===cr?'qfb-ok':'qfb-err')+'">'+(ch===cr?'✓ Correct!':'✗ Correct: ')+'<strong>'+q.opts[cr]+'</strong></div>';}}
 function renderQuizCSS(idx){buildQuizCSS(idx);}
 function runCSS(li){try{var code=document.getElementById('csse'+li);var frame=document.getElementById('cssf'+li);if(code&&frame){var sample="<div class=\"row\"><div>One</div><div>Two</div><div>Three</div></div><div class=\"grid\"><div>A</div><div>B</div><div>C</div><div>D</div></div><div class=\"card\"><div class=\"card__title card__title--accent\">Card Title</div><div class=\"card__body\">Sample body text.</div></div><ul class=\"list\"><li>Dashboard</li><li>Invoices</li><li>Reports</li></ul><button class=\"btn\" id=\"cta\">Primary</button><div class=\"box\">Box</div><div class=\"hero\">Hero Text</div><div class=\"panel\">Panel</div>";var head="<!DOCTYPE html><html><head><meta charset='utf-8'><style>html{background:#1a0505;color:#e5e5e5;font-family:-apple-system,BlinkMacSystemFont,sans-serif}body{margin:0;padding:20px;display:flex;flex-direction:column;gap:14px}";frame.srcdoc=head+code.value+'</style></head><body>'+sample+'</body></html>';}}catch(ex){console.error('runCSS',ex);}}
-function askCSS(li){try{askAI('css-ai-inp','css-ai-resp',CSS_CTX[CSS_CUR]||'CSS Mastery');}catch(ex){_showErr('askCSS',ex);}}
-function cssKey(e,idx){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askCSS(idx);}}
 function cssNextOrComplete(){if(CSS_CUR<CSS_TOTAL-1){goCSS(CSS_CUR+1);}else{CSS_DONE.add(CSS_CUR);_LS.set('kz_css_done',JSON.stringify([...CSS_DONE]));cssUI();if(CSS_DONE.size>=CSS_TOTAL){toast('🎉 CSS Complete!',4000);showCertModal('css');}}}
 function cssProg(){var d=CSS_DONE.size,t=CSS_TOTAL,p=Math.round(d/t*100),elP=document.getElementById('landing-css-prog'),elB=document.getElementById('landing-css-bar'),elT=document.getElementById('landing-css-txt');if(elP)elP.style.display=d>0?'block':'none';if(elB)elB.style.width=p+'%';if(elT)elT.textContent=d+'/'+t+' lessons · '+p+'% complete';}
 var ZAT_DONE=new Set(JSON.parse(_LS.get('kz_zat_done')||'[]'));var ZAT_XP=parseFloat(_LS.get('kz_zat_xp')||'0');var ZAT_CUR=parseInt(_LS.get('kz_zat_cur')||'0');var ZAT_TOTAL=25;var ZAT_HOURS_PER=[3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0, 3.0,4.0];var ZAT_LXP=ZAT_HOURS_PER;var ZAT_QUIZ={};var ZAT_CTX=["ZATCA & E-Invoicing Overview", "Phase 1 vs Phase 2 Requirements", "UBL 2.1 XML Invoice Structure", "Invoice Types: Standard, Simplified & Credit Notes", "Mandatory & Conditional Fields", "Cryptographic Stamps: ECDSA secp256k1", "CSR Generation & CSID Registration", "Onboarding: CCSID & Production PCSID", "ZATCA Sandbox & Simulation Environment", "Clearance API: Standard Invoices", "Reporting API: Simplified Invoices", "UUID, PIH, Counter & QR Code Generation", "XML Signing with XMLDSig", "Invoice Hash Chaining (PIH)", "Compliance Check Endpoint", "Error Codes & Rejection Handling", "Multi-Tenant Architecture for BSS", "Storing CSID & Keys Securely", "Retry Logic & Idempotency", "ZATCA Audit Logs & Reporting", "Integrating ZATCA into BSS POS Flow", "Testing: Mock ZATCA Responses", "ZATCA Phase 2 Go-Live Checklist", "Capstone: Full E-Invoice Flow for BSS","Example: Integrating & Inspecting BSS"];var ZAT_PROSE=["<p><strong>ZATCA</strong> (Zakat, Tax and Customs Authority) mandates e-invoicing (Fatoora) in Saudi Arabia. Phase 1 (Generation, since Dec 2021) requires structured electronic invoices with a QR code. Phase 2 (Integration, rolling out in waves since 2023) requires invoices to be cleared or reported through ZATCA's platform in real time. For a POS SaaS like BSS, Phase 2 compliance is mandatory — every invoice must carry a cryptographic stamp and be transmitted to ZATCA.</p>",
@@ -7259,8 +7063,6 @@ function buildQuizZAT(idx){var q=ZAT_QUIZ_Q[idx];if(!q)return;ZAT_QUIZ[idx]={ans
 function answerQuizZAT(li,ch){var cr=ZAT_QUIZ_CA[li];ZAT_QUIZ[li]={answered:true,correct:ch===cr};document.querySelectorAll('#zatqo0 .quiz-opt').forEach(function(b,i){b.disabled=true;if(i===cr)b.classList.add('correct');else if(i===ch&&ch!==cr)b.classList.add('wrong');});var fb=document.getElementById('zatqf0');if(fb){var q=ZAT_QUIZ_Q[li];fb.innerHTML='<div class="qfb-inner '+(ch===cr?'qfb-ok':'qfb-err')+'">'+(ch===cr?'✓ Correct!':'✗ Correct: ')+'<strong>'+q.opts[cr]+'</strong></div>';}}
 function renderQuizZAT(idx){buildQuizZAT(idx);}
 function runZAT(li){runCode('zate'+li,'zato'+li);}
-function askZAT(li){try{askAI('zat-ai-inp','zat-ai-resp',ZAT_CTX[ZAT_CUR]||'ZATCA E-Invoicing');}catch(ex){_showErr('askZAT',ex);}}
-function zatKey(e,idx){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askZAT(idx);}}
 function zatNextOrComplete(){if(ZAT_CUR<ZAT_TOTAL-1){goZAT(ZAT_CUR+1);}else{ZAT_DONE.add(ZAT_CUR);_LS.set('kz_zat_done',JSON.stringify([...ZAT_DONE]));zatUI();if(ZAT_DONE.size>=ZAT_TOTAL){toast('🎉 ZAT Complete!',4000);showCertModal('zat');}}}
 function zatProg(){var d=ZAT_DONE.size,t=ZAT_TOTAL,p=Math.round(d/t*100),elP=document.getElementById('landing-zat-prog'),elB=document.getElementById('landing-zat-bar'),elT=document.getElementById('landing-zat-txt');if(elP)elP.style.display=d>0?'block':'none';if(elB)elB.style.width=p+'%';if(elT)elT.textContent=d+'/'+t+' lessons · '+p+'% complete';}
 /* ─── PY PATH ─── */
@@ -7370,8 +7172,6 @@ function runPythonCode(code,out){
 }
 
 function runPY(li){try{var code=document.getElementById('pye'+li),out=document.getElementById('pyo'+li);if(code&&out){out.innerHTML='<span class="co-info">Running...</span>';runPythonCode(code.value,out);}}catch(ex){var o=document.getElementById('pyo'+li);if(o)o.textContent='Error: '+ex.message;}}
-function askPY(idx){aiAsk(idx,'pyam0','pyth0','pyai0',PY_CTX,'Advanced Python');}
-function pyKey(e,idx){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askPY(idx);}}
 function pyNextOrComplete(){if(PY_CUR<PY_TOTAL-1){goPY(PY_CUR+1);}else{PY_DONE.add(PY_CUR);_LS.set('kz_py_done',JSON.stringify([...PY_DONE]));pyUI();if(PY_DONE.size>=PY_TOTAL){toast('🎉 PY Path Complete! Certificate unlocked.',4000);showCertModal('py');}}}
 function pyProg(){var d=PY_DONE.size,t=PY_TOTAL,p=Math.round(d/t*100),elP=document.getElementById('landing-py-prog'),elB=document.getElementById('landing-py-bar'),elT=document.getElementById('landing-py-txt');if(elP)elP.style.display=d>0?'block':'none';if(elB)elB.style.width=p+'%';if(elT)elT.textContent=d+'/'+t+' lessons · '+p+'% complete';}
 
@@ -7397,8 +7197,6 @@ function buildQuizJS(idx){var q=JS_QUIZ_Q[idx];if(!q)return;JS_QUIZ[idx]={answer
 function answerQuizJS(li,ch){var cr=JS_QUIZ_CA[li];JS_QUIZ[li]={answered:true,correct:ch===cr};document.querySelectorAll('#jsqo0 .quiz-opt').forEach(function(b,i){b.disabled=true;if(i===cr)b.classList.add('correct');else if(i===ch&&ch!==cr)b.classList.add('wrong');});var fb=document.getElementById('jsqf0');if(fb){var q=JS_QUIZ_Q[li];fb.innerHTML='<div class="qfb-inner '+(ch===cr?'qfb-ok':'qfb-err')+'">'+(ch===cr?'✓ Correct!':'✗ Correct: ')+'<strong>'+q.opts[cr]+'</strong></div>';}}
 function renderQuizJS(idx){buildQuizJS(idx);}
 function runJS(li){runCode('jse'+li,'jso'+li);}
-function askJS(idx){aiAsk(idx,'jsam0','jsth0','jsai0',JS_CTX,'Modern JavaScript');}
-function jsKey(e,idx){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askJS(idx);}}
 function jsNextOrComplete(){if(JS_CUR<JS_TOTAL-1){goJS(JS_CUR+1);}else{JS_DONE.add(JS_CUR);_LS.set('kz_js_done',JSON.stringify([...JS_DONE]));jsUI();if(JS_DONE.size>=JS_TOTAL){toast('🎉 JS Path Complete! Certificate unlocked.',4000);showCertModal('js');}}}
 function jsProg(){var d=JS_DONE.size,t=JS_TOTAL,p=Math.round(d/t*100),elP=document.getElementById('landing-js-prog'),elB=document.getElementById('landing-js-bar'),elT=document.getElementById('landing-js-txt');if(elP)elP.style.display=d>0?'block':'none';if(elB)elB.style.width=p+'%';if(elT)elT.textContent=d+'/'+t+' lessons · '+p+'% complete';}
 
@@ -7439,20 +7237,16 @@ var SM_XP=parseFloat(_LS.get('kz_sm_xp')||'0');
 function goSM(idx){try{if(idx<0||idx>=SM_TOTAL)return;if(idx>SM_CUR&&!SM_DONE.has(SM_CUR)){SM_DONE.add(SM_CUR);SM_XP+=(SM_LXP[SM_CUR]||3);toast('+'+(SM_HOURS_PER[SM_CUR]||3)+'h completed');_LS.set('kz_sm_done',JSON.stringify([...SM_DONE]));_LS.set('kz_sm_xp',String(SM_XP));}SM_CUR=idx;_LS.set('kz_sm_cur',String(idx));var e;e=document.getElementById('sm-eyebrow');if(e)e.textContent='Lesson '+(idx+1)+' of '+SM_TOTAL;e=document.getElementById('sm-title');if(e)e.textContent=SM_CTX[idx]||'';e=document.getElementById('sm-meta1');if(e)e.textContent='\u23f1 '+(SM_HOURS_PER[idx]||3)+'h';e=document.getElementById('sm-meta2');if(e)e.textContent=SM_DONE.has(idx)?'\u2713 Complete':'In Progress';e=document.getElementById('smp0');if(e)e.innerHTML=SM_PROSE[idx]||'';e=document.getElementById('sme0');if(e)e.value=SM_CODE[idx]||'';e=document.getElementById('smo0');if(e)e.innerHTML='<span class="co-info">// Click Run \u25b6</span>';e=document.getElementById('smqo0');if(e)e.innerHTML='';e=document.getElementById('smqf0');if(e)e.innerHTML='';if(SM_QUIZ[idx]){renderQuizSM(idx);}else{buildQuizSM(idx);}e=document.getElementById('sm-ai-ctx');if(e)e.textContent=SM_CTX[idx]||'';e=document.getElementById('sm-prev-btn');if(e)e.disabled=idx===0;e=document.getElementById('sm-next-btn');if(e)e.textContent=idx===SM_TOTAL-1?'Complete Path \u2713':'Next Lesson \u2192';smUI();updateLandingProgress();}catch(ex){_showErr('goSM',ex);}}
 function smUI(){try{var hrs=0;SM_DONE.forEach(function(i){hrs+=(SM_HOURS_PER[i]||3);});var hs=hrs.toFixed(1).replace(/\.0$/,''),pct=Math.round(SM_DONE.size/SM_TOTAL*100),e;e=document.getElementById('sm-xpv-tb');if(e)e.textContent=hs;e=document.getElementById('sm-pf-tb');if(e)e.style.width=pct+'%';e=document.getElementById('sm-pp');if(e)e.textContent=pct+'%';e=document.getElementById('sm-lc');if(e)e.textContent=(SM_CUR+1)+' / '+SM_TOTAL;e=document.getElementById('sm-xpv');if(e)e.textContent=hs;e=document.getElementById('sm-pf');if(e)e.style.width=pct+'%';document.querySelectorAll('#sm-sb button').forEach(function(b){var i=parseInt(b.dataset.smidx);b.classList.toggle('done',SM_DONE.has(i));b.classList.toggle('active',i===SM_CUR);});e=document.getElementById('sm-cert-btn');if(e)e.style.display=SM_DONE.size>=SM_TOTAL?'inline-flex':'none';e=document.getElementById('sm-cert-btn-hdr');if(e)e.style.display=SM_DONE.size>=SM_TOTAL?'inline-flex':'none';}catch(ex){_showErr('smUI',ex);}}
 function runSM(li){runCode('sme'+li,'smo'+li);}
-function smKey(e,idx){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askSM(idx);}}
 function buildQuizSM(idx){var q=SM_QUIZ_Q[idx];if(!q)return;SM_QUIZ[idx]={answered:false,correct:null};var qo=document.getElementById('smqo0');if(!qo)return;var html='<div class="quiz-lbl">\uD83C\uDFAF Check Your Understanding</div><div class="quiz-q"><div class="quiz-question">'+q.q+'</div><div class="quiz-opts">';for(var i=0;i<q.opts.length;i++)html+='<button type="button" class="quiz-opt" onclick="answerQuizSM('+idx+','+i+')" id="smqopt'+idx+'_'+i+'">'+q.opts[i]+'</button>';html+='</div></div>';qo.innerHTML=html;}
 function renderQuizSM(idx){buildQuizSM(idx);var st=SM_QUIZ[idx];if(st&&st.answered){}}
 function answerQuizSM(li,ch){var cr=SM_QUIZ_CA[li];SM_QUIZ[li]={answered:true,correct:ch===cr};document.querySelectorAll('#smqo0 .quiz-opt').forEach(function(b,i){b.disabled=true;if(i===cr)b.classList.add('correct');else if(i===ch&&ch!==cr)b.classList.add('wrong');});var fb=document.getElementById('smqf0');if(fb){var q=SM_QUIZ_Q[li];fb.innerHTML='<div class="qfb-inner '+(ch===cr?'qfb-ok':'qfb-err')+'">'+(ch===cr?'\u2713 Correct!':'\u2717 Correct: ')+'<strong>'+q.opts[cr]+'</strong></div>';}}
 function smNextOrComplete(){if(SM_CUR<SM_TOTAL-1){goSM(SM_CUR+1);}else{SM_DONE.add(SM_CUR);_LS.set('kz_sm_done',JSON.stringify([...SM_DONE]));smUI();if(SM_DONE.size>=SM_TOTAL){toast('\uD83C\uDF89 SaaS Marketing Path Complete! Certificate unlocked.',4000);showCertModal('sm');}}}
-function askSM(idx){aiAsk(idx,'smam0','smth0','smai0',SM_CTX,'SaaS Marketing');}
 
 function goDK(idx){try{if(idx<0||idx>=DK_TOTAL)return;if(idx>DK_CUR&&!DK_DONE.has(DK_CUR)){DK_DONE.add(DK_CUR);DK_XP+=(DK_LXP[DK_CUR]||3);toast('+'+(DK_HOURS_PER[DK_CUR]||3)+'h completed');_LS.set('kz_dk_done',JSON.stringify([...DK_DONE]));_LS.set('kz_dk_xp',String(DK_XP));}DK_CUR=idx;_LS.set('kz_dk_cur',String(idx));var e;e=document.getElementById('dk-eyebrow');if(e)e.textContent='Lesson '+(idx+1)+' of 20';e=document.getElementById('dk-title');if(e)e.textContent=DK_CTX[idx]||'';e=document.getElementById('dk-meta1');if(e)e.textContent='⏱ '+(DK_HOURS_PER[idx]||3)+'h';e=document.getElementById('dk-meta2');if(e)e.textContent=DK_DONE.has(idx)?'✓ Complete':'In Progress';e=document.getElementById('dkp0');if(e)e.innerHTML=DK_PROSE[idx]||'';e=document.getElementById('dke0');if(e)e.value=DK_CODE[idx]||'';e=document.getElementById('dko0');if(e)e.innerHTML='<span class="co-info">// Click Run ▶</span>';e=document.getElementById('dkqo0');if(e)e.innerHTML='';e=document.getElementById('dkqf0');if(e)e.innerHTML='';if(DK_QUIZ[idx]){renderQuizDK(idx);}else{buildQuizDK(idx);}e=document.getElementById('dk-ai-ctx');if(e)e.textContent=DK_CTX[idx]||'';e=document.getElementById('dk-prev-btn');if(e)e.disabled=idx===0;e=document.getElementById('dk-next-btn');if(e)e.textContent=idx===DK_TOTAL-1?'Complete Path ✓':'Next Lesson →';dkUI();updateLandingProgress();}catch(ex){_showErr('goDK',ex);}}
 function buildQuizDK(idx){var q=DK_QUIZ_Q[idx];if(!q)return;DK_QUIZ[idx]={answered:false,correct:null};var qo=document.getElementById('dkqo0');if(!qo)return;var html='<div class="quiz-lbl">\uD83C\uDFAF Check Your Understanding</div><div class="quiz-q"><div class="quiz-question">'+q.q+'</div><div class="quiz-opts">';for(var i=0;i<q.opts.length;i++)html+='<button class="quiz-opt" onclick="answerQuizDK('+idx+','+i+')" id="dkqopt'+idx+'_'+i+'">'+q.opts[i]+'</button>';html+='</div></div>';qo.innerHTML=html;}
 function answerQuizDK(li,ch){var cr=DK_QUIZ_CA[li];DK_QUIZ[li]={answered:true,correct:ch===cr};document.querySelectorAll('#dkqo0 .quiz-opt').forEach(function(b,i){b.disabled=true;if(i===cr)b.classList.add('correct');else if(i===ch&&ch!==cr)b.classList.add('wrong');});var fb=document.getElementById('dkqf0');if(fb){var q=DK_QUIZ_Q[li];fb.innerHTML='<div class="qfb-inner '+(ch===cr?'qfb-ok':'qfb-err')+'">'+(ch===cr?'✓ Correct!':'✗ Correct: ')+'<strong>'+q.opts[cr]+'</strong></div>';}}
 function renderQuizDK(idx){buildQuizDK(idx);}
 function runDK(li){try{var code=document.getElementById('dke'+li),out=document.getElementById('dko'+li);if(code&&out){out.innerHTML='<span class="co-info">Running...</span>';runPythonCode(code.value,out);}}catch(ex){var o=document.getElementById('dko'+li);if(o)o.textContent='Error: '+ex.message;}}
-function askDK(idx){aiAsk(idx,'dkam0','dkth0','dkai0',DK_CTX,'Docker & DevOps');}
-function dkKey(e,idx){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();askDK(idx);}}
 function dkNextOrComplete(){if(DK_CUR<DK_TOTAL-1){goDK(DK_CUR+1);}else{DK_DONE.add(DK_CUR);_LS.set('kz_dk_done',JSON.stringify([...DK_DONE]));dkUI();if(DK_DONE.size>=DK_TOTAL){toast('🎉 DK Path Complete! Certificate unlocked.',4000);showCertModal('dk');}}}
 function dkProg(){var d=DK_DONE.size,t=DK_TOTAL,p=Math.round(d/t*100),elP=document.getElementById('landing-dk-prog'),elB=document.getElementById('landing-dk-bar'),elT=document.getElementById('landing-dk-txt');if(elP)elP.style.display=d>0?'block':'none';if(elB)elB.style.width=p+'%';if(elT)elT.textContent=d+'/'+t+' lessons · '+p+'% complete';}
 
