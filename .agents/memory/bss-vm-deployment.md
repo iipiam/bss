@@ -12,7 +12,7 @@ repo-root `deploy.sh` and `DEPLOYMENT.md` — trust them over this note if they 
 **Process manager:** pm2, exactly **one** process named **`BSS`** (uppercase). There is **no** `ecosystem.config.cjs` — `deploy.sh` `source`s the repo-root `.env` and runs `pm2 start npm --name BSS --update-env -- run start` (first time) or `pm2 restart BSS --update-env`. Then `pm2 save`.
 - Logs: `pm2 logs BSS --lines 40 --nostream`. Status: `pm2 status`.
 
-**Networking / env:** nginx :443 → Node/pm2 on **`PORT=5000`** (0.0.0.0) → AWS RDS Postgres. `.env` (repo root) needs `DATABASE_URL` (no quotes); set `NODE_ENV=production` (pm2 `run start` handles this). Keep secrets in ONE place (the `.env`), not also `~/.bashrc`.
+**Networking / env:** nginx :443 → `proxy_pass http://localhost:3000` → Node/pm2 on **`PORT=3000`** → AWS RDS Postgres. (Verified via `sudo nginx -T` Jul 2026 — earlier note claiming 5000 caused a 502 outage; the deploy.sh "must match nginx upstream" banner is the check.) `.env` (repo root) needs `DATABASE_URL` (no quotes); set `NODE_ENV=production` (pm2 `run start` handles this). Keep secrets in ONE place (the `.env`), not also `~/.bashrc`.
 
 **Rollback:** `git reset --hard <prev-commit> && ./deploy.sh`.
 

@@ -1,0 +1,85 @@
+Kinzhal@BSS-Server:/home/BSS$ pm2 logs BSS --lines 40 --nostream
+[TAILING] Tailing last 40 lines for [BSS] process (change the value with --lines option)
+/home/Kinzhal/.pm2/logs/BSS-error.log last 40 lines:
+0|BSS      |   severity: 'ERROR',
+0|BSS      |   code: '42703',
+0|BSS      |   detail: undefined,
+0|BSS      |   hint: undefined,
+0|BSS      |   position: '262',
+0|BSS      |   internalPosition: undefined,
+0|BSS      |   internalQuery: undefined,
+0|BSS      |   where: undefined,
+0|BSS      |   schema: undefined,
+0|BSS      |   table: undefined,
+0|BSS      |   column: undefined,
+0|BSS      |   dataType: undefined,
+0|BSS      |   constraint: undefined,
+0|BSS      |   file: 'parse_target.c',
+0|BSS      |   line: '1066',
+0|BSS      |   routine: 'checkInsertTargets'
+0|BSS      | }
+0|BSS      | error: relation "bills" does not exist
+0|BSS      |     at /home/BSS/node_modules/pg/lib/client.js:535:17
+0|BSS      |     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|BSS      |     at async DatabaseStorage.deleteUser (file:///home/BSS/dist/index.js:4096:11)
+0|BSS      |     at async file:///home/BSS/dist/index.js:27213:21 {
+0|BSS      |   length: 103,
+0|BSS      |   severity: 'ERROR',
+0|BSS      |   code: '42P01',
+0|BSS      |   detail: undefined,
+0|BSS      |   hint: undefined,
+0|BSS      |   position: '8',
+0|BSS      |   internalPosition: undefined,
+0|BSS      |   internalQuery: undefined,
+0|BSS      |   where: undefined,
+0|BSS      |   schema: undefined,
+0|BSS      |   table: undefined,
+0|BSS      |   column: undefined,
+0|BSS      |   dataType: undefined,
+0|BSS      |   constraint: undefined,
+0|BSS      |   file: 'parse_relation.c',
+0|BSS      |   line: '1449',
+0|BSS      |   routine: 'parserOpenTable'
+0|BSS      | }
+
+/home/Kinzhal/.pm2/logs/BSS-out.log last 40 lines:
+0|BSS      | [Migration] Table verified/created: pending_signups
+0|BSS      | [Migration] Invoices columns verified/added: document_type, referenced_invoice_id, adjustment_reason
+0|BSS      | [Migration] service_projects columns verified/added: actual_cost, contractor_id, client_cr_number, client_vat_number, client_address, client_legal_representative
+0|BSS      | [Migration] Table verified/created: contracts
+0|BSS      | [Migration] Table verified/created: valuations
+0|BSS      | [Migration] Table verified/created: meal_subscriptions
+0|BSS      | [Migration] Meal subscriptions columns verified/added: delivery_log, delivery_hours, credit_balance, number_of_days, discount_type, discount_value
+0|BSS      | [Migration] Table verified/created: service_catalog
+0|BSS      | [Migration] Table verified/created: contractors
+0|BSS      | [Migration] Tables verified/created: catering_contracts, catering_contract_templates
+0|BSS      | [Migration] Table verified/created: investment_agreement_templates
+0|BSS      | [Migration] service_projects decision-center columns verified/added: approval_status, lifecycle_status, approved_at, approved_by, decline_reason, customer_id (+FK)
+0|BSS      | [Migration] Table verified/created: customer_documents (+FKs)
+0|BSS      | [Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings, customer_documents
+0|BSS      | [Migration] product_items column verified/added: selling_price
+0|BSS      | [Migration] project_items column verified/added: selling_price
+0|BSS      | [Migration] Tables verified/created: assignment_history, contractor_settlements
+0|BSS      | [Migration] phase column verified/added: project_items, project_services, project_tasks, product_items, product_service_links, product_tasks
+0|BSS      | [Migration] Tables verified/created: project_client_requirements, project_meetings
+0|BSS      | [Migration] Tables verified/created: project_equipment
+0|BSS      | [Migration] Tables verified/created: product_client_requirements, product_meetings
+0|BSS      | [Migration] Table verified/created: influencer_profiles
+0|BSS      | [Migration] Table verified/created: blogger_profiles (with discount_type, discount_value)
+0|BSS      | [Migration] Table verified/created: company_profiles (with font_family, header_style)
+0|BSS      | [Migration] Table verified/created: marketing_discount_codes
+0|BSS      | [Migration] Table verified/created: marketing_broadcast_templates
+0|BSS      | [Migration] Table verified/created: marketing_qr_scans
+0|BSS      | [Migration] Table verified/created: properties
+0|BSS      | [Migration] Table verified/created: property_units
+0|BSS      | [Migration] Table verified/created: property_tenants
+0|BSS      | [Migration] Table verified/created: rental_contracts
+0|BSS      | [Migration] Table verified/created: rental_invoices
+0|BSS      | [Migration] Table verified/created: rental_payments
+0|BSS      | [Migration] Table verified/created: property_expenses
+0|BSS      | [Migration] Table verified/created: maintenance_requests
+0|BSS      | [Migration] Table verified/created: chart_of_accounts
+0|BSS      | [Migration] Table verified/created: journal_entries
+0|BSS      | [Migration] Table verified/created: journal_lines
+0|BSS      | [Migration] Table verified/created: property_notifications
+0|BSS      | [SchemaSync] 1627 statements applied (0 skipped)

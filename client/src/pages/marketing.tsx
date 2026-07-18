@@ -726,20 +726,6 @@ export default function Marketing() {
     return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
   };
 
-  const monthlyFixedCosts = useMemo(() => {
-    const factor: Record<string, number> = {
-      "one-time": 0,
-      weekly: 4.33,
-      monthly: 1,
-      quarterly: 1 / 3,
-      "semi-annually": 1 / 6,
-      yearly: 1 / 12,
-    };
-    return shopBills
-      .filter((b) => !b.archived)
-      .reduce((sum, b) => sum + (parseFloat(b.amount) || 0) * (factor[b.paymentPeriod] ?? 1), 0);
-  }, [shopBills]);
-
   const computeVariableCost = (mi: MenuItem): number => {
     const portion = parseFloat(mi.portionSize || "1") || 1;
     if (mi.recipeId) {
@@ -928,6 +914,26 @@ export default function Marketing() {
     queryKey: ["/api/marketing/fin/settings"],
     enabled: finTabActive,
   });
+
+  // Monthly fixed costs = recurring non-salary shop bills (normalized to monthly)
+  // + one recurring salary per employee (from the server, latest amount per employee).
+  // Salary-type bills are excluded here because a paid salary bill exists per
+  // employee PER MONTH — counting each of them as a recurring monthly cost
+  // would multiply salaries by the number of settled months.
+  const monthlyFixedCosts = useMemo(() => {
+    const factor: Record<string, number> = {
+      "one-time": 0,
+      weekly: 4.33,
+      monthly: 1,
+      quarterly: 1 / 3,
+      "semi-annually": 1 / 6,
+      yearly: 1 / 12,
+    };
+    const billsMonthly = shopBills
+      .filter((b) => !b.archived && b.billType !== "salary")
+      .reduce((sum, b) => sum + (parseFloat(b.amount) || 0) * (factor[b.paymentPeriod] ?? 1), 0);
+    return billsMonthly + (finFixedCosts?.salaries ?? 0);
+  }, [shopBills, finFixedCosts]);
 
   const actualFor = (name: string) =>
     (finActuals?.items || []).find((a) => a.name.trim().toLowerCase() === name.trim().toLowerCase());
