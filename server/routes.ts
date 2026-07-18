@@ -3816,6 +3816,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           if (!existing || (bIsTyped && !existingIsTyped)) salaryByEmployee.set(key, b);
         }
         const salaryBillsForMonth = [...salaryByEmployee.values()];
+        // Salary bills belong on the "Salaries & Wages" line, not in
+        // operating expenses. Add their monthly value to totalSalaries.
+        totalSalaries += salaryBillsForMonth
+          .reduce((sum, b) => sum + parseFloat(b.amount || "0"), 0);
         const latestNonSalaryBills = new Map<string, typeof nonFoundationalBills[number]>();
         for (const b of nonFoundationalBills) {
           if (isSalaryBill(b)) continue;
@@ -3825,7 +3829,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           const existingDate = existing ? new Date(existing.paymentDate || existing.createdAt || 0).getTime() : -Infinity;
           if (!existing || billDate > existingDate) latestNonSalaryBills.set(key, b);
         }
-        const recurringBills = [...salaryBillsForMonth, ...latestNonSalaryBills.values()];
+        const recurringBills = [...latestNonSalaryBills.values()];
         
         // Helper function to prorate bill amounts to monthly values
         // Quarterly bills should be divided by 3, semi-annual by 6, yearly by 12
