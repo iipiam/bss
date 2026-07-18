@@ -21604,7 +21604,7 @@ ${phaseSchedules.length > 0 ? `
         return res.json({ total: 0, bills: 0, salaries: 0, billsCount: 0, salariesCount: 0 });
       }
       const factor: Record<string, number> = {
-        "one-time": 0, weekly: 4.33, monthly: 1, quarterly: 1 / 3, "semi-annually": 1 / 6, yearly: 1 / 12,
+        "one-time": 0, oneTime: 0, weekly: 4.33, monthly: 1, quarterly: 1 / 3, "semi-annually": 1 / 6, semiAnnually: 1 / 6, yearly: 1 / 12,
       };
       const [bills, salaryList] = await Promise.all([
         storage.getShopBills(restaurantId),

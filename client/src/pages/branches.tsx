@@ -20,7 +20,7 @@ import { useDeviceLayout } from "@/lib/mobileLayout";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useBusinessType } from "@/hooks/useBusinessType";
 
-type BranchFormValues = Omit<z.infer<typeof insertBranchSchema>, "staff"> & {
+type BranchFormValues = Omit<z.infer<typeof insertBranchSchema>, "staff" | "restaurantId"> & {
   staff: string;
 };
 
@@ -32,7 +32,10 @@ export default function Branches() {
   const { t, isRTL } = useLanguage();
   const { labels } = useBusinessType();
 
-  const branchFormSchema = insertBranchSchema.extend({
+  // restaurantId is supplied by the server from the session, never by the
+  // form — leaving it in the schema makes validation fail silently and the
+  // Create/Update button appear dead.
+  const branchFormSchema = insertBranchSchema.omit({ restaurantId: true }).extend({
     staff: z.string().min(1, t.staffCountRequired),
   });
 

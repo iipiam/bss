@@ -922,10 +922,12 @@ export default function Marketing() {
   const monthlyFixedCosts = useMemo(() => {
     const factor: Record<string, number> = {
       "one-time": 0,
+      oneTime: 0,
       weekly: 4.33,
       monthly: 1,
       quarterly: 1 / 3,
       "semi-annually": 1 / 6,
+      semiAnnually: 1 / 6,
       yearly: 1 / 12,
     };
     const latestByBillKey = new Map<string, { monthly: number; date: number }>();
