@@ -17347,11 +17347,17 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Bilingual EN+AR settlement voucher PDF.
-  app.get("/api/contractor-settlements/:id/pdf", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
+  // Public by unguessable UUID (like /public/invoice/:id) so WhatsApp recipients can open it.
+  // If a session user with a restaurant exists, still enforce tenant scoping.
+  app.get("/api/contractor-settlements/:id/pdf", async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
-      const s = await storage.getContractorSettlement(req.params.id, restaurantId);
+      const s = await storage.getContractorSettlementPublic(req.params.id);
       if (!s) return res.status(404).json({ message: "Not found" });
+      const sessionRestaurantId = req.session?.user?.restaurantId;
+      if (sessionRestaurantId && sessionRestaurantId !== s.restaurantId) {
+        return res.status(404).json({ message: "Not found" });
+      }
+      const restaurantId = s.restaurantId;
       const company = await storage.getCompanySettings(restaurantId);
       const project = s.projectId ? await storage.getServiceProject(s.projectId, restaurantId) : undefined;
       // Resolve assignee name + phone

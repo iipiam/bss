@@ -743,6 +743,7 @@ export interface IStorage {
   // Contractor / Employee Settlements
   getContractorSettlements(restaurantId: string, assigneeType: 'employee' | 'contractor', assigneeId: string): Promise<ContractorSettlement[]>;
   getContractorSettlement(id: string, restaurantId: string): Promise<ContractorSettlement | undefined>;
+  getContractorSettlementPublic(id: string): Promise<ContractorSettlement | undefined>;
   createContractorSettlement(s: InsertContractorSettlement): Promise<ContractorSettlement>;
   updateContractorSettlement(id: string, restaurantId: string, data: Partial<InsertContractorSettlement> & { sentAt?: Date | null }): Promise<ContractorSettlement | undefined>;
   deleteContractorSettlement(id: string, restaurantId: string): Promise<boolean>;
@@ -6083,6 +6084,12 @@ export class DatabaseStorage implements IStorage {
   async getContractorSettlement(id: string, restaurantId: string): Promise<ContractorSettlement | undefined> {
     const [row] = await db.select().from(contractorSettlements)
       .where(and(eq(contractorSettlements.id, id), eq(contractorSettlements.restaurantId, restaurantId)));
+    return row;
+  }
+  async getContractorSettlementPublic(id: string): Promise<ContractorSettlement | undefined> {
+    // PUBLIC: for WhatsApp share links; the unguessable UUID acts as the access token
+    const [row] = await db.select().from(contractorSettlements)
+      .where(eq(contractorSettlements.id, id));
     return row;
   }
   async createContractorSettlement(s: InsertContractorSettlement): Promise<ContractorSettlement> {
