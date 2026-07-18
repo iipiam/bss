@@ -692,6 +692,7 @@ export interface IStorage {
   // Quotations (MULTI-TENANT: requires restaurantId for all operations)
   getQuotations(restaurantId: string): Promise<Quotation[]>;
   getQuotation(id: string, restaurantId: string): Promise<Quotation | undefined>;
+  getQuotationPublic(id: string): Promise<Quotation | undefined>;
   createQuotation(quotation: InsertQuotation): Promise<Quotation>;
   updateQuotation(id: string, restaurantId: string, quotation: Partial<InsertQuotation>): Promise<Quotation | undefined>;
   deleteQuotation(id: string, restaurantId: string): Promise<boolean>;
@@ -5894,6 +5895,12 @@ export class DatabaseStorage implements IStorage {
 
   async getQuotation(id: string, restaurantId: string): Promise<Quotation | undefined> {
     const [quotation] = await db.select().from(quotations).where(and(eq(quotations.id, id), eq(quotations.restaurantId, restaurantId)));
+    return quotation;
+  }
+
+  async getQuotationPublic(id: string): Promise<Quotation | undefined> {
+    // PUBLIC: for WhatsApp share links; the unguessable UUID acts as the access token
+    const [quotation] = await db.select().from(quotations).where(eq(quotations.id, id));
     return quotation;
   }
 

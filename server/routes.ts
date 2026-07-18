@@ -18157,18 +18157,22 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
-  app.get("/api/quotations/:id/download-pdf", requireAuth, requireRestaurant, requirePermission('quotations'), async (req, res) => {
+  // Public by unguessable UUID (like /public/invoice/:id) so WhatsApp recipients can download it.
+  // If a session user with a restaurant exists, still enforce tenant scoping.
+  app.get("/api/quotations/:id/download-pdf", async (req, res) => {
     try {
-      const restaurantId = req.session.user!.restaurantId!;
-      if (!restaurantId) return res.status(403).json({ message: "Access denied" });
-
       const lang = req.query.lang === 'ar' ? 'ar' : 'en';
       const isAr = lang === 'ar';
       const dir = isAr ? 'rtl' : 'ltr';
       const align = isAr ? 'right' : 'left';
 
-      const quotation = await storage.getQuotation(req.params.id, restaurantId);
+      const quotation = await storage.getQuotationPublic(req.params.id);
       if (!quotation) return res.status(404).json({ message: "Quotation not found" });
+      const sessionRestaurantId = req.session?.user?.restaurantId;
+      if (sessionRestaurantId && sessionRestaurantId !== quotation.restaurantId) {
+        return res.status(404).json({ message: "Quotation not found" });
+      }
+      const restaurantId = quotation.restaurantId;
       
       const companyInfo = await storage.getCompanySettings(restaurantId);
       
