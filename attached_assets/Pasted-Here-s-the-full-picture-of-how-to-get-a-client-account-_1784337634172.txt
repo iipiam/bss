@@ -1,0 +1,35 @@
+Here's the full picture of how to get a client account live on ZATCA Phase 2, based on how your system is built.
+
+What to collect from each client (before you start)
+Business identity:
+
+VAT registration number (15 digits, starts and ends with 3)
+Commercial Registration (CR) number
+Official company name (exactly as registered with ZATCA)
+Branch name (if they have more than one branch)
+National address (as registered with ZATCA):
+
+Street name, building number, district (city subdivision), city, postal code
+Access needed:
+
+Login access to their Fatoora portal (fatoora.zatca.gov.sa) — or have the client sit with you, because they must generate a one-time OTP code from that portal during activation. The OTP is only valid for about an hour, so plan this step together.
+Activation steps (done from your IT ZATCA Settings page)
+Enter the client's profile — fill in the VAT number, CR number, company name, branch, and address, and pick the environment. Best practice: test on Simulation first, then redo on Production.
+
+Generate CSR — one click. The system creates the client's private key and a certificate request. Nothing is sent to the client; it's stored securely per account.
+
+Get the OTP and onboard — the client (or you, with their Fatoora login) logs into the Fatoora portal, clicks "Onboard new solution unit / device", and generates an OTP. Enter that OTP in your settings page and click Onboard. ZATCA returns the Compliance CSID (a temporary certificate).
+
+Run compliance checks — one click. The system automatically sends sample standard and simplified invoices to ZATCA to prove the setup works. All must pass.
+
+Get Production CSID — one click after checks pass. This exchanges the temporary certificate for the permanent production one.
+
+Enable the integration — flip the toggle to Enabled. From then on, every invoice is automatically signed, gets the 9-tag QR code, and is reported to (simplified) or cleared by (standard) ZATCA.
+
+Things to watch out for
+The OTP expires quickly (~1 hour) — coordinate with the client so you enter it right after they generate it.
+The company name and VAT number you enter must match ZATCA's records exactly, or onboarding will fail.
+Each branch/device needs its own onboarding if they invoice separately.
+If something goes wrong mid-way, you have a "reset onboarding" option that clears the certificates so you can start over.
+Keep the client's certificates and secrets in the system only — never send them by email or WhatsApp.
+So in short: collect VAT number, CR number, exact registered name, national address, and Fatoora portal access — then the whole activation is about 10 minutes of clicking through the 4 steps on your ZATCA Settings page.

@@ -18,6 +18,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Shield, AlertCircle, AlertTriangle, CheckCircle2, Settings, KeyRound, FileText, RefreshCw, RotateCcw, Clock, XCircle, Info, Eye, EyeOff, Copy, Download, Building2, ChevronDown, Upload } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { InfoTip } from "@/components/ui/info-tip";
+import ZatcaIntegrationGuide from "@/components/zatca-integration-guide";
+import { BookOpen } from "lucide-react";
 
 interface Restaurant {
   restaurantId: string;
@@ -90,7 +92,7 @@ interface InvoiceZatcaStatus {
 }
 
 export default function ZatcaSettingsPage() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
   const { isLoading: authLoading, user } = useAuth();
   const { toast } = useToast();
   
@@ -643,13 +645,16 @@ export default function ZatcaSettingsPage() {
       </Card>
 
       {!selectedRestaurantId ? (
-        <Alert>
-          <Info className="h-4 w-4" />
-          <AlertTitle>{t.noRestaurantSelected || "No Restaurant Selected"}</AlertTitle>
-          <AlertDescription>
-            {t.pleaseSelectRestaurant || "Please select a restaurant from the dropdown above to manage their ZATCA settings."}
-          </AlertDescription>
-        </Alert>
+        <div className="space-y-6">
+          <Alert>
+            <Info className="h-4 w-4" />
+            <AlertTitle>{t.noRestaurantSelected || "No Restaurant Selected"}</AlertTitle>
+            <AlertDescription>
+              {t.pleaseSelectRestaurant || "Please select a restaurant from the dropdown above to manage their ZATCA settings."}
+            </AlertDescription>
+          </Alert>
+          <ZatcaIntegrationGuide />
+        </div>
       ) : isLoading ? (
         <div className="flex items-center justify-center min-h-[200px]">
           <Loader2 className="h-6 w-6 animate-spin" />
@@ -707,6 +712,10 @@ export default function ZatcaSettingsPage() {
           <TabsTrigger value="invoices" data-testid="tab-invoices">
             <FileText className="w-4 h-4 mr-2" />
             {t.invoices || "Invoices"}
+          </TabsTrigger>
+          <TabsTrigger value="guide" data-testid="tab-guide">
+            <BookOpen className="w-4 h-4 mr-2" />
+            {language === "Arabic" ? "دليل الربط" : "Integration Guide"}
           </TabsTrigger>
         </TabsList>
 
@@ -1529,6 +1538,10 @@ export default function ZatcaSettingsPage() {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="guide">
+          <ZatcaIntegrationGuide />
         </TabsContent>
       </Tabs>
         </>
