@@ -3793,14 +3793,32 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         // For other recurring bills (rent, utilities...), multiple rows can exist
         // for successive payments of the same bill; keep only the most recent row
         // per bill identity so the monthly prorated amount is counted once.
-        const salaryBillsForMonth = nonFoundationalBills.filter(b => {
-          if (String(b.billType || '').toLowerCase() !== 'salary') return false;
+        // A bill counts as a salary bill if its type is 'salary' OR it carries an
+        // employee/salary description (legacy salary settlement rows were saved
+        // with billType 'other' but the same "Monthly salary for X" description).
+        const isSalaryBill = (b: typeof nonFoundationalBills[number]): boolean =>
+          String(b.billType || '').toLowerCase() === 'salary' ||
+          !!b.employeeId ||
+          /^monthly salary for /i.test((b.description || '').trim());
+        const salaryBillCandidates = nonFoundationalBills.filter(b => {
+          if (!isSalaryBill(b)) return false;
           if (b.paymentMonth) return b.paymentMonth === currentPaymentMonth;
           return inPeriod(b.paymentDate || b.createdAt);
         });
+        // Dedupe salary bills per employee so a 'salary' row and a legacy 'other'
+        // row for the same employee/month count once (prefer the 'salary' row).
+        const salaryByEmployee = new Map<string, typeof nonFoundationalBills[number]>();
+        for (const b of salaryBillCandidates) {
+          const key = String((b.description || '').trim() || b.employeeId || b.employeeName || b.id).trim().toLowerCase();
+          const existing = salaryByEmployee.get(key);
+          const bIsTyped = String(b.billType || '').toLowerCase() === 'salary';
+          const existingIsTyped = existing ? String(existing.billType || '').toLowerCase() === 'salary' : false;
+          if (!existing || (bIsTyped && !existingIsTyped)) salaryByEmployee.set(key, b);
+        }
+        const salaryBillsForMonth = [...salaryByEmployee.values()];
         const latestNonSalaryBills = new Map<string, typeof nonFoundationalBills[number]>();
         for (const b of nonFoundationalBills) {
-          if (String(b.billType || '').toLowerCase() === 'salary') continue;
+          if (isSalaryBill(b)) continue;
           const key = `${String(b.billType || '').toLowerCase()}|${b.branchId || ''}|${b.employeeId || ''}|${(b.description || '').trim().toLowerCase()}|${parseFloat(b.amount || '0')}|${String(b.paymentPeriod || '').toLowerCase()}`;
           const existing = latestNonSalaryBills.get(key);
           const billDate = new Date(b.paymentDate || b.createdAt || 0).getTime();
