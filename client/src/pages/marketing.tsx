@@ -915,11 +915,10 @@ export default function Marketing() {
     enabled: finTabActive,
   });
 
-  // Monthly fixed costs = recurring non-salary shop bills (normalized to monthly)
-  // + one recurring salary per employee (from the server, latest amount per employee).
-  // Salary-type bills are excluded here because a paid salary bill exists per
-  // employee PER MONTH — counting each of them as a recurring monthly cost
-  // would multiply salaries by the number of settled months.
+  // Monthly fixed costs: bills recur (a new row per month for rent, electricity,
+  // etc.), so only the LATEST bill per recurring cost (billType + description)
+  // counts — summing every row would multiply each cost by the number of
+  // recorded months. Salaries come from the server (latest per employee).
   const monthlyFixedCosts = useMemo(() => {
     const factor: Record<string, number> = {
       "one-time": 0,
@@ -929,9 +928,20 @@ export default function Marketing() {
       "semi-annually": 1 / 6,
       yearly: 1 / 12,
     };
-    const billsMonthly = shopBills
-      .filter((b) => !b.archived && b.billType !== "salary")
-      .reduce((sum, b) => sum + (parseFloat(b.amount) || 0) * (factor[b.paymentPeriod] ?? 1), 0);
+    const latestByBillKey = new Map<string, { monthly: number; date: number }>();
+    for (const b of shopBills) {
+      if (b.archived || b.billType === "salary") continue;
+      const monthly = (parseFloat(b.amount) || 0) * (factor[b.paymentPeriod] ?? 1);
+      if (monthly <= 0) continue;
+      const key = `${b.billType}|${b.branchId || ""}|${(b.description || "").trim().toLowerCase()}`;
+      const dateVal = b.paymentDate ? new Date(b.paymentDate).getTime() : 0;
+      const cur = latestByBillKey.get(key);
+      if (!cur || dateVal > cur.date) {
+        latestByBillKey.set(key, { monthly, date: dateVal });
+      }
+    }
+    let billsMonthly = 0;
+    latestByBillKey.forEach((v) => { billsMonthly += v.monthly; });
     return billsMonthly + (finFixedCosts?.salaries ?? 0);
   }, [shopBills, finFixedCosts]);
 

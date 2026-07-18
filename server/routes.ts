@@ -21582,13 +21582,25 @@ ${phaseSchedules.length > 0 ? `
         storage.getShopBills(restaurantId),
         storage.getSalaries(restaurantId),
       ]);
-      let billsTotal = 0;
-      let billsCount = 0;
+      // Bills recur (a new row is created each period), so only the LATEST
+      // bill per recurring cost (billType + description) counts as the
+      // current recurring monthly cost — summing all rows would multiply
+      // rent/electricity/etc. by the number of recorded months.
+      const latestByBillKey = new Map<string, { monthly: number; date: number }>();
       for (const b of bills) {
         if (b.archived || b.billType === "salary") continue;
         const monthly = (parseFloat(b.amount) || 0) * (factor[b.paymentPeriod] ?? 1);
-        if (monthly > 0) { billsTotal += monthly; billsCount++; }
+        if (monthly <= 0) continue;
+        const key = `${b.billType}|${b.branchId || ""}|${(b.description || "").trim().toLowerCase()}`;
+        const dateVal = b.paymentDate ? new Date(b.paymentDate).getTime() : 0;
+        const cur = latestByBillKey.get(key);
+        if (!cur || dateVal > cur.date) {
+          latestByBillKey.set(key, { monthly, date: dateVal });
+        }
       }
+      let billsTotal = 0;
+      for (const v of Array.from(latestByBillKey.values())) billsTotal += v.monthly;
+      const billsCount = latestByBillKey.size;
       // Salaries: latest amount per employee = recurring monthly cost
       const latestByEmployee = new Map<string, { amount: number; date: number }>();
       for (const s of salaryList) {
