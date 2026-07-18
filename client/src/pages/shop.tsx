@@ -52,6 +52,8 @@ export default function Shop() {
   const [editingBill, setEditingBill] = useState<ShopBill | null>(null);
   const [salarySearch, setSalarySearch] = useState("");
   const [billSearch, setBillSearch] = useState("");
+  const [billStatusFilter, setBillStatusFilter] = useState("all");
+  const [billSortOrder, setBillSortOrder] = useState("newest");
   const [generateSalariesDialogOpen, setGenerateSalariesDialogOpen] = useState(false);
   const [settleSalaryTarget, setSettleSalaryTarget] = useState<Salary | null>(null);
   const [settleInvoiceFile, setSettleInvoiceFile] = useState<File | null>(null);
@@ -491,10 +493,26 @@ export default function Shop() {
 
   const filteredBills = bills?.filter((bill) => {
     const searchLower = billSearch.toLowerCase();
-    return (
+    const matchesSearch = (
       bill.billType.toLowerCase().includes(searchLower) ||
       (bill.description && bill.description.toLowerCase().includes(searchLower))
     );
+    const matchesStatus = billStatusFilter === "all" ||
+      (billStatusFilter === "unpaid" ? bill.status !== "paid" : bill.status === billStatusFilter);
+    return matchesSearch && matchesStatus;
+  }).sort((a, b) => {
+    const dateA = new Date(a.paymentDate || a.createdAt || 0).getTime();
+    const dateB = new Date(b.paymentDate || b.createdAt || 0).getTime();
+    switch (billSortOrder) {
+      case "oldest":
+        return dateA - dateB;
+      case "paidFirst":
+        return (a.status === "paid" ? 0 : 1) - (b.status === "paid" ? 0 : 1) || dateB - dateA;
+      case "unpaidFirst":
+        return (a.status === "paid" ? 1 : 0) - (b.status === "paid" ? 1 : 0) || dateB - dateA;
+      default:
+        return dateB - dateA;
+    }
   });
 
   const totalSalaries = salaries?.reduce((sum, s) => sum + parseFloat(s.amount), 0) || 0;
@@ -1075,7 +1093,7 @@ export default function Shop() {
             </div>
             </CardHeader>
             <CardContent>
-              <div className="mb-4">
+              <div className="mb-4 space-y-2">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -1085,6 +1103,35 @@ export default function Shop() {
                     className="pl-9"
                     data-testid="input-search-bills"
                   />
+                </div>
+                <div className="flex flex-wrap gap-2 items-center">
+                  <Button
+                    size="sm"
+                    variant={billStatusFilter === "paid" ? "default" : "outline"}
+                    onClick={() => setBillStatusFilter(billStatusFilter === "paid" ? "all" : "paid")}
+                    data-testid="button-shop-filter-paid"
+                  >
+                    {t.paid}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={billStatusFilter === "unpaid" ? "default" : "outline"}
+                    onClick={() => setBillStatusFilter(billStatusFilter === "unpaid" ? "all" : "unpaid")}
+                    data-testid="button-shop-filter-unpaid"
+                  >
+                    {isRTL ? "غير المدفوعة" : "Unpaid"}
+                  </Button>
+                  <Select value={billSortOrder} onValueChange={setBillSortOrder}>
+                    <SelectTrigger className="w-44" data-testid="select-shop-bill-sort">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">{isRTL ? "الأحدث أولاً" : "Newest first"}</SelectItem>
+                      <SelectItem value="oldest">{isRTL ? "الأقدم أولاً" : "Oldest first"}</SelectItem>
+                      <SelectItem value="paidFirst">{isRTL ? "المدفوعة أولاً" : "Paid first"}</SelectItem>
+                      <SelectItem value="unpaidFirst">{isRTL ? "غير المدفوعة أولاً" : "Unpaid first"}</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               {billsLoading ? (
