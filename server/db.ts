@@ -272,4 +272,33 @@ export const db = drizzle(pool, { schema });
       console.warn(`[Migration] ${label}:`, (err as Error).message);
     }
   }
+
+  // Full schema sync: server/schema-sync.sql is auto-generated from the
+  // development database and contains only idempotent statements
+  // (CREATE TABLE IF NOT EXISTS + ADD COLUMN IF NOT EXISTS for every table
+  // and column). This keeps production aligned with the code schema even
+  // when a feature's hand-written migration was missed.
+  try {
+    const fsMod = await import("fs");
+    const pathMod = await import("path");
+    const syncPath = pathMod.join(process.cwd(), "server", "schema-sync.sql");
+    if (fsMod.existsSync(syncPath)) {
+      const sql = fsMod.readFileSync(syncPath, "utf8");
+      const statements = sql.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean);
+      let failed = 0;
+      for (const stmt of statements) {
+        try {
+          await pool.query(stmt);
+        } catch (err) {
+          failed++;
+          console.warn(`[SchemaSync] ${(err as Error).message} -- ${stmt.slice(0, 80)}`);
+        }
+      }
+      console.log(`[SchemaSync] ${statements.length} statements applied (${failed} skipped)`);
+    } else {
+      console.warn("[SchemaSync] server/schema-sync.sql not found; skipping full schema sync");
+    }
+  } catch (err) {
+    console.warn("[SchemaSync] failed:", (err as Error).message);
+  }
 })();
