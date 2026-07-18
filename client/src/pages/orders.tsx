@@ -1,7 +1,9 @@
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, User, MapPin } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Clock, User, MapPin, Search } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -37,10 +39,29 @@ export default function Orders() {
     }
   };
   
+  const [searchQuery, setSearchQuery] = useState("");
+
   const { data: orders = [], isLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
     staleTime: 0,
   });
+
+  // Newest orders first, then filter by search (order number, customer, item names, status, type, table)
+  const displayedOrders = useMemo(() => {
+    const sorted = [...orders].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return sorted;
+    return sorted.filter((o) =>
+      String(o.orderNumber).toLowerCase().includes(q) ||
+      (o.customerName || "").toLowerCase().includes(q) ||
+      (o.orderType || "").toLowerCase().includes(q) ||
+      (o.table || "").toLowerCase().includes(q) ||
+      o.status.toLowerCase().includes(q) ||
+      o.items.some((item) => (item.name || "").toLowerCase().includes(q))
+    );
+  }, [orders, searchQuery]);
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -128,8 +149,24 @@ export default function Orders() {
         </Card>
       </div>
 
+      <div className="relative">
+        <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground`} />
+        <Input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={isRTL ? "ابحث برقم الطلب أو اسم العميل أو الصنف..." : "Search by order number, customer, or item..."}
+          className={isRTL ? 'pr-9' : 'pl-9'}
+          data-testid="input-search-orders"
+        />
+      </div>
+
       <div className="grid gap-6">
-        {orders.map((order) => (
+        {displayedOrders.length === 0 && (
+          <p className="text-muted-foreground text-sm" data-testid="text-no-orders">
+            {isRTL ? "لا توجد طلبات مطابقة" : "No matching orders"}
+          </p>
+        )}
+        {displayedOrders.map((order) => (
           <Card key={order.id} data-testid={`card-order-${order.id}`}>
             <CardHeader>
               <div className="flex items-start justify-between">
