@@ -535,6 +535,189 @@ export function registerSupplierRoutes(
     try { res.json(await storage.getSupplierRentals(req.params.id, rid(req))); }
     catch (e: any) { res.status(500).json({ message: e.message }); }
   });
+
+  // ---- Rental agreement PDF (single or multiple rentals combined) ----
+  const fmtD = (d: Date | string) => new Date(d).toLocaleDateString("en-GB");
+  const esc = (s: any) => String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  async function buildAgreementData(supplierId: string, restaurantId: string, ids: string[]) {
+    const supplier = await storage.getEquipmentSupplier(supplierId, restaurantId);
+    if (!supplier) return null;
+    const all = await storage.getSupplierRentals(supplierId, restaurantId);
+    const rentals = all.filter(r => ids.includes(r.id));
+    if (rentals.length === 0) return null;
+    const equipment = await storage.getSupplierEquipment(supplierId, restaurantId);
+    return { supplier, rentals, equipment };
+  }
+
+  function rentalAgreementHtml(supplier: EquipmentSupplier, rentals: any[], equipment: any[], lang: string) {
+    const isAr = lang === "ar";
+    const L = (en: string, ar: string) => (isAr ? ar : en);
+    const first = rentals[0];
+    const rateUnit = first.rateUnit || "daily";
+    const unitLbl = rateUnit === "hourly" ? L("SAR/hour", "ريال/ساعة") : rateUnit === "weekly" ? L("SAR/week", "ريال/أسبوع") : L("SAR/day", "ريال/يوم");
+    const rateOf = (name: string) => {
+      const e = equipment.find((x: any) => x.name === name);
+      if (!e) return "-";
+      return (rateUnit === "hourly" ? e.hourlyRate : rateUnit === "weekly" ? e.weeklyRate : e.dailyRate) || "-";
+    };
+    const driverOf = (name: string) => {
+      const e = equipment.find((x: any) => x.name === name);
+      return e?.hasDriver ? L("Yes", "نعم") : L("No", "لا");
+    };
+    const terms = [supplier.fuel, supplier.breakdown, supplier.minRental, supplier.notice, supplier.cancellation, supplier.insurance].filter(Boolean).join(" • ") || "-";
+    return `<!DOCTYPE html><html dir="${isAr ? "rtl" : "ltr"}"><head><meta charset="utf-8"><style>
+      body{font-family:Arial,sans-serif;color:#111827;font-size:13px;padding:8px}
+      h1{font-size:20px;color:#1e3a8a;border-bottom:2px solid #1e3a8a;padding-bottom:8px}
+      table{width:100%;border-collapse:collapse;margin-top:12px}
+      td,th{border:1px solid #cbd5e1;padding:8px;font-size:12px;text-align:${isAr ? "right" : "left"}}
+      th{background:#eef2ff}
+      p{margin:6px 0}
+      .sig{margin-top:48px;display:flex;justify-content:space-between;gap:24px}
+    </style></head><body>
+      <h1>${L("Equipment Rental Agreement", "عقد إيجار معدات")}</h1>
+      <p>${L("Reference", "المرجع")}: <b>${rentals.map(r => esc(r.referenceNumber)).join(", ")}</b> | ${L("Date", "التاريخ")}: ${fmtD(new Date())}</p>
+      <p>${L("First party (Renter)", "الطرف الأول (المستأجر)")}: <b>${esc(first.renterName || "-")}</b>${first.renterEmail ? ` — ${esc(first.renterEmail)}` : ""}${first.renterWhatsapp ? ` — ${esc(first.renterWhatsapp)}` : ""}</p>
+      <p>${L("Second party (Supplier)", "الطرف الثاني (المورد)")}: <b>${esc(supplier.companyName)}</b> — ${esc(supplier.contactName)} — ${esc(supplier.phone)}</p>
+      <p>${L("CR", "السجل التجاري")}: ${esc(supplier.crNumber)} | ${L("VAT", "الرقم الضريبي")}: ${esc(supplier.vatNumber)} | IBAN: ${esc(supplier.iban)}</p>
+      <p>${L("Period", "المدة")}: ${fmtD(first.startDate)} → ${fmtD(first.endDate)} | ${L("Location", "الموقع")}: ${esc(first.location || "-")}</p>
+      <table><thead><tr><th>${L("Equipment", "المعدة")}</th><th>${L("Rate", "السعر")} (${unitLbl})</th><th>${L("Driver", "سائق")}</th></tr></thead>
+      <tbody>${rentals.map(r => `<tr><td>${esc(r.equipmentName)}</td><td>${esc(rateOf(r.equipmentName))}</td><td>${driverOf(r.equipmentName)}</td></tr>`).join("")}</tbody></table>
+      <p style="margin-top:20px"><b>${L("Terms", "الشروط")}:</b> ${esc(terms)}</p>
+      <div class="sig"><span>${L("First party signature", "توقيع الطرف الأول")}: ______________</span><span>${L("Second party signature", "توقيع الطرف الثاني")}: ______________</span></div>
+    </body></html>`;
+  }
+
+  app.get("/api/suppliers/:id/rentals/agreement.pdf", ...canView, async (req, res) => {
+    try {
+      const ids = String(req.query.ids || "").split(",").filter(Boolean);
+      if (ids.length === 0) return res.status(400).json({ message: "ids required" });
+      const data = await buildAgreementData(req.params.id, rid(req), ids);
+      if (!data) return res.status(404).json({ message: "Rental not found" });
+      const lang = req.query.lang === "ar" ? "ar" : "en";
+      const { renderPdf } = await import("./realEstatePdf");
+      const pdf = await renderPdf(rentalAgreementHtml(data.supplier, data.rentals, data.equipment, lang));
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Content-Disposition", `attachment; filename="rental-agreement-${data.rentals[0].referenceNumber || data.rentals[0].id}.pdf"`);
+      res.send(pdf);
+    } catch (e: any) { res.status(500).json({ message: e.message }); }
+  });
+
+  // ---- Shared email helper (Resend integration/key first, SMTP fallback) ----
+  async function sendSupplierEmail(to: string, subject: string, html: string, text: string, attachments?: Array<{ filename: string; content: Buffer }>) {
+    let sendError: string | undefined;
+    try {
+      let connectorKey: string | undefined;
+      let fromEmail: string | undefined;
+      const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+      const xReplitToken = process.env.REPL_IDENTITY
+        ? "repl " + process.env.REPL_IDENTITY
+        : process.env.WEB_REPL_RENEWAL
+        ? "depl " + process.env.WEB_REPL_RENEWAL
+        : null;
+      if (xReplitToken && hostname) {
+        const r = await fetch(
+          "https://" + hostname + "/api/v2/connection?include_secrets=true&connector_names=resend",
+          { headers: { Accept: "application/json", X_REPLIT_TOKEN: xReplitToken } as any },
+        );
+        const data = await r.json();
+        const s = data.items?.[0]?.settings;
+        if (s?.api_key) { connectorKey = s.api_key; fromEmail = s.from_email; }
+      }
+      const envKey = process.env.RESEND_API_KEY;
+      const candidates = [connectorKey, envKey].filter(Boolean) as string[];
+      const apiKey = candidates.find(k => k.startsWith("re_")) || candidates[0];
+      if (!fromEmail) fromEmail = process.env.EMAIL_FROM || process.env.IT_EMAIL || "IT@kinbss.org";
+      if (apiKey) {
+        const { Resend } = await import("resend");
+        const resend = new Resend(apiKey);
+        const data: any = await resend.emails.send({ from: fromEmail!, to, subject, html, text, attachments } as any);
+        if (data?.error) sendError = data.error.message; else return { ok: true };
+      }
+    } catch (e: any) {
+      sendError = e.message;
+    }
+    const hasSmtp = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD);
+    if (!hasSmtp) return { ok: false, error: sendError || "No email provider is configured" };
+    const { sendGenericEmail } = await import("./emailService");
+    const result = await sendGenericEmail({
+      to, subject, html, text,
+      attachments: attachments?.map(a => ({ ...a, contentType: "application/pdf" })),
+    });
+    return result.ok ? { ok: true } : { ok: false, error: sendError || result.error || "Failed to send email" };
+  }
+
+  // ---- Share rental agreement via email (PDF attached) ----
+  app.post("/api/suppliers/:id/rentals/share-email", ...canView, async (req, res) => {
+    try {
+      const body = z.object({
+        ids: z.array(z.string()).min(1),
+        to: z.string().email().optional(),
+        lang: z.enum(["en", "ar"]).optional(),
+      }).parse(req.body);
+      const data = await buildAgreementData(req.params.id, rid(req), body.ids);
+      if (!data) return res.status(404).json({ message: "Rental not found" });
+      const to = body.to || data.rentals[0].renterEmail;
+      if (!to) return res.status(400).json({ message: "No renter email on file" });
+      const lang = body.lang === "ar" ? "ar" : "en";
+      const isAr = lang === "ar";
+      const { renderPdf } = await import("./realEstatePdf");
+      const pdf = await renderPdf(rentalAgreementHtml(data.supplier, data.rentals, data.equipment, lang));
+      const ref = data.rentals.map(r => r.referenceNumber).filter(Boolean).join(", ");
+      const subject = isAr ? `عقد إيجار معدات — ${ref}` : `Equipment Rental Agreement — ${ref}`;
+      const eqNames = data.rentals.map(r => r.equipmentName).join(", ");
+      const text = isAr
+        ? `مرفق عقد إيجار المعدات (${eqNames}) من ${data.supplier.companyName}. المدة: ${fmtD(data.rentals[0].startDate)} إلى ${fmtD(data.rentals[0].endDate)}.`
+        : `Attached is the equipment rental agreement (${eqNames}) from ${data.supplier.companyName}. Period: ${fmtD(data.rentals[0].startDate)} to ${fmtD(data.rentals[0].endDate)}.`;
+      const html = `<p>${esc(text)}</p>`;
+      const result = await sendSupplierEmail(to, subject, html, text, [
+        { filename: `rental-agreement-${data.rentals[0].referenceNumber || data.rentals[0].id}.pdf`, content: pdf },
+      ]);
+      if (!result.ok) return res.status(500).json({ message: result.error });
+      res.json({ success: true, to });
+    } catch (e: any) {
+      if (e instanceof z.ZodError) return res.status(400).json({ message: "Invalid data", errors: e.errors });
+      res.status(500).json({ message: e.message });
+    }
+  });
+
+  // ---- Share payment schedule via email ----
+  app.post("/api/suppliers/:id/payments/share-email", ...canView, async (req, res) => {
+    try {
+      const body = z.object({
+        to: z.string().email().optional(),
+        lang: z.enum(["en", "ar"]).optional(),
+      }).parse(req.body);
+      const supplier = await storage.getEquipmentSupplier(req.params.id, rid(req));
+      if (!supplier) return res.status(404).json({ message: "Supplier not found" });
+      const to = body.to || supplier.email;
+      if (!to) return res.status(400).json({ message: "No email on file" });
+      const payments = await storage.getSupplierPayments(req.params.id, rid(req));
+      if (payments.length === 0) return res.status(400).json({ message: "No payments to share" });
+      const isAr = body.lang === "ar";
+      const L = (en: string, ar: string) => (isAr ? ar : en);
+      const total = payments.reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+      const paid = payments.filter((p: any) => p.status === "paid").reduce((s: number, p: any) => s + Number(p.amount || 0), 0);
+      const rows = payments.map((p: any) =>
+        `<tr><td>${esc(p.label)}</td><td>${Number(p.amount).toLocaleString()}</td><td>${fmtD(p.dueDate)}</td><td>${p.status === "paid" ? L("Paid", "مدفوع") : L("Pending", "قيد الانتظار")}</td></tr>`).join("");
+      const subject = L(`Payment schedule — ${supplier.companyName}`, `جدول الدفعات — ${supplier.companyName}`);
+      const html = `<div dir="${isAr ? "rtl" : "ltr"}" style="font-family:Arial,sans-serif">
+        <h2>${esc(subject)}</h2>
+        <table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse">
+          <tr><th>${L("Installment", "الدفعة")}</th><th>${L("Amount (SAR)", "المبلغ (ريال)")}</th><th>${L("Due Date", "تاريخ الاستحقاق")}</th><th>${L("Status", "الحالة")}</th></tr>
+          ${rows}
+        </table>
+        <p>${L("Total", "الإجمالي")}: <b>${total.toLocaleString()}</b> | ${L("Paid", "المدفوع")}: <b>${paid.toLocaleString()}</b> | ${L("Remaining", "المتبقي")}: <b>${(total - paid).toLocaleString()}</b></p>
+      </div>`;
+      const text = payments.map((p: any) => `${p.label}: ${p.amount} SAR — ${fmtD(p.dueDate)} — ${p.status}`).join("\n");
+      const result = await sendSupplierEmail(to, subject, html, text);
+      if (!result.ok) return res.status(500).json({ message: result.error });
+      res.json({ success: true, to });
+    } catch (e: any) {
+      if (e instanceof z.ZodError) return res.status(400).json({ message: "Invalid data", errors: e.errors });
+      res.status(500).json({ message: e.message });
+    }
+  });
   app.post("/api/suppliers/:id/rentals", ...canAdd, async (req, res) => {
     try {
       const supplier = await storage.getEquipmentSupplier(req.params.id, rid(req));

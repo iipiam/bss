@@ -31,7 +31,7 @@ async function getBrowser() {
   return browserInstance;
 }
 
-async function renderPdf(html: string): Promise<Buffer> {
+export async function renderPdf(html: string): Promise<Buffer> {
   const browser = await getBrowser();
   const page = await browser.newPage();
   try {

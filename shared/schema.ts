@@ -2722,11 +2722,16 @@ export const supplierRentals = pgTable("supplier_rentals", {
   endDate: timestamp("end_date").notNull(),
   location: text("location"),
   referenceNumber: text("reference_number"),
+  renterName: text("renter_name"),
+  renterEmail: text("renter_email"),
+  renterWhatsapp: text("renter_whatsapp"),
+  rateUnit: text("rate_unit"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [index("idx_supplier_rentals_supplier").on(table.supplierId)]);
 export const insertSupplierRentalSchema = createInsertSchema(supplierRentals).omit({ id: true, createdAt: true, referenceNumber: true }).extend({
   startDate: z.coerce.date(),
   endDate: z.coerce.date(),
+  rateUnit: z.enum(["hourly", "daily", "weekly"]).nullable().optional(),
 });
 export type InsertSupplierRental = z.infer<typeof insertSupplierRentalSchema>;
 export type SupplierRental = typeof supplierRentals.$inferSelect;

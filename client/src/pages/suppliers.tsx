@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Plus, Search, LayoutGrid, List, Pencil, Trash2, ArrowLeft, ArrowRight, Upload, Eye,
-  FileText, Bell, Settings2, BarChart3, Truck, CheckCircle2, Download, X,
+  FileText, Bell, Settings2, BarChart3, Truck, CheckCircle2, Download, X, Mail, MessageCircle,
 } from "lucide-react";
 
 // ---------- types ----------
@@ -39,7 +39,7 @@ type SupplierDetail = Supplier & {
   payments: { id: string; label: string; amount: string; dueDate: string; status: string; paidDate: string | null }[];
   documents: { id: string; docKey: string; fileName: string }[];
   equipmentDocuments: { id: string; equipmentId: string; docKey: string; fileName: string }[];
-  rentals: { id: string; equipmentName: string; startDate: string; endDate: string; location: string | null; referenceNumber: string | null }[];
+  rentals: { id: string; equipmentName: string; startDate: string; endDate: string; location: string | null; referenceNumber: string | null; renterName: string | null; renterEmail: string | null; renterWhatsapp: string | null; rateUnit: string | null }[];
 };
 
 const SUPPLIER_DOC_SLOTS = [
@@ -111,7 +111,8 @@ export default function SuppliersPage() {
   const [alertsOpen, setAlertsOpen] = useState(false);
   const [newTypeName, setNewTypeName] = useState("");
   const [payForm, setPayForm] = useState({ label: "", amount: "", dueDate: "" });
-  const [rentalForm, setRentalForm] = useState({ companyName: "", startDate: "", endDate: "", location: "", rateUnit: "daily", equipment: [] as string[] });
+  const [rentalForm, setRentalForm] = useState({ companyName: "", renterEmail: "", renterWhatsapp: "", startDate: "", endDate: "", location: "", rateUnit: "daily", equipment: [] as string[] });
+  const [sharingId, setSharingId] = useState<string | null>(null);
 
   const { data: suppliers = [], isLoading } = useQuery<Supplier[]>({ queryKey: ["/api/suppliers"] });
   const { data: detail } = useQuery<SupplierDetail>({
@@ -186,23 +187,81 @@ export default function SuppliersPage() {
 
   const rentalMut = useMutation({
     mutationFn: async () => {
-      const results = [];
+      const ids: string[] = [];
       for (const name of rentalForm.equipment) {
-        results.push(await apiRequest("POST", `/api/suppliers/${selectedId}/rentals`, {
+        const res = await apiRequest("POST", `/api/suppliers/${selectedId}/rentals`, {
           equipmentName: name, startDate: new Date(rentalForm.startDate), endDate: new Date(rentalForm.endDate),
           location: rentalForm.location || null,
-        }));
+          renterName: rentalForm.companyName || null,
+          renterEmail: rentalForm.renterEmail || null,
+          renterWhatsapp: rentalForm.renterWhatsapp || null,
+          rateUnit: rentalForm.rateUnit || null,
+        });
+        const created = await res.json();
+        if (created?.id) ids.push(created.id);
       }
-      return results;
+      return ids;
     },
-    onSuccess: () => {
+    onSuccess: (ids: string[]) => {
       invalidate(selectedId);
-      printRentalAgreement();
-      setRentalForm({ companyName: "", startDate: "", endDate: "", location: "", rateUnit: "daily", equipment: [] });
-      toast({ title: L("Rental agreement generated", "تم إنشاء عقد الإيجار") });
+      if (ids.length > 0) downloadAgreementPdf(ids);
+      setRentalForm({ companyName: "", renterEmail: "", renterWhatsapp: "", startDate: "", endDate: "", location: "", rateUnit: "daily", equipment: [] });
+      toast({ title: L("Rental agreement generated — PDF downloading", "تم إنشاء عقد الإيجار — جارٍ تنزيل PDF") });
     },
     onError: (e: any) => toast({ title: L("Error", "خطأ"), description: e.message, variant: "destructive" }),
   });
+
+  function downloadAgreementPdf(ids: string[]) {
+    const url = `/api/suppliers/${selectedId}/rentals/agreement.pdf?ids=${ids.join(",")}&lang=${isAr ? "ar" : "en"}`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  const shareRentalEmailMut = useMutation({
+    mutationFn: async (rentalId: string) => {
+      setSharingId(rentalId);
+      return apiRequest("POST", `/api/suppliers/${selectedId}/rentals/share-email`, { ids: [rentalId], lang: isAr ? "ar" : "en" });
+    },
+    onSuccess: () => toast({ title: L("Agreement sent by email", "تم إرسال العقد بالبريد الإلكتروني") }),
+    onError: (e: any) => toast({ title: L("Error", "خطأ"), description: e.message, variant: "destructive" }),
+    onSettled: () => setSharingId(null),
+  });
+
+  const sharePaymentsEmailMut = useMutation({
+    mutationFn: () => apiRequest("POST", `/api/suppliers/${selectedId}/payments/share-email`, { lang: isAr ? "ar" : "en" }),
+    onSuccess: () => toast({ title: L("Payment schedule sent by email", "تم إرسال جدول الدفعات بالبريد الإلكتروني") }),
+    onError: (e: any) => toast({ title: L("Error", "خطأ"), description: e.message, variant: "destructive" }),
+  });
+
+  function waLink(phone: string, text: string) {
+    const digits = phone.replace(/[^0-9]/g, "").replace(/^0/, "966");
+    return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
+  }
+
+  function shareRentalWhatsapp(r: SupplierDetail["rentals"][number]) {
+    if (!detail) return;
+    const phone = r.renterWhatsapp || "";
+    if (!phone) { toast({ title: L("No renter WhatsApp number on file", "لا يوجد رقم واتساب للمستأجر"), variant: "destructive" }); return; }
+    const text = L(
+      `Equipment Rental Agreement ${r.referenceNumber || ""}\nSupplier: ${detail.companyName}\nEquipment: ${r.equipmentName}\nPeriod: ${fmtDate(r.startDate)} - ${fmtDate(r.endDate)}\nLocation: ${r.location || "-"}`,
+      `عقد إيجار معدات ${r.referenceNumber || ""}\nالمورد: ${detail.companyName}\nالمعدة: ${r.equipmentName}\nالمدة: ${fmtDate(r.startDate)} - ${fmtDate(r.endDate)}\nالموقع: ${r.location || "-"}`,
+    );
+    window.open(waLink(phone, text), "_blank");
+  }
+
+  function sharePaymentsWhatsapp() {
+    if (!detail) return;
+    const phone = detail.whatsapp || detail.phone || "";
+    if (!phone) { toast({ title: L("No WhatsApp number on file", "لا يوجد رقم واتساب"), variant: "destructive" }); return; }
+    const lines = detail.payments.map(p =>
+      `${p.label}: ${fmtSAR(p.amount)} ${L("SAR", "ريال")} — ${fmtDate(p.dueDate)} — ${p.status === "paid" ? L("Paid", "مدفوع") : L("Pending", "قيد الانتظار")}`);
+    const text = L(`Payment schedule — ${detail.companyName}\n`, `جدول الدفعات — ${detail.companyName}\n`) + lines.join("\n");
+    window.open(waLink(phone, text), "_blank");
+  }
 
   async function uploadDoc(file: File, docKey: string, equipmentId?: string) {
     if (file.size > 5 * 1024 * 1024) { toast({ title: L("File too large (max 5MB)", "الملف كبير جداً (الحد 5 م.ب)"), variant: "destructive" }); return; }
@@ -227,29 +286,6 @@ export default function SuppliersPage() {
       : `/api/suppliers/${selectedId}/documents/${docId}`;
     await apiRequest("DELETE", url);
     invalidate(selectedId);
-  }
-
-  function printRentalAgreement() {
-    if (!detail) return;
-    const eqList = detail.equipment.filter(e => rentalForm.equipment.includes(e.name));
-    const rateOf = (e: EquipmentRow) => rentalForm.rateUnit === "hourly" ? e.hourlyRate : rentalForm.rateUnit === "weekly" ? e.weeklyRate : e.dailyRate;
-    const unitLbl = rentalForm.rateUnit === "hourly" ? L("SAR/hour", "ريال/ساعة") : rentalForm.rateUnit === "weekly" ? L("SAR/week", "ريال/أسبوع") : L("SAR/day", "ريال/يوم");
-    const w = window.open("", "_blank");
-    if (!w) return;
-    w.document.write(`<!DOCTYPE html><html dir="${isAr ? "rtl" : "ltr"}"><head><meta charset="utf-8"><title>${L("Rental Agreement", "عقد إيجار معدات")}</title>
-      <style>body{font-family:Arial,sans-serif;padding:32px;color:#111}h1{font-size:20px}table{width:100%;border-collapse:collapse;margin-top:12px}td,th{border:1px solid #ccc;padding:8px;font-size:13px}p{font-size:13px}</style></head><body>
-      <h1>${L("Equipment Rental Agreement", "عقد إيجار معدات")}</h1>
-      <p>${L("First party (Renter)", "الطرف الأول (المستأجر)")}: <b>${rentalForm.companyName}</b></p>
-      <p>${L("Second party (Supplier)", "الطرف الثاني (المورد)")}: <b>${detail.companyName}</b> — ${detail.contactName} — ${detail.phone}</p>
-      <p>${L("CR", "السجل التجاري")}: ${detail.crNumber} | ${L("VAT", "الرقم الضريبي")}: ${detail.vatNumber} | IBAN: ${detail.iban}</p>
-      <p>${L("Period", "المدة")}: ${rentalForm.startDate} → ${rentalForm.endDate} | ${L("Location", "الموقع")}: ${rentalForm.location || "-"}</p>
-      <table><thead><tr><th>${L("Equipment", "المعدة")}</th><th>${L("Rate", "السعر")} (${unitLbl})</th><th>${L("Driver", "سائق")}</th></tr></thead>
-      <tbody>${eqList.map(e => `<tr><td>${e.name}</td><td>${rateOf(e) || "-"}</td><td>${e.hasDriver ? L("Yes", "نعم") : L("No", "لا")}</td></tr>`).join("")}</tbody></table>
-      <p style="margin-top:24px">${L("Terms", "الشروط")}: ${[detail.fuel, detail.breakdown, detail.minRental, detail.notice, detail.cancellation, detail.insurance].filter(Boolean).join(" • ") || "-"}</p>
-      <br/><br/><table style="border:none"><tr><td style="border:none">${L("First party signature", "توقيع الطرف الأول")}: ______________</td><td style="border:none">${L("Second party signature", "توقيع الطرف الثاني")}: ______________</td></tr></table>
-      </body></html>`);
-    w.document.close();
-    w.print();
   }
 
   function exportSupplierExcel() {
@@ -391,6 +427,8 @@ export default function SuppliersPage() {
                 <div className="space-y-1"><Label>{L("Amount (SAR)", "المبلغ (ريال)")}</Label><Input type="number" value={payForm.amount} onChange={e => setPayForm({ ...payForm, amount: e.target.value })} data-testid="input-payment-amount" /></div>
                 <div className="space-y-1"><Label>{L("Due Date", "تاريخ الاستحقاق")}</Label><Input type="date" value={payForm.dueDate} onChange={e => setPayForm({ ...payForm, dueDate: e.target.value })} data-testid="input-payment-due" /></div>
                 <Button onClick={() => addPaymentMut.mutate()} disabled={!payForm.label || !payForm.amount || !payForm.dueDate || addPaymentMut.isPending} data-testid="button-add-payment"><Plus className="w-4 h-4" />{L("Add", "إضافة")}</Button>
+                <Button variant="outline" onClick={() => sharePaymentsEmailMut.mutate()} disabled={detail.payments.length === 0 || !detail.email || sharePaymentsEmailMut.isPending} data-testid="button-payments-email"><Mail className="w-4 h-4" />{L("Send by Email", "إرسال بالبريد")}</Button>
+                <Button variant="outline" onClick={() => sharePaymentsWhatsapp()} disabled={detail.payments.length === 0} data-testid="button-payments-wa"><MessageCircle className="w-4 h-4" />{L("WhatsApp", "واتساب")}</Button>
               </div>
               <Table>
                 <TableHeader><TableRow><TableHead>{L("Description", "الوصف")}</TableHead><TableHead>{L("Amount", "المبلغ")}</TableHead><TableHead>{L("Due", "الاستحقاق")}</TableHead><TableHead>{L("Status", "الحالة")}</TableHead><TableHead></TableHead></TableRow></TableHeader>
@@ -485,8 +523,10 @@ export default function SuppliersPage() {
           <TabsContent value="rental" className="space-y-4">
             <Card><CardContent className="pt-4 space-y-3">
               <div className="grid md:grid-cols-2 gap-3">
-                <div className="space-y-1"><Label>{L("My Company Name", "اسم شركتي")}</Label><Input value={rentalForm.companyName} onChange={e => setRentalForm({ ...rentalForm, companyName: e.target.value })} data-testid="input-rental-company" /></div>
+                <div className="space-y-1"><Label>{L("Renter Company Name", "اسم شركة المستأجر")}</Label><Input value={rentalForm.companyName} onChange={e => setRentalForm({ ...rentalForm, companyName: e.target.value })} data-testid="input-rental-company" /></div>
                 <div className="space-y-1"><Label>{L("Location", "الموقع")}</Label><Input value={rentalForm.location} onChange={e => setRentalForm({ ...rentalForm, location: e.target.value })} data-testid="input-rental-location" /></div>
+                <div className="space-y-1"><Label>{L("Renter Email", "بريد المستأجر")}</Label><Input type="email" value={rentalForm.renterEmail} onChange={e => setRentalForm({ ...rentalForm, renterEmail: e.target.value })} data-testid="input-rental-email" /></div>
+                <div className="space-y-1"><Label>{L("Renter WhatsApp", "واتساب المستأجر")}</Label><Input value={rentalForm.renterWhatsapp} onChange={e => setRentalForm({ ...rentalForm, renterWhatsapp: e.target.value })} placeholder="05xxxxxxxx" data-testid="input-rental-whatsapp" /></div>
                 <div className="space-y-1"><Label>{L("Start Date", "تاريخ البداية")}</Label><Input type="date" value={rentalForm.startDate} onChange={e => setRentalForm({ ...rentalForm, startDate: e.target.value })} data-testid="input-rental-start" /></div>
                 <div className="space-y-1"><Label>{L("End Date", "تاريخ النهاية")}</Label><Input type="date" value={rentalForm.endDate} onChange={e => setRentalForm({ ...rentalForm, endDate: e.target.value })} data-testid="input-rental-end" /></div>
                 <div className="space-y-1"><Label>{L("Rate Unit", "وحدة السعر")}</Label>
@@ -510,19 +550,27 @@ export default function SuppliersPage() {
                 ))}
               </div>
               <Button onClick={() => rentalMut.mutate()} disabled={!rentalForm.companyName || !rentalForm.startDate || !rentalForm.endDate || rentalForm.equipment.length === 0 || rentalMut.isPending} data-testid="button-generate-rental">
-                <FileText className="w-4 h-4" />{L("Generate Agreement", "إنشاء العقد")}
+                <Download className="w-4 h-4" />{L("Generate Agreement (PDF)", "إنشاء العقد (PDF)")}
               </Button>
             </CardContent></Card>
             <Card><CardHeader><CardTitle className="text-base">{L("Rental History", "سجل الإيجارات")}</CardTitle></CardHeader>
               <CardContent className="p-0">
                 <Table>
-                  <TableHeader><TableRow><TableHead>{L("Ref", "المرجع")}</TableHead><TableHead>{L("Equipment", "المعدة")}</TableHead><TableHead>{L("From", "من")}</TableHead><TableHead>{L("To", "إلى")}</TableHead><TableHead>{L("Location", "الموقع")}</TableHead></TableRow></TableHeader>
+                  <TableHeader><TableRow><TableHead>{L("Ref", "المرجع")}</TableHead><TableHead>{L("Equipment", "المعدة")}</TableHead><TableHead>{L("Renter", "المستأجر")}</TableHead><TableHead>{L("From", "من")}</TableHead><TableHead>{L("To", "إلى")}</TableHead><TableHead>{L("Location", "الموقع")}</TableHead><TableHead>{L("Share", "مشاركة")}</TableHead></TableRow></TableHeader>
                   <TableBody>
-                    {detail.rentals.length === 0 && <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">{L("No rentals yet", "لا توجد إيجارات")}</TableCell></TableRow>}
+                    {detail.rentals.length === 0 && <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">{L("No rentals yet", "لا توجد إيجارات")}</TableCell></TableRow>}
                     {detail.rentals.map(r => (
                       <TableRow key={r.id} data-testid={`row-rental-${r.id}`}>
                         <TableCell>{r.referenceNumber}</TableCell><TableCell>{r.equipmentName}</TableCell>
+                        <TableCell>{r.renterName || "-"}</TableCell>
                         <TableCell>{fmtDate(r.startDate)}</TableCell><TableCell>{fmtDate(r.endDate)}</TableCell><TableCell>{r.location || "-"}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-1 flex-wrap">
+                            <Button size="icon" variant="ghost" title={L("Download PDF", "تنزيل PDF")} onClick={() => downloadAgreementPdf([r.id])} data-testid={`button-rental-pdf-${r.id}`}><Download className="w-4 h-4" /></Button>
+                            <Button size="icon" variant="ghost" title={L("Send by email", "إرسال بالبريد")} disabled={!r.renterEmail || (shareRentalEmailMut.isPending && sharingId === r.id)} onClick={() => shareRentalEmailMut.mutate(r.id)} data-testid={`button-rental-email-${r.id}`}><Mail className="w-4 h-4" /></Button>
+                            <Button size="icon" variant="ghost" title={L("Share on WhatsApp", "مشاركة عبر واتساب")} disabled={!r.renterWhatsapp} onClick={() => shareRentalWhatsapp(r)} data-testid={`button-rental-wa-${r.id}`}><MessageCircle className="w-4 h-4" /></Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

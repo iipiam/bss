@@ -7069,6 +7069,14 @@ export const storage = new DatabaseStorage();
       CREATE INDEX IF NOT EXISTS idx_equipment_types_restaurant ON equipment_types(restaurant_id);
     `);
     console.log('[Migration] Equipment Supplier tables verified/created: equipment_suppliers, supplier_equipment, supplier_payments, supplier_documents, supplier_equipment_documents, supplier_rentals, equipment_types');
+
+    await pool.query(`
+      ALTER TABLE supplier_rentals ADD COLUMN IF NOT EXISTS renter_name TEXT;
+      ALTER TABLE supplier_rentals ADD COLUMN IF NOT EXISTS renter_email TEXT;
+      ALTER TABLE supplier_rentals ADD COLUMN IF NOT EXISTS renter_whatsapp TEXT;
+      ALTER TABLE supplier_rentals ADD COLUMN IF NOT EXISTS rate_unit TEXT;
+    `);
+    console.log('[Migration] Supplier rentals columns verified/added: renter_name, renter_email, renter_whatsapp, rate_unit');
     
     // Create device_serial_numbers table if it doesn't exist (for ZATCA compliance)
     await pool.query(`
