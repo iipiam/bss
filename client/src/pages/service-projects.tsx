@@ -114,6 +114,8 @@ const projectFormSchema = z.object({
   startDate: z.string().optional().default(""),
   endDate: z.string().optional().default(""),
   estimatedBudget: z.string().optional().default(""),
+  discountType: z.string().optional().default("none"),
+  discountValue: z.string().optional().default(""),
   notes: z.string().optional().default(""),
 });
 
@@ -215,6 +217,8 @@ export default function ServiceProjects() {
       startDate: "",
       endDate: "",
       estimatedBudget: "",
+      discountType: "none",
+      discountValue: "",
       notes: "",
     },
   });
@@ -238,6 +242,8 @@ export default function ServiceProjects() {
         startDate: data.startDate || null,
         endDate: data.endDate || null,
         estimatedBudget: data.estimatedBudget || null,
+        discountType: data.discountType && data.discountType !== "none" && parseFloat(data.discountValue || "0") > 0 ? data.discountType : null,
+        discountValue: data.discountType && data.discountType !== "none" && parseFloat(data.discountValue || "0") > 0 ? data.discountValue : null,
         notes: data.notes || null,
       };
       return await apiRequest("POST", "/api/service-projects", payload);
@@ -279,6 +285,8 @@ export default function ServiceProjects() {
         startDate: data.startDate || null,
         endDate: data.endDate || null,
         estimatedBudget: data.estimatedBudget || null,
+        discountType: data.discountType && data.discountType !== "none" && parseFloat(data.discountValue || "0") > 0 ? data.discountType : null,
+        discountValue: data.discountType && data.discountType !== "none" && parseFloat(data.discountValue || "0") > 0 ? data.discountValue : null,
         notes: data.notes || null,
       };
       return await apiRequest("PATCH", `/api/service-projects/${data.id}`, payload);
@@ -365,6 +373,8 @@ export default function ServiceProjects() {
       startDate: project.startDate || "",
       endDate: project.endDate || "",
       estimatedBudget: project.estimatedBudget || "",
+      discountType: (project as any).discountType || "none",
+      discountValue: (project as any).discountValue || "",
       notes: project.notes || "",
     });
     setOpen(true);
@@ -404,6 +414,8 @@ export default function ServiceProjects() {
       startDate: "",
       endDate: "",
       estimatedBudget: "",
+      discountType: "none",
+      discountValue: "",
       notes: "",
     });
     setEditingProject(null);
@@ -792,6 +804,51 @@ export default function ServiceProjects() {
                     </FormItem>
                   )}
                 />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={form.control}
+                    name="discountType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{isRTL ? "نوع الخصم" : "Discount Type"}<InfoTip>{isRTL ? "خصم يطبق على قيمة الخدمات قبل الضريبة في الاتفاقية وملف المشروع." : "Discount applied before VAT in the agreement and project documents."}</InfoTip></FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || "none"}>
+                          <FormControl>
+                            <SelectTrigger data-testid="select-discount-type">
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="none">{isRTL ? "بدون خصم" : "No discount"}</SelectItem>
+                            <SelectItem value="percent">{isRTL ? "نسبة مئوية %" : "Percentage %"}</SelectItem>
+                            <SelectItem value="fixed">{isRTL ? "مبلغ ثابت (ريال)" : "Fixed amount (SAR)"}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="discountValue"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{isRTL ? "قيمة الخصم" : "Discount Value"}</FormLabel>
+                        <FormControl>
+                          <Input
+                            data-testid="input-discount-value"
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            disabled={form.watch("discountType") === "none" || !form.watch("discountType")}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
                 <FormField
                   control={form.control}

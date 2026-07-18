@@ -27,7 +27,7 @@ import {
   User, MapPin, Clock, FileText, CheckCircle, Layers, Receipt,
   ShoppingCart, CreditCard, ListTodo, Zap, AlertTriangle, Download, RefreshCw,
   FileSignature, MessageCircle, ShieldCheck, ShieldX, PlayCircle, CheckSquare, PackageCheck,
-  Lightbulb, Target, GitBranch, Activity, ClipboardList, Video, Users, Link2, Percent,
+  Lightbulb, Target, GitBranch, Activity, ClipboardList, Video, Users, Link2, Percent, Wrench,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -74,6 +74,17 @@ interface ProjectProcurementItem {
   id: string; projectId: string; itemName: string; description: string | null;
   quantity: string; unitPrice: string; totalPrice: string; vendor: string | null;
   purchaseDate: string; deliveryDate: string | null; status: string; notes: string | null;
+}
+interface ProjectEquipmentItem {
+  id: string; projectId: string; name: string; supplierId: string | null;
+  supplierName: string | null; rateUnit: string; rate: string; quantity: string;
+  totalCost: string; startDate: string | null; endDate: string | null;
+  status: string; phase: number; notes: string | null;
+}
+interface SupplierRef { id: string; companyName: string }
+interface SupplierEquipmentRef {
+  id: string; name: string; hourlyRate: string | null; dailyRate: string | null;
+  weeklyRate: string | null; available: boolean;
 }
 interface PaymentScheduleItem {
   id: string; projectId: string; milestoneName: string; amount: string;
@@ -131,6 +142,16 @@ const procurementSchema = z.object({
   status: z.string().min(1), notes: z.string().optional().default(""),
   phase: z.string().optional().default("1"),
 });
+const equipmentSchema = z.object({
+  name: z.string().min(1), supplierId: z.string().optional().default(""),
+  supplierName: z.string().optional().default(""),
+  rateUnit: z.string().min(1), rate: z.string().min(1),
+  quantity: z.string().min(1), totalCost: z.string().min(1),
+  startDate: z.string().optional().default(""), endDate: z.string().optional().default(""),
+  status: z.string().min(1), notes: z.string().optional().default(""),
+  phase: z.string().optional().default("1"),
+});
+type EquipmentFormValues = z.infer<typeof equipmentSchema>;
 const paymentSchema = z.object({
   milestoneName: z.string().min(1), amount: z.string().min(1),
   dueDate: z.string().optional().default(""), status: z.string().min(1),
@@ -220,6 +241,8 @@ export default function ProjectDetail() {
   const [discountValueInput, setDiscountValueInput] = useState<string>("");
   const [selectedProductId, setSelectedProductId] = useState<string>("");
   const [procOpen, setProcOpen] = useState(false);
+  const [eqOpen, setEqOpen] = useState(false);
+  const [eqSupplierPick, setEqSupplierPick] = useState<string>("");
   const [payOpen, setPayOpen] = useState(false);
   const [taskOpen, setTaskOpen] = useState(false);
   const [autoGenOpen, setAutoGenOpen] = useState(false);
@@ -228,6 +251,7 @@ export default function ProjectDetail() {
   const [editSvc, setEditSvc] = useState<ProjectServiceItem | null>(null);
   const [editBill, setEditBill] = useState<ProjectBillItem | null>(null);
   const [editProc, setEditProc] = useState<ProjectProcurementItem | null>(null);
+  const [editEq, setEditEq] = useState<ProjectEquipmentItem | null>(null);
   const [editPay, setEditPay] = useState<PaymentScheduleItem | null>(null);
   const [editTask, setEditTask] = useState<ProjectTaskItem | null>(null);
   const [delItem, setDelItem] = useState<{ type: string; id: string; name: string } | null>(null);
@@ -297,6 +321,28 @@ export default function ProjectDetail() {
     },
     enabled: !!projectId,
   });
+  const { data: equipment = [] } = useQuery<ProjectEquipmentItem[]>({
+    queryKey: ["/api/project-equipment", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/project-equipment?projectId=${projectId}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed"); return res.json();
+    },
+    enabled: !!projectId,
+  });
+  const { data: supplierList = [] } = useQuery<SupplierRef[]>({
+    queryKey: ["/api/suppliers"],
+    enabled: eqOpen,
+    retry: false,
+  });
+  const { data: supplierEquipList = [] } = useQuery<SupplierEquipmentRef[]>({
+    queryKey: ["/api/suppliers", eqSupplierPick, "equipment"],
+    queryFn: async () => {
+      const res = await fetch(`/api/suppliers/${eqSupplierPick}/equipment`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed"); return res.json();
+    },
+    enabled: eqOpen && !!eqSupplierPick,
+    retry: false,
+  });
   const { data: payments = [] } = useQuery<PaymentScheduleItem[]>({
     queryKey: ["/api/payment-schedules", projectId],
     queryFn: async () => {
@@ -358,6 +404,7 @@ export default function ProjectDetail() {
   const svcForm = useForm<ServiceFormValues>({ resolver: zodResolver(serviceSchema), defaultValues: { serviceCatalogId: "", name: "", description: "", pricingMethod: "lump_sum", unitPrice: "0", quantity: "1", unit: "", totalPrice: "0", status: "pending", notes: "", phase: "1" } });
   const billForm = useForm<BillFormValues>({ resolver: zodResolver(billSchema), defaultValues: { description: "", amount: "", category: "", vendor: "", billDate: new Date().toISOString().split("T")[0], dueDate: "", status: "pending", paidDate: "", notes: "" } });
   const procForm = useForm<ProcurementFormValues>({ resolver: zodResolver(procurementSchema), defaultValues: { itemName: "", description: "", quantity: "1", unitPrice: "0", totalPrice: "0", vendor: "", purchaseDate: new Date().toISOString().split("T")[0], deliveryDate: "", status: "ordered", notes: "", phase: "1" } });
+  const eqForm = useForm<EquipmentFormValues>({ resolver: zodResolver(equipmentSchema), defaultValues: { name: "", supplierId: "", supplierName: "", rateUnit: "daily", rate: "0", quantity: "1", totalCost: "0", startDate: "", endDate: "", status: "assigned", notes: "", phase: "1" } });
   const payForm = useForm<PaymentFormValues>({ resolver: zodResolver(paymentSchema), defaultValues: { milestoneName: "", amount: "", dueDate: "", status: "pending", paidDate: "", notes: "", phase: "1" } });
   const taskForm = useForm<TaskFormValues>({ resolver: zodResolver(taskSchema), defaultValues: { name: "", description: "", duration: "1", dependencies: "", status: "pending", phase: "1", assigneeType: "", assigneeId: "" } });
   const [assigneeFilter, setAssigneeFilter] = useState<string>("__all");
@@ -454,6 +501,7 @@ export default function ProjectDetail() {
   const svcMut = makeMutation("/api/project-services", ["/api/project-services", projectId], "POST", () => { setSvcOpen(false); setEditSvc(null); svcForm.reset(); });
   const billMut = makeMutation("/api/project-bills", ["/api/project-bills", projectId], "POST", () => { setBillOpen(false); setEditBill(null); billForm.reset(); });
   const procMut = makeMutation("/api/project-procurements", ["/api/project-procurements", projectId], "POST", () => { setProcOpen(false); setEditProc(null); procForm.reset(); });
+  const eqMut = makeMutation("/api/project-equipment", ["/api/project-equipment", projectId], "POST", () => { setEqOpen(false); setEditEq(null); setEqSupplierPick(""); eqForm.reset(); });
   const payMut = makeMutation("/api/payment-schedules", ["/api/payment-schedules", projectId], "POST", () => { setPayOpen(false); setEditPay(null); payForm.reset(); });
   const taskMut = makeMutation("/api/project-tasks", ["/api/project-tasks", projectId], "POST", () => { setTaskOpen(false); setEditTask(null); taskForm.reset(); });
   const reqMut = makeMutation("/api/project-client-requirements", ["/api/project-client-requirements", projectId], "POST", () => { setReqOpen(false); setEditReq(null); setReqForm(emptyReq); });
@@ -490,6 +538,7 @@ export default function ProjectDetail() {
       queryClient.invalidateQueries({ queryKey: ["/api/project-services", projectId] });
       queryClient.invalidateQueries({ queryKey: ["/api/project-bills", projectId] });
       queryClient.invalidateQueries({ queryKey: ["/api/project-procurements", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/project-equipment", projectId] });
       queryClient.invalidateQueries({ queryKey: ["/api/payment-schedules", projectId] });
       queryClient.invalidateQueries({ queryKey: ["/api/project-tasks", projectId] });
       queryClient.invalidateQueries({ queryKey: ["/api/project-client-requirements", projectId] });
@@ -721,6 +770,23 @@ export default function ProjectDetail() {
     procForm.reset({ itemName: p.itemName, description: p.description || "", quantity: p.quantity, unitPrice: p.unitPrice, totalPrice: p.totalPrice, vendor: p.vendor || "", purchaseDate: p.purchaseDate?.split("T")[0] || "", deliveryDate: p.deliveryDate?.split("T")[0] || "", status: p.status, notes: p.notes || "", phase: String((p as any).phase ?? 1) });
     setProcOpen(true);
   }
+  function recalcEqTotal() {
+    const rate = parseFloat(eqForm.getValues("rate") || "0");
+    const qty = parseFloat(eqForm.getValues("quantity") || "1");
+    eqForm.setValue("totalCost", (rate * qty).toFixed(2));
+  }
+  function openEditEq(e: ProjectEquipmentItem) {
+    setEditEq(e);
+    setEqSupplierPick(e.supplierId || "");
+    eqForm.reset({ name: e.name, supplierId: e.supplierId || "", supplierName: e.supplierName || "", rateUnit: e.rateUnit, rate: e.rate, quantity: e.quantity, totalCost: e.totalCost, startDate: e.startDate ? String(e.startDate).split("T")[0] : "", endDate: e.endDate ? String(e.endDate).split("T")[0] : "", status: e.status, notes: e.notes || "", phase: String(e.phase ?? 1) });
+    setEqOpen(true);
+  }
+  function openAddEq() {
+    setEditEq(null);
+    setEqSupplierPick("");
+    eqForm.reset({ name: "", supplierId: "", supplierName: "", rateUnit: "daily", rate: "0", quantity: "1", totalCost: "0", startDate: "", endDate: "", status: "assigned", notes: "", phase: "1" });
+    setEqOpen(true);
+  }
   async function downloadPaymentInvoice(p: PaymentScheduleItem) {
     if (!p.invoiceId) return;
     try {
@@ -788,6 +854,21 @@ export default function ProjectDetail() {
     if (editProc) body._editId = editProc.id;
     procMut.mutate(body);
   }
+  function submitEq(data: EquipmentFormValues) {
+    const phaseNum = Math.max(1, parseInt(data.phase || "1") || 1);
+    const supplier = supplierList.find(s => s.id === data.supplierId);
+    const body: any = {
+      ...data, projectId,
+      supplierId: data.supplierId || null,
+      supplierName: data.supplierName || supplier?.companyName || null,
+      startDate: data.startDate || null,
+      endDate: data.endDate || null,
+      notes: data.notes || null,
+      phase: phaseNum,
+    };
+    if (editEq) body._editId = editEq.id;
+    eqMut.mutate(body);
+  }
   function submitPay(data: PaymentFormValues) {
     const phaseNum = Math.max(1, parseInt(data.phase || "1") || 1);
     const body: any = { ...data, projectId, dueDate: data.dueDate || null, paidDate: data.paidDate || null, notes: data.notes || null, phase: phaseNum };
@@ -818,6 +899,7 @@ export default function ProjectDetail() {
   const netServices = totalServices - discountAmount;
   const totalBills = bills.reduce((s, x) => s + parseFloat(x.amount || "0"), 0);
   const totalProc = procurements.reduce((s, x) => s + parseFloat(x.totalPrice || "0"), 0);
+  const totalEquipment = equipment.reduce((s, x) => s + parseFloat(x.totalCost || "0"), 0);
   const totalPayments = payments.reduce((s, x) => s + parseFloat(x.amount || "0"), 0);
   const paidPayments = payments.filter(p => p.status === "paid").reduce((s, x) => s + parseFloat(x.amount || "0"), 0);
   const paymentProgress = totalPayments > 0 ? (paidPayments / totalPayments) * 100 : 0;
@@ -1029,6 +1111,7 @@ export default function ProjectDetail() {
           <TabsTrigger value="services" data-testid="tab-services">{t.services || "Services"}</TabsTrigger>
           <TabsTrigger value="bills" data-testid="tab-bills">{t.bills || "Bills"}</TabsTrigger>
           <TabsTrigger value="procurements" data-testid="tab-procurements">{t.procurements || "Procurements"}</TabsTrigger>
+          <TabsTrigger value="equipment" data-testid="tab-equipment">{(t as any).equipment || tr("Equipment", "المعدات")}</TabsTrigger>
           <TabsTrigger value="payments" data-testid="tab-payments">{t.payments || "Payments"}</TabsTrigger>
           <TabsTrigger value="tasks" data-testid="tab-tasks">{t.tasks || "Tasks"}</TabsTrigger>
         </TabsList>
@@ -1038,6 +1121,7 @@ export default function ProjectDetail() {
             <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Layers className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalServicesValue || "Services Value"}</p><InfoTip>{language === 'Arabic' ? 'إجمالي قيمة الخدمات المضافة للمشروع.' : 'Total billable value of services on this project.'}</InfoTip><Button variant="ghost" size="icon" className="ml-auto" onClick={() => { setDiscountTypeInput(projDiscountType || "percent"); setDiscountValueInput(projDiscountValue > 0 ? String(projDiscountValue) : ""); setDiscountOpen(true); }} data-testid="button-edit-discount" aria-label={isAr ? "تعديل الخصم" : "Edit discount"}><Percent className="h-3.5 w-3.5" /></Button></div><p className="text-2xl font-bold" data-testid="text-total-services">{fmtNum(String(netServices))} SAR</p>{discountAmount > 0 && <p className="text-xs text-muted-foreground mt-1" data-testid="text-discount-detail"><span className="line-through">{fmtNum(String(totalServices))} SAR</span>{" · "}{isAr ? "خصم" : "Discount"} {projDiscountType === "percent" ? `${projDiscountValue}%` : `${fmtNum(String(discountAmount))} SAR`}</p>}</CardContent></Card>
             <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Receipt className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalBillsAmount || "Total Bills"}</p><InfoTip>{language === 'Arabic' ? 'مجموع جميع فواتير المشروع.' : 'Sum of all bills recorded for this project.'}</InfoTip></div><p className="text-2xl font-bold" data-testid="text-total-bills">{fmtNum(String(totalBills))} SAR</p></CardContent></Card>
             <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><ShoppingCart className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.totalProcurements || "Procurements"}</p><InfoTip>{language === 'Arabic' ? 'إجمالي تكلفة المشتريات للمشروع.' : 'Total cost of items procured for this project.'}</InfoTip></div><p className="text-2xl font-bold" data-testid="text-total-procurements">{fmtNum(String(totalProc))} SAR</p></CardContent></Card>
+            <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><Wrench className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{(t as any).equipment || tr("Equipment", "المعدات")}</p><InfoTip>{language === 'Arabic' ? 'إجمالي تكلفة المعدات المخصصة للمشروع.' : 'Total cost of equipment assigned to this project.'}</InfoTip></div><p className="text-2xl font-bold" data-testid="text-total-equipment">{fmtNum(String(totalEquipment))} SAR</p></CardContent></Card>
             <Card><CardContent className="pt-4 pb-4"><div className="flex items-center gap-2 mb-1"><CreditCard className="h-4 w-4 text-muted-foreground" /><p className="text-sm text-muted-foreground">{t.paymentProgress || "Payment Progress"}</p><InfoTip>{language === 'Arabic' ? 'نسبة المبالغ المحصلة من إجمالي جدول الدفعات.' : 'Share of scheduled payments already collected.'}</InfoTip></div><p className="text-2xl font-bold" data-testid="text-payment-progress">{paymentProgress.toFixed(0)}%</p><Progress value={paymentProgress} className="mt-2" /></CardContent></Card>
           </div>
           <div className={`grid ${layout.gap} ${layout.gridCols({ desktop: 2, tablet: 1, mobile: 1 })}`}>
@@ -1262,6 +1346,57 @@ export default function ProjectDetail() {
                   setProcOpen(true);
                 }} data-testid="button-add-procurement-phase"><Plus className="h-4 w-4 mr-2" />{(t as any).addPhase || "Add Phase"}</Button>
                 <p className="font-bold">{t.total}: {fmtNum(String(totalProc))} SAR</p>
+              </div>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="equipment" className="space-y-4">
+          <div className="flex items-center justify-between gap-2 flex-wrap">
+            <h2 className="text-lg font-semibold">{(t as any).equipment || tr("Equipment", "المعدات")}</h2>
+            <Button onClick={openAddEq} data-testid="button-add-equipment"><Plus className="h-4 w-4 mr-2" />{(t as any).addEquipment || tr("Add Equipment", "إضافة معدات")}</Button>
+          </div>
+          {equipment.length === 0 ? <p className="text-muted-foreground text-center py-8">{(t as any).noEquipment || tr("No equipment assigned yet", "لم يتم تخصيص معدات بعد")}</p> : (
+            <div className="space-y-3">
+              {equipment.map(e => (
+                <Card key={e.id} data-testid={`card-equipment-${e.id}`}>
+                  <CardContent className="pt-4 pb-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <div className="min-w-0">
+                        <p className="font-semibold truncate" data-testid={`text-equipment-name-${e.id}`}>{e.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {e.supplierName || "-"} · {fmtNum(e.rate)} SAR / {e.rateUnit === "hourly" ? (isAr ? "ساعة" : "hour") : e.rateUnit === "weekly" ? (isAr ? "أسبوع" : "week") : (isAr ? "يوم" : "day")} · {isAr ? "الكمية" : "Qty"}: {e.quantity}
+                          {e.startDate && <> · {fmtDate(e.startDate)}{e.endDate ? ` → ${fmtDate(e.endDate)}` : ""}</>}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                        <Badge variant={e.status === "returned" ? "secondary" : "default"}>{e.status === "returned" ? (isAr ? "مُرجع" : "Returned") : (isAr ? "مخصص" : "Assigned")}</Badge>
+                        <span className="font-semibold">{fmtNum(e.totalCost)} SAR</span>
+                        {e.status === "assigned" && (
+                          <Button variant="outline" size="sm" onClick={() => eqMut.mutate({ _editId: e.id, status: "returned" } as any)} disabled={eqMut.isPending} data-testid={`button-return-equipment-${e.id}`}>
+                            <PackageCheck className="h-4 w-4 mr-1" />{isAr ? "إرجاع" : "Return"}
+                          </Button>
+                        )}
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={t.edit} onClick={() => openEditEq(e)} data-testid={`button-edit-equipment-${e.id}`}><Edit className="h-4 w-4" /></Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{t.edit}</TooltipContent>
+                        </Tooltip>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="ghost" size="icon" aria-label={t.delete} onClick={() => setDelItem({ type: "project-equipment", id: e.id, name: e.name })} data-testid={`button-delete-equipment-${e.id}`}><Trash2 className="h-4 w-4" /></Button>
+                          </TooltipTrigger>
+                          <TooltipContent>{isAr ? "حذف المعدات من المشروع." : "Remove this equipment from the project."}</TooltipContent>
+                        </Tooltip>
+                      </div>
+                    </div>
+                    {e.notes && <p className="text-sm text-muted-foreground mt-2 whitespace-pre-wrap">{e.notes}</p>}
+                  </CardContent>
+                </Card>
+              ))}
+              <div className="flex justify-end pt-2 border-t">
+                <p className="font-bold">{t.total}: {fmtNum(String(totalEquipment))} SAR</p>
               </div>
             </div>
           )}
@@ -2524,6 +2659,109 @@ export default function ProjectDetail() {
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => { setProcOpen(false); setEditProc(null); }} data-testid="button-cancel-procurement">{t.cancel}</Button>
                 <Button type="submit" disabled={procMut.isPending} data-testid="button-submit-procurement">{editProc ? t.save : t.add}</Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Equipment Dialog */}
+      <Dialog open={eqOpen} onOpenChange={(o) => { if (!o) { setEqOpen(false); setEditEq(null); setEqSupplierPick(""); } else setEqOpen(true); }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle>{editEq ? t.edit : t.add} {(t as any).equipment || tr("Equipment", "المعدات")}</DialogTitle><DialogDescription>{editEq ? tr("Update equipment details", "تحديث بيانات المعدات") : tr("Assign equipment to this project", "تخصيص معدات لهذا المشروع")}</DialogDescription></DialogHeader>
+          <Form {...eqForm}>
+            <form onSubmit={eqForm.handleSubmit(submitEq)} className="space-y-4">
+              {supplierList.length > 0 && (
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField control={eqForm.control} name="supplierId" render={({ field }) => (
+                    <FormItem><FormLabel>{tr("Supplier", "المورد")}</FormLabel>
+                      <Select onValueChange={(v) => { const val = v === "__none" ? "" : v; field.onChange(val); setEqSupplierPick(val); const sup = supplierList.find(s => s.id === val); eqForm.setValue("supplierName", sup?.companyName || ""); }} value={field.value || "__none"}>
+                        <FormControl><SelectTrigger data-testid="select-equipment-supplier"><SelectValue /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          <SelectItem value="__none">{tr("Manual entry", "إدخال يدوي")}</SelectItem>
+                          {supplierList.map(s => <SelectItem key={s.id} value={s.id}>{s.companyName}</SelectItem>)}
+                        </SelectContent>
+                      </Select><FormMessage /></FormItem>
+                  )} />
+                  {eqSupplierPick && supplierEquipList.length > 0 && (
+                    <div className="space-y-2"><Label>{tr("Pick equipment", "اختر المعدات")}</Label>
+                      <Select onValueChange={(v) => {
+                        const eq = supplierEquipList.find(x => x.id === v);
+                        if (eq) {
+                          eqForm.setValue("name", eq.name);
+                          const unit = eqForm.getValues("rateUnit") || "daily";
+                          const rate = unit === "hourly" ? eq.hourlyRate : unit === "weekly" ? eq.weeklyRate : eq.dailyRate;
+                          if (rate) { eqForm.setValue("rate", rate); setTimeout(recalcEqTotal, 0); }
+                        }
+                      }}>
+                        <SelectTrigger data-testid="select-supplier-equipment"><SelectValue placeholder={tr("Select...", "اختر...")} /></SelectTrigger>
+                        <SelectContent>
+                          {supplierEquipList.map(x => <SelectItem key={x.id} value={x.id}>{x.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              )}
+              <FormField control={eqForm.control} name="name" render={({ field }) => (
+                <FormItem><FormLabel>{tr("Equipment Name", "اسم المعدات")}</FormLabel><FormControl><Input data-testid="input-equipment-name" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              {supplierList.length === 0 && (
+                <FormField control={eqForm.control} name="supplierName" render={({ field }) => (
+                  <FormItem><FormLabel>{tr("Supplier (optional)", "المورد (اختياري)")}</FormLabel><FormControl><Input data-testid="input-equipment-supplier-name" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              )}
+              <div className="grid grid-cols-3 gap-4">
+                <FormField control={eqForm.control} name="rateUnit" render={({ field }) => (
+                  <FormItem><FormLabel>{tr("Rate Unit", "وحدة السعر")}</FormLabel>
+                    <Select onValueChange={(v) => { field.onChange(v); }} value={field.value}>
+                      <FormControl><SelectTrigger data-testid="select-equipment-rate-unit"><SelectValue /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="hourly">{tr("Hourly", "بالساعة")}</SelectItem>
+                        <SelectItem value="daily">{tr("Daily", "يومي")}</SelectItem>
+                        <SelectItem value="weekly">{tr("Weekly", "أسبوعي")}</SelectItem>
+                      </SelectContent>
+                    </Select><FormMessage /></FormItem>
+                )} />
+                <FormField control={eqForm.control} name="rate" render={({ field }) => (
+                  <FormItem><FormLabel>{tr("Rate (SAR)", "السعر (ريال)")}</FormLabel><FormControl><Input data-testid="input-equipment-rate" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcEqTotal, 0); }} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={eqForm.control} name="quantity" render={({ field }) => (
+                  <FormItem><FormLabel>{t.quantity || "Quantity"}</FormLabel><FormControl><Input data-testid="input-equipment-quantity" type="number" {...field} onChange={(e) => { field.onChange(e); setTimeout(recalcEqTotal, 0); }} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <FormField control={eqForm.control} name="totalCost" render={({ field }) => (
+                <FormItem><FormLabel>{tr("Total Cost (SAR)", "التكلفة الإجمالية (ريال)")}</FormLabel><FormControl><Input data-testid="input-equipment-total" type="number" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={eqForm.control} name="startDate" render={({ field }) => (
+                  <FormItem><FormLabel>{t.startDate || "Start Date"}</FormLabel><FormControl><Input data-testid="input-equipment-start" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+                <FormField control={eqForm.control} name="endDate" render={({ field }) => (
+                  <FormItem><FormLabel>{t.endDate || "End Date"}</FormLabel><FormControl><Input data-testid="input-equipment-end" type="date" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={eqForm.control} name="status" render={({ field }) => (
+                  <FormItem><FormLabel>{t.status}</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl><SelectTrigger data-testid="select-equipment-status"><SelectValue /></SelectTrigger></FormControl>
+                      <SelectContent>
+                        <SelectItem value="assigned">{tr("Assigned", "مخصص")}</SelectItem>
+                        <SelectItem value="returned">{tr("Returned", "مُرجع")}</SelectItem>
+                      </SelectContent>
+                    </Select><FormMessage /></FormItem>
+                )} />
+                <FormField control={eqForm.control} name="phase" render={({ field }) => (
+                  <FormItem><FormLabel>{(t as any).phase || "Phase"}</FormLabel><FormControl><Input data-testid="input-equipment-phase" type="number" min="1" {...field} /></FormControl><FormMessage /></FormItem>
+                )} />
+              </div>
+              <FormField control={eqForm.control} name="notes" render={({ field }) => (
+                <FormItem><FormLabel>{t.notes}</FormLabel><FormControl><Textarea data-testid="input-equipment-notes" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => { setEqOpen(false); setEditEq(null); setEqSupplierPick(""); }} data-testid="button-cancel-equipment">{t.cancel}</Button>
+                <Button type="submit" disabled={eqMut.isPending} data-testid="button-submit-equipment">{editEq ? t.save : t.add}</Button>
               </div>
             </form>
           </Form>

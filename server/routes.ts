@@ -9,7 +9,7 @@ import { sanitizePatchBody } from "./utils";
 import { generateCompanyProfilePDF } from "./company-profile-pdf";
 import { generateBusinessCardPDF } from "./business-card-pdf";
 import { amountToWords, percentageToWords } from "./lib/numberToWords";
-import { insertCompanyProfileSchema, insertInfluencerProfileSchema, insertBloggerProfileSchema, insertMarketingFinSnapshotSchema, insertMarketingFinScenarioSchema } from "@shared/schema";
+import { insertCompanyProfileSchema, insertInfluencerProfileSchema, insertBloggerProfileSchema, insertMarketingFinSnapshotSchema, insertMarketingFinScenarioSchema, insertProjectEquipmentSchema } from "@shared/schema";
 import { logActivity } from "./activityLogger";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
 import { hasAnyPermission } from "@shared/permissions";
@@ -16918,6 +16918,59 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // ==================== PROJECT EQUIPMENT ====================
+  app.get("/api/project-equipment", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const projectId = req.query.projectId as string;
+      if (!projectId) return res.status(400).json({ message: "projectId is required" });
+      const equipment = await storage.getProjectEquipment(restaurantId, projectId);
+      res.json(equipment);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.post("/api/project-equipment", requireAuth, requireRestaurant, requireAction('projects', 'add'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const parsed = insertProjectEquipmentSchema.parse({ ...req.body, restaurantId });
+      const project = await storage.getServiceProject(parsed.projectId, restaurantId);
+      if (!project) return res.status(404).json({ message: "Project not found" });
+      const equipment = await storage.createProjectEquipment(parsed);
+      res.status(201).json(equipment);
+    } catch (error: any) {
+      if (error?.name === 'ZodError') return res.status(400).json({ message: "Invalid equipment data", errors: error.errors });
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.patch("/api/project-equipment/:id", requireAuth, requireRestaurant, requireAction('projects', 'edit'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const parsed = insertProjectEquipmentSchema.partial().parse(req.body);
+      delete (parsed as any).restaurantId;
+      delete (parsed as any).projectId;
+      const equipment = await storage.updateProjectEquipment(req.params.id, restaurantId, parsed);
+      if (!equipment) return res.status(404).json({ message: "Project equipment not found" });
+      res.json(equipment);
+    } catch (error: any) {
+      if (error?.name === 'ZodError') return res.status(400).json({ message: "Invalid equipment data", errors: error.errors });
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  app.delete("/api/project-equipment/:id", requireAuth, requireRestaurant, requireAction('projects', 'delete'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const deleted = await storage.deleteProjectEquipment(req.params.id, restaurantId);
+      if (!deleted) return res.status(404).json({ message: "Project equipment not found" });
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
   // ==================== PROJECT TASKS ====================
   app.get("/api/project-tasks", requireAuth, requireRestaurant, requirePermission('projects'), async (req, res) => {
     try {
@@ -18252,10 +18305,21 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const procurements = await storage.getProjectProcurements(restaurantId, project.id);
     const tasks = await storage.getProjectTasks(restaurantId, project.id);
     const schedules = await storage.getPaymentSchedules(restaurantId, project.id);
+    const equipment = await storage.getProjectEquipment(restaurantId, project.id);
 
     const totalServices = services.reduce((s, svc) => s + parseFloat(svc.totalPrice || '0'), 0);
     const totalBills = bills.reduce((s, b) => s + parseFloat(b.amount || '0'), 0);
     const totalProcurements = procurements.reduce((s, p) => s + parseFloat(p.totalPrice || '0'), 0);
+    const totalEquipment = equipment.reduce((s, e) => s + parseFloat(e.totalCost || '0'), 0);
+    const dossierDiscountValue = parseFloat((project as any).discountValue || '0') || 0;
+    const dossierDiscountType = (project as any).discountType as string | null;
+    let dossierDiscountAmount = 0;
+    if (dossierDiscountType === 'percent' && dossierDiscountValue > 0) {
+      dossierDiscountAmount = totalServices * (Math.min(dossierDiscountValue, 100) / 100);
+    } else if (dossierDiscountType === 'fixed' && dossierDiscountValue > 0) {
+      dossierDiscountAmount = Math.min(dossierDiscountValue, totalServices);
+    }
+    const netServicesValue = totalServices - dossierDiscountAmount;
     const totalPaid = schedules.filter(s => s.status === 'paid').reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
     const totalScheduled = schedules.reduce((s, p) => s + parseFloat(p.amount || '0'), 0);
     const reqsAndMeetingsHtml = await buildRequirementsAndMeetingsHtml(restaurantId, project.id);
@@ -18427,6 +18491,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
               <div class="summary-item"><div class="label">Services Value / قيمة الخدمات</div><div class="value">${totalServices.toFixed(2)} SAR</div></div>
               <div class="summary-item"><div class="label">Total Bills / إجمالي الفواتير</div><div class="value">${totalBills.toFixed(2)} SAR</div></div>
               <div class="summary-item"><div class="label">Procurements / المشتريات</div><div class="value">${totalProcurements.toFixed(2)} SAR</div></div>
+              ${totalEquipment > 0 ? `<div class="summary-item"><div class="label">Equipment / المعدات</div><div class="value">${totalEquipment.toFixed(2)} SAR</div></div>` : ''}
+              ${dossierDiscountAmount > 0 ? `<div class="summary-item"><div class="label">Discount / الخصم${dossierDiscountType === 'percent' ? ` (${dossierDiscountValue}%)` : ''}</div><div class="value" style="color:#b91c1c">- ${dossierDiscountAmount.toFixed(2)} SAR</div></div>` : ''}
+              ${dossierDiscountAmount > 0 ? `<div class="summary-item"><div class="label">Net Services / صافي الخدمات</div><div class="value">${netServicesValue.toFixed(2)} SAR</div></div>` : ''}
             </div>
           </div>
 
@@ -18459,6 +18526,27 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
               <thead><tr><th>#</th><th>Item</th><th>Vendor</th><th>Qty</th><th>Total</th><th>Status</th></tr></thead>
               <tbody>${procurementRows}
                 <tr class="total-row"><td colspan="4" style="text-align:right">Total:</td><td style="text-align:right">${totalProcurements.toFixed(2)} SAR</td><td></td></tr>
+              </tbody>
+            </table>
+          </div>` : ''}
+
+          ${equipment.length > 0 ? `
+          <div class="section">
+            <h3>Equipment / المعدات</h3>
+            <table>
+              <thead><tr><th>#</th><th>Equipment</th><th>Supplier</th><th>Rate</th><th>Qty</th><th>Period</th><th>Total</th><th>Status</th></tr></thead>
+              <tbody>${equipment.map((e, idx) => `
+                <tr>
+                  <td>${idx + 1}</td>
+                  <td>${escapeHtml(e.name)}</td>
+                  <td>${escapeHtml(e.supplierName || '-')}</td>
+                  <td style="text-align:right">${parseFloat(e.rate || '0').toFixed(2)} / ${escapeHtml(e.rateUnit)}</td>
+                  <td style="text-align:center">${parseFloat(e.quantity || '1')}</td>
+                  <td>${e.startDate ? new Date(e.startDate).toLocaleDateString('en-GB') : '-'} → ${e.endDate ? new Date(e.endDate).toLocaleDateString('en-GB') : '-'}</td>
+                  <td style="text-align:right">${parseFloat(e.totalCost || '0').toFixed(2)} SAR</td>
+                  <td>${escapeHtml(e.status)}</td>
+                </tr>`).join('')}
+                <tr class="total-row"><td colspan="6" style="text-align:right">Total:</td><td style="text-align:right">${totalEquipment.toFixed(2)} SAR</td><td></td></tr>
               </tbody>
             </table>
           </div>` : ''}
@@ -18817,7 +18905,10 @@ ${phaseSchedules.length > 0 ? `
 
       const company = await storage.getCompanySettings(restaurantId);
       const services = await storage.getProjectServices(restaurantId, project.id);
-      const totalAmount = services.reduce((s, svc) => s + parseFloat(svc.totalPrice || '0'), 0);
+      const agEquipment = await storage.getProjectEquipment(restaurantId, project.id);
+      const servicesAmount = services.reduce((s, svc) => s + parseFloat(svc.totalPrice || '0'), 0);
+      const equipmentAmount = agEquipment.reduce((s, e) => s + parseFloat(e.totalCost || '0'), 0);
+      const totalAmount = servicesAmount + equipmentAmount;
 
       const template = (company?.agreementTemplate || '').trim();
       if (!template) {
@@ -18844,6 +18935,8 @@ ${phaseSchedules.length > 0 ? `
 
       const replacements: Record<string, string> = {
         '{{grossAmount}}': fmtMoney(totalAmount),
+        '{{servicesAmount}}': fmtMoney(servicesAmount),
+        '{{equipmentAmount}}': fmtMoney(equipmentAmount),
         '{{discountAmount}}': fmtMoney(discountAmount),
         '{{netAmount}}': fmtMoney(netAmount),
         '{{clientName}}': project.clientName || '',
@@ -19031,9 +19124,41 @@ ${phaseSchedules.length > 0 ? `
             </tbody>
           </table>
 
+          ${agEquipment.length > 0 ? `
+          <div class="section-title">Equipment / المعدات</div>
+          <table class="services">
+            <thead>
+              <tr>
+                <th style="width:30px;">#</th>
+                <th>Equipment / المعدات</th>
+                <th>Supplier / المورد</th>
+                <th class="num" style="width:110px;">Rate</th>
+                <th class="num" style="width:70px;">Qty</th>
+                <th class="num" style="width:120px;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${agEquipment.map((e, i) => `
+              <tr>
+                <td class="num">${i + 1}</td>
+                <td><div class="svc-name">${escapeHtml(e.name)}</div>${e.notes ? `<div class="svc-desc">${escapeHtml(e.notes)}</div>` : ''}</td>
+                <td>${escapeHtml(e.supplierName || '-')}</td>
+                <td class="num">${fmtMoney(parseFloat(e.rate || '0'))} / ${escapeHtml(e.rateUnit)}</td>
+                <td class="num">${parseFloat(e.quantity || '1')}</td>
+                <td class="num">${fmtMoney(parseFloat(e.totalCost || '0'))}</td>
+              </tr>`).join('')}
+            </tbody>
+          </table>` : ''}
+
           <div class="totals">
             <table>
+              ${agEquipment.length > 0 ? `
+              <tr><td class="lbl">Services</td><td class="val">${fmtMoney(servicesAmount)}</td></tr>
+              <tr><td class="lbl">Equipment</td><td class="val">${fmtMoney(equipmentAmount)}</td></tr>` : ''}
               <tr><td class="lbl">Subtotal</td><td class="val">${fmtMoney(totalAmount)}</td></tr>
+              ${discountAmount > 0 ? `
+              <tr><td class="lbl">Discount${discountType === 'percent' ? ` (${discountValue}%)` : ''} / الخصم</td><td class="val">- ${fmtMoney(discountAmount)}</td></tr>
+              <tr><td class="lbl">Net / الصافي</td><td class="val">${fmtMoney(netAmount)}</td></tr>` : ''}
               <tr><td class="lbl">VAT (15%)</td><td class="val">${fmtMoney(vatAmount)}</td></tr>
               <tr class="grand"><td>Total</td><td class="val">${fmtMoney(totalWithVat)}</td></tr>
             </table>

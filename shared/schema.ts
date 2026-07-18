@@ -1881,6 +1881,35 @@ export const insertProjectProcurementSchema = createInsertSchema(projectProcurem
 export type InsertProjectProcurement = z.infer<typeof insertProjectProcurementSchema>;
 export type ProjectProcurement = typeof projectProcurements.$inferSelect;
 
+// Project Equipment (equipment assigned/rented into a service project - MULTI-TENANT)
+export const projectEquipment = pgTable("project_equipment", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  projectId: varchar("project_id").references(() => serviceProjects.id).notNull(),
+  name: text("name").notNull(),
+  supplierId: varchar("supplier_id"),
+  supplierName: text("supplier_name"),
+  rateUnit: text("rate_unit").notNull().default("daily"), // "hourly" | "daily" | "weekly"
+  rate: decimal("rate", { precision: 12, scale: 2 }).notNull().default("0"),
+  quantity: decimal("quantity", { precision: 12, scale: 2 }).notNull().default("1"), // number of hours/days/weeks
+  totalCost: decimal("total_cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  status: text("status").notNull().default("assigned"), // "assigned" | "returned"
+  phase: integer("phase").notNull().default(1),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => [index("idx_project_equipment_project").on(table.projectId)]);
+
+export const insertProjectEquipmentSchema = createInsertSchema(projectEquipment).omit({ id: true, createdAt: true }).extend({
+  rateUnit: z.enum(["hourly", "daily", "weekly"]).default("daily"),
+  status: z.enum(["assigned", "returned"]).default("assigned"),
+  startDate: z.coerce.date().nullable().optional(),
+  endDate: z.coerce.date().nullable().optional(),
+});
+export type InsertProjectEquipment = z.infer<typeof insertProjectEquipmentSchema>;
+export type ProjectEquipment = typeof projectEquipment.$inferSelect;
+
 // Project Tasks (for CPM scheduling)
 export const projectTasks = pgTable("project_tasks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

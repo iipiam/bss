@@ -157,6 +157,9 @@ import {
   type ProjectProcurement,
   type InsertProjectProcurement,
   projectProcurements,
+  type ProjectEquipment,
+  type InsertProjectEquipment,
+  projectEquipment,
   type ProjectTask,
   type InsertProjectTask,
   projectTasks,
@@ -714,6 +717,12 @@ export interface IStorage {
   createProjectProcurement(procurement: InsertProjectProcurement): Promise<ProjectProcurement>;
   updateProjectProcurement(id: string, restaurantId: string, data: Partial<InsertProjectProcurement>): Promise<ProjectProcurement | undefined>;
   deleteProjectProcurement(id: string, restaurantId: string): Promise<boolean>;
+
+  // Project Equipment
+  getProjectEquipment(restaurantId: string, projectId: string): Promise<ProjectEquipment[]>;
+  createProjectEquipment(equipment: InsertProjectEquipment): Promise<ProjectEquipment>;
+  updateProjectEquipment(id: string, restaurantId: string, data: Partial<InsertProjectEquipment>): Promise<ProjectEquipment | undefined>;
+  deleteProjectEquipment(id: string, restaurantId: string): Promise<boolean>;
 
   // Project Tasks
   getProjectTasks(restaurantId: string, projectId: string): Promise<ProjectTask[]>;
@@ -5857,6 +5866,7 @@ export class DatabaseStorage implements IStorage {
       await tx.delete(projectServices).where(and(eq(projectServices.projectId, id), eq(projectServices.restaurantId, restaurantId)));
       await tx.delete(projectBills).where(and(eq(projectBills.projectId, id), eq(projectBills.restaurantId, restaurantId)));
       await tx.delete(projectProcurements).where(and(eq(projectProcurements.projectId, id), eq(projectProcurements.restaurantId, restaurantId)));
+      await tx.delete(projectEquipment).where(and(eq(projectEquipment.projectId, id), eq(projectEquipment.restaurantId, restaurantId)));
       await tx.delete(projectTasks).where(and(eq(projectTasks.projectId, id), eq(projectTasks.restaurantId, restaurantId)));
       await tx.delete(projectItems).where(and(eq(projectItems.projectId, id), eq(projectItems.restaurantId, restaurantId)));
       const result = await tx.delete(serviceProjects).where(and(eq(serviceProjects.id, id), eq(serviceProjects.restaurantId, restaurantId)));
@@ -5974,6 +5984,27 @@ export class DatabaseStorage implements IStorage {
 
   async deleteProjectProcurement(id: string, restaurantId: string): Promise<boolean> {
     const result = await db.delete(projectProcurements).where(and(eq(projectProcurements.id, id), eq(projectProcurements.restaurantId, restaurantId))).returning();
+    return result.length > 0;
+  }
+
+  // Project Equipment
+  async getProjectEquipment(restaurantId: string, projectId: string): Promise<ProjectEquipment[]> {
+    return db.select().from(projectEquipment).where(and(eq(projectEquipment.restaurantId, restaurantId), eq(projectEquipment.projectId, projectId))).orderBy(projectEquipment.createdAt);
+  }
+
+  async createProjectEquipment(equipment: InsertProjectEquipment): Promise<ProjectEquipment> {
+    const [result] = await db.insert(projectEquipment).values(equipment as any).returning();
+    return result;
+  }
+
+  async updateProjectEquipment(id: string, restaurantId: string, data: Partial<InsertProjectEquipment>): Promise<ProjectEquipment | undefined> {
+    const { restaurantId: _rid, ...safe } = data as any;
+    const [result] = await db.update(projectEquipment).set(safe).where(and(eq(projectEquipment.id, id), eq(projectEquipment.restaurantId, restaurantId))).returning();
+    return result;
+  }
+
+  async deleteProjectEquipment(id: string, restaurantId: string): Promise<boolean> {
+    const result = await db.delete(projectEquipment).where(and(eq(projectEquipment.id, id), eq(projectEquipment.restaurantId, restaurantId))).returning();
     return result.length > 0;
   }
 
@@ -7758,6 +7789,30 @@ export const storage = new DatabaseStorage();
       )
     `);
     console.log('[Migration] Tables verified/created: project_client_requirements, project_meetings');
+
+    // BizFlow Manager: Project Equipment assignments
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS project_equipment (
+        id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR NOT NULL REFERENCES restaurants(id),
+        project_id VARCHAR NOT NULL REFERENCES service_projects(id),
+        name TEXT NOT NULL,
+        supplier_id VARCHAR,
+        supplier_name TEXT,
+        rate_unit TEXT NOT NULL DEFAULT 'daily',
+        rate DECIMAL(12,2) NOT NULL DEFAULT 0,
+        quantity DECIMAL(12,2) NOT NULL DEFAULT 1,
+        total_cost DECIMAL(12,2) NOT NULL DEFAULT 0,
+        start_date TIMESTAMP,
+        end_date TIMESTAMP,
+        status TEXT NOT NULL DEFAULT 'assigned',
+        phase INTEGER NOT NULL DEFAULT 1,
+        notes TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_project_equipment_project ON project_equipment(project_id)`);
+    console.log('[Migration] Tables verified/created: project_equipment');
 
     // BizFlow Manager: Product-level Client Requirements + Meetings
     await pool.query(`
