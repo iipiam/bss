@@ -9453,6 +9453,63 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
   });
 
+  // Convert training-page report HTML into a downloadable PDF (IT accounts only)
+  app.post('/api/it/training/export-pdf', requireAuth, requireITAccount, async (req, res) => {
+    let browser: any = null;
+    try {
+      const { html, filename } = req.body || {};
+      if (typeof html !== 'string' || !html.trim()) {
+        return res.status(400).json({ error: 'Missing html content' });
+      }
+      if (html.length > 3_000_000) {
+        return res.status(400).json({ error: 'HTML content too large' });
+      }
+      const safeName = String(filename || 'Report')
+        .replace(/\.pdf$/i, '')
+        .replace(/[^a-zA-Z0-9_\-]/g, '_')
+        .slice(0, 120) || 'Report';
+
+      const puppeteer = await import("puppeteer");
+      const { execSync } = await import("child_process");
+      const { existsSync } = await import("fs");
+      let chromiumPath: string | undefined;
+      try {
+        chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null', { encoding: 'utf8' }).trim();
+        if (!chromiumPath || !existsSync(chromiumPath)) chromiumPath = undefined;
+      } catch {}
+      browser = await puppeteer.default.launch({
+        headless: true,
+        executablePath: chromiumPath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu', '--single-process', '--no-zygote'],
+      });
+      const page = await browser.newPage();
+      // Security hardening: reports are self-contained HTML with inline CSS only.
+      // Disable JS and block every outbound network request (SSRF prevention).
+      await page.setJavaScriptEnabled(false);
+      await page.setRequestInterception(true);
+      page.on('request', (r: any) => {
+        const u = r.url();
+        if (u.startsWith('data:') || u === 'about:blank') r.continue();
+        else r.abort();
+      });
+      await page.setContent(html, { waitUntil: 'load', timeout: 30000 });
+      const pdfBuffer = await page.pdf({
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '12mm', bottom: '14mm', left: '10mm', right: '10mm' },
+      });
+      await browser.close();
+      browser = null;
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${safeName}.pdf"`);
+      res.send(Buffer.from(pdfBuffer));
+    } catch (error) {
+      if (browser) { try { await browser.close(); } catch {} }
+      console.error('Training PDF export error:', error);
+      res.status(500).json({ error: 'Failed to generate PDF' });
+    }
+  });
+
   // Authenticated endpoint to download bill invoice files (IT-only)
   // Use ?download=true query param to force download instead of inline display
   app.get('/api/it/bill-invoices/:filename', requireAuth, requireITAccount, async (req, res) => {

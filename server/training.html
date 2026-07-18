@@ -5000,20 +5000,9 @@ function pbExportPDF(){
 
   // Footer
   html+='<div class="footer">Kinzhal LTD Co. — Confidential Business Case Document · Generated '+date+'</div>';
-
-  html+='\u003cscript>window.onload=function(){setTimeout(function(){window.print();},400);}<\/script>';
   html+='</body></html>';
 
-  var blob=new Blob([html],{type:'text/html'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;
-  a.download='BusinessCase_'+name.replace(/[^a-zA-Z0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.html';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(function(){URL.revokeObjectURL(url);},3000);
-  toast('✓ Business case report downloaded');
+  exportHtmlAsPdf(html, 'BusinessCase_'+name.replace(/[^a-zA-Z0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10), 'Business case PDF downloaded');
 }
 
 
@@ -5287,6 +5276,30 @@ function csCalcPortfolio(){
 }
 
 /* ── Case Study PDF Export ─────────────────────────────────── */
+function exportHtmlAsPdf(html, baseName, successMsg){
+  toast('⏳ Generating PDF…');
+  fetch('/api/it/training/export-pdf', {
+    method:'POST',
+    credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ html: html, filename: baseName })
+  }).then(function(r){
+    if(!r.ok) throw new Error('PDF service returned '+r.status);
+    return r.blob();
+  }).then(function(blob){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    a.href=url;
+    a.download=baseName+'.pdf';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},3000);
+    toast('✓ '+(successMsg||'PDF downloaded'));
+  }).catch(function(err){
+    console.error('PDF export failed:', err);
+    toast('⚠️ PDF generation failed — check your connection and try again');
+  });
+}
+
 function csExport(id){
   if(id==='portfolio'){
     var date=new Date().toLocaleDateString('en-SA',{year:'numeric',month:'long',day:'numeric'});
@@ -5315,9 +5328,7 @@ function csExport(id){
     p.push('<div class="kpi"><div class="kv">'+gp('pf-k-costs')+'<\/div><div class="kl">Combined Costs<\/div><\/div>');
     p.push('<div class="kpi"><div class="kv">'+gp('pf-k-net')+'<\/div><div class="kl">Net Profit<\/div><\/div><\/div><\/div>');
     p.push('<footer>Kinzhal Training Platform &middot; Kinzhal LTD Co. &middot; Eastern Province, KSA<\/footer><\/body><\/html>');
-    var html=p.join('');
-    var w=window.open('','_blank');
-    if(w){w.document.write(html);w.document.close();setTimeout(function(){w.print();},600);}
+    exportHtmlAsPdf(p.join(''), 'Kinzhal_Portfolio_Report_'+new Date().toISOString().slice(0,10), 'Portfolio PDF downloaded');
     return;
   }
   var names={bss:'BSS — SaaS POS',matcha:'Matcha Valley — Coffee Shop',sdl:'SDL — Tea Shop'};
@@ -5398,17 +5409,9 @@ function csExport(id){
     +'<div class="verdict"><div class="verdict-h">'+verdictHead+'</div>'
     +'<div class="verdict-b">'+verdictBody+'</div></div></div>'
     +'<div class="footer">Kinzhal LTD Co. · Confidential · '+date+'</div>'
-    +'\u003cscript>window.onload=function(){setTimeout(function(){window.print();},400);}\u003c/script>'
     +'</body></html>';
 
-  var blob=new Blob([html],{type:'text/html'});
-  var url=URL.createObjectURL(blob);
-  var a=document.createElement('a');
-  a.href=url;
-  a.download='BusinessCase_'+title.replace(/[^a-zA-Z0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.html';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(function(){URL.revokeObjectURL(url);},3000);
-  toast('✓ '+title+' business case downloaded');
+  exportHtmlAsPdf(html, 'BusinessCase_'+title.replace(/[^a-zA-Z0-9]/g,'_')+'_'+new Date().toISOString().slice(0,10), title+' business case PDF downloaded');
 }
 
 /* run initial calc on load */
@@ -8106,9 +8109,9 @@ var INFRA_DB_BASE = {
   pg_managed:    [45,  90,  170, 320],
   pg_self:       [0,   0,   0,   0],   // same server — 0 extra
   mysql_managed: [40,  80,  150, 280],
-  mongo_managed: [0,   80,  160, 300],
+  mongo_managed: [45,  80,  160, 300],
   mongo_self:    [0,   0,   0,   0],
-  redis_only:    [30,  60,  110, 0],
+  redis_only:    [30,  60,  110, 200],
   sqlite:        [0,   0,   0,   0]
 };
 var DB_CPU_IDX = {1:0, 2:1, 4:2, 8:3};
@@ -8208,9 +8211,12 @@ function infraCalc(){
   var dbBaseArr = INFRA_DB_BASE[dbType] || INFRA_DB_BASE.pg_managed;
   var dbBase    = dbBaseArr[dbCpuIdx] || 0;
   var storageCost = dbStorage * INFRA_STORAGE_COST;
-  var dbTotal   = dbType === 'pg_self' || dbType === 'mongo_self' || dbType === 'sqlite'
+  var dbSelfHosted = dbType === 'pg_self' || dbType === 'mongo_self' || dbType === 'sqlite';
+  // RAM premium for managed DBs: if RAM > 2× vCPU count, add 20% (same rule as app server)
+  var dbRamPremium = (!dbSelfHosted && dbRam > dbCpu * 2) ? dbBase * 0.2 : 0;
+  var dbTotal   = dbSelfHosted
                   ? Math.round(storageCost)
-                  : Math.round((dbBase + storageCost) * dbMul);
+                  : Math.round((dbBase + dbRamPremium + storageCost) * dbMul);
 
   var dbEl = document.getElementById('db-price-tag');
   var dbTypeLabel = {'pg_managed':'PostgreSQL Managed','pg_self':'PostgreSQL Self-hosted',
@@ -8234,9 +8240,10 @@ function infraCalc(){
   var bwVal   = parseInt((document.getElementById('bw-tier')||{}).value||3);
   var bwCost  = BW_PRICES[bwVal] || 0;
   var emailCost = EMAIL_PRICES[(document.getElementById('email-tier')||{}).value||'sendgrid'] || 0;
-  var netTotal  = bwCost + emailCost;
+  var sslCost = ((document.getElementById('ssl-tier')||{}).value||'free') === 'paid' ? 4 : 0; // SAR 45/yr ≈ 4/mo
+  var netTotal  = bwCost + emailCost + sslCost;
   var netEl = document.getElementById('network-price-tag');
-  if(netEl) netEl.textContent = 'Bandwidth '+bwCost+' + Email '+emailCost+' = SAR '+netTotal+'/mo';
+  if(netEl) netEl.textContent = 'Bandwidth '+bwCost+' + Email '+emailCost+(sslCost?' + SSL/DNS '+sslCost:'')+' = SAR '+netTotal+'/mo';
 
   // ── Totals ──
   var total   = srvTotal + dbTotal + supportTotal + netTotal;
@@ -8273,13 +8280,17 @@ function infraCalc(){
       {key:'gcp',     pros:'KSA region, ML tools', bestFor:'AI/analytics workloads'},
       {key:'azure',   pros:'UAE region, Microsoft stack', bestFor:'Enterprise, Office365 clients'}
     ];
-    var rows = provs.map(function(p){
+    var provTotals = provs.map(function(p){
       var pm = INFRA_PROV_MUL[p.key];
-      var pSrv = Math.round((cpuArr[cpuIdx]||90) * pm.srv) * srvCount;
-      var pDb  = (dbType==='pg_self'||dbType==='sqlite') ? dbTotal
-               : Math.round((dbBase + storageCost) * pm.db);
-      var pTot = pSrv + pDb + supportTotal + netTotal;
-      var isBest = p.key === 'hetzner' || (p.key === 'do' && _infraProv === 'do');
+      var pSrv = Math.round(((cpuArr[cpuIdx]||90) + ramPremium) * pm.srv) * srvCount;
+      var pDb  = dbSelfHosted ? dbTotal
+               : Math.round((dbBase + dbRamPremium + storageCost) * pm.db);
+      return {p:p, pm:pm, pSrv:pSrv, pDb:pDb, pTot:pSrv + pDb + supportTotal + netTotal};
+    });
+    var cheapestTot = Math.min.apply(null, provTotals.map(function(x){return x.pTot;}));
+    var rows = provTotals.map(function(x){
+      var p = x.p, pm = x.pm, pSrv = x.pSrv, pDb = x.pDb, pTot = x.pTot;
+      var isBest = pTot === cheapestTot;
       return '<tr'+(isBest?' class="best"':'')+'>'
         +'<td class="name">'+pm.label+'</td>'
         +'<td class="tag">'+pm.region+'</td>'
