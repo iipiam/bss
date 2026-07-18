@@ -1442,6 +1442,7 @@ export interface Translations {
   invoiceDeleted: string;
   invoiceUploadError: string;
   invoiceFileMissing: string;
+  averagePricesReport: string;
   invoiceDeleteError: string;
   invoiceAttached: string;
   viewInvoice: string;
@@ -4348,6 +4349,7 @@ export const translations: Record<Language, Translations> = {
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
     invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
+    averagePricesReport: 'Average Prices Report',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -7203,6 +7205,7 @@ export const translations: Record<Language, Translations> = {
     invoiceDeleted: 'تم حذف الفاتورة بنجاح',
     invoiceUploadError: 'فشل رفع الفاتورة',
     invoiceFileMissing: 'ملف الفاتورة غير موجود على الخادم. يمكنك إزالته من نافذة التعديل ورفعه مرة أخرى.',
+    averagePricesReport: 'تقرير متوسط الأسعار',
     invoiceDeleteError: 'فشل حذف الفاتورة',
     invoiceAttached: 'فاتورة',
     viewInvoice: 'عرض الفاتورة',
@@ -10052,6 +10055,7 @@ export const translations: Record<Language, Translations> = {
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
     invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
+    averagePricesReport: 'Average Prices Report',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -12903,6 +12907,7 @@ export const translations: Record<Language, Translations> = {
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
     invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
+    averagePricesReport: 'Average Prices Report',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -15758,6 +15763,7 @@ export const translations: Record<Language, Translations> = {
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
     invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
+    averagePricesReport: 'Average Prices Report',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -18613,6 +18619,7 @@ export const translations: Record<Language, Translations> = {
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
     invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
+    averagePricesReport: 'Average Prices Report',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -22777,6 +22784,7 @@ export const translations: Record<Language, Translations> = {
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
     invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
+    averagePricesReport: 'Average Prices Report',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -25617,6 +25625,7 @@ export const translations: Record<Language, Translations> = {
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
     invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
+    averagePricesReport: 'Average Prices Report',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -28401,6 +28410,7 @@ export const translations: Record<Language, Translations> = {
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
     invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
+    averagePricesReport: 'Average Prices Report',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',
@@ -31185,6 +31195,7 @@ export const translations: Record<Language, Translations> = {
     invoiceDeleted: 'Invoice deleted successfully',
     invoiceUploadError: 'Failed to upload invoice',
     invoiceFileMissing: 'Invoice file not found on server. You can remove it from the Edit dialog and upload it again.',
+    averagePricesReport: 'Average Prices Report',
     invoiceDeleteError: 'Failed to delete invoice',
     invoiceAttached: 'Invoice',
     viewInvoice: 'View Invoice',

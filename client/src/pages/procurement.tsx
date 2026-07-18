@@ -485,6 +485,41 @@ export default function ProcurementPage() {
     }
   };
 
+  // Download procurement PDF reports
+  const [downloadingReport, setDownloadingReport] = useState<string | null>(null);
+  const handleReportDownload = async (report: 'requests' | 'average-prices') => {
+    setDownloadingReport(report);
+    try {
+      const langParam = language === 'Arabic' ? 'ar' : 'en';
+      const url = report === 'requests'
+        ? `/api/procurement/report/pdf?lang=${langParam}&type=${encodeURIComponent(selectedType)}&status=${encodeURIComponent(selectedStatus)}`
+        : `/api/procurement/report/average-prices/pdf?lang=${langParam}`;
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Download failed' }));
+        throw new Error(errorData.error || 'Failed to download report');
+      }
+      const contentDisposition = response.headers.get('Content-Disposition') || '';
+      const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+      const filename = filenameMatch ? filenameMatch[1] : `procurement-${report}.pdf`;
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Report download error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to download report';
+      toast({ title: t.error, description: errorMessage, variant: 'destructive' });
+    } finally {
+      setDownloadingReport(null);
+    }
+  };
+
   // Sync inventory items to procurement
   const syncMutation = useMutation({
     mutationFn: async () => {
@@ -540,7 +575,33 @@ export default function ProcurementPage() {
           <h1 className="text-3xl font-bold mb-2">{t.procurementManagement}</h1>
           <p className="text-muted-foreground">{t.procurementDescription}</p>
         </div>
-        <div className="flex gap-2 mobile-stack">
+        <div className="flex gap-2 mobile-stack flex-wrap">
+          <Button 
+            variant="outline" 
+            onClick={() => handleReportDownload('requests')}
+            disabled={downloadingReport === 'requests'}
+            data-testid="button-download-procurement-pdf"
+          >
+            {downloadingReport === 'requests' ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            {t.downloadPdf}
+          </Button>
+          <Button 
+            variant="outline" 
+            onClick={() => handleReportDownload('average-prices')}
+            disabled={downloadingReport === 'average-prices'}
+            data-testid="button-download-average-prices"
+          >
+            {downloadingReport === 'average-prices' ? (
+              <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4 mr-2" />
+            )}
+            {t.averagePricesReport}
+          </Button>
           <Button 
             variant="outline" 
             onClick={() => syncBillsMutation.mutate()}

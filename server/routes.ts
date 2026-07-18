@@ -4982,6 +4982,243 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     res.json(procurements);
   });
 
+  // Procurement requests PDF report (must be registered before /api/procurement/:id)
+  app.get("/api/procurement/report/pdf", requireAuth, requireRestaurant, requirePermission('procurement'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { type, status, lang } = req.query;
+      const isAr = lang === 'ar';
+      const L = (en: string, ar: string) => (isAr ? ar : en);
+
+      const items = await storage.getProcurements({
+        restaurantId,
+        type: type && type !== 'all' ? (type as string) : undefined,
+        status: status && status !== 'all-statuses' ? (status as string) : undefined,
+      });
+      items.sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+
+      const restaurant = await storage.getRestaurant(restaurantId);
+      const settings = await storage.getSettings(restaurantId);
+
+      const statusLabels: Record<string, [string, string]> = {
+        pending: ['Pending', 'قيد الانتظار'],
+        approved: ['Approved', 'موافق عليه'],
+        ordered: ['Ordered', 'تم الطلب'],
+        received: ['Received', 'تم الاستلام'],
+        completed: ['Completed', 'مكتمل'],
+        cancelled: ['Cancelled', 'ملغى'],
+      };
+      const typeLabels: Record<string, [string, string]> = {
+        inventory: ['Inventory', 'مخزون'],
+        maintenance: ['Maintenance', 'صيانة'],
+        installation: ['Installation', 'تركيب'],
+        equipment: ['Equipment', 'معدات'],
+      };
+      const fmtNum = (v: any) => {
+        const n = parseFloat(String(v ?? ''));
+        return isNaN(n) ? '-' : n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      };
+      const fmtDate = (d: any) => {
+        if (!d) return '-';
+        const dt = new Date(d);
+        return isNaN(dt.getTime()) ? '-' : dt.toISOString().slice(0, 10);
+      };
+
+      const totalCostSum = items.reduce((s: number, it: any) => s + (parseFloat(String(it.totalCost)) || 0), 0);
+
+      const rows = items.map((it: any, i: number) => `
+        <tr>
+          <td>${i + 1}</td>
+          <td>${escapeHtml(it.title)}</td>
+          <td>${escapeHtml(L(...(typeLabels[it.type] || [it.type, it.type])))}</td>
+          <td>${escapeHtml(it.supplier || '-')}</td>
+          <td class="num">${fmtNum(it.quantity)}${it.unit ? ' ' + escapeHtml(it.unit) : ''}</td>
+          <td class="num">${fmtNum(it.unitPrice)}</td>
+          <td class="num">${fmtNum(it.totalCost)}</td>
+          <td>${escapeHtml(L(...(statusLabels[it.status] || [it.status, it.status])))}</td>
+          <td>${fmtDate(it.createdAt)}</td>
+        </tr>`).join('');
+
+      const html = `<!DOCTYPE html>
+<html dir="${isAr ? 'rtl' : 'ltr'}" lang="${isAr ? 'ar' : 'en'}">
+<head><meta charset="utf-8"><title>${L('Procurement Report', 'تقرير المشتريات')}</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: #1a202c; font-size: 11px; margin: 0; }
+  .header { text-align: center; margin-bottom: 14px; }
+  h1 { font-size: 18px; margin: 4px 0 2px; }
+  .subtitle { color: #16a34a; font-weight: 600; font-size: 13px; }
+  .meta { color: #64748b; font-size: 10px; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th { background: #16a34a; color: #fff; padding: 6px 5px; font-size: 10px; text-align: ${isAr ? 'right' : 'left'}; }
+  td { padding: 5px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .num { text-align: ${isAr ? 'left' : 'right'}; white-space: nowrap; }
+  .totals { margin-top: 10px; font-weight: 700; font-size: 12px; text-align: ${isAr ? 'left' : 'right'}; }
+  .footer { position: fixed; bottom: 6mm; left: 16mm; right: 16mm; text-align: center; color: #999; font-size: 9px; border-top: 1px solid #e2e8f0; padding-top: 4px; }
+  thead { display: table-header-group; }
+  tr { page-break-inside: avoid; }
+</style></head>
+<body>
+  <div class="header">
+    ${buildLogoHTML(settings?.logoPath || undefined)}
+    <h1>${escapeHtml(restaurant?.name || '')}</h1>
+    <div class="subtitle">${L('Procurement Requests Report', 'تقرير طلبات المشتريات')}</div>
+    <div class="meta">${L('Generated', 'تاريخ الإنشاء')}: ${new Date().toISOString().slice(0, 10)} — ${L('Total requests', 'إجمالي الطلبات')}: ${items.length}</div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>#</th>
+      <th>${L('Title', 'العنوان')}</th>
+      <th>${L('Type', 'النوع')}</th>
+      <th>${L('Supplier', 'المورد')}</th>
+      <th>${L('Qty', 'الكمية')}</th>
+      <th>${L('Unit Price (SAR)', 'سعر الوحدة (ريال)')}</th>
+      <th>${L('Total (SAR)', 'الإجمالي (ريال)')}</th>
+      <th>${L('Status', 'الحالة')}</th>
+      <th>${L('Date', 'التاريخ')}</th>
+    </tr></thead>
+    <tbody>${rows || `<tr><td colspan="9" style="text-align:center;color:#64748b;">${L('No procurement requests found', 'لا توجد طلبات مشتريات')}</td></tr>`}</tbody>
+  </table>
+  <div class="totals">${L('Grand Total', 'الإجمالي الكلي')}: ${totalCostSum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} SAR</div>
+  <div class="footer">${L('Generated by BlindSpot System (BSS) — kinbss.org', 'تم الإنشاء بواسطة نظام بلايند سبوت (BSS) — kinbss.org')}</div>
+</body></html>`;
+
+      const browser = await getBrowser();
+      const page = await browser.newPage();
+      try {
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        const pdfData = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '14mm', right: '12mm', bottom: '20mm', left: '12mm' } });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="procurement-report-${new Date().toISOString().slice(0, 10)}.pdf"`);
+        res.send(Buffer.from(pdfData));
+      } finally {
+        await page.close();
+      }
+    } catch (error) {
+      console.error('[PROCUREMENT] Report PDF error:', error);
+      res.status(500).json({ error: 'Failed to generate procurement report PDF' });
+    }
+  });
+
+  // Procurement average prices PDF report
+  app.get("/api/procurement/report/average-prices/pdf", requireAuth, requireRestaurant, requirePermission('procurement'), async (req, res) => {
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const { lang } = req.query;
+      const isAr = lang === 'ar';
+      const L = (en: string, ar: string) => (isAr ? ar : en);
+
+      const items = await storage.getProcurements({ restaurantId });
+
+      // Group by normalized title (strip "Reorder: " prefix so reorders count toward the same item)
+      type Group = { title: string; unit: string; count: number; totalQty: number; prices: number[]; totalSpend: number; lastPrice: number | null; lastDate: Date | null };
+      const groups = new Map<string, Group>();
+      for (const it of items as any[]) {
+        const unitPrice = parseFloat(String(it.unitPrice));
+        if (isNaN(unitPrice) || unitPrice <= 0) continue;
+        const normTitle = String(it.title || '').replace(/^Reorder:\s*/i, '').trim();
+        if (!normTitle) continue;
+        const key = normTitle.toLowerCase();
+        let g = groups.get(key);
+        if (!g) {
+          g = { title: normTitle, unit: it.unit || '', count: 0, totalQty: 0, prices: [], totalSpend: 0, lastPrice: null, lastDate: null };
+          groups.set(key, g);
+        }
+        g.count++;
+        g.prices.push(unitPrice);
+        g.totalQty += parseFloat(String(it.quantity)) || 0;
+        g.totalSpend += parseFloat(String(it.totalCost)) || 0;
+        if (it.unit && !g.unit) g.unit = it.unit;
+        const d = it.createdAt ? new Date(it.createdAt) : null;
+        if (d && !isNaN(d.getTime()) && (!g.lastDate || d > g.lastDate)) {
+          g.lastDate = d;
+          g.lastPrice = unitPrice;
+        }
+      }
+
+      const rowsData = Array.from(groups.values()).sort((a, b) => b.totalSpend - a.totalSpend);
+      const restaurant = await storage.getRestaurant(restaurantId);
+      const settings = await storage.getSettings(restaurantId);
+      const fmt = (n: number) => n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const rows = rowsData.map((g, i) => {
+        const avg = g.prices.reduce((s, p) => s + p, 0) / g.prices.length;
+        const min = Math.min(...g.prices);
+        const max = Math.max(...g.prices);
+        // Trend: compare last price vs average
+        const trend = g.lastPrice == null ? '' : g.lastPrice > avg * 1.02 ? `<span style="color:#dc2626;">▲</span>` : g.lastPrice < avg * 0.98 ? `<span style="color:#16a34a;">▼</span>` : `<span style="color:#64748b;">=</span>`;
+        return `<tr>
+          <td>${i + 1}</td>
+          <td>${escapeHtml(g.title)}${g.unit ? ` <span style="color:#64748b;">(${escapeHtml(g.unit)})</span>` : ''}</td>
+          <td class="num">${g.count}</td>
+          <td class="num">${fmt(avg)}</td>
+          <td class="num">${fmt(min)}</td>
+          <td class="num">${fmt(max)}</td>
+          <td class="num">${g.lastPrice != null ? fmt(g.lastPrice) : '-'} ${trend}</td>
+          <td class="num">${fmt(g.totalSpend)}</td>
+        </tr>`;
+      }).join('');
+
+      const html = `<!DOCTYPE html>
+<html dir="${isAr ? 'rtl' : 'ltr'}" lang="${isAr ? 'ar' : 'en'}">
+<head><meta charset="utf-8"><title>${L('Average Prices Report', 'تقرير متوسط الأسعار')}</title>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color: #1a202c; font-size: 11px; margin: 0; }
+  .header { text-align: center; margin-bottom: 14px; }
+  h1 { font-size: 18px; margin: 4px 0 2px; }
+  .subtitle { color: #16a34a; font-weight: 600; font-size: 13px; }
+  .meta { color: #64748b; font-size: 10px; margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th { background: #16a34a; color: #fff; padding: 6px 5px; font-size: 10px; text-align: ${isAr ? 'right' : 'left'}; }
+  td { padding: 5px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .num { text-align: ${isAr ? 'left' : 'right'}; white-space: nowrap; }
+  .note { margin-top: 10px; color: #64748b; font-size: 9.5px; }
+  .footer { position: fixed; bottom: 6mm; left: 16mm; right: 16mm; text-align: center; color: #999; font-size: 9px; border-top: 1px solid #e2e8f0; padding-top: 4px; }
+  thead { display: table-header-group; }
+  tr { page-break-inside: avoid; }
+</style></head>
+<body>
+  <div class="header">
+    ${buildLogoHTML(settings?.logoPath || undefined)}
+    <h1>${escapeHtml(restaurant?.name || '')}</h1>
+    <div class="subtitle">${L('Procurement Average Prices Report', 'تقرير متوسط أسعار المشتريات')}</div>
+    <div class="meta">${L('Generated', 'تاريخ الإنشاء')}: ${new Date().toISOString().slice(0, 10)} — ${L('Items', 'الأصناف')}: ${rowsData.length}</div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>#</th>
+      <th>${L('Item', 'الصنف')}</th>
+      <th>${L('Orders', 'الطلبات')}</th>
+      <th>${L('Avg Price (SAR)', 'متوسط السعر (ريال)')}</th>
+      <th>${L('Lowest (SAR)', 'الأدنى (ريال)')}</th>
+      <th>${L('Highest (SAR)', 'الأعلى (ريال)')}</th>
+      <th>${L('Latest (SAR)', 'الأحدث (ريال)')}</th>
+      <th>${L('Total Spend (SAR)', 'إجمالي الإنفاق (ريال)')}</th>
+    </tr></thead>
+    <tbody>${rows || `<tr><td colspan="8" style="text-align:center;color:#64748b;">${L('No priced procurement requests found', 'لا توجد طلبات مشتريات مسعّرة')}</td></tr>`}</tbody>
+  </table>
+  <div class="note">${L('Averages are calculated per unit price across all requests for the same item (reorders included). ▲ latest price above average, ▼ below average.', 'يُحسب المتوسط لسعر الوحدة عبر جميع الطلبات لنفس الصنف (شاملاً إعادة الطلب). ▲ السعر الأحدث أعلى من المتوسط، ▼ أقل من المتوسط.')}</div>
+  <div class="footer">${L('Generated by BlindSpot System (BSS) — kinbss.org', 'تم الإنشاء بواسطة نظام بلايند سبوت (BSS) — kinbss.org')}</div>
+</body></html>`;
+
+      const browser = await getBrowser();
+      const page = await browser.newPage();
+      try {
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+        const pdfData = await page.pdf({ format: 'A4', printBackground: true, margin: { top: '14mm', right: '12mm', bottom: '20mm', left: '12mm' } });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="procurement-average-prices-${new Date().toISOString().slice(0, 10)}.pdf"`);
+        res.send(Buffer.from(pdfData));
+      } finally {
+        await page.close();
+      }
+    } catch (error) {
+      console.error('[PROCUREMENT] Average prices PDF error:', error);
+      res.status(500).json({ error: 'Failed to generate average prices PDF' });
+    }
+  });
+
   app.get("/api/procurement/:id", requireAuth, requireRestaurant, requirePermission('procurement'), async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
     const procurement = await storage.getProcurement(req.params.id, restaurantId);
