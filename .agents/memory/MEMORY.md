@@ -4,6 +4,7 @@
 - [ZATCA fatoora CLI quirks](zatca-sdk-wrapper-quirks.md) — nonzero-exit -help, env CSR flags, tolerant label parsing, QR from XML not stdout, base64(hex) cert hash.
 - [ZATCA hash chain & signing lock](zatca-hash-chain.md) — per-restaurant lock around ICV/PIH/sign/submit; PIH is base64(hex-string); Riyadh (+3) timestamps.
 - [html-to-image off-screen capture](html-to-image-offscreen-capture.md) — never capture the fixed/off-screen element itself; wrap it and capture a static inner div, or the canvas is blank/black.
+- [BSS form & bill quirks](bss-form-and-bill-quirks.md) — omit restaurantId from form zod schemas or submits fail silently; shop_bills paymentPeriod is camelCase (oneTime) vs kebab enum.
 - [BSS VM deployment](bss-vm-deployment.md) — self-managed VM at /home/BSS via pm2 + git; repeatable deploy steps and ecosystem.config.cjs/.env requirements.
 - [Prod schema sync](prod-schema-sync.md) — server/schema-sync.sql (auto-generated, idempotent) applied at startup keeps RDS aligned; regenerate with scripts/generate-schema-sync.mjs after every schema change.
 - [Replit firewall URLs in lockfile](replit-lockfile-firewall-urls.md) — npm installs here can bake package-firewall.replit.local into package-lock.json, breaking VM installs; sed-fix before deploy.
