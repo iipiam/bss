@@ -3723,12 +3723,19 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         // Calculate revenue and COGS from finalized orders containing this recipe's menu items
         finalizedOrders.forEach(order => {
           if (order.items && Array.isArray(order.items)) {
+            // If the order carried a discount, scale the recipe's revenue share
+            // proportionally so discounts (e.g. blogger QR codes) are reflected.
+            const orderSubtotal = parseFloat(order.subtotal || "0");
+            const orderDiscount = parseFloat((order as any).discountAmount || "0");
+            const discountFactor = orderSubtotal > 0
+              ? Math.max(0, (orderSubtotal - orderDiscount) / orderSubtotal)
+              : 1;
             order.items.forEach((item: any) => {
               if (recipeMenuItemIds.includes(item.id)) {
                 // Revenue from this recipe's items (using basePrice for VAT-excluded calculations)
                 const menuItem = recipeMenuItems.find(m => m.id === item.id);
                 if (menuItem) {
-                  totalRevenue += parseFloat(menuItem.basePrice || "0") * (item.quantity || 1);
+                  totalRevenue += parseFloat(menuItem.basePrice || "0") * (item.quantity || 1) * discountFactor;
                   
                   // COGS for this recipe (applying portionSize for accurate cost calculation)
                   if (investorRecipe) {
@@ -3748,12 +3755,34 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         totalBills = 0;
       } else {
         // Money investor: Calculate from business net profit for the statement period
-        totalRevenue = transactions
-          .filter(t => inPeriod(t.createdAt))
-          .reduce((sum, t) => sum + parseFloat(t.total || "0"), 0);
+        // Revenue uses the before-VAT subtotal: VAT is collected on behalf of
+        // ZATCA and is not business income.
+        const periodTransactions = transactions.filter(t => inPeriod(t.createdAt));
+        totalRevenue = periodTransactions
+          .reduce((sum, t) => {
+            const subtotal = parseFloat(t.subtotal || "0");
+            if (subtotal > 0) return sum + subtotal;
+            // Legacy fallback: derive before-VAT amount from total - tax
+            return sum + Math.max(0, parseFloat(t.total || "0") - parseFloat(t.tax || "0"));
+          }, 0);
         
-        // Calculate COGS from finalized orders only
-        finalizedOrders.forEach(order => {
+        // Calculate COGS from orders that produced a payment transaction in the
+        // period, so costs line up with the revenue counted above. Transactions
+        // without an orderId (legacy/manual) still contribute revenue, so their
+        // costs are covered by also including finalized period orders that are
+        // not linked to any transaction at all (avoids undercounting COGS in
+        // mixed datasets while never double-counting an order).
+        const paidOrderIds = new Set(periodTransactions.map(t => t.orderId).filter(Boolean));
+        const hasUnlinkedPeriodTx = periodTransactions.some(t => !t.orderId);
+        const allLinkedOrderIds = new Set(transactions.map(t => t.orderId).filter(Boolean));
+        const cogsOrders = orders.filter(o =>
+          paidOrderIds.has(o.id) ||
+          (hasUnlinkedPeriodTx &&
+            !allLinkedOrderIds.has(o.id) &&
+            validOrderStatuses.includes(o.status) &&
+            inPeriod(o.createdAt))
+        );
+        cogsOrders.forEach(order => {
           if (order.items && Array.isArray(order.items)) {
             order.items.forEach((item: any) => {
               const menuItem = menuItems.find(m => m.id === item.id);
@@ -3774,9 +3803,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         // Salary payments (salaries table) that are linked to a salary shop bill
         // (billId set) are settlements of bills already counted below — skip them
         // to avoid double-counting. Only count period-scoped standalone payments.
-        totalSalaries = salaries
-          .filter(s => !s.billId && inPeriod(s.paymentDate || s.createdAt))
-          .reduce((sum: number, s) => sum + parseFloat(s.amount || "0"), 0);
+        const standaloneSalaries = salaries
+          .filter(s => !s.billId && inPeriod(s.paymentDate || s.createdAt));
         
         // Filter out foundational and one-time bills - only include recurring operational expenses
         const nonFoundationalBills = shopBills.filter(b => {
@@ -3817,19 +3845,48 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         }
         const salaryBillsForMonth = [...salaryByEmployee.values()];
         // Salary bills belong on the "Salaries & Wages" line, not in
-        // operating expenses. Add their monthly value to totalSalaries.
-        totalSalaries += salaryBillsForMonth
+        // operating expenses.
+        totalSalaries = salaryBillsForMonth
           .reduce((sum, b) => sum + parseFloat(b.amount || "0"), 0);
-        const latestNonSalaryBills = new Map<string, typeof nonFoundationalBills[number]>();
+        // Standalone salary payments (not linked to any bill) count only for
+        // employees NOT already covered by a salary bill this month, to avoid
+        // paying the same employee's salary twice in the statement.
+        const billedEmployeeNames = new Set(
+          salaryBillsForMonth
+            .map(b => String(b.employeeName || '').trim().toLowerCase())
+            .filter(Boolean)
+        );
+        totalSalaries += standaloneSalaries
+          .filter(s => !billedEmployeeNames.has(String(s.employeeName || '').trim().toLowerCase()))
+          .reduce((sum: number, s) => sum + parseFloat(s.amount || "0"), 0);
+        // Group non-salary recurring bills by identity (type/branch/description/
+        // period — amount intentionally excluded so an edited bill, e.g. a rent
+        // increase, counts once with only the most recent row). Within a group,
+        // keep every row dated in the same calendar month as the latest row so
+        // two genuinely separate bills paid in the same month both still count.
+        const nonSalaryBillGroups = new Map<string, Array<typeof nonFoundationalBills[number]>>();
         for (const b of nonFoundationalBills) {
           if (isSalaryBill(b)) continue;
-          const key = `${String(b.billType || '').toLowerCase()}|${b.branchId || ''}|${b.employeeId || ''}|${(b.description || '').trim().toLowerCase()}|${parseFloat(b.amount || '0')}|${String(b.paymentPeriod || '').toLowerCase()}`;
-          const existing = latestNonSalaryBills.get(key);
-          const billDate = new Date(b.paymentDate || b.createdAt || 0).getTime();
-          const existingDate = existing ? new Date(existing.paymentDate || existing.createdAt || 0).getTime() : -Infinity;
-          if (!existing || billDate > existingDate) latestNonSalaryBills.set(key, b);
+          const key = `${String(b.billType || '').toLowerCase()}|${b.branchId || ''}|${b.employeeId || ''}|${(b.description || '').trim().toLowerCase()}|${String(b.paymentPeriod || '').toLowerCase()}`;
+          const group = nonSalaryBillGroups.get(key);
+          if (group) group.push(b); else nonSalaryBillGroups.set(key, [b]);
         }
-        const recurringBills = [...latestNonSalaryBills.values()];
+        const recurringBills: Array<typeof nonFoundationalBills[number]> = [];
+        for (const group of nonSalaryBillGroups.values()) {
+          let latest = group[0];
+          let latestTime = new Date(latest.paymentDate || latest.createdAt || 0).getTime();
+          for (const b of group) {
+            const time = new Date(b.paymentDate || b.createdAt || 0).getTime();
+            if (time > latestTime) { latest = b; latestTime = time; }
+          }
+          const latestDate = new Date(latest.paymentDate || latest.createdAt || 0);
+          for (const b of group) {
+            const d = new Date(b.paymentDate || b.createdAt || 0);
+            if (d.getFullYear() === latestDate.getFullYear() && d.getMonth() === latestDate.getMonth()) {
+              recurringBills.push(b);
+            }
+          }
+        }
         
         // Helper function to prorate bill amounts to monthly values
         // Quarterly bills should be divided by 3, semi-annual by 6, yearly by 12
