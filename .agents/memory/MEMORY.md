@@ -5,4 +5,5 @@
 - [ZATCA hash chain & signing lock](zatca-hash-chain.md) — per-restaurant lock around ICV/PIH/sign/submit; PIH is base64(hex-string); Riyadh (+3) timestamps.
 - [html-to-image off-screen capture](html-to-image-offscreen-capture.md) — never capture the fixed/off-screen element itself; wrap it and capture a static inner div, or the canvas is blank/black.
 - [BSS VM deployment](bss-vm-deployment.md) — self-managed VM at /home/BSS via pm2 + git; repeatable deploy steps and ecosystem.config.cjs/.env requirements.
+- [Replit firewall URLs in lockfile](replit-lockfile-firewall-urls.md) — npm installs here can bake package-firewall.replit.local into package-lock.json, breaking VM installs; sed-fix before deploy.
 - [TypeScript check quirks](typescript-check-quirks.md) — tsc via node_modules/.bin, reinstall packages when node_modules corrupt, clear tsbuildinfo after tsconfig changes, AST-only edits to translations.ts.
