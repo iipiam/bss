@@ -3691,6 +3691,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       let totalSalaries = 0;
       let totalBills = 0;
       let recipeName = '';
+      const expenseBreakdown: Array<{ billType: string; description: string; rawAmount: number; period: string; monthlyAmount: number }> = [];
       
       // Filter orders to only include finalized/completed orders (exclude cancelled and pending)
       const validOrderStatuses = ['Completed', 'Ready', 'Preparing', 'Paid'];
@@ -3789,11 +3790,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           }
         };
         
-        // Sum bills with proper proration for monthly calculations
-        totalBills = recurringBills.reduce((sum: number, b) => {
+        // Sum bills with proper proration for monthly calculations,
+        // collecting a per-bill breakdown for the statement PDF
+        totalBills = 0;
+        for (const b of recurringBills) {
           const rawAmount = parseFloat(b.amount || "0");
-          return sum + getMonthlyAmount(rawAmount, b.paymentPeriod || 'monthly');
-        }, 0);
+          const monthly = getMonthlyAmount(rawAmount, b.paymentPeriod || 'monthly');
+          totalBills += monthly;
+          if (monthly > 0) {
+            expenseBreakdown.push({
+              billType: String(b.billType || 'other'),
+              description: b.description || '',
+              rawAmount,
+              period: String(b.paymentPeriod || 'monthly'),
+              monthlyAmount: monthly,
+            });
+          }
+        }
         
         // Add delivery profitability for money investors (delivery is a separate revenue stream)
         const now = new Date();
@@ -3817,6 +3830,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         totalRevenue += deliveryRevenue;
         // Delivery fees are not COGS but separate operational costs
         totalBills += deliveryFees;
+        if (deliveryFees > 0) {
+          expenseBreakdown.push({
+            billType: 'deliveryFees',
+            description: '',
+            rawAmount: deliveryFees,
+            period: 'monthly',
+            monthlyAmount: deliveryFees,
+          });
+        }
       }
       
       // Net profit
@@ -3860,6 +3882,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         totalCOGS,
         totalSalaries,
         totalBills,
+        expenseBreakdown,
         statementDate: now,
         periodStart,
         periodEnd,

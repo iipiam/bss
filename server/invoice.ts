@@ -2471,6 +2471,13 @@ interface InvestorStatementData {
   totalCOGS: number;
   totalSalaries: number;
   totalBills: number;
+  expenseBreakdown?: Array<{
+    billType: string;
+    description: string;
+    rawAmount: number;
+    period: string;
+    monthlyAmount: number;
+  }>;
   statementDate: Date;
   periodStart: Date;
   periodEnd: Date;
@@ -2491,10 +2498,85 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
     totalCOGS,
     totalSalaries,
     totalBills,
+    expenseBreakdown,
     statementDate,
     periodStart,
     periodEnd,
   } = data;
+
+  // Bilingual labels for expense breakdown bill types
+  const fmtSar = (amount: number) =>
+    amount.toLocaleString('en-SA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const billTypeLabels: Record<string, string> = {
+    rent: 'Rent / إيجار',
+    electricity: 'Electricity / كهرباء',
+    water: 'Water / ماء',
+    gas: 'Gas / غاز',
+    internet: 'Internet / إنترنت',
+    maintenance: 'Maintenance / صيانة',
+    deliveryFees: 'Delivery App Fees / رسوم تطبيقات التوصيل',
+    other: 'Other / أخرى',
+  };
+  const periodLabels: Record<string, string> = {
+    weekly: 'Weekly / أسبوعي',
+    monthly: 'Monthly / شهري',
+    quarterly: 'Quarterly / ربع سنوي',
+    'semi-annually': 'Semi-annual / نصف سنوي',
+    semiannually: 'Semi-annual / نصف سنوي',
+    'semi-annual': 'Semi-annual / نصف سنوي',
+    yearly: 'Yearly / سنوي',
+    annually: 'Yearly / سنوي',
+  };
+  const breakdownRows = (expenseBreakdown || [])
+    .slice()
+    .sort((a, b) => b.monthlyAmount - a.monthlyAmount)
+    .map((e) => {
+      const label = billTypeLabels[e.billType] || `${escapeHtml(e.billType)}`;
+      const desc = e.description ? ` — ${escapeHtml(e.description)}` : '';
+      const periodKey = String(e.period || 'monthly').toLowerCase();
+      const periodLabel = periodLabels[periodKey] || 'Monthly / شهري';
+      const isProrated = Math.abs(e.rawAmount - e.monthlyAmount) > 0.01;
+      const calcNote = isProrated
+        ? `${fmtSar(e.rawAmount)} ${periodLabel}`
+        : periodLabel;
+      const pct = totalBills > 0 ? ((e.monthlyAmount / totalBills) * 100).toFixed(1) : '0.0';
+      return `
+          <tr>
+            <td>${label}${desc}<div style="font-size: 9px; color: #6b7280;">${calcNote}</div></td>
+            <td class="text-right">${fmtSar(e.monthlyAmount)}</td>
+            <td class="text-right">${pct}%</td>
+          </tr>`;
+    })
+    .join('');
+  const expenseBreakdownSection = breakdownRows
+    ? `
+    <div class="section">
+      <div class="section-title bilingual-header">
+        <span>Operating Expenses Details / تفاصيل المصاريف التشغيلية</span>
+      </div>
+      <table class="earnings-table">
+        <thead>
+          <tr>
+            <th>Expense / المصروف</th>
+            <th class="text-right">Monthly (SAR) / شهرياً (ريال)</th>
+            <th class="text-right">% of Total / النسبة</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${breakdownRows}
+          <tr style="background: #f9fafb;">
+            <td><strong>Total Operating Expenses / إجمالي المصاريف التشغيلية</strong></td>
+            <td class="text-right"><strong>${fmtSar(totalBills)}</strong></td>
+            <td class="text-right"><strong>100%</strong></td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size: 9px; color: #6b7280; margin-top: 6px;">
+        Non-monthly bills are prorated to a monthly value (quarterly ÷ 3, semi-annual ÷ 6, yearly ÷ 12, weekly × 4.33).
+        / الفواتير غير الشهرية محوّلة إلى قيمة شهرية (ربع سنوي ÷ 3، نصف سنوي ÷ 6، سنوي ÷ 12، أسبوعي × 4.33).
+      </p>
+    </div>`
+    : '';
 
   const escapedCompanyName = escapeHtml(companyName);
   const escapedInvestorName = escapeHtml(investor.name);
@@ -2923,7 +3005,7 @@ function generateInvestorStatementHTML(data: InvestorStatementData): string {
         </tbody>
       </table>
     </div>
-    
+    ${expenseBreakdownSection}
     <div class="summary-box">
       <div class="summary-row">
         <span class="summary-label">Net Profit for Period / صافي الربح للفترة</span>
