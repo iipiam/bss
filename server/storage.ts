@@ -720,6 +720,7 @@ export interface IStorage {
 
   // Project Equipment
   getProjectEquipment(restaurantId: string, projectId: string): Promise<ProjectEquipment[]>;
+  getProjectEquipmentItem(id: string, restaurantId: string): Promise<ProjectEquipment | undefined>;
   createProjectEquipment(equipment: InsertProjectEquipment): Promise<ProjectEquipment>;
   updateProjectEquipment(id: string, restaurantId: string, data: Partial<InsertProjectEquipment>): Promise<ProjectEquipment | undefined>;
   deleteProjectEquipment(id: string, restaurantId: string): Promise<boolean>;
@@ -5992,6 +5993,11 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(projectEquipment).where(and(eq(projectEquipment.restaurantId, restaurantId), eq(projectEquipment.projectId, projectId))).orderBy(projectEquipment.createdAt);
   }
 
+  async getProjectEquipmentItem(id: string, restaurantId: string): Promise<ProjectEquipment | undefined> {
+    const [result] = await db.select().from(projectEquipment).where(and(eq(projectEquipment.id, id), eq(projectEquipment.restaurantId, restaurantId)));
+    return result;
+  }
+
   async createProjectEquipment(equipment: InsertProjectEquipment): Promise<ProjectEquipment> {
     const [result] = await db.insert(projectEquipment).values(equipment as any).returning();
     return result;
@@ -7807,10 +7813,12 @@ export const storage = new DatabaseStorage();
         end_date TIMESTAMP,
         status TEXT NOT NULL DEFAULT 'assigned',
         phase INTEGER NOT NULL DEFAULT 1,
+        task_id VARCHAR,
         notes TEXT,
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       )
     `);
+    await pool.query(`ALTER TABLE project_equipment ADD COLUMN IF NOT EXISTS task_id VARCHAR`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_project_equipment_project ON project_equipment(project_id)`);
     console.log('[Migration] Tables verified/created: project_equipment');
 

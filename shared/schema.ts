@@ -1897,6 +1897,7 @@ export const projectEquipment = pgTable("project_equipment", {
   endDate: timestamp("end_date"),
   status: text("status").notNull().default("assigned"), // "assigned" | "returned"
   phase: integer("phase").notNull().default(1),
+  taskId: varchar("task_id"),
   notes: text("notes"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => [index("idx_project_equipment_project").on(table.projectId)]);

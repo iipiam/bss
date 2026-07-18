@@ -26,7 +26,7 @@ import {
   ArrowLeft, Plus, Edit, Trash2, DollarSign, Calendar, Phone, Mail,
   User, MapPin, Clock, FileText, CheckCircle, Layers, Receipt,
   ShoppingCart, CreditCard, ListTodo, Zap, AlertTriangle, Download, RefreshCw,
-  FileSignature, MessageCircle, ShieldCheck, ShieldX, PlayCircle, CheckSquare, PackageCheck,
+  FileSignature, MessageCircle, ShieldCheck, ShieldX, PlayCircle, CheckSquare, PackageCheck, ListChecks,
   Lightbulb, Target, GitBranch, Activity, ClipboardList, Video, Users, Link2, Percent, Wrench,
 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -79,7 +79,7 @@ interface ProjectEquipmentItem {
   id: string; projectId: string; name: string; supplierId: string | null;
   supplierName: string | null; rateUnit: string; rate: string; quantity: string;
   totalCost: string; startDate: string | null; endDate: string | null;
-  status: string; phase: number; notes: string | null;
+  status: string; phase: number; taskId: string | null; notes: string | null;
 }
 interface SupplierRef { id: string; companyName: string }
 interface SupplierEquipmentRef {
@@ -150,6 +150,7 @@ const equipmentSchema = z.object({
   startDate: z.string().optional().default(""), endDate: z.string().optional().default(""),
   status: z.string().min(1), notes: z.string().optional().default(""),
   phase: z.string().optional().default("1"),
+  taskId: z.string().optional().default(""),
 });
 type EquipmentFormValues = z.infer<typeof equipmentSchema>;
 const paymentSchema = z.object({
@@ -778,13 +779,13 @@ export default function ProjectDetail() {
   function openEditEq(e: ProjectEquipmentItem) {
     setEditEq(e);
     setEqSupplierPick(e.supplierId || "");
-    eqForm.reset({ name: e.name, supplierId: e.supplierId || "", supplierName: e.supplierName || "", rateUnit: e.rateUnit, rate: e.rate, quantity: e.quantity, totalCost: e.totalCost, startDate: e.startDate ? String(e.startDate).split("T")[0] : "", endDate: e.endDate ? String(e.endDate).split("T")[0] : "", status: e.status, notes: e.notes || "", phase: String(e.phase ?? 1) });
+    eqForm.reset({ name: e.name, supplierId: e.supplierId || "", supplierName: e.supplierName || "", rateUnit: e.rateUnit, rate: e.rate, quantity: e.quantity, totalCost: e.totalCost, startDate: e.startDate ? String(e.startDate).split("T")[0] : "", endDate: e.endDate ? String(e.endDate).split("T")[0] : "", status: e.status, notes: e.notes || "", phase: String(e.phase ?? 1), taskId: e.taskId || "" });
     setEqOpen(true);
   }
   function openAddEq() {
     setEditEq(null);
     setEqSupplierPick("");
-    eqForm.reset({ name: "", supplierId: "", supplierName: "", rateUnit: "daily", rate: "0", quantity: "1", totalCost: "0", startDate: "", endDate: "", status: "assigned", notes: "", phase: "1" });
+    eqForm.reset({ name: "", supplierId: "", supplierName: "", rateUnit: "daily", rate: "0", quantity: "1", totalCost: "0", startDate: "", endDate: "", status: "assigned", notes: "", phase: "1", taskId: "" });
     setEqOpen(true);
   }
   async function downloadPaymentInvoice(p: PaymentScheduleItem) {
@@ -865,6 +866,7 @@ export default function ProjectDetail() {
       endDate: data.endDate || null,
       notes: data.notes || null,
       phase: phaseNum,
+      taskId: data.taskId && data.taskId !== "none" ? data.taskId : null,
     };
     if (editEq) body._editId = editEq.id;
     eqMut.mutate(body);
@@ -1368,6 +1370,11 @@ export default function ProjectDetail() {
                           {e.supplierName || "-"} · {fmtNum(e.rate)} SAR / {e.rateUnit === "hourly" ? (isAr ? "ساعة" : "hour") : e.rateUnit === "weekly" ? (isAr ? "أسبوع" : "week") : (isAr ? "يوم" : "day")} · {isAr ? "الكمية" : "Qty"}: {e.quantity}
                           {e.startDate && <> · {fmtDate(e.startDate)}{e.endDate ? ` → ${fmtDate(e.endDate)}` : ""}</>}
                         </p>
+                        {e.taskId && (() => { const tk = tasks.find(x => x.id === e.taskId); return tk ? (
+                          <p className="text-sm text-muted-foreground inline-flex items-center gap-1 flex-wrap" data-testid={`text-equipment-task-${e.id}`}>
+                            <ListChecks className="h-3 w-3" />{tr("Task", "المهمة")}: {tk.name}
+                          </p>
+                        ) : null; })()}
                       </div>
                       <div className="flex items-center gap-2 shrink-0 flex-wrap">
                         <Badge variant={e.status === "returned" ? "secondary" : "default"}>{e.status === "returned" ? (isAr ? "مُرجع" : "Returned") : (isAr ? "مخصص" : "Assigned")}</Badge>
@@ -2756,6 +2763,16 @@ export default function ProjectDetail() {
                   <FormItem><FormLabel>{(t as any).phase || "Phase"}</FormLabel><FormControl><Input data-testid="input-equipment-phase" type="number" min="1" {...field} /></FormControl><FormMessage /></FormItem>
                 )} />
               </div>
+              <FormField control={eqForm.control} name="taskId" render={({ field }) => (
+                <FormItem><FormLabel>{tr("Assign to Task", "تخصيص لمهمة")}</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || "none"}>
+                    <FormControl><SelectTrigger data-testid="select-equipment-task"><SelectValue placeholder={tr("No task", "بدون مهمة")} /></SelectTrigger></FormControl>
+                    <SelectContent>
+                      <SelectItem value="none">{tr("No task", "بدون مهمة")}</SelectItem>
+                      {tasks.map(tk => <SelectItem key={tk.id} value={tk.id}>{tk.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select><FormMessage /></FormItem>
+              )} />
               <FormField control={eqForm.control} name="notes" render={({ field }) => (
                 <FormItem><FormLabel>{t.notes}</FormLabel><FormControl><Textarea data-testid="input-equipment-notes" className="resize-none" {...field} /></FormControl><FormMessage /></FormItem>
               )} />

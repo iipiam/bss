@@ -16937,6 +16937,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const parsed = insertProjectEquipmentSchema.parse({ ...req.body, restaurantId });
       const project = await storage.getServiceProject(parsed.projectId, restaurantId);
       if (!project) return res.status(404).json({ message: "Project not found" });
+      if (parsed.taskId) {
+        const projTasks = await storage.getProjectTasks(restaurantId, parsed.projectId);
+        if (!projTasks.some(tk => tk.id === parsed.taskId)) return res.status(400).json({ message: "Task not found in this project" });
+      }
       const equipment = await storage.createProjectEquipment(parsed);
       res.status(201).json(equipment);
     } catch (error: any) {
@@ -16951,6 +16955,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const parsed = insertProjectEquipmentSchema.partial().parse(req.body);
       delete (parsed as any).restaurantId;
       delete (parsed as any).projectId;
+      if (parsed.taskId) {
+        const existing = await storage.getProjectEquipmentItem(req.params.id, restaurantId);
+        if (!existing) return res.status(404).json({ message: "Project equipment not found" });
+        const projTasks = await storage.getProjectTasks(restaurantId, existing.projectId);
+        if (!projTasks.some(tk => tk.id === parsed.taskId)) return res.status(400).json({ message: "Task not found in this project" });
+      }
       const equipment = await storage.updateProjectEquipment(req.params.id, restaurantId, parsed);
       if (!equipment) return res.status(404).json({ message: "Project equipment not found" });
       res.json(equipment);
