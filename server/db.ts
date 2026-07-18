@@ -182,6 +182,22 @@ export const db = drizzle(pool, { schema });
        )`,
     ],
     [
+      "marketing_qr_scans",
+      `CREATE TABLE IF NOT EXISTS marketing_qr_scans (
+         id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+         restaurant_id varchar NOT NULL REFERENCES restaurants(id),
+         target_type text NOT NULL,
+         target_id varchar NOT NULL,
+         source text NOT NULL DEFAULT 'camera',
+         order_id varchar,
+         scanned_at timestamp NOT NULL DEFAULT now()
+       )`,
+    ],
+    [
+      "marketing_qr_scans_restaurant_target_idx",
+      `CREATE INDEX IF NOT EXISTS marketing_qr_scans_restaurant_target_idx ON marketing_qr_scans(restaurant_id, target_type, target_id)`,
+    ],
+    [
       "meal_subscriptions.credit_balance",
       `ALTER TABLE meal_subscriptions ADD COLUMN IF NOT EXISTS credit_balance numeric(10,2) NOT NULL DEFAULT 0`,
     ],

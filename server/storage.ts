@@ -7979,6 +7979,21 @@ export const storage = new DatabaseStorage();
     `);
     console.log('[Migration] Table verified/created: marketing_broadcast_templates');
 
+    // Marketing - QR Scans
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS marketing_qr_scans (
+        id VARCHAR(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+        restaurant_id VARCHAR(255) NOT NULL REFERENCES restaurants(id),
+        target_type TEXT NOT NULL,
+        target_id VARCHAR(255) NOT NULL,
+        source TEXT NOT NULL DEFAULT 'camera',
+        order_id VARCHAR(255),
+        scanned_at TIMESTAMP NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`CREATE INDEX IF NOT EXISTS marketing_qr_scans_restaurant_target_idx ON marketing_qr_scans(restaurant_id, target_type, target_id)`);
+    console.log('[Migration] Table verified/created: marketing_qr_scans');
+
     // ===== Property Management (Real Estate Brokerage) =====
     await pool.query(`
       CREATE TABLE IF NOT EXISTS properties (
