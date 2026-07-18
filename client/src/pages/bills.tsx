@@ -26,6 +26,7 @@ export default function Bills() {
   const [showArchived, setShowArchived] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [sortOrder, setSortOrder] = useState<string>("newest");
   const [salaryDialogOpen, setSalaryDialogOpen] = useState(false);
   const [salaryMonth, setSalaryMonth] = useState(() => format(new Date(), "yyyy-MM"));
 
@@ -85,6 +86,24 @@ export default function Bills() {
       (!endDate || new Date(bill.paymentDate) <= new Date(endDate));
 
     return matchesSearch && matchesType && matchesStatus && matchesArchived && matchesDateRange;
+  }).sort((a, b) => {
+    const dateA = new Date(a.paymentDate || a.createdAt || 0).getTime();
+    const dateB = new Date(b.paymentDate || b.createdAt || 0).getTime();
+    switch (sortOrder) {
+      case "oldest":
+        return dateA - dateB;
+      case "paidFirst": {
+        const rank = (s: string | null) => (s === "paid" ? 0 : 1);
+        return rank(a.status) - rank(b.status) || dateB - dateA;
+      }
+      case "unpaidFirst": {
+        const rank = (s: string | null) => (s === "paid" ? 1 : 0);
+        return rank(a.status) - rank(b.status) || dateB - dateA;
+      }
+      case "newest":
+      default:
+        return dateB - dateA;
+    }
   });
 
   const totalAmount = filteredBills.reduce((sum, bill) => sum + parseFloat(bill.amount || "0"), 0);
@@ -230,7 +249,7 @@ export default function Bills() {
           <CardDescription>{t.filterBills || "Filter bills by various criteria"}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
@@ -265,6 +284,18 @@ export default function Bills() {
                     {status === "all" ? t.all || "All" : (t as any)[status] || status}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+              <SelectTrigger data-testid="select-sort-order">
+                <SelectValue placeholder={isRTL ? "الترتيب" : "Sort"} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">{isRTL ? "الأحدث أولاً" : "Newest first"}</SelectItem>
+                <SelectItem value="oldest">{isRTL ? "الأقدم أولاً" : "Oldest first"}</SelectItem>
+                <SelectItem value="paidFirst">{isRTL ? "المدفوعة أولاً" : "Paid first"}</SelectItem>
+                <SelectItem value="unpaidFirst">{isRTL ? "غير المدفوعة أولاً" : "Unpaid first"}</SelectItem>
               </SelectContent>
             </Select>
 
