@@ -113,6 +113,17 @@ export default function ZatcaIntegrationGuide() {
     },
   ];
 
+  const exampleFields = [
+    { label: tr("Company name", "اسم الشركة"), value: "مطعم وادي الماتشا للتجارة | Matcha Valley Trading Est.", note: tr("Exactly as registered with ZATCA", "تمامًا كما هو مسجل لدى الهيئة") },
+    { label: tr("VAT number", "الرقم الضريبي"), value: "310122393500003", note: tr("15 digits — starts and ends with 3", "15 رقمًا — يبدأ وينتهي بالرقم 3") },
+    { label: tr("CR number", "رقم السجل التجاري"), value: "1010123456", note: tr("From the commercial registration certificate", "من شهادة السجل التجاري") },
+    { label: tr("Branch name", "اسم الفرع"), value: tr("Main Branch — Riyadh", "الفرع الرئيسي — الرياض"), note: tr("Only needed if invoicing per branch", "مطلوب فقط عند الفوترة لكل فرع") },
+    { label: tr("Street / building", "الشارع / المبنى"), value: tr("King Fahd Road, Building 7235", "طريق الملك فهد، مبنى 7235"), note: "" },
+    { label: tr("District", "الحي"), value: tr("Al Olaya", "العليا"), note: "" },
+    { label: tr("City / postal code", "المدينة / الرمز البريدي"), value: tr("Riyadh, 12244", "الرياض، 12244"), note: tr("From the national address", "من العنوان الوطني") },
+    { label: tr("Environment", "البيئة"), value: tr("Simulation (first) → Production", "المحاكاة (أولًا) ← الإنتاج"), note: tr("Test on Simulation before going live", "جرّب على المحاكاة قبل الانطلاق") },
+  ];
+
   const warnings = [
     {
       icon: Clock,
@@ -207,6 +218,46 @@ export default function ZatcaIntegrationGuide() {
             </Card>
           ))}
         </div>
+      </div>
+
+      {/* Worked example */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <FileText className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          <h3 className="text-lg font-semibold" data-testid="text-example-title">
+            {tr("Worked example — how a filled profile looks", "مثال عملي — كيف يبدو الملف بعد التعبئة")}
+          </h3>
+        </div>
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <Badge variant="secondary" className="text-xs">
+                {tr("Fictional data — for illustration only", "بيانات افتراضية — للتوضيح فقط")}
+              </Badge>
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {exampleFields.map((f, i) => (
+                <div
+                  key={i}
+                  className="rounded-md border bg-muted/40 p-3"
+                  data-testid={`row-example-${i}`}
+                >
+                  <div className="text-xs font-medium text-muted-foreground mb-1">{f.label}</div>
+                  <div className="text-sm font-mono break-words">{f.value}</div>
+                  {f.note && (
+                    <div className="text-xs text-muted-foreground mt-1">{f.note}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <p className="text-sm text-muted-foreground mt-4">
+              {tr(
+                "With this profile saved, the flow would be: generate the CSR, ask the client to log into Fatoora and create an OTP (e.g. 123456), enter it and click Onboard, run the compliance checks, request the Production CSID, then flip the toggle to Enabled — from that moment every invoice is signed and sent to ZATCA automatically.",
+                "بعد حفظ هذا الملف، يكون المسار: توليد CSR، ثم يطلب من العميل الدخول إلى بوابة فاتورة وتوليد رمز OTP (مثل 123456)، إدخاله والضغط على تفعيل، تشغيل فحوصات الامتثال، طلب شهادة الإنتاج، ثم تحويل المفتاح إلى «مفعّل» — ومن تلك اللحظة تُوقَّع كل فاتورة وتُرسل إلى الهيئة تلقائيًا.",
+              )}
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Activation timeline */}
