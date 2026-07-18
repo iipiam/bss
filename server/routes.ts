@@ -9424,7 +9424,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         return res.status(404).json({ error: 'Training content not found' });
       }
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.sendFile(filePath);
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      res.sendFile(filePath, { etag: false, lastModified: false, cacheControl: false });
     } catch (error) {
       console.error('Error serving training page:', error);
       res.status(500).json({ error: 'Failed to load training page' });
