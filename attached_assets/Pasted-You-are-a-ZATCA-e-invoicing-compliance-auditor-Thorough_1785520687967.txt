@@ -1,0 +1,72 @@
+You are a ZATCA e-invoicing compliance auditor. Thoroughly inspect this entire application (codebase, configuration, database schema, API clients, invoice generation logic, storage, and any related modules) and determine its readiness for **ZATCA Phase 2 (Integration Phase / Fatoora)**.
+
+Perform a complete compliance audit against official ZATCA requirements for Phase 2. Do not assume anything is compliant — verify every point by examining the actual code.
+
+### 1. Invoice Format & Structure
+- Confirm the system generates invoices in **UBL 2.1-based XML** (or PDF/A-3 with embedded XML).
+- Check that both **Standard Tax Invoices (B2B)** and **Simplified Tax Invoices (B2C)** are supported with the correct structure.
+- Verify all mandatory fields from ZATCA Data Dictionary / XML Implementation Standards are present and correctly mapped (seller/buyer details, VAT numbers, line items, totals, tax categories, etc.).
+- Confirm Credit Notes and Debit Notes follow the same structure and link correctly to the original invoice.
+
+### 2. Mandatory Phase 2 Security & Integrity Features
+Inspect generation of the following for **every** invoice/note:
+- **UUID** (Universally Unique Identifier) – unique per invoice.
+- **Invoice Hash (IH)** – SHA-256 of the invoice.
+- **Previous Invoice Hash (PIH)** – correctly chained from the immediately preceding invoice (hash chaining must be unbroken).
+- **Invoice Counter Value (ICV)** – sequential, non-resettable counter.
+- **Cryptographic Stamp / Digital Signature** (ECDSA) using the CSID private key.
+- **Cryptographic Stamp Identifier (CSID)** handling (onboarding, renewal, revocation).
+- **QR Code** generation using correct TLV (Tag-Length-Value) structure (Phase 2 version with hash, signature, public key, etc.).
+
+### 3. Clearance vs Reporting Logic
+- **Standard Tax Invoices (B2B)**: Must be submitted to ZATCA for **Clearance** *before* sharing with the buyer. Check that the flow blocks sharing until clearance response (with ZATCA stamp) is received.
+- **Simplified Tax Invoices (B2C)**: Must be **Reported** to ZATCA within 24 hours of issuance. Verify the reporting mechanism and timing.
+- Confirm proper handling of clearance/reporting responses (accepted, rejected with warnings, rejected).
+
+### 4. Fatoora / ZATCA API Integration
+- Locate and review the ZATCA/Fatoora API client code.
+- Check support for:
+  - Sandbox environment
+  - Production environment
+  - Onboarding endpoints (CSR generation, Compliance CSID, Production CSID)
+  - Invoice Clearance API
+  - Invoice Reporting API
+- Verify authentication (CSID certificates, tokens), request/response handling, error handling, and retry logic.
+- Confirm the system can handle ZATCA validation responses correctly (including warnings vs hard rejects).
+
+### 5. Onboarding & Certificate Management
+- Check if the app supports the full onboarding flow: OTP → CSR → Compliance CSID → Production CSID.
+- Verify secure storage of private keys and certificates.
+- Confirm support for CSID renewal and revocation.
+
+### 6. Anti-Tampering & Security
+- Confirm the solution is tamper-resistant (cannot modify issued invoices).
+- Verify invoice sequence protection via hash chaining.
+- Check logging of all invoice generation and submission events.
+- Ensure invoices cannot be deleted or altered after generation/clearance.
+
+### 7. Storage & Archiving
+- Confirm electronic invoices and notes are stored in the required format for at least 6 years.
+- Verify they remain accessible for ZATCA audit (including when using cloud storage).
+- Check that the system can produce the original XML (and PDF/A-3 if used) on demand.
+
+### 8. Prohibited Functions
+Flag any presence of:
+- Ability to issue invoices without the required Phase 2 fields.
+- Ability to share B2B invoices before clearance.
+- Ability to reset the invoice counter.
+- Any functionality that allows modification of already issued invoices.
+
+### 9. Output Required from You
+Produce a clear structured report with these sections:
+
+1. **Overall Compliance Status** (Compliant / Partially Compliant / Non-Compliant)
+2. **What is correctly implemented** (list with file references)
+3. **Critical Gaps / Non-Compliance Issues** (list with file references + severity: Critical / High / Medium)
+4. **Missing Features** that must be added
+5. **Recommended Code Changes** (concrete suggestions or pseudocode where helpful)
+6. **Next Steps** to reach full Phase 2 readiness (including sandbox testing recommendations)
+
+Be extremely thorough. Search the entire codebase (including any invoice service, tax module, PDF/XML generators, API clients, models, and configuration files). Quote relevant code snippets when pointing out issues or correct implementations.
+
+Start the audit now.
