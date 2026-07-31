@@ -5,6 +5,8 @@ import path from "path";
 import fs from "fs";
 import { pool } from "./db";
 import { registerRoutes } from "./routes";
+import { retryPendingInvoices } from "./zatca/service";
+import { storage } from "./storage";
 
 function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -118,6 +120,31 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app, sessionParser);
+
+  // ── ZATCA 24-hour B2C reporting scheduler ───────────────────────────────
+  // ZATCA Phase 2 requires simplified (B2C) invoices to be reported within
+  // 24 hours. Sweep every 15 minutes so any invoice that failed to submit at
+  // creation time (network error, ZATCA outage) is retried well within the SLA.
+  const ZATCA_RETRY_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
+  setInterval(async () => {
+    try {
+      const restaurantIds = await storage.getRestaurantsWithPendingZatcaInvoices();
+      if (restaurantIds.length === 0) return;
+      log(`[ZATCA Scheduler] Retrying pending invoices for ${restaurantIds.length} restaurant(s)`, "zatca");
+      for (const restaurantId of restaurantIds) {
+        try {
+          const result = await retryPendingInvoices(restaurantId);
+          if (result.processed > 0) {
+            log(`[ZATCA Scheduler] ${restaurantId}: processed=${result.processed} ok=${result.succeeded} fail=${result.failed}`, "zatca");
+          }
+        } catch (err) {
+          console.error(`[ZATCA Scheduler] Error retrying for ${restaurantId}:`, err);
+        }
+      }
+    } catch (err) {
+      console.error("[ZATCA Scheduler] Error during pending invoice sweep:", err);
+    }
+  }, ZATCA_RETRY_INTERVAL_MS);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

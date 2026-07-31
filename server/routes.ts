@@ -20,6 +20,7 @@ import {
   runComplianceChecks,
   retryPendingInvoices,
 } from "./zatca/service";
+import { ZatcaApiClient, type ZatcaConfig } from "./zatca/api-client";
 import bcrypt from "bcrypt";
 import QRCode from "qrcode";
 import rateLimit from "express-rate-limit";
@@ -6097,14 +6098,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         pdfPath: `/invoices/${pdfFilename}`,
       });
       
-      // Process invoice through ZATCA if enabled (B2B Standard Invoice - requires clearance)
+      // Process invoice through ZATCA.
+      // ZATCA Phase 2: Standard (B2B) invoices MUST be cleared by ZATCA BEFORE they are
+      // shared with the buyer. Non-blocking processing is NOT acceptable for B2B.
+      let zatcaResult: Awaited<ReturnType<typeof processInvoiceForZatca>> | null = null;
       try {
-        
-        const zatcaResult = await processInvoiceForZatca({
+        zatcaResult = await processInvoiceForZatca({
           restaurantId,
           invoiceId: createdInvoice.id,
           invoiceNumber,
-          invoiceType: "standard", // B2B - Standard Tax Invoice (requires clearance)
+          invoiceType: "standard", // B2B — Standard Tax Invoice (clearance required)
           paymentMethod: "bank_transfer",
           subtotal: totalCost / 1.15,
           vatAmount: totalCost - (totalCost / 1.15),
@@ -6118,16 +6121,37 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           })),
           customerName: procurementRecord.supplier || undefined
         });
-
-        if (zatcaResult.success) {
-          console.log(`[ZATCA] B2B Invoice ${invoiceNumber} processed: ${zatcaResult.submissionStatus}`);
-        } else if (zatcaResult.errors && zatcaResult.errors.length > 0) {
-          console.log(`[ZATCA] B2B Invoice ${invoiceNumber} not submitted (ZATCA disabled or not configured)`);
-        }
+        console.log(`[ZATCA] B2B Invoice ${invoiceNumber} status: ${zatcaResult.submissionStatus}`);
       } catch (zatcaError) {
-        console.error("[ZATCA] Non-blocking error processing B2B invoice:", zatcaError);
+        console.error("[ZATCA] Error processing B2B invoice:", zatcaError);
       }
-      
+
+      // Phase 2 clearance gate: block sharing if ZATCA is enabled but clearance failed/pending.
+      if (zatcaResult) {
+        const isUnconfigured = zatcaResult.errors?.some(
+          (e: { code: string }) => e.code === "NO_SETTINGS" || e.code === "ZATCA_DISABLED"
+        );
+        if (!isUnconfigured) {
+          if (zatcaResult.submissionStatus === "rejected") {
+            return res.status(422).json({
+              error: "B2B invoice was rejected by ZATCA and cannot be shared with the buyer per Phase 2 requirements.",
+              invoiceId: createdInvoice.id,
+              invoiceNumber,
+              zatcaErrors: zatcaResult.errors,
+            });
+          }
+          if (zatcaResult.submissionStatus === "pending") {
+            // ZATCA unreachable — invoice queued; the 15-minute scheduler will retry.
+            return res.status(202).json({
+              message: "Invoice saved and submitted to ZATCA for clearance. It will be available for download once ZATCA confirms clearance (usually within minutes). Use /api/zatca/retry-pending to recheck.",
+              invoiceId: createdInvoice.id,
+              invoiceNumber,
+              zatcaStatus: "pending",
+            });
+          }
+        }
+      }
+
       // Broadcast sales update for real-time BEP tracking
       broadcastNotification({
         type: 'sales:updated',
@@ -9235,6 +9259,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   // Download individual invoice XML (ZATCA-compliant UBL 2.1 format)
+  // Returns the authoritative SIGNED XML that was submitted to / cleared by ZATCA.
+  // Falls back to generating an unsigned XML only if no ZATCA record exists (e.g. ZATCA not yet enabled).
   app.get("/api/invoices/:id/download-xml", requireAuth, requireRestaurant, async (req, res) => {
     try {
       const restaurantId = req.session.user!.restaurantId!;
@@ -9242,22 +9268,34 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       if (!invoice) {
         return res.status(404).json({ error: "Invoice not found" });
       }
-      
-      // Get restaurant settings for seller info
+
+      // ZATCA file naming convention: {VAT}_{YYYYMMDDTHHMMSS}_{invoiceNumber}.xml
       const restaurant = await storage.getRestaurant(restaurantId);
+      const vatForFile = ((restaurant?.taxNumber) || "300000000000003").replace(/\D/g, "");
+      const invoiceDate = new Date(invoice.createdAt);
+      const issueDate = invoiceDate.toISOString().split('T')[0];
+      const issueTime = invoiceDate.toISOString().split('T')[1].split('.')[0];
+      const tsForFile = `${issueDate.replace(/-/g, "")}T${issueTime.replace(/:/g, "")}`;
+      const invNumForFile = invoice.invoiceNumber.replace(/[^A-Za-z0-9]/g, "-");
+      const filename = `${vatForFile}_${tsForFile}_${invNumForFile}.xml`;
+
+      res.setHeader('Content-Type', 'application/xml');
+      res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+
+      // Prefer the stored signed (and potentially ZATCA-cleared) XML — this is the
+      // authoritative document that matches the hash ZATCA has on record.
+      const zatcaStatus = await storage.getInvoiceZatcaStatus(req.params.id, restaurantId);
+      if (zatcaStatus?.signedXml) {
+        console.log(`[ZATCA] Serving stored signed XML for invoice ${invoice.invoiceNumber} (status: ${zatcaStatus.submissionStatus})`);
+        return res.send(zatcaStatus.signedXml);
+      }
+
+      // Fallback: regenerate unsigned XML for invoices that predate Phase 2 or where ZATCA is disabled.
+      console.warn(`[ZATCA] No signed XML on record for invoice ${invoice.invoiceNumber} — serving unsigned fallback`);
       if (!restaurant) {
         return res.status(404).json({ error: "Restaurant not found" });
       }
-      
-      // Import the XML generator
       const { generateUnsignedInvoiceXml } = await import("./zatca/xml-generator");
-      
-      // Parse invoice date
-      const invoiceDate = new Date(invoice.createdAt);
-      const issueDate = invoiceDate.toISOString().split('T')[0]; // YYYY-MM-DD
-      const issueTime = invoiceDate.toISOString().split('T')[1].split('.')[0]; // HH:MM:SS
-      
-      // Map invoice items to ZATCA format
       const items = (invoice.items as Array<{ name: string; quantity: number; basePrice: number; vatAmount: number; total: number }>).map(item => ({
         name: item.name,
         quantity: item.quantity,
@@ -9266,11 +9304,6 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         taxCategory: "S" as const,
         taxPercent: 15,
       }));
-      
-      // Generate UUID for invoice (use invoice ID)
-      const uuid = invoice.id;
-      
-      // Build ZATCA invoice data
       const zatcaData = {
         invoiceNumber: invoice.invoiceNumber,
         invoiceType: "simplified" as const,
@@ -9283,7 +9316,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         items,
         invoiceCounter: 1,
         previousInvoiceHash: null,
-        uuid,
+        uuid: invoice.id,
         issueDate,
         issueTime,
         sellerInfo: {
@@ -9297,22 +9330,9 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           countryCode: "SA",
           crNumber: restaurant.commercialRegistration || "0000000000",
         },
-        buyerInfo: invoice.customerName ? {
-          name: invoice.customerName,
-        } : undefined,
+        buyerInfo: invoice.customerName ? { name: invoice.customerName } : undefined,
       };
-      
-      // Generate XML
-      const xml = generateUnsignedInvoiceXml(zatcaData);
-      
-      res.setHeader('Content-Type', 'application/xml');
-      // ZATCA file naming convention: {VAT}_{YYYYMMDDTHHMMSS}_{invoiceNumber}.xml
-      // (invoice number with special characters replaced by dashes)
-      const vatForFile = (restaurant.taxNumber || "300000000000003").replace(/\D/g, "");
-      const tsForFile = `${issueDate.replace(/-/g, "")}T${issueTime.replace(/:/g, "")}`;
-      const invNumForFile = invoice.invoiceNumber.replace(/[^A-Za-z0-9]/g, "-");
-      res.setHeader('Content-Disposition', `attachment; filename=${vatForFile}_${tsForFile}_${invNumForFile}.xml`);
-      res.send(xml);
+      res.send(generateUnsignedInvoiceXml(zatcaData));
     } catch (error) {
       console.error("Invoice XML download error:", error);
       res.status(500).json({ error: "Failed to generate invoice XML" });
@@ -16074,6 +16094,73 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error) {
       console.error("Error resetting ZATCA onboarding:", error);
       res.status(500).json({ error: "Failed to reset ZATCA onboarding" });
+    }
+  });
+
+  // Renew Production CSID - IT only
+  // Must be called before the current production CSID expires (check csidExpiresAt).
+  // Requires a fresh OTP from fatoora.zatca.gov.sa for the production environment.
+  app.post("/api/zatca/renew-csid", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { restaurantId: targetRestaurantId, otp } = req.body;
+      if (!targetRestaurantId) {
+        return res.status(400).json({ error: "Restaurant ID required in request body" });
+      }
+      if (!otp || !/^\d{6}$/.test(otp.trim())) {
+        return res.status(400).json({ error: "A valid 6-digit OTP is required. Generate a fresh OTP from fatoora.zatca.gov.sa." });
+      }
+
+      const settings = await storage.getZatcaSettings(targetRestaurantId);
+      if (!settings?.productionCsid || !settings?.productionCsidSecret) {
+        return res.status(400).json({ error: "No production CSID found for this restaurant. Complete onboarding first." });
+      }
+
+      const config: ZatcaConfig = {
+        environment: settings.environment as "sandbox" | "simulation" | "production",
+        csid: settings.productionCsid,
+        csidSecret: settings.productionCsidSecret,
+        privateKey: settings.privateKey || "",
+      };
+
+      const client = new ZatcaApiClient(config);
+      const response = await client.renewProductionCSID(otp.trim());
+
+      if (!response.success) {
+        return res.status(400).json({
+          error: response.error?.message || "Failed to renew production CSID",
+          details: response.error?.details,
+        });
+      }
+
+      // Parse new certificate expiry
+      let csidExpiresAt: Date | undefined;
+      try {
+        const { normalizeCertificateToPem } = await import("./zatca/crypto");
+        const certPem = normalizeCertificateToPem(response.data!.binarySecurityToken);
+        const x509 = new (await import("crypto")).X509Certificate(certPem);
+        csidExpiresAt = new Date(x509.validTo);
+        if (isNaN(csidExpiresAt.getTime())) csidExpiresAt = undefined;
+      } catch (e) {
+        console.error("[ZATCA] Failed to parse renewed CSID expiry:", e);
+      }
+
+      await storage.updateZatcaSettings(targetRestaurantId, {
+        productionCsid: response.data!.binarySecurityToken,
+        productionCsidSecret: response.data!.secret,
+        csidExpiresAt,
+      });
+
+      console.log(`[ZATCA] Production CSID renewed for restaurant ${targetRestaurantId}`);
+      res.json({
+        success: true,
+        message: csidExpiresAt
+          ? `Production CSID renewed successfully. New expiry: ${csidExpiresAt.toISOString().slice(0, 10)}.`
+          : "Production CSID renewed successfully.",
+        expiresAt: csidExpiresAt,
+      });
+    } catch (error: any) {
+      console.error("Error renewing production CSID:", error?.stack || error);
+      res.status(500).json({ error: error?.message || "Failed to renew production CSID" });
     }
   });
 

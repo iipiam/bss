@@ -273,6 +273,7 @@ import { eq, ne, and, gte, lte, lt, sql, or, isNull, isNotNull, desc, inArray } 
 import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { calcDeliveryBreakdown, resolveSubsidy } from "@shared/deliveryCalc";
+import { encryptPrivateKey, decryptPrivateKey } from "./zatca/crypto";
 
 export interface IStorage {
   // Restaurants (Multi-tenant isolation)
@@ -627,6 +628,8 @@ export interface IStorage {
   getInvoiceZatcaStatus(invoiceId: string, restaurantId: string): Promise<InvoiceZatcaStatus | undefined>;
   createInvoiceZatcaStatus(status: InsertInvoiceZatcaStatus): Promise<InvoiceZatcaStatus>;
   updateInvoiceZatcaStatus(invoiceId: string, restaurantId: string, status: Partial<InsertInvoiceZatcaStatus>): Promise<InvoiceZatcaStatus | undefined>;
+  /** Returns distinct restaurantIds that have at least one pending ZATCA invoice — used by the 24-hour reporting scheduler. */
+  getRestaurantsWithPendingZatcaInvoices(): Promise<string[]>;
 
   // Shop Files (MULTI-TENANT: requires restaurantId for all operations)
   getShopFiles(restaurantId: string): Promise<ShopFile[]>;
@@ -2487,6 +2490,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInvoice(id: string, restaurantId: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
+    // ZATCA Phase 2 anti-tampering: reject modifications to financial fields once an
+    // invoice has been cleared or reported. Non-financial fields (qrCode, pdfPath) are
+    // always allowed because they are set internally right after creation.
+    const financialFields = ["subtotal", "vatAmount", "total", "discount", "items"];
+    const touchingFinancials = financialFields.some((f) => f in (invoice as any));
+    if (touchingFinancials) {
+      const [zatcaRow] = await db
+        .select({ submissionStatus: invoiceZatcaStatus.submissionStatus })
+        .from(invoiceZatcaStatus)
+        .where(and(
+          eq(invoiceZatcaStatus.invoiceId, id),
+          eq(invoiceZatcaStatus.restaurantId, restaurantId)
+        ))
+        .limit(1);
+      if (zatcaRow && (zatcaRow.submissionStatus === "cleared" || zatcaRow.submissionStatus === "reported")) {
+        throw new Error(
+          `Cannot modify invoice ${id}: it has already been ${zatcaRow.submissionStatus} by ZATCA. ` +
+          `Issue a credit or debit note instead.`
+        );
+      }
+    }
+
     // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
     const { restaurantId: _, procurementId: __, ...safeData } = invoice as any;
     const updateData = Object.fromEntries(
@@ -5358,20 +5383,38 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(zatcaSettings)
       .where(eq(zatcaSettings.restaurantId, restaurantId));
+    if (!settings) return settings;
+    // Decrypt private key on the way out (plaintext legacy keys pass through unchanged)
+    if (settings.privateKey) {
+      try {
+        settings.privateKey = decryptPrivateKey(settings.privateKey);
+      } catch (e) {
+        console.error("[ZATCA Storage] Private key decryption failed:", e);
+      }
+    }
     return settings;
   }
 
   async createZatcaSettings(settings: InsertZatcaSettings): Promise<ZatcaSettings> {
-    const [created] = await db.insert(zatcaSettings).values(settings).returning();
+    const toStore = { ...settings };
+    if (toStore.privateKey) toStore.privateKey = encryptPrivateKey(toStore.privateKey);
+    const [created] = await db.insert(zatcaSettings).values(toStore).returning();
+    // Return with decrypted key so callers always see plaintext
+    if (created.privateKey) created.privateKey = decryptPrivateKey(created.privateKey);
     return created;
   }
 
   async updateZatcaSettings(restaurantId: string, settings: Partial<InsertZatcaSettings>): Promise<ZatcaSettings | undefined> {
+    const toStore = { ...settings };
+    if (toStore.privateKey) toStore.privateKey = encryptPrivateKey(toStore.privateKey);
     const [updated] = await db
       .update(zatcaSettings)
-      .set({ ...settings, updatedAt: new Date() })
+      .set({ ...toStore, updatedAt: new Date() })
       .where(eq(zatcaSettings.restaurantId, restaurantId))
       .returning();
+    if (!updated) return updated;
+    // Return with decrypted key
+    if (updated.privateKey) updated.privateKey = decryptPrivateKey(updated.privateKey);
     return updated;
   }
 
@@ -5437,6 +5480,15 @@ export class DatabaseStorage implements IStorage {
       ))
       .returning();
     return updated;
+  }
+
+  async getRestaurantsWithPendingZatcaInvoices(): Promise<string[]> {
+    // Used by the 24-hour reporting scheduler to know which tenants need a retry sweep.
+    const rows = await db
+      .selectDistinct({ restaurantId: invoiceZatcaStatus.restaurantId })
+      .from(invoiceZatcaStatus)
+      .where(eq(invoiceZatcaStatus.submissionStatus, "pending"));
+    return rows.map((r) => r.restaurantId);
   }
 
   // Shop Files (MULTI-TENANT: requires restaurantId)

@@ -173,6 +173,16 @@ async function processInvoiceForZatcaUnlocked(
     };
   }
 
+  // M8 — Buyer VAT enforcement: ZATCA schematron BR-KSA-44 requires the buyer's
+  // VAT number on Standard (B2B) Tax Invoices. Warn loudly so the issue surfaces
+  // in logs and can be corrected before submission.
+  if (params.invoiceType === "standard" && !params.customerVat) {
+    console.warn(
+      `[ZATCA] Warning: B2B standard invoice ${params.invoiceNumber} is missing the buyer VAT number. ` +
+      `ZATCA may reject it with BR-KSA-44. Provide customerVat when creating B2B invoices.`
+    );
+  }
+
   const uuid = generateUUID();
   const now = new Date();
   const issueDate = formatIssueDate(now);

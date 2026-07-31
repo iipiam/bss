@@ -675,3 +675,56 @@ export function decodeBase64(data: string): string {
 }
 
 export type { TLVData, CSRConfig };
+
+// ── Private-key encryption at rest ────────────────────────────────────────
+// Keys stored in the DB are wrapped with AES-256-GCM using a key derived from
+// SESSION_SECRET. Legacy plaintext keys (no "v1:" prefix) are accepted on
+// read and re-encrypted transparently on the next write.
+
+function deriveEncryptionKey(): Buffer {
+  const secret = process.env.SESSION_SECRET || "default-secret-change-in-production";
+  // scryptSync is synchronous and low-cost for a 32-byte key derivation on
+  // each read/write (no caching needed — the secret rarely changes).
+  return crypto.scryptSync(secret, "zatca-pkey-salt-v1", 32) as Buffer;
+}
+
+/**
+ * Encrypt a PEM private key for storage in the database.
+ * Returns a "v1:<ivHex>:<tagHex>:<cipherHex>" string.
+ * If the value is already encrypted (starts with "v1:") it is returned as-is.
+ */
+export function encryptPrivateKey(pem: string): string {
+  if (!pem) return pem;
+  if (pem.startsWith("v1:")) return pem; // already encrypted
+  const key = deriveEncryptionKey();
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+  const enc = Buffer.concat([cipher.update(pem, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `v1:${iv.toString("hex")}:${tag.toString("hex")}:${enc.toString("hex")}`;
+}
+
+/**
+ * Decrypt a private key retrieved from the database.
+ * Accepts both the encrypted "v1:…" format and legacy plaintext PEM
+ * (which is returned unchanged so old rows keep working until next write).
+ */
+export function decryptPrivateKey(stored: string): string {
+  if (!stored) return stored;
+  if (!stored.startsWith("v1:")) return stored; // legacy plaintext — passthrough
+  const parts = stored.split(":");
+  if (parts.length !== 4) return stored; // malformed — return as-is (fail loudly later)
+  const [, ivHex, tagHex, encHex] = parts;
+  try {
+    const key = deriveEncryptionKey();
+    const decipher = crypto.createDecipheriv("aes-256-gcm", key, Buffer.from(ivHex, "hex"));
+    decipher.setAuthTag(Buffer.from(tagHex, "hex"));
+    return Buffer.concat([
+      decipher.update(Buffer.from(encHex, "hex")),
+      decipher.final(),
+    ]).toString("utf8");
+  } catch (err) {
+    console.error("[ZATCA] Failed to decrypt private key:", err);
+    throw new Error("Private key decryption failed — check SESSION_SECRET has not changed.");
+  }
+}
