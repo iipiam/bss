@@ -645,6 +645,8 @@ export interface IStorage {
   getUnarchivedZatcaInvoices(restaurantId?: string): Promise<InvoiceZatcaStatus[]>;
   /** Get all ZATCA settings with enabled production setup (for scheduler sweeps). */
   getAllEnabledZatcaSettings(): Promise<ZatcaSettings[]>;
+  /** Atomically claim the right to send a CSID expiry alert for a threshold. Returns false if already claimed. */
+  claimCsidExpiryAlert(restaurantId: string, level: string): Promise<boolean>;
   /** Delete an invoice, guarded by ZATCA 6-year retention (throws if cleared/reported). */
   deleteInvoice(id: string, restaurantId: string): Promise<boolean>;
 
@@ -2507,27 +2509,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInvoice(id: string, restaurantId: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
-    // ZATCA Phase 2 anti-tampering: reject modifications to financial fields once an
-    // invoice has been cleared or reported. Non-financial fields (qrCode, pdfPath) are
-    // always allowed because they are set internally right after creation.
-    const financialFields = ["subtotal", "vatAmount", "total", "discount", "items"];
-    const touchingFinancials = financialFields.some((f) => f in (invoice as any));
-    if (touchingFinancials) {
-      const [zatcaRow] = await db
-        .select({ submissionStatus: invoiceZatcaStatus.submissionStatus })
-        .from(invoiceZatcaStatus)
-        .where(and(
-          eq(invoiceZatcaStatus.invoiceId, id),
-          eq(invoiceZatcaStatus.restaurantId, restaurantId)
-        ))
-        .limit(1);
-      if (zatcaRow && (zatcaRow.submissionStatus === "cleared" || zatcaRow.submissionStatus === "reported")) {
-        throw new Error(
-          `Cannot modify invoice ${id}: it has already been ${zatcaRow.submissionStatus} by ZATCA. ` +
-          `Issue a credit or debit note instead.`
-        );
-      }
-    }
+    // ZATCA Phase 2 anti-tampering: once an invoice has been cleared or reported,
+    // reject ALL business-field modifications. Only internal artifacts (qrCode, pdfPath)
+    // may still be written, since they are derived from the already-signed document.
+    // Guard + update run in ONE transaction with a row lock on the ZATCA status row so a
+    // concurrent clearance cannot slip between check and write. A DB trigger
+    // (zatca_invoice_finality_guard) additionally enforces this at the database layer.
+    const internalArtifactFields = new Set(["qrCode", "pdfPath"]);
+    const touchedBusinessFields = Object.keys(invoice as any).filter(
+      (f) => !internalArtifactFields.has(f) && (invoice as any)[f] !== undefined
+    );
 
     // SECURITY: Defensively strip restaurantId to prevent cross-tenant reassignment
     const { restaurantId: _, procurementId: __, ...safeData } = invoice as any;
@@ -2538,12 +2529,38 @@ export class DatabaseStorage implements IStorage {
       return this.getInvoice(id, restaurantId);
     }
     try {
-      const [updated] = await db.update(invoices)
-        .set(updateData as any)
-        .where(and(eq(invoices.id, id), eq(invoices.restaurantId, restaurantId)))
-        .returning();
-      return updated;
+      return await db.transaction(async (tx) => {
+        if (touchedBusinessFields.length > 0) {
+          // Lock the invoice row itself — the common lock shared with status creation —
+          // so even a FIRST final-status insert cannot race this check.
+          await tx
+            .select({ id: invoices.id })
+            .from(invoices)
+            .where(and(eq(invoices.id, id), eq(invoices.restaurantId, restaurantId)))
+            .for("update");
+          const [zatcaRow] = await tx
+            .select({ submissionStatus: invoiceZatcaStatus.submissionStatus })
+            .from(invoiceZatcaStatus)
+            .where(and(
+              eq(invoiceZatcaStatus.invoiceId, id),
+              eq(invoiceZatcaStatus.restaurantId, restaurantId)
+            ))
+            .limit(1)
+          if (zatcaRow && (zatcaRow.submissionStatus === "cleared" || zatcaRow.submissionStatus === "reported")) {
+            throw new Error(
+              `Cannot modify invoice ${id} (fields: ${touchedBusinessFields.join(", ")}): it has already been ` +
+              `${zatcaRow.submissionStatus} by ZATCA. Issue a credit or debit note instead.`
+            );
+          }
+        }
+        const [updated] = await tx.update(invoices)
+          .set(updateData as any)
+          .where(and(eq(invoices.id, id), eq(invoices.restaurantId, restaurantId)))
+          .returning();
+        return updated;
+      });
     } catch (error: any) {
+      if (error.message?.includes('ZATCA')) throw error;
       // Handle case where columns don't exist yet (pre-migration)
       if (error.message?.includes('column') && error.message?.includes('does not exist')) {
         console.warn('[Invoices] Column not found, using fallback UPDATE');
@@ -5483,20 +5500,37 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createInvoiceZatcaStatus(status: InsertInvoiceZatcaStatus): Promise<InvoiceZatcaStatus> {
-    const [created] = await db.insert(invoiceZatcaStatus).values(status as any).returning();
-    return created;
+    // Serialize with updateInvoice/deleteInvoice on the parent invoice row lock, so a
+    // first final-status insert cannot race an in-flight invoice mutation/deletion.
+    return db.transaction(async (tx) => {
+      await tx
+        .select({ id: invoices.id })
+        .from(invoices)
+        .where(and(eq(invoices.id, status.invoiceId), eq(invoices.restaurantId, status.restaurantId)))
+        .for("update");
+      const [created] = await tx.insert(invoiceZatcaStatus).values(status as any).returning();
+      return created;
+    });
   }
 
   async updateInvoiceZatcaStatus(invoiceId: string, restaurantId: string, status: Partial<InsertInvoiceZatcaStatus>): Promise<InvoiceZatcaStatus | undefined> {
-    const [updated] = await db
-      .update(invoiceZatcaStatus)
-      .set(status as any)
-      .where(and(
-        eq(invoiceZatcaStatus.invoiceId, invoiceId),
-        eq(invoiceZatcaStatus.restaurantId, restaurantId)
-      ))
-      .returning();
-    return updated;
+    // Same serialization: lock the parent invoice row before any status transition.
+    return db.transaction(async (tx) => {
+      await tx
+        .select({ id: invoices.id })
+        .from(invoices)
+        .where(and(eq(invoices.id, invoiceId), eq(invoices.restaurantId, restaurantId)))
+        .for("update");
+      const [updated] = await tx
+        .update(invoiceZatcaStatus)
+        .set(status as any)
+        .where(and(
+          eq(invoiceZatcaStatus.invoiceId, invoiceId),
+          eq(invoiceZatcaStatus.restaurantId, restaurantId)
+        ))
+        .returning();
+      return updated;
+    });
   }
 
   async getRestaurantsWithPendingZatcaInvoices(): Promise<string[]> {
@@ -5506,6 +5540,134 @@ export class DatabaseStorage implements IStorage {
       .from(invoiceZatcaStatus)
       .where(eq(invoiceZatcaStatus.submissionStatus, "pending"));
     return rows.map((r) => r.restaurantId);
+  }
+
+  async archiveZatcaXml(data: InsertZatcaXmlArchive): Promise<ZatcaXmlArchive> {
+    // Idempotent append-only write, race-safe under concurrent sweeps:
+    // unique index on (invoice_id, restaurant_id) + ON CONFLICT DO NOTHING.
+    const [created] = await db
+      .insert(zatcaXmlArchive)
+      .values(data)
+      .onConflictDoNothing({ target: [zatcaXmlArchive.invoiceId, zatcaXmlArchive.restaurantId] })
+      .returning();
+    if (created) return created;
+    const existing = await this.getZatcaXmlArchive(data.invoiceId, data.restaurantId);
+    return existing!;
+  }
+
+  async getZatcaXmlArchive(invoiceId: string, restaurantId: string): Promise<ZatcaXmlArchive | undefined> {
+    const [row] = await db
+      .select()
+      .from(zatcaXmlArchive)
+      .where(and(
+        eq(zatcaXmlArchive.invoiceId, invoiceId),
+        eq(zatcaXmlArchive.restaurantId, restaurantId)
+      ))
+      .limit(1);
+    return row;
+  }
+
+  async getZatcaXmlArchiveByRestaurant(restaurantId: string): Promise<ZatcaXmlArchive[]> {
+    return db
+      .select()
+      .from(zatcaXmlArchive)
+      .where(eq(zatcaXmlArchive.restaurantId, restaurantId))
+      .orderBy(desc(zatcaXmlArchive.archivedAt));
+  }
+
+  async getUnarchivedZatcaInvoices(restaurantId?: string): Promise<InvoiceZatcaStatus[]> {
+    // Cleared/reported rows with signed XML that have no matching archive record yet.
+    const conditions = [
+      inArray(invoiceZatcaStatus.submissionStatus, ["cleared", "reported"]),
+      isNotNull(invoiceZatcaStatus.signedXml),
+      sql`NOT EXISTS (
+        SELECT 1 FROM ${zatcaXmlArchive}
+        WHERE ${zatcaXmlArchive.invoiceId} = ${invoiceZatcaStatus.invoiceId}
+          AND ${zatcaXmlArchive.restaurantId} = ${invoiceZatcaStatus.restaurantId}
+      )`,
+    ];
+    if (restaurantId) conditions.push(eq(invoiceZatcaStatus.restaurantId, restaurantId));
+    return db
+      .select()
+      .from(invoiceZatcaStatus)
+      .where(and(...conditions))
+      .limit(200); // Bounded per sweep; the scheduler catches up over successive runs
+  }
+
+  async getAllEnabledZatcaSettings(): Promise<ZatcaSettings[]> {
+    // Note: does NOT decrypt private keys — scheduler sweeps only need metadata (expiry, status).
+    return db
+      .select()
+      .from(zatcaSettings)
+      .where(and(
+        eq(zatcaSettings.isEnabled, true),
+        eq(zatcaSettings.onboardingStatus, "production_ready")
+      ));
+  }
+
+  async deleteInvoice(id: string, restaurantId: string): Promise<boolean> {
+    // ZATCA 6-year retention (Article 59, VAT Implementing Regulations):
+    // invoices cleared or reported to ZATCA can NEVER be deleted.
+    // Guard + delete run in ONE transaction with a row lock on the status row,
+    // so a concurrent clearance cannot slip between check and delete.
+    return db.transaction(async (tx) => {
+      // Common lock: the invoice row itself, shared with status creation/transition paths.
+      await tx
+        .select({ id: invoices.id })
+        .from(invoices)
+        .where(and(eq(invoices.id, id), eq(invoices.restaurantId, restaurantId)))
+        .for("update");
+      const [zatcaRow] = await tx
+        .select({ submissionStatus: invoiceZatcaStatus.submissionStatus })
+        .from(invoiceZatcaStatus)
+        .where(and(
+          eq(invoiceZatcaStatus.invoiceId, id),
+          eq(invoiceZatcaStatus.restaurantId, restaurantId)
+        ))
+        .limit(1)
+      if (zatcaRow && (zatcaRow.submissionStatus === "cleared" || zatcaRow.submissionStatus === "reported")) {
+        throw new Error(
+          `Cannot delete invoice ${id}: it has been ${zatcaRow.submissionStatus} by ZATCA and must be retained for 6 years. ` +
+          `Issue a credit note instead.`
+        );
+      }
+      // Also refuse if archived (belt-and-suspenders; the archive FK would block the delete anyway)
+      const [archived] = await tx
+        .select({ id: zatcaXmlArchive.id })
+        .from(zatcaXmlArchive)
+        .where(and(
+          eq(zatcaXmlArchive.invoiceId, id),
+          eq(zatcaXmlArchive.restaurantId, restaurantId)
+        ))
+        .limit(1);
+      if (archived) {
+        throw new Error(
+          `Cannot delete invoice ${id}: it is in the ZATCA 6-year retention archive. Issue a credit note instead.`
+        );
+      }
+      // Remove any non-final ZATCA tracking rows first (FK), then the invoice.
+      await tx.delete(invoiceZatcaStatus).where(and(
+        eq(invoiceZatcaStatus.invoiceId, id),
+        eq(invoiceZatcaStatus.restaurantId, restaurantId)
+      ));
+      const result = await tx
+        .delete(invoices)
+        .where(and(eq(invoices.id, id), eq(invoices.restaurantId, restaurantId)));
+      return (result.rowCount ?? 0) > 0;
+    });
+  }
+
+  async claimCsidExpiryAlert(restaurantId: string, level: string): Promise<boolean> {
+    // Atomic claim: only one scheduler instance wins the right to send this alert level.
+    // Escalation only (null -> 30d -> 7d); never downgrades.
+    const result = await db.execute(sql`
+      UPDATE zatca_settings
+      SET csid_expiry_alert_level = ${level}
+      WHERE restaurant_id = ${restaurantId}
+        AND (csid_expiry_alert_level IS DISTINCT FROM ${level})
+        AND NOT (csid_expiry_alert_level = '7d' AND ${level} = '30d')
+    `);
+    return ((result as any).rowCount ?? 0) > 0;
   }
 
   // Shop Files (MULTI-TENANT: requires restaurantId)

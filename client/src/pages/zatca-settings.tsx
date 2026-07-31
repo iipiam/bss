@@ -58,6 +58,7 @@ interface ZatcaSettings {
   complianceCsidReceivedAt: string | null;
   isEnabled: boolean;
   credentialsCorrupted?: boolean;
+  csidExpiresAt: string | null;
 }
 
 // Only these fields may be edited from this page. Server-managed fields
@@ -687,6 +688,31 @@ export default function ZatcaSettingsPage() {
               </Tooltip>
             )}
           </div>
+
+          {(() => {
+            if (!settings?.csidExpiresAt || settings?.onboardingStatus !== "production_ready") return null;
+            const daysLeft = Math.floor((new Date(settings.csidExpiresAt).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+            if (daysLeft > 30) return null;
+            const expiryStr = new Date(settings.csidExpiresAt).toLocaleDateString();
+            const critical = daysLeft <= 7;
+            return (
+              <Alert variant={critical ? "destructive" : "default"} className={`mb-6 ${critical ? "" : "border-yellow-500 text-yellow-700 dark:text-yellow-400 [&>svg]:text-yellow-600"}`} data-testid="alert-csid-expiry">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>
+                  {daysLeft < 0
+                    ? (isRTL ? "انتهت صلاحية شهادة زاتكا!" : "ZATCA Certificate EXPIRED!")
+                    : critical
+                    ? (isRTL ? `تنتهي شهادة زاتكا خلال ${daysLeft} يوم!` : `ZATCA Certificate expires in ${daysLeft} day(s)!`)
+                    : (isRTL ? "شهادة زاتكا تقترب من الانتهاء" : "ZATCA Certificate Expiring Soon")}
+                </AlertTitle>
+                <AlertDescription>
+                  {isRTL
+                    ? `تنتهي صلاحية شهادة الإنتاج (CSID) في ${expiryStr}. بعد انتهاء الصلاحية سترفض زاتكا جميع الفواتير. أنشئ رمز OTP جديدًا من fatoora.zatca.gov.sa ثم جدد الشهادة.`
+                    : `The production certificate (CSID) expires on ${expiryStr}. Once expired, ZATCA will reject ALL invoice submissions. Generate a fresh OTP from fatoora.zatca.gov.sa and renew the certificate now.`}
+                </AlertDescription>
+              </Alert>
+            );
+          })()}
 
           {isCredentialsCorrupted && (
             <Alert variant="destructive" className="mb-6">

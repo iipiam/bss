@@ -7,6 +7,7 @@ import { pool } from "./db";
 import { registerRoutes } from "./routes";
 import { retryPendingInvoices } from "./zatca/service";
 import { storage } from "./storage";
+import { createEmailProvider } from "./email";
 
 function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -129,8 +130,11 @@ app.use((req, res, next) => {
   setInterval(async () => {
     try {
       const restaurantIds = await storage.getRestaurantsWithPendingZatcaInvoices();
-      if (restaurantIds.length === 0) return;
-      log(`[ZATCA Scheduler] Retrying pending invoices for ${restaurantIds.length} restaurant(s)`, "zatca");
+      // NOTE: no early return here — the archive and CSID-expiry sweeps below must
+      // run every cycle even when there are no pending invoices to retry.
+      if (restaurantIds.length > 0) {
+        log(`[ZATCA Scheduler] Retrying pending invoices for ${restaurantIds.length} restaurant(s)`, "zatca");
+      }
       for (const restaurantId of restaurantIds) {
         try {
           const result = await retryPendingInvoices(restaurantId);
@@ -143,6 +147,98 @@ app.use((req, res, next) => {
       }
     } catch (err) {
       console.error("[ZATCA Scheduler] Error during pending invoice sweep:", err);
+    }
+
+    // ── Archive sweep: copy cleared/reported signed XMLs into the 6-year archive ──
+    try {
+      const unarchived = await storage.getUnarchivedZatcaInvoices();
+      if (unarchived.length > 0) {
+        let archivedCount = 0;
+        for (const row of unarchived) {
+          try {
+            if (!row.signedXml) continue;
+            const baseDate = row.clearedAt || row.submittedAt || row.createdAt || new Date();
+            const retentionExpiresAt = new Date(baseDate);
+            retentionExpiresAt.setFullYear(retentionExpiresAt.getFullYear() + 6);
+            // Fetch the invoice number for the archive record
+            const inv = await storage.getInvoice(row.invoiceId, row.restaurantId);
+            await storage.archiveZatcaXml({
+              invoiceId: row.invoiceId,
+              restaurantId: row.restaurantId,
+              invoiceNumber: inv?.invoiceNumber || row.uuid,
+              invoiceHash: row.invoiceHash,
+              signedXml: row.signedXml,
+              submissionStatus: row.submissionStatus as "cleared" | "reported",
+              submittedAt: row.clearedAt || row.submittedAt,
+              retentionExpiresAt,
+            });
+            archivedCount++;
+          } catch (err) {
+            console.error(`[ZATCA Archive] Failed to archive invoice ${row.invoiceId}:`, err);
+          }
+        }
+        if (archivedCount > 0) {
+          log(`[ZATCA Archive] Archived ${archivedCount} signed XML(s) for 6-year retention`, "zatca");
+        }
+      }
+    } catch (err) {
+      console.error("[ZATCA Archive] Error during archive sweep:", err);
+    }
+
+    // ── CSID expiry alerts: warn operators 30 days / 7 days before expiry ──
+    try {
+      const enabledSettings = await storage.getAllEnabledZatcaSettings();
+      const now = Date.now();
+      for (const s of enabledSettings) {
+        if (!s.csidExpiresAt) continue;
+        const daysLeft = Math.floor((new Date(s.csidExpiresAt).getTime() - now) / (24 * 60 * 60 * 1000));
+        let level: "30d" | "7d" | null = null;
+        if (daysLeft <= 7) level = "7d";
+        else if (daysLeft <= 30) level = "30d";
+        if (!level || s.csidExpiryAlertLevel === level || (level === "30d" && s.csidExpiryAlertLevel === "7d")) continue;
+
+        // Atomic claim so overlapping sweeps / multiple instances never double-send.
+        const claimed = await storage.claimCsidExpiryAlert(s.restaurantId, level);
+        if (!claimed) continue;
+
+        const expiryDateStr = new Date(s.csidExpiresAt).toISOString().slice(0, 10);
+        const isCritical = level === "7d";
+        const subject = isCritical
+          ? `🚨 CRITICAL: ZATCA certificate expires in ${Math.max(daysLeft, 0)} day(s) — renew immediately`
+          : `⚠️ ZATCA certificate expires on ${expiryDateStr} — renew within 30 days`;
+        const bodyText =
+          `The ZATCA production certificate (CSID) for restaurant ${s.restaurantId} expires on ${expiryDateStr}` +
+          ` (${Math.max(daysLeft, 0)} day(s) remaining).\n\n` +
+          `Once it expires, ZATCA will reject ALL invoice submissions for this business.\n\n` +
+          `To renew: generate a fresh OTP at fatoora.zatca.gov.sa, then use the "Renew CSID" action ` +
+          `in ZATCA Settings (or POST /api/zatca/renew-csid).`;
+        try {
+          const provider = await createEmailProvider();
+          const toEmail = process.env.IT_EMAIL || "IT@kinbss.org";
+          if (provider) {
+            const result = await provider.sendEmail({
+              to: toEmail,
+              from: process.env.EMAIL_FROM || "IT@kinbss.org",
+              subject,
+              text: bodyText,
+              html: `<p>${bodyText.replace(/\n/g, "<br/>")}</p>`,
+            });
+            if (result.success) {
+              log(`[ZATCA CSID Alert] ${level} expiry alert sent for restaurant ${s.restaurantId} (expires ${expiryDateStr})`, "zatca");
+            } else {
+              console.error(`[ZATCA CSID Alert] Email failed for ${s.restaurantId}:`, result.error);
+            }
+          } else {
+            console.warn(`[ZATCA CSID Alert] No email provider configured; CSID for ${s.restaurantId} expires ${expiryDateStr} (${daysLeft}d left)`);
+          }
+          // Note: the claim above already recorded the alert level (prevents 15-min spam);
+          // the settings-page banner remains the always-visible signal if email fails.
+        } catch (err) {
+          console.error(`[ZATCA CSID Alert] Error alerting for ${s.restaurantId}:`, err);
+        }
+      }
+    } catch (err) {
+      console.error("[ZATCA CSID Alert] Error during expiry sweep:", err);
     }
   }, ZATCA_RETRY_INTERVAL_MS);
 

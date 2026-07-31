@@ -16148,6 +16148,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         productionCsid: response.data!.binarySecurityToken,
         productionCsidSecret: response.data!.secret,
         csidExpiresAt,
+        csidExpiryAlertLevel: null, // reset alert dedup so a future expiry triggers fresh alerts
       });
 
       console.log(`[ZATCA] Production CSID renewed for restaurant ${targetRestaurantId}`);
@@ -16161,6 +16162,34 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     } catch (error: any) {
       console.error("Error renewing production CSID:", error?.stack || error);
       res.status(500).json({ error: error?.message || "Failed to renew production CSID" });
+    }
+  });
+
+  // Export archived signed XMLs (6-year retention archive) - IT only
+  // Returns all archived signed XMLs for a restaurant as JSON (metadata + XML),
+  // so the archive remains accessible to ZATCA auditors on demand.
+  app.get("/api/zatca/archive/:restaurantId", requireAuth, requireITAccount, async (req, res) => {
+    try {
+      const { restaurantId } = req.params;
+      const records = await storage.getZatcaXmlArchiveByRestaurant(restaurantId);
+      res.json({
+        restaurantId,
+        count: records.length,
+        retentionPolicy: "6 years from invoice date (ZATCA Article 59, VAT Implementing Regulations)",
+        records: records.map((r) => ({
+          invoiceId: r.invoiceId,
+          invoiceNumber: r.invoiceNumber,
+          invoiceHash: r.invoiceHash,
+          submissionStatus: r.submissionStatus,
+          submittedAt: r.submittedAt,
+          archivedAt: r.archivedAt,
+          retentionExpiresAt: r.retentionExpiresAt,
+          signedXml: r.signedXml,
+        })),
+      });
+    } catch (error) {
+      console.error("Error exporting ZATCA archive:", error);
+      res.status(500).json({ error: "Failed to export ZATCA XML archive" });
     }
   });
 

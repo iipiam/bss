@@ -1,0 +1,89 @@
+You previously worked on making this application compliant with ZATCA Integration Phase 2 (Fatoora). 
+
+Now perform a strict final verification audit. Your goal is to confirm whether the application fully implements ALL official ZATCA Phase 2 regulations and technical requirements. Do not be lenient. Treat this as a formal compliance certification check.
+
+### Verification Instructions
+
+Go through the entire codebase again and verify each of the following points one by one. For every point, clearly state:
+
+- Status: Fully Implemented / Partially Implemented / Not Implemented
+- Exact file(s) and code location where it is implemented
+- Short explanation of how it works
+- Any remaining gap (if not fully implemented)
+
+### Mandatory Checklist You Must Verify
+
+**1. Invoice Generation & Format**
+- Generates invoices in UBL 2.1 XML format (or PDF/A-3 with embedded XML)
+- Supports both Standard Tax Invoice (B2B) and Simplified Tax Invoice (B2C)
+- Supports Credit Notes and Debit Notes with correct references
+- All mandatory fields from the ZATCA Data Dictionary are present and correctly mapped
+
+**2. Phase 2 Mandatory Security Features (must exist on every invoice)**
+- UUID generation (unique per invoice)
+- Invoice Hash (IH) using SHA-256
+- Previous Invoice Hash (PIH) with unbroken hash chaining
+- Invoice Counter Value (ICV) – sequential and non-resettable
+- Cryptographic Stamp (ECDSA signature using CSID private key)
+- Cryptographic Stamp Identifier (CSID) handling
+- QR Code generation using correct Phase 2 TLV structure
+
+**3. Clearance vs Reporting Logic**
+- B2B (Standard) invoices: Must go through Clearance and only be shared with the buyer AFTER successful clearance
+- B2C (Simplified) invoices: Reported to ZATCA within 24 hours
+- Proper handling of ZATCA responses (Accepted / Accepted with Warnings / Rejected)
+
+**4. Onboarding & Certificate Management**
+- Full onboarding flow: OTP → CSR → Compliance CSID → Production CSID
+- Secure storage of private keys and certificates
+- Support for CSID renewal and revocation
+
+**5. API Integration with Fatoora**
+- Working integration with Sandbox environment
+- Working integration with Production environment
+- Clearance API implemented
+- Reporting API implemented
+- Correct authentication and error handling
+
+**6. Anti-Tampering & Integrity**
+- Invoices cannot be modified after issuance
+- Invoices cannot be deleted
+- Hash chaining protects the sequence
+- Proper logging of generation and submission events
+
+**7. Storage & Archiving**
+- Invoices are stored in the required format
+- Retention for at least 6 years is supported
+- Invoices remain accessible for ZATCA audit
+
+**8. Prohibited Functions**
+- Confirm there is no ability to:
+  - Issue invoices missing Phase 2 fields
+  - Share B2B invoices before clearance
+  - Reset the invoice counter
+  - Alter already issued invoices
+
+### Required Output Format
+
+1. **Final Compliance Verdict**
+   - Fully Compliant with ZATCA Phase 2
+   - Partially Compliant (list remaining gaps)
+   - Not Compliant
+
+2. **Detailed Checklist Results**
+   (Go through every point above with Status + File references + Explanation)
+
+3. **Remaining Gaps** (if any)
+   - List each gap with severity (Critical / High / Medium)
+   - Exact recommendation to fix it
+
+4. **Confirmation Statement**
+   At the end, clearly write one of these two statements:
+
+   - “I confirm that this application fully implements all mandatory requirements of ZATCA Integration Phase 2 according to the official regulations and technical specifications.”
+   
+   OR
+
+   - “I cannot fully confirm compliance. The following critical/high priority items are still missing or incomplete: [list them]”
+
+Be extremely strict and evidence-based. Only mark something as “Fully Implemented” if you can point to the actual working code. Start the verification now.

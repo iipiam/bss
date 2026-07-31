@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb, index, date } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb, index, uniqueIndex, date } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import type { PermissionSet } from "./permissions";
@@ -1493,6 +1493,7 @@ export const zatcaSettings = pgTable("zatca_settings", {
   productionCsid: text("production_csid"), // Production CSID
   productionCsidSecret: text("production_csid_secret"), // Production CSID secret
   csidExpiresAt: timestamp("csid_expires_at"),
+  csidExpiryAlertLevel: text("csid_expiry_alert_level"), // null | "30d" | "7d" — dedup for expiry alert emails; reset on renewal
   // Onboarding status tracking
   onboardingStatus: text("onboarding_status").default("not_started"), // "not_started", "csr_generated", "compliance_received", "compliance_passed", "production_ready"
   // Certificate chain
@@ -1542,6 +1543,7 @@ export const invoiceZatcaStatus = pgTable("invoice_zatca_status", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => ({
   invoiceIdx: index("invoice_zatca_status_invoice_idx").on(table.invoiceId),
+  invoiceUnique: uniqueIndex("invoice_zatca_status_invoice_unique").on(table.invoiceId, table.restaurantId),
   restaurantIdx: index("invoice_zatca_status_restaurant_idx").on(table.restaurantId),
   statusIdx: index("invoice_zatca_status_status_idx").on(table.submissionStatus),
 }));
@@ -1572,7 +1574,7 @@ export const zatcaXmlArchive = pgTable("zatca_xml_archive", {
   // ZATCA mandates retention for 6 years from invoice date (Article 59, VAT Implementing Regulations)
   retentionExpiresAt: timestamp("retention_expires_at").notNull(),
 }, (table) => ({
-  invoiceIdx: index("zatca_xml_archive_invoice_idx").on(table.invoiceId),
+  invoiceUnique: uniqueIndex("zatca_xml_archive_invoice_unique").on(table.invoiceId, table.restaurantId),
   restaurantIdx: index("zatca_xml_archive_restaurant_idx").on(table.restaurantId),
   retentionIdx: index("zatca_xml_archive_retention_idx").on(table.retentionExpiresAt),
 }));

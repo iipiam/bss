@@ -3322,6 +3322,7 @@ CREATE TABLE IF NOT EXISTS "zatca_settings" (
   "updated_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
   "compliance_request_id" text,
   "compliance_csid_received_at" timestamp without time zone,
+  "csid_expiry_alert_level" text,
   PRIMARY KEY ("id")
 );
 ALTER TABLE "zatca_settings" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
@@ -3358,3 +3359,27 @@ ALTER TABLE "zatca_settings" ADD COLUMN IF NOT EXISTS "created_at" timestamp wit
 ALTER TABLE "zatca_settings" ADD COLUMN IF NOT EXISTS "updated_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL;
 ALTER TABLE "zatca_settings" ADD COLUMN IF NOT EXISTS "compliance_request_id" text;
 ALTER TABLE "zatca_settings" ADD COLUMN IF NOT EXISTS "compliance_csid_received_at" timestamp without time zone;
+ALTER TABLE "zatca_settings" ADD COLUMN IF NOT EXISTS "csid_expiry_alert_level" text;
+CREATE TABLE IF NOT EXISTS "zatca_xml_archive" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "invoice_id" varchar NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "invoice_number" text NOT NULL,
+  "invoice_hash" text NOT NULL,
+  "signed_xml" text NOT NULL,
+  "submission_status" text NOT NULL,
+  "submitted_at" timestamp without time zone,
+  "archived_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "retention_expires_at" timestamp without time zone NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "invoice_id" varchar;
+ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "invoice_number" text;
+ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "invoice_hash" text;
+ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "signed_xml" text;
+ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "submission_status" text;
+ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "submitted_at" timestamp without time zone;
+ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "archived_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "retention_expires_at" timestamp without time zone;
