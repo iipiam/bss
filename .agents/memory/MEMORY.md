@@ -2,6 +2,7 @@
 - [ZATCA credit/debit reason (KSA-10)](zatca-credit-debit-reason.md) — reason MUST be cbc:InstructionNote inside cac:PaymentMeans (per ZATCA SDK samples + BR-KSA-17); a header cbc:Note is rejected. Note: grep mangles UBL tag names in output.
 - [ZATCA QR tags 6 & 7 encoding](zatca-qr-tag6-encoding.md) — Phase-2 QR tags 6 (hash) & 7 (signature) must be base64 STRINGS, not decoded bytes; tags 8/9 stay raw bytes; mismatch hits simplified invoices only.
 - [ZATCA fatoora CLI quirks](zatca-sdk-wrapper-quirks.md) — nonzero-exit -help, env CSR flags, tolerant label parsing, QR from XML not stdout, base64(hex) cert hash.
+- [ZATCA CSID renewal](zatca-csid-renewal.md) — renewal is PATCH /production/csids with fresh CSR + OTP header (no /renew path); persist new key+cert atomically only on success.
 - [ZATCA hash chain & signing lock](zatca-hash-chain.md) — per-restaurant lock around ICV/PIH/sign/submit; PIH is base64(hex-string); Riyadh (+3) timestamps.
 - [ZATCA retention & lifecycle rules](zatca-retention-archive.md) — 6-yr append-only retention via DB constraints, claim-before-send alert dedup, no shared early-returns between scheduler sweeps.
 - [html-to-image off-screen capture](html-to-image-offscreen-capture.md) — never capture the fixed/off-screen element itself; wrap it and capture a static inner div, or the canvas is blank/black.

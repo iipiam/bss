@@ -16122,12 +16122,39 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         privateKey: settings.privateKey || "",
       };
 
+      // ZATCA renewal (PATCH /production/csids) requires a FRESH CSR in the
+      // body. Generate a new keypair + CSR now, but only persist them if
+      // ZATCA accepts the renewal — otherwise the current (still valid)
+      // credentials must remain untouched.
+      const env = (settings.environment || "sandbox") as "sandbox" | "simulation" | "production";
+      const { generateCSR } = await import("./zatca/crypto");
+      const { csr: freshCsr, privateKey: freshKey } = generateCSR(
+        settings.csrCommonName || "",
+        settings.csrOrganizationName || "",
+        settings.csrOrganizationUnitName || "",
+        settings.csrCountryName || "SA",
+        settings.csrSerialNumber || "",
+        settings.csrOrganizationIdentifier || "",
+        (settings.csrInvoiceType || "1100") as "1000" | "0100" | "1100",
+        settings.csrSerialNumber || "",
+        settings.csrLocationAddress || settings.csrOrganizationUnitName || "",
+        "BSS",
+        env,
+        settings.csrIndustryBusinessCategory || ""
+      );
+
       const client = new ZatcaApiClient(config);
-      const response = await client.renewProductionCSID(otp.trim());
+      const response = await client.renewProductionCSID(freshCsr, otp.trim());
 
       if (!response.success) {
+        const code = response.error?.code || "";
+        const rawMsg = response.error?.message || "";
+        const friendly =
+          code === "401" || /401/.test(rawMsg)
+            ? "ZATCA rejected the renewal (401 Unauthorized). The OTP may be invalid/expired, or the current production credentials are no longer accepted. Generate a fresh OTP from fatoora.zatca.gov.sa for this environment and try again."
+            : rawMsg || "Failed to renew production CSID";
         return res.status(400).json({
-          error: response.error?.message || "Failed to renew production CSID",
+          error: friendly,
           details: response.error?.details,
         });
       }
@@ -16144,7 +16171,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         console.error("[ZATCA] Failed to parse renewed CSID expiry:", e);
       }
 
+      // The renewed CSID certifies the NEW keypair — store CSR + private key
+      // together with the new credentials, or invoice signing will break.
       await storage.updateZatcaSettings(targetRestaurantId, {
+        csr: freshCsr,
+        privateKey: freshKey,
         productionCsid: response.data!.binarySecurityToken,
         productionCsidSecret: response.data!.secret,
         csidExpiresAt,

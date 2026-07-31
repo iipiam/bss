@@ -99,7 +99,7 @@ export class ZatcaApiClient {
 
   private async request<T>(
     endpoint: string,
-    method: "GET" | "POST",
+    method: "GET" | "POST" | "PATCH",
     body?: any,
     customHeaders?: Record<string, string>
   ): Promise<ZatcaResponse<T>> {
@@ -284,11 +284,14 @@ export class ZatcaApiClient {
     );
   }
 
-  async renewProductionCSID(otp: string): Promise<ZatcaResponse<CSIDResponse>> {
+  // ZATCA renewal API: PATCH /production/csids, authenticated with the
+  // CURRENT production CSID/secret, OTP header, and a FRESH CSR in the body.
+  // (POST /production/csids/renew does not exist — ZATCA returns 404.)
+  async renewProductionCSID(csr: string, otp: string): Promise<ZatcaResponse<CSIDResponse>> {
     return this.request<CSIDResponse>(
-      "/production/csids/renew",
-      "POST",
-      {},
+      "/production/csids",
+      "PATCH",
+      { csr },
       { "OTP": otp }
     );
   }
