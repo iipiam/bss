@@ -1,0 +1,117 @@
+Kinzhal@BSS-Server:~$ cd /home/BSS && ./deploy.sh
+
+==> Loading environment from .env
+
+==> App will listen on PORT=5000 (must match nginx upstream)
+
+==> Checking working tree is clean
+
+xx Uncommitted local changes on the server. Commit, stash, or discard them before deploying.
+Kinzhal@BSS-Server:/home/BSS$ git status && git diff
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        public/uploads/logos/logo-5fc64595-9b6e-4d98-9fac-2733318fa1e6-1784724914763.png
+        public/uploads/logos/logo-bf31801a-dade-4aa9-8531-62cf6d1415fc-1785349490840.png
+        uploads/procurement-invoices/procurement-1784545968805-342915527.jpeg
+        uploads/procurement-invoices/procurement-1784560524668-476884299.png
+        uploads/procurement-invoices/procurement-1784560554980-95466733.png
+        uploads/procurement-invoices/procurement-1785503748892-467228218.jpeg
+
+nothing added to commit but untracked files present (use "git add" to track)
+Kinzhal@BSS-Server:/home/BSS$ cd /home/BSS && ./deploy.sh
+
+==> Loading environment from .env
+
+==> App will listen on PORT=5000 (must match nginx upstream)
+
+==> Checking working tree is clean
+
+xx Uncommitted local changes on the server. Commit, stash, or discard them before deploying.
+Kinzhal@BSS-Server:/home/BSS$ pm2 logs BSS --lines 40 --nostream
+[TAILING] Tailing last 40 lines for [BSS] process (change the value with --lines option)
+/home/Kinzhal/.pm2/logs/BSS-error.log last 40 lines:
+0|BSS      |     at matchLayer (/home/BSS/node_modules/express/lib/router/index.js:585:18)
+0|BSS      |     at next (/home/BSS/node_modules/express/lib/router/index.js:226:15)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/serve-static/index.js:121:7)
+0|BSS      |     at SendStream.emit (node:events:524:28)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/send/index.js:270:17)
+0|BSS      |     at SendStream.pipe (/home/BSS/node_modules/send/index.js:515:10)
+0|BSS      |     at serveStatic (/home/BSS/node_modules/serve-static/index.js:125:12)
+0|BSS      | URIError: Failed to decode param '/%c0'
+0|BSS      |     at decodeURIComponent (<anonymous>)
+0|BSS      |     at decode_param (/home/BSS/node_modules/express/lib/router/layer.js:172:12)
+0|BSS      |     at Layer.match (/home/BSS/node_modules/express/lib/router/layer.js:123:27)
+0|BSS      |     at matchLayer (/home/BSS/node_modules/express/lib/router/index.js:585:18)
+0|BSS      |     at next (/home/BSS/node_modules/express/lib/router/index.js:226:15)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/serve-static/index.js:121:7)
+0|BSS      |     at SendStream.emit (node:events:524:28)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/send/index.js:270:17)
+0|BSS      |     at SendStream.pipe (/home/BSS/node_modules/send/index.js:515:10)
+0|BSS      |     at serveStatic (/home/BSS/node_modules/serve-static/index.js:125:12)
+0|BSS      | URIError: Failed to decode param '/%c0'
+0|BSS      |     at decodeURIComponent (<anonymous>)
+0|BSS      |     at decode_param (/home/BSS/node_modules/express/lib/router/layer.js:172:12)
+0|BSS      |     at Layer.match (/home/BSS/node_modules/express/lib/router/layer.js:123:27)
+0|BSS      |     at matchLayer (/home/BSS/node_modules/express/lib/router/index.js:585:18)
+0|BSS      |     at next (/home/BSS/node_modules/express/lib/router/index.js:226:15)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/serve-static/index.js:121:7)
+0|BSS      |     at SendStream.emit (node:events:524:28)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/send/index.js:270:17)
+0|BSS      |     at SendStream.pipe (/home/BSS/node_modules/send/index.js:515:10)
+0|BSS      |     at serveStatic (/home/BSS/node_modules/serve-static/index.js:125:12)
+0|BSS      | URIError: Failed to decode param '/%c0'
+0|BSS      |     at decodeURIComponent (<anonymous>)
+0|BSS      |     at decode_param (/home/BSS/node_modules/express/lib/router/layer.js:172:12)
+0|BSS      |     at Layer.match (/home/BSS/node_modules/express/lib/router/layer.js:123:27)
+0|BSS      |     at matchLayer (/home/BSS/node_modules/express/lib/router/index.js:585:18)
+0|BSS      |     at next (/home/BSS/node_modules/express/lib/router/index.js:226:15)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/serve-static/index.js:121:7)
+0|BSS      |     at SendStream.emit (node:events:524:28)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/send/index.js:270:17)
+0|BSS      |     at SendStream.pipe (/home/BSS/node_modules/send/index.js:515:10)
+0|BSS      |     at serveStatic (/home/BSS/node_modules/serve-static/index.js:125:12)
+
+/home/Kinzhal/.pm2/logs/BSS-out.log last 40 lines:
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | 9:11:57 PM [express] GET /api/branches 304 in 25ms :: [{"id":"c863466f-c4d9-4392-a9ba-6341ed619b76",…
+0|BSS      | 9:11:57 PM [express] GET /api/auth/me 200 in 21ms :: {"user":{"id":"1681a090-e64b-4187-86b0-5366c5e6…
+0|BSS      | 9:11:57 PM [express] GET /api/analytics/sales-comparison 200 in 28ms :: {"summary":{"totalOrders":90…
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [WebSocket] Upgrade rejected: No valid session
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
