@@ -274,6 +274,11 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { calcDeliveryBreakdown, resolveSubsidy } from "@shared/deliveryCalc";
 import { encryptPrivateKey, decryptPrivateKey } from "./zatca/crypto";
+import {
+  zatcaXmlArchive,
+  type ZatcaXmlArchive,
+  type InsertZatcaXmlArchive,
+} from "@shared/schema";
 
 export interface IStorage {
   // Restaurants (Multi-tenant isolation)
@@ -630,6 +635,18 @@ export interface IStorage {
   updateInvoiceZatcaStatus(invoiceId: string, restaurantId: string, status: Partial<InsertInvoiceZatcaStatus>): Promise<InvoiceZatcaStatus | undefined>;
   /** Returns distinct restaurantIds that have at least one pending ZATCA invoice — used by the 24-hour reporting scheduler. */
   getRestaurantsWithPendingZatcaInvoices(): Promise<string[]>;
+  /** Archive a cleared/reported signed XML for 6-year retention. Idempotent (skips if already archived). */
+  archiveZatcaXml(data: InsertZatcaXmlArchive): Promise<ZatcaXmlArchive>;
+  /** Get the archive record for a specific invoice. */
+  getZatcaXmlArchive(invoiceId: string, restaurantId: string): Promise<ZatcaXmlArchive | undefined>;
+  /** Get all archive records for a restaurant (for export). */
+  getZatcaXmlArchiveByRestaurant(restaurantId: string): Promise<ZatcaXmlArchive[]>;
+  /** Find cleared/reported invoice_zatca_status rows not yet in zatca_xml_archive (for backfill sweep). */
+  getUnarchivedZatcaInvoices(restaurantId?: string): Promise<InvoiceZatcaStatus[]>;
+  /** Get all ZATCA settings with enabled production setup (for scheduler sweeps). */
+  getAllEnabledZatcaSettings(): Promise<ZatcaSettings[]>;
+  /** Delete an invoice, guarded by ZATCA 6-year retention (throws if cleared/reported). */
+  deleteInvoice(id: string, restaurantId: string): Promise<boolean>;
 
   // Shop Files (MULTI-TENANT: requires restaurantId for all operations)
   getShopFiles(restaurantId: string): Promise<ShopFile[]>;

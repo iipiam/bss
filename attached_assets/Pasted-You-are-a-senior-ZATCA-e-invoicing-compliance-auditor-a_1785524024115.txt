@@ -1,0 +1,100 @@
+You are a senior ZATCA e-invoicing compliance auditor and technical specialist. Thoroughly inspect this entire application (codebase, configuration, database schema, API clients, invoice generation logic, storage, certificate handling, and any related modules) and determine its readiness for **ZATCA Phase 2 (Integration Phase / Fatoora)**.
+
+Do not assume anything is compliant. Verify every point by examining the actual code. Base all judgments strictly on the official ZATCA regulations and technical documents listed below.
+
+### OFFICIAL SOURCE OF TRUTH (Mandatory Reference)
+
+You must treat the following official ZATCA documents and rules as the absolute source of truth:
+
+**Core Legal Documents:**
+- E-Invoicing Regulation
+- Controls, Requirements, Technical Specifications and Procedural Rules (E-Invoicing Implementation Resolution)
+- VAT Law and VAT Implementing Regulation
+
+**Key Technical Documents:**
+- Electronic Invoice Data Dictionary (latest version)
+- Electronic Invoice XML Implementation Standard (UBL 2.1 based)
+- Security Features Implementation Standards
+- E-invoicing Detailed Technical Guidelines (Version 2)
+- Developer Portal Manual
+- Simplified Technical Guide
+
+**Mandatory Phase 2 Technical Rules You Must Enforce:**
+
+1. **Invoice Types & Models**
+   - Standard Tax Invoice (B2B) → Clearance model (must be cleared by ZATCA BEFORE sharing with the buyer)
+   - Simplified Tax Invoice (B2C) → Reporting model (must be reported to ZATCA within 24 hours of issuance)
+   - Credit Notes and Debit Notes must follow the same rules and correctly reference the original invoice
+
+2. **Mandatory Formats**
+   - Invoices must be generated in XML (UBL 2.1) or PDF/A-3 with embedded XML
+
+3. **Mandatory Phase 2 Security & Integrity Features (required on every invoice/note)**
+   - UUID (Universally Unique Identifier)
+   - Invoice Hash (IH) – SHA-256
+   - Previous Invoice Hash (PIH) – unbroken hash chaining from the immediately preceding invoice
+   - Invoice Counter Value (ICV) – sequential and non-resettable
+   - Cryptographic Stamp (ECDSA digital signature using CSID)
+   - Cryptographic Stamp Identifier (CSID)
+   - QR Code in correct TLV (Tag-Length-Value) Phase 2 structure
+
+4. **Onboarding & Certificate Lifecycle**
+   - Full support for: OTP → CSR generation → Compliance CSID → Production CSID
+   - Secure storage of private keys and certificates
+   - Support for CSID renewal and revocation
+
+5. **API Integration**
+   - Support for Sandbox and Production environments
+   - Clearance API (for B2B)
+   - Reporting API (for B2C)
+   - Proper handling of ZATCA responses (Accepted / Accepted with Warnings / Rejected)
+
+6. **Anti-Tampering & Security**
+   - Solution must be tamper-resistant
+   - No ability to modify or delete already issued invoices
+   - Invoice sequence protected by hash chaining
+   - Proper logging of generation and submission events
+
+7. **Storage & Archiving**
+   - Electronic invoices and notes must be stored for at least 6 years
+   - Must remain accessible to ZATCA for audit purposes
+
+8. **Prohibited Functions**
+   - Issuing invoices without required Phase 2 fields
+   - Sharing B2B invoices before clearance
+   - Resetting the invoice counter
+   - Any ability to alter issued invoices
+
+### AUDIT SCOPE – Inspect the Following Areas Thoroughly
+
+1. Invoice Format & Structure (XML / PDF/A-3 generation, Data Dictionary compliance)
+2. Mandatory Phase 2 fields generation (UUID, IH, PIH, ICV, Cryptographic Stamp, CSID, QR Code)
+3. Clearance vs Reporting logic and flow control
+4. Fatoora / ZATCA API client implementation
+5. Onboarding and CSID certificate management
+6. Anti-tampering mechanisms and hash chaining
+7. Storage and long-term archiving
+8. Presence of any prohibited functions
+
+### REQUIRED OUTPUT FORMAT
+
+Produce a clear structured report with these exact sections:
+
+1. **Overall Compliance Status**  
+   (Fully Compliant / Partially Compliant / Non-Compliant)
+
+2. **What is Correctly Implemented**  
+   (List with specific file/code references)
+
+3. **Critical Gaps / Non-Compliance Issues**  
+   (List with file references + Severity: Critical / High / Medium / Low)
+
+4. **Missing Features** that must be added
+
+5. **Recommended Code Changes**  
+   (Concrete suggestions or pseudocode where helpful)
+
+6. **Next Steps** to reach full Phase 2 readiness  
+   (Including sandbox testing recommendations)
+
+Be extremely thorough. Search the entire codebase. Quote relevant code snippets when pointing out issues or correct implementations. Start the full compliance audit now.

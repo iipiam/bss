@@ -1557,6 +1557,34 @@ export const insertInvoiceZatcaStatusSchema = createInsertSchema(invoiceZatcaSta
 export type InsertInvoiceZatcaStatus = z.infer<typeof insertInvoiceZatcaStatusSchema>;
 export type InvoiceZatcaStatus = typeof invoiceZatcaStatus.$inferSelect;
 
+// ZATCA XML Archive - Append-only 6-year retention store for cleared/reported signed XML
+// This table is NEVER updated or deleted; it is the authoritative audit archive.
+export const zatcaXmlArchive = pgTable("zatca_xml_archive", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  invoiceId: varchar("invoice_id").references(() => invoices.id).notNull(),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  invoiceNumber: text("invoice_number").notNull(),
+  invoiceHash: text("invoice_hash").notNull(), // SHA256 of the signed XML
+  signedXml: text("signed_xml").notNull(), // Full UBL 2.1 signed XML as submitted
+  submissionStatus: text("submission_status").notNull(), // "cleared" | "reported"
+  submittedAt: timestamp("submitted_at"), // When ZATCA confirmed
+  archivedAt: timestamp("archived_at").notNull().defaultNow(),
+  // ZATCA mandates retention for 6 years from invoice date (Article 59, VAT Implementing Regulations)
+  retentionExpiresAt: timestamp("retention_expires_at").notNull(),
+}, (table) => ({
+  invoiceIdx: index("zatca_xml_archive_invoice_idx").on(table.invoiceId),
+  restaurantIdx: index("zatca_xml_archive_restaurant_idx").on(table.restaurantId),
+  retentionIdx: index("zatca_xml_archive_retention_idx").on(table.retentionExpiresAt),
+}));
+
+export const insertZatcaXmlArchiveSchema = createInsertSchema(zatcaXmlArchive)
+  .omit({ id: true, archivedAt: true })
+  .extend({
+    submissionStatus: z.enum(["cleared", "reported"]),
+  });
+export type InsertZatcaXmlArchive = z.infer<typeof insertZatcaXmlArchiveSchema>;
+export type ZatcaXmlArchive = typeof zatcaXmlArchive.$inferSelect;
+
 // Shop Files - Client account document storage (CR, VAT, IBAN, National Address certificates)
 export const shopFiles = pgTable("shop_files", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
