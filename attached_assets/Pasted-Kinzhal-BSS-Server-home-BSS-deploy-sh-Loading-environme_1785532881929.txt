@@ -1,0 +1,383 @@
+Kinzhal@BSS-Server:/home/BSS$ ./deploy.sh
+
+==> Loading environment from .env
+
+==> App will listen on PORT=5000 (must match nginx upstream)
+
+==> Checking working tree is clean
+
+==> Pulling latest on branch: main (current commit a20a76946a3fc2580ba08b202b74038a99c641bd)
+remote: Enumerating objects: 90, done.
+remote: Counting objects: 100% (90/90), done.
+remote: Compressing objects: 100% (20/20), done.
+remote: Total 68 (delta 45), reused 68 (delta 45), pack-reused 0 (from 0)
+Unpacking objects: 100% (68/68), 108.39 KiB | 613.00 KiB/s, done.
+From https://github.com/iipiam/bss
+ * branch              main       -> FETCH_HEAD
+   a20a7694..3867b667  main       -> origin/main
+Updating a20a7694..3867b667
+Fast-forward
+ .agents/memory/MEMORY.md                                                    |   2 +
+ .agents/memory/zatca-compliance-fixes.md                                    |  49 ++++++
+ .agents/memory/zatca-csid-renewal.md                                        |   9 ++
+ .agents/memory/zatca-retention-archive.md                                   |  13 ++
+ ...ou-are-a-ZATCA-e-invoicing-compliance-auditor-Thorough_1785520687967.txt |  72 +++++++++
+ ...ou-are-a-senior-ZATCA-e-invoicing-compliance-auditor-a_1785524024115.txt | 100 +++++++++++++
+ ...ou-are-a-senior-ZATCA-e-invoicing-compliance-auditor-a_1785524199211.txt | 100 +++++++++++++
+ ...ou-previously-worked-on-making-this-application-compli_1785525440532.txt |  89 +++++++++++
+ attached_assets/image_1784411984565.png                                     | Bin 0 -> 4068 bytes
+ attached_assets/image_1785524150438.png                                     | Bin 0 -> 72516 bytes
+ client/src/pages/zatca-settings.tsx                                         |  82 ++++++++++
+ scripts/test-invoice-immutability.ts                                        | 288 ++++++++++++++++++++++++++++++++++++
+ scripts/verify-zatca-sweeps.ts                                              | 178 ++++++++++++++++++++++
+ server/db.ts                                                                | 168 +++++++++++++++++++++
+ server/index.ts                                                             | 123 +++++++++++++++
+ server/routes.ts                                                            | 233 +++++++++++++++++++++++------
+ server/schema-sync.sql                                                      |  25 ++++
+ server/storage.ts                                                           | 263 ++++++++++++++++++++++++++++++--
+ server/zatca/api-client.ts                                                  |  13 +-
+ server/zatca/crypto.ts                                                      |  53 +++++++
+ server/zatca/service.ts                                                     |  10 ++
+ shared/schema.ts                                                            |  32 +++-
+ 22 files changed, 1837 insertions(+), 65 deletions(-)
+ create mode 100644 .agents/memory/zatca-compliance-fixes.md
+ create mode 100644 .agents/memory/zatca-csid-renewal.md
+ create mode 100644 .agents/memory/zatca-retention-archive.md
+ create mode 100644 attached_assets/Pasted-You-are-a-ZATCA-e-invoicing-compliance-auditor-Thorough_1785520687967.txt
+ create mode 100644 attached_assets/Pasted-You-are-a-senior-ZATCA-e-invoicing-compliance-auditor-a_1785524024115.txt
+ create mode 100644 attached_assets/Pasted-You-are-a-senior-ZATCA-e-invoicing-compliance-auditor-a_1785524199211.txt
+ create mode 100644 attached_assets/Pasted-You-previously-worked-on-making-this-application-compli_1785525440532.txt
+ create mode 100644 attached_assets/image_1784411984565.png
+ create mode 100644 attached_assets/image_1785524150438.png
+ create mode 100644 scripts/test-invoice-immutability.ts
+ create mode 100644 scripts/verify-zatca-sweeps.ts
+✓ Now at commit 3867b6670f09944c50d17b8bd8982140d85fa458
+
+==> Installing dependencies (npm ci)
+npm warn deprecated @esbuild-kit/esm-loader@2.6.5: Merged into tsx: https://tsx.is
+npm warn deprecated har-validator@5.1.5: this library is no longer supported
+npm warn deprecated request-promise@4.2.6: request-promise has been deprecated because it extends the now deprecated request package, see https://github.com/request/request/issues/3142
+npm warn deprecated @esbuild-kit/core-utils@3.3.2: Merged into tsx: https://tsx.is
+npm warn deprecated uuid@3.4.0: Please upgrade  to version 7 or higher.  Older versions may use Math.random() in certain circumstances, which is known to be problematic.  See https://v8.dev/blog/math-random for details.
+npm warn deprecated request@2.88.2: request has been deprecated, see https://github.com/request/request/issues/3142
+
+added 751 packages, and audited 752 packages in 23s
+
+68 packages are looking for funding
+  run `npm fund` for details
+
+52 vulnerabilities (1 low, 32 moderate, 14 high, 5 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues possible (including breaking changes), run:
+  npm audit fix --force
+
+Some issues need review, and may require choosing
+a different dependency.
+
+Run `npm audit` for details.
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 12.0.2
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+npm notice To update run: npm install -g npm@12.0.2
+npm notice
+
+==> Checking PDF engine (headless Chromium)
+[pdf-check] Browser executable: /usr/bin/chromium
+[pdf-check] OK — rendered test PDF (7688 bytes)
+✓ PDF engine working
+
+==> Pushing schema to database (npm run db:push)
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/home/BSS/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
+Error: Interactive prompts require a TTY terminal (process.stdin.isTTY or process.stdout.isTTY is false). This can happen when running in CI, piped input, or non-interactive shells.
+    at render10 (/home/BSS/node_modules/drizzle-kit/bin.cjs:1450:31)
+    at promptNamedWithSchemasConflict (/home/BSS/node_modules/drizzle-kit/bin.cjs:32812:65)
+    at tablesResolver (/home/BSS/node_modules/drizzle-kit/bin.cjs:32001:60)
+    at applyPgSnapshotsDiff (/home/BSS/node_modules/drizzle-kit/bin.cjs:28212:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async preparePgPush (/home/BSS/node_modules/drizzle-kit/bin.cjs:32257:52)
+    at async pgPush (/home/BSS/node_modules/drizzle-kit/bin.cjs:82708:26)
+    at async Object.handler (/home/BSS/node_modules/drizzle-kit/bin.cjs:92226:9)
+    at async run (/home/BSS/node_modules/drizzle-kit/bin.cjs:91472:7)
+Error: Interactive prompts require a TTY terminal (process.stdin.isTTY or process.stdout.isTTY is false). This can happen when running in CI, piped input, or non-interactive shells.
+    at render10 (/home/BSS/node_modules/drizzle-kit/bin.cjs:1450:31)
+    at promptNamedWithSchemasConflict (/home/BSS/node_modules/drizzle-kit/bin.cjs:32812:65)
+    at tablesResolver (/home/BSS/node_modules/drizzle-kit/bin.cjs:32001:60)
+    at applyPgSnapshotsDiff (/home/BSS/node_modules/drizzle-kit/bin.cjs:28212:17)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async preparePgPush (/home/BSS/node_modules/drizzle-kit/bin.cjs:32257:52)
+    at async pgPush (/home/BSS/node_modules/drizzle-kit/bin.cjs:82708:26)
+    at async Object.handler (/home/BSS/node_modules/drizzle-kit/bin.cjs:92226:9)
+    at async run (/home/BSS/node_modules/drizzle-kit/bin.cjs:91472:7)
+
+==> Building (npm run build)
+
+> rest-express@1.0.0 build
+> vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist
+
+vite v7.3.2 building client environment for production...
+transforming (1037) src/pages/inventory.tsx
+A PostCSS plugin did not pass the `from` option to `postcss.parse`. This may cause imported assets to be incorrectly transformed. If you've recently added a PostCSS plugin that raised this warning, please contact the package author to fix the issue.
+✓ 3568 modules transformed.
+../dist/public/index.html                                             1.31 kB │ gzip:   0.63 kB
+../dist/public/assets/Kinzhal_logo_1768960890639-B-_N0zQE.png       845.07 kB
+../dist/public/assets/index-Aow1JIjf.css                            153.25 kB │ gzip:  23.16 kB
+../dist/public/assets/collapsible-DS-W_sW9.js                         0.10 kB │ gzip:   0.11 kB
+../dist/public/assets/minus-BGvlP2kD.js                               0.12 kB │ gzip:   0.13 kB
+../dist/public/assets/plus-DcWvHbjj.js                                0.15 kB │ gzip:   0.15 kB
+../dist/public/assets/filter-BS0Pls6J.js                              0.16 kB │ gzip:   0.16 kB
+../dist/public/assets/arrow-right-CuUOWt7R.js                         0.16 kB │ gzip:   0.16 kB
+../dist/public/assets/search-rKkx2haX.js                              0.17 kB │ gzip:   0.16 kB
+../dist/public/assets/skeleton-BXYXL-Q4.js                            0.17 kB │ gzip:   0.16 kB
+../dist/public/assets/message-square-B5QTEZtF.js                      0.18 kB │ gzip:   0.16 kB
+../dist/public/assets/circle-play-DD8xBO0_.js                         0.19 kB │ gzip:   0.17 kB
+../dist/public/assets/rotate-ccw-ByFhLZGN.js                          0.20 kB │ gzip:   0.18 kB
+../dist/public/assets/trending-down-BQAZqbO9.js                       0.21 kB │ gzip:   0.17 kB
+../dist/public/assets/undo-2-GLM-eVOY.js                              0.21 kB │ gzip:   0.18 kB
+../dist/public/assets/bell-CsfRFbZ7.js                                0.21 kB │ gzip:   0.19 kB
+../dist/public/assets/star-DhSJmR2y.js                                0.21 kB │ gzip:   0.18 kB
+../dist/public/assets/laptop-IkQVcuKu.js                              0.22 kB │ gzip:   0.19 kB
+../dist/public/assets/file-B0RjTlQ3.js                                0.22 kB │ gzip:   0.18 kB
+../dist/public/assets/square-check-big-B2RCRB-s.js                    0.22 kB │ gzip:   0.19 kB
+../dist/public/assets/target-5OwpOP6k.js                              0.22 kB │ gzip:   0.16 kB
+../dist/public/assets/copy-DRq4trkk.js                                0.23 kB │ gzip:   0.21 kB
+../dist/public/assets/percent-BJp0_-4v.js                             0.24 kB │ gzip:   0.19 kB
+../dist/public/assets/globe-LzLiYEak.js                               0.24 kB │ gzip:   0.19 kB
+../dist/public/assets/banknote-Dz_NYhjs.js                            0.24 kB │ gzip:   0.21 kB
+../dist/public/assets/file-warning-DrnBwyTw.js                        0.25 kB │ gzip:   0.19 kB
+../dist/public/assets/circle-alert-D-uFbSTa.js                        0.25 kB │ gzip:   0.19 kB
+../dist/public/assets/settings-2-CvqE5cUS.js                          0.25 kB │ gzip:   0.19 kB
+../dist/public/assets/archive-BSbm53-B.js                             0.25 kB │ gzip:   0.21 kB
+../dist/public/assets/eye-BbGw90Ze.js                                 0.25 kB │ gzip:   0.20 kB
+../dist/public/assets/calendar-D8tA_ios.js                            0.26 kB │ gzip:   0.20 kB
+../dist/public/assets/map-pin-BrrTK77B.js                             0.26 kB │ gzip:   0.22 kB
+../dist/public/assets/download-DSEiYnoI.js                            0.26 kB │ gzip:   0.22 kB
+../dist/public/assets/list-plus-BqHG1aHp.js                           0.27 kB │ gzip:   0.19 kB
+../dist/public/assets/arrow-up-BaGXG1CY.js                            0.27 kB │ gzip:   0.20 kB
+../dist/public/assets/chart-pie-BKxJ98qy.js                           0.27 kB │ gzip:   0.22 kB
+../dist/public/assets/pencil-IEpMMPkC.js                              0.27 kB │ gzip:   0.22 kB
+../dist/public/assets/wallet-vO8J0TRQ.js                              0.28 kB │ gzip:   0.21 kB
+../dist/public/assets/lightbulb-C_tmfElk.js                           0.28 kB │ gzip:   0.22 kB
+../dist/public/assets/send-D2jbhARB.js                                0.29 kB │ gzip:   0.23 kB
+../dist/public/assets/folder-open-CV0KOSBf.js                         0.29 kB │ gzip:   0.22 kB
+../dist/public/assets/maximize-2-P25mWUEt.js                          0.30 kB │ gzip:   0.21 kB
+../dist/public/assets/file-down-C1WD1HbK.js                           0.30 kB │ gzip:   0.21 kB
+../dist/public/assets/factory-KBHvjHuT.js                             0.30 kB │ gzip:   0.20 kB
+../dist/public/assets/training-HsqrdFTh.js                            0.31 kB │ gzip:   0.25 kB
+../dist/public/assets/shield-check-Bowg_PxP.js                        0.32 kB │ gzip:   0.25 kB
+../dist/public/assets/refresh-cw-CVGnCNPE.js                          0.32 kB │ gzip:   0.22 kB
+../dist/public/assets/BarChart-CDMtYqWn.js                            0.32 kB │ gzip:   0.23 kB
+../dist/public/assets/tag-BQP-KqwZ.js                                 0.32 kB │ gzip:   0.25 kB
+../dist/public/assets/save-Cc0MlszJ.js                                0.33 kB │ gzip:   0.22 kB
+../dist/public/assets/key-round-CZorYxtH.js                           0.35 kB │ gzip:   0.26 kB
+../dist/public/assets/trash-2-CKmLVl8H.js                             0.36 kB │ gzip:   0.25 kB
+../dist/public/assets/layers-DsziES_4.js                              0.36 kB │ gzip:   0.24 kB
+../dist/public/assets/scale-YHoxry6H.js                               0.37 kB │ gzip:   0.24 kB
+../dist/public/assets/file-pen-line-ZF2tyAu6.js                       0.39 kB │ gzip:   0.26 kB
+../dist/public/assets/phone-ukP7rx7q.js                               0.39 kB │ gzip:   0.26 kB
+../dist/public/assets/eye-off-ClcgVnkZ.js                             0.43 kB │ gzip:   0.27 kB
+../dist/public/assets/list-checks-CocVtGOA.js                         0.47 kB │ gzip:   0.28 kB
+../dist/public/assets/info-tip-dqHG14OU.js                            0.49 kB │ gzip:   0.34 kB
+../dist/public/assets/calendar-days-CbeJFHR3.js                       0.49 kB │ gzip:   0.26 kB
+../dist/public/assets/textarea-BkjODhln.js                            0.50 kB │ gzip:   0.32 kB
+../dist/public/assets/server-Ba6Aep9-.js                              0.53 kB │ gzip:   0.31 kB
+../dist/public/assets/building-CXltHXJ5.js                            0.54 kB │ gzip:   0.27 kB
+../dist/public/assets/list-DzdaGg4X.js                                0.59 kB │ gzip:   0.28 kB
+../dist/public/assets/qr-code-fQA1hgoS.js                             0.65 kB │ gzip:   0.31 kB
+../dist/public/assets/deliveryCalc-NDGjcVQY.js                        0.65 kB │ gzip:   0.38 kB
+../dist/public/assets/not-found-CG3d17hf.js                           0.81 kB │ gzip:   0.43 kB
+../dist/public/assets/alert-DJSYfPhb.js                               0.91 kB │ gzip:   0.47 kB
+../dist/public/assets/mobileLayout-DpnRFHUx.js                        0.92 kB │ gzip:   0.49 kB
+../dist/public/assets/useBusinessType-C0IfQMJn.js                     1.12 kB │ gzip:   0.52 kB
+../dist/public/assets/investors-B9bHbBoS.js                           1.44 kB │ gzip:   0.74 kB
+../dist/public/assets/table-BFJ5YERn.js                               1.49 kB │ gzip:   0.52 kB
+../dist/public/assets/form-DWvtwP1j.js                                1.69 kB │ gzip:   0.72 kB
+../dist/public/assets/progress-Duyp_BCE.js                            1.90 kB │ gzip:   0.95 kB
+../dist/public/assets/index-D4Ui6dyQ.js                               2.16 kB │ gzip:   0.96 kB
+../dist/public/assets/payment-success-DcKbXH7T.js                     2.23 kB │ gzip:   0.86 kB
+../dist/public/assets/switch-De347L99.js                              2.34 kB │ gzip:   1.19 kB
+../dist/public/assets/payment-failed-DlYCcPS_.js                      2.39 kB │ gzip:   0.98 kB
+../dist/public/assets/whatsapp-DdqiaUo2.js                            2.73 kB │ gzip:   1.15 kB
+../dist/public/assets/payments-C50lEQTx.js                            3.97 kB │ gzip:   1.34 kB
+../dist/public/assets/property-detail-DJ0UtJ7Y.js                     4.02 kB │ gzip:   1.20 kB
+../dist/public/assets/exportUtils-CWARLIz2.js                         4.16 kB │ gzip:   1.94 kB
+../dist/public/assets/alert-dialog-HER3Q8Ln.js                        4.68 kB │ gzip:   1.71 kB
+../dist/public/assets/popover-COov7ERV.js                             5.23 kB │ gzip:   1.89 kB
+../dist/public/assets/accounting-Z9pq2Q9h.js                          5.34 kB │ gzip:   1.72 kB
+../dist/public/assets/dashboard-c-hA_xbA.js                           5.86 kB │ gzip:   1.66 kB
+../dist/public/assets/performance-BZZUeUtb.js                         6.17 kB │ gzip:   2.30 kB
+../dist/public/assets/payment-test-yVmPw1bl.js                        6.20 kB │ gzip:   2.01 kB
+../dist/public/assets/sales-BnLLvtzS.js                               6.28 kB │ gzip:   2.04 kB
+../dist/public/assets/kitchen-DvlB_WI2.js                             6.49 kB │ gzip:   2.21 kB
+../dist/public/assets/password-manager-Ds3J9EO5.js                    6.53 kB │ gzip:   2.34 kB
+../dist/public/assets/invoices-DlTLn67b.js                            7.31 kB │ gzip:   2.24 kB
+../dist/public/assets/tenants-DBRCR-Pu.js                             7.45 kB │ gzip:   2.10 kB
+../dist/public/assets/orders-Ur9C7ZH7.js                              7.52 kB │ gzip:   2.36 kB
+../dist/public/assets/reports-3LJlrXwM.js                             7.56 kB │ gzip:   2.16 kB
+../dist/public/assets/analysis-CwNP0cqg.js                            7.60 kB │ gzip:   1.84 kB
+../dist/public/assets/branches-Cin2IPzj.js                            9.00 kB │ gzip:   2.82 kB
+../dist/public/assets/support-detail-CWZDcxXQ.js                      9.01 kB │ gzip:   2.66 kB
+../dist/public/assets/properties-BxUNyiBC.js                          9.02 kB │ gzip:   2.50 kB
+../dist/public/assets/reports-DvxamH4n.js                             9.70 kB │ gzip:   2.20 kB
+../dist/public/assets/maintenance-CfZ4fMDz.js                         9.96 kB │ gzip:   2.66 kB
+../dist/public/assets/contracts-DDbymwKv.js                          10.02 kB │ gzip:   2.71 kB
+../dist/public/assets/support-Be6n1nhE.js                            10.60 kB │ gzip:   3.41 kB
+../dist/public/assets/invoices-DE55m7gK.js                           10.86 kB │ gzip:   3.60 kB
+../dist/public/assets/units-BpvStCue.js                              10.90 kB │ gzip:   3.11 kB
+../dist/public/assets/app-diagram-DTp6rs7Q.js                        11.00 kB │ gzip:   4.02 kB
+../dist/public/assets/LineChart-CY-j7R54.js                          11.13 kB │ gzip:   4.29 kB
+../dist/public/assets/expenses-CTMt0L2t.js                           11.54 kB │ gzip:   3.25 kB
+../dist/public/assets/activity-log-DzHyf2Y9.js                       12.01 kB │ gzip:   3.88 kB
+../dist/public/assets/bills-_715jQL9.js                              12.02 kB │ gzip:   3.84 kB
+../dist/public/assets/vat-reports-BxtxRJvy.js                        12.21 kB │ gzip:   3.81 kB
+../dist/public/assets/company-settings-CPwuLHpT.js                   13.20 kB │ gzip:   4.08 kB
+../dist/public/assets/AssigneeHistoryDialog-DR5mYIOK.js              13.52 kB │ gzip:   4.15 kB
+../dist/public/assets/customers-DUCpahPX.js                          13.68 kB │ gzip:   4.11 kB
+../dist/public/assets/delivery-app-profitability-RZM5bPi_.js         13.68 kB │ gzip:   3.46 kB
+../dist/public/assets/sales-comparison-BoScpWR4.js                   13.74 kB │ gzip:   3.05 kB
+../dist/public/assets/inspection-tools-J-CeQFBB.js                   14.30 kB │ gzip:   4.08 kB
+../dist/public/assets/menu-profitability-CCbL3MGj.js                 15.48 kB │ gzip:   4.61 kB
+../dist/public/assets/service-profitability-Dpseh1Wk.js              15.96 kB │ gzip:   5.53 kB
+../dist/public/assets/profile-C938e1Pj.js                            16.27 kB │ gzip:   4.38 kB
+../dist/public/assets/contractors-CWl_MmOB.js                        16.35 kB │ gzip:   4.53 kB
+../dist/public/assets/chat-CpKCXS2B.js                               17.92 kB │ gzip:   6.01 kB
+../dist/public/assets/valuations-yeHApaBq.js                         18.54 kB │ gzip:   4.91 kB
+../dist/public/assets/contracts-BXCyvkVp.js                          18.71 kB │ gzip:   4.81 kB
+../dist/public/assets/printer-settings-DMDPWoLe.js                   18.87 kB │ gzip:   5.46 kB
+../dist/public/assets/recipes-B8d2saDJ.js                            19.17 kB │ gzip:   5.82 kB
+../dist/public/assets/licenses-Dl6G84HL.js                           19.25 kB │ gzip:   5.71 kB
+../dist/public/assets/format-CMIRxocf.js                             19.80 kB │ gzip:   5.64 kB
+../dist/public/assets/purify.es-C65SP4u9.js                          22.38 kB │ gzip:   8.63 kB
+../dist/public/assets/forecasting-D1MeaVMr.js                        24.47 kB │ gzip:   5.91 kB
+../dist/public/assets/it-dashboard-1AIZAplZ.js                       24.50 kB │ gzip:   6.24 kB
+../dist/public/assets/_shared-DtNBXA6g.js                            24.58 kB │ gzip:   8.26 kB
+../dist/public/assets/PieChart-BR7bp7du.js                           25.99 kB │ gzip:   7.05 kB
+../dist/public/assets/settings-D3YA28ja.js                           26.65 kB │ gzip:   6.97 kB
+../dist/public/assets/violations-CQhPl-39.js                         27.44 kB │ gzip:   6.43 kB
+../dist/public/assets/investment-agreement-templates-CQ-F0B1k.js     29.18 kB │ gzip:   9.67 kB
+../dist/public/assets/service-projects-CYRfKH6B.js                   29.47 kB │ gzip:   7.03 kB
+../dist/public/assets/quotations-DK0eCPO_.js                         29.96 kB │ gzip:   7.79 kB
+../dist/public/assets/dashboard-C3aWh1el.js                          31.22 kB │ gzip:   8.17 kB
+../dist/public/assets/menu-BSx2XA2h.js                               31.81 kB │ gzip:   8.40 kB
+../dist/public/assets/it-tutorial-Br5BXAEY.js                        33.99 kB │ gzip:  11.55 kB
+../dist/public/assets/meal-subscriptions-B40NQjxT.js                 35.36 kB │ gzip:   9.08 kB
+../dist/public/assets/shop-BogUr5Eq.js                               36.52 kB │ gzip:   8.19 kB
+../dist/public/assets/delivery-apps-DHdF3Oxi.js                      36.90 kB │ gzip:   8.80 kB
+../dist/public/assets/procurement-CNoRkOK8.js                        38.76 kB │ gzip:   9.46 kB
+../dist/public/assets/suppliers-CltLKNye.js                          42.25 kB │ gzip:  10.96 kB
+../dist/public/assets/sortable.esm-BQxTDT4A.js                       45.72 kB │ gzip:  15.31 kB
+../dist/public/assets/catering-contracts-DHCbMuxd.js                 49.37 kB │ gzip:  13.88 kB
+../dist/public/assets/employees-Ccp-8ra6.js                          50.87 kB │ gzip:   9.13 kB
+../dist/public/assets/profitability-Sz0j5P5S.js                      53.43 kB │ gzip:  10.91 kB
+../dist/public/assets/investors-list-DyHa36m8.js                     54.02 kB │ gzip:  11.40 kB
+../dist/public/assets/inventory-C6ewOSK1.js                          55.73 kB │ gzip:  14.80 kB
+../dist/public/assets/service-catalog-Bydq5eMZ.js                    58.63 kB │ gzip:  11.67 kB
+../dist/public/assets/zatca-settings-CZpiYX5A.js                     64.56 kB │ gzip:  16.79 kB
+../dist/public/assets/company-profile-D-_Py8r9.js                    68.80 kB │ gzip:  17.55 kB
+../dist/public/assets/financial-URYjX8BT.js                          71.22 kB │ gzip:  12.26 kB
+../dist/public/assets/it-account-management-44E4H5cE.js              74.11 kB │ gzip:  12.63 kB
+../dist/public/assets/index-D1KaA7mi.js                              86.91 kB │ gzip:  24.20 kB
+../dist/public/assets/business-management-DnI4Ef8u.js               100.05 kB │ gzip:  22.10 kB
+../dist/public/assets/schema-CtqKshmH.js                            123.23 kB │ gzip:  23.86 kB
+../dist/public/assets/project-detail-CCud0r73.js                    132.14 kB │ gzip:  26.86 kB
+../dist/public/assets/index.es-DdEMeWLd.js                          158.60 kB │ gzip:  52.92 kB
+../dist/public/assets/html2canvas.esm-Ge7aVWlp.js                   201.40 kB │ gzip:  47.48 kB
+../dist/public/assets/marketing-DHP8wY_o.js                         230.63 kB │ gzip:  67.07 kB
+../dist/public/assets/xlsx-BsqxREE8.js                              282.98 kB │ gzip:  94.97 kB
+../dist/public/assets/tutorial-SaKxZ-x_.js                          316.68 kB │ gzip:  71.88 kB
+../dist/public/assets/generateCategoricalChart-B2ZmweRE.js          382.61 kB │ gzip: 105.43 kB
+../dist/public/assets/pos-BytBw65P.js                               384.58 kB │ gzip: 110.02 kB
+../dist/public/assets/jspdf.es.min-h7Ve3usY.js                      384.96 kB │ gzip: 125.67 kB
+../dist/public/assets/index-Dwc-kTzu.js                           1,875.09 kB │ gzip: 541.22 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 31.61s
+
+  dist/index.js  1.9mb ⚠️
+
+⚡ Done in 161ms
+
+==> Reconciling pm2 process list (one BSS process only)
+
+==> Restarting BSS (pm2 restart --update-env)
+[PM2] Applying action restartProcessId on app [BSS](ids: [ 0 ])
+[PM2] [BSS](0) ✓
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 1    │ online    │ 0%       │ 18.6mb   │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+[PM2] Saving current process list...
+[PM2] Successfully saved in /home/Kinzhal/.pm2/dump.pm2
+
+==> Waiting 4s for the app to bind to port 5000...
+
+==> pm2 status
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 0  │ BSS                │ fork     │ 1    │ online    │ 0%       │ 173.8mb  │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+
+==> Health check: curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:5000/
+✓ App responded with HTTP 200 on port 5000
+
+==> Recent logs:
+[TAILING] Tailing last 20 lines for [BSS] process (change the value with --lines option)
+/home/Kinzhal/.pm2/logs/BSS-error.log last 20 lines:
+0|BSS      |     at decode_param (/home/BSS/node_modules/express/lib/router/layer.js:172:12)
+0|BSS      |     at Layer.match (/home/BSS/node_modules/express/lib/router/layer.js:123:27)
+0|BSS      |     at matchLayer (/home/BSS/node_modules/express/lib/router/index.js:585:18)
+0|BSS      |     at next (/home/BSS/node_modules/express/lib/router/index.js:226:15)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/serve-static/index.js:121:7)
+0|BSS      |     at SendStream.emit (node:events:524:28)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/send/index.js:270:17)
+0|BSS      |     at SendStream.pipe (/home/BSS/node_modules/send/index.js:515:10)
+0|BSS      |     at serveStatic (/home/BSS/node_modules/serve-static/index.js:125:12)
+0|BSS      | URIError: Failed to decode param '/%c0'
+0|BSS      |     at decodeURIComponent (<anonymous>)
+0|BSS      |     at decode_param (/home/BSS/node_modules/express/lib/router/layer.js:172:12)
+0|BSS      |     at Layer.match (/home/BSS/node_modules/express/lib/router/layer.js:123:27)
+0|BSS      |     at matchLayer (/home/BSS/node_modules/express/lib/router/index.js:585:18)
+0|BSS      |     at next (/home/BSS/node_modules/express/lib/router/index.js:226:15)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/serve-static/index.js:121:7)
+0|BSS      |     at SendStream.emit (node:events:524:28)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/send/index.js:270:17)
+0|BSS      |     at SendStream.pipe (/home/BSS/node_modules/send/index.js:515:10)
+0|BSS      |     at serveStatic (/home/BSS/node_modules/serve-static/index.js:125:12)
+
+/home/Kinzhal/.pm2/logs/BSS-out.log last 20 lines:
+0|BSS      | [Migration] Tables verified/created: project_equipment
+0|BSS      | [Migration] Tables verified/created: product_client_requirements, product_meetings
+0|BSS      | [Migration] Table verified/created: influencer_profiles
+0|BSS      | [Migration] Table verified/created: blogger_profiles (with discount_type, discount_value)
+0|BSS      | [Migration] Table verified/created: company_profiles (with font_family, header_style)
+0|BSS      | [Migration] Table verified/created: marketing_discount_codes
+0|BSS      | [Migration] Table verified/created: marketing_broadcast_templates
+0|BSS      | [Migration] Table verified/created: marketing_qr_scans
+0|BSS      | [Migration] Table verified/created: properties
+0|BSS      | [Migration] Table verified/created: property_units
+0|BSS      | [Migration] Table verified/created: property_tenants
+0|BSS      | [Migration] Table verified/created: rental_contracts
+0|BSS      | [Migration] Table verified/created: rental_invoices
+0|BSS      | [Migration] Table verified/created: rental_payments
+0|BSS      | [Migration] Table verified/created: property_expenses
+0|BSS      | [Migration] Table verified/created: maintenance_requests
+0|BSS      | [Migration] Table verified/created: chart_of_accounts
+0|BSS      | [Migration] Table verified/created: journal_entries
+0|BSS      | [Migration] Table verified/created: journal_lines
+0|BSS      | [Migration] Table verified/created: property_notifications
+
+✓ Deploy complete — commit 3867b6670f09944c50d17b8bd8982140d85fa458 is live on port 5000.
