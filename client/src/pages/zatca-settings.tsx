@@ -106,6 +106,7 @@ export default function ZatcaSettingsPage() {
     onboardingStatus: "not_started"
   });
   const [otp, setOtp] = useState("");
+  const [renewOtp, setRenewOtp] = useState("");
   const [complianceRequestId, setComplianceRequestId] = useState("");
   const [showPrivateKey, setShowPrivateKey] = useState(false);
   const [showComplianceCsid, setShowComplianceCsid] = useState(false);
@@ -508,6 +509,36 @@ export default function ZatcaSettingsPage() {
     },
   });
 
+  const renewCsidMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/zatca/renew-csid", { otp: renewOtp.trim(), restaurantId: selectedRestaurantId });
+      return await res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/zatca/settings", selectedRestaurantId] });
+      setRenewOtp("");
+      toast({
+        title: t.success || "Success",
+        description: data.message || "Production CSID renewed successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      let msg = error.message;
+      try {
+        const jsonStart = msg.indexOf("{");
+        if (jsonStart >= 0) {
+          const parsed = JSON.parse(msg.substring(jsonStart));
+          msg = parsed.error || parsed.message || msg;
+        }
+      } catch {}
+      toast({
+        title: t.error || "Error",
+        description: msg,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleChange = (field: keyof ZatcaSettings, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -621,6 +652,7 @@ export default function ZatcaSettingsPage() {
                 onboardingStatus: "not_started"
               });
               setOtp("");
+              setRenewOtp("");
               setComplianceRequestId("");
               setManualCredentials({
                 privateKey: "",
@@ -709,6 +741,30 @@ export default function ZatcaSettingsPage() {
                   {isRTL
                     ? `تنتهي صلاحية شهادة الإنتاج (CSID) في ${expiryStr}. بعد انتهاء الصلاحية سترفض زاتكا جميع الفواتير. أنشئ رمز OTP جديدًا من fatoora.zatca.gov.sa ثم جدد الشهادة.`
                     : `The production certificate (CSID) expires on ${expiryStr}. Once expired, ZATCA will reject ALL invoice submissions. Generate a fresh OTP from fatoora.zatca.gov.sa and renew the certificate now.`}
+                  <div className="flex items-center gap-2 mt-3 flex-wrap">
+                    <Input
+                      value={renewOtp}
+                      onChange={(e) => setRenewOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                      placeholder={isRTL ? "رمز OTP المكون من 6 أرقام" : "6-digit OTP"}
+                      inputMode="numeric"
+                      maxLength={6}
+                      className="w-40"
+                      data-testid="input-renew-otp"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => renewCsidMutation.mutate()}
+                      disabled={renewCsidMutation.isPending || renewOtp.trim().length !== 6}
+                      data-testid="button-renew-csid"
+                    >
+                      {renewCsidMutation.isPending ? (
+                        <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      ) : (
+                        <RefreshCw className="w-3 h-3 mr-1" />
+                      )}
+                      {isRTL ? "تجديد الشهادة" : "Renew certificate"}
+                    </Button>
+                  </div>
                 </AlertDescription>
               </Alert>
             );
