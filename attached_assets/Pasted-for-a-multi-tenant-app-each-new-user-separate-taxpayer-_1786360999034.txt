@@ -1,0 +1,92 @@
+for a multi-tenant app (each new user = separate taxpayer), you must give every user their own isolated ZATCA “block” (EGS unit). Sharing one CSID / private key / hash chain across users will fail compliance and produce rejections.
+What “special block per user” means in ZATCA Phase 2
+Each taxpayer (your app user) needs:
+
+Their own EGS unit (Electronic Invoice Generation Solution unit)
+Their own CSR → Compliance CSID (CCSID) → Production CSID (PCSID)
+Their own private key (never shared)
+Their own Previous Invoice Hash (PIH) chain + Invoice Counter Value (ICV)
+Their own sequential invoice numbering
+
+ZATCA treats each EGS unit as belonging to one VAT-registered entity. Mixing users breaks the cryptographic chain and the clearance/reporting rules.
+Recommended architecture (Replit-friendly)
+Store per user (or per branch/EGS if a user has multiple locations):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+DataPurposeSecurity notePrivate key (PEM)Signing invoicesEncrypt at rest (Replit Secrets + app-level encryption or a KMS)CCSID / PCSID + secretAuth for APIsStore encryptedCurrent PIHHash chain continuityCritical – lost PIH = broken chainICV / last invoice numberSequential numberingMust be atomicOTP history / onboarding statusTracking—Environment (sandbox / simulation / production)Endpoint selection—
+Never put private keys or CSID secrets in client-side code or plain environment variables that multiple users can reach.
+Correct onboarding flow (per new user)
+
+User logs into their ZATCA Fatoora / ERAD portal and generates an OTP for a new solution unit/device.
+Your backend generates an ECDSA secp256k1 key pair + CSR with the correct ZATCA OIDs and subject fields (VAT number, device serial, organisation name, etc.).
+Call the compliance endpoint with the CSR + OTP → receive CCSID + secret.
+Run the mandatory compliance checks (submit the required sample standard + simplified invoices/credit/debit notes using the CCSID).
+After successful compliance, exchange for the Production CSID (PCSID).
+Persist the private key, PCSID, secret, initial PIH, and ICV securely against that user record.
+From now on, every invoice for that user is signed with their private key and submitted with their PCSID credentials.
+
+Official environments (use the correct base URL):
+
+Developer portal / sandbox
+Simulation
+Core (production)
+
+Invoice submission (per user)
+
+Build UBL 2.1 XML (Saudi profile).
+Compute invoice hash, maintain PIH chain, generate UUID, create 9-tag TLV QR code.
+Digitally sign (XAdES) with the user’s private key.
+Submit to the correct endpoint:
+Clearance (real-time) for B2B/standard tax invoices
+Reporting (within 24 h) for B2C/simplified invoices
+
+Use Basic Auth with the user’s BinarySecurityToken (CSID) + secret.
+Always update and store the new PIH + ICV after a successful response.
+
+Common backend problems on Replit / multi-tenant apps
+
+Shared CSID or private key across users → immediate compliance failure.
+Lost or non-atomic PIH / ICV updates (race conditions when multiple invoices are issued close together).
+Using the wrong environment URL or Accept-Version header.
+Incorrect CSR fields (especially the ZATCA-specific OIDs and VAT number format).
+Not handling certificate renewal (CSIDs expire).
+Storing secrets in plain Replit environment variables instead of per-user encrypted storage.
+Missing BillingReference on credit/debit notes (error 1020 and similar).
