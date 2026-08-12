@@ -1,0 +1,1023 @@
+# Zakat, Tax and Customs Authority (ZATCA)
+## Electronic Invoice XML Implementation Standard to the E-Invoicing resolution dated 2023-05-19
+### Version 1.2 — Track Changes Version
+
+---
+
+## Version History
+
+| Version | Date | Updates |
+|---|---|---|
+| 1.0 | 2021-05-28 | — |
+| 1.1 | 2022-06-24 | Addition and deletion of business rules; Amendments of file naming standard; Amendments of references in rules |
+| 1.2 | 2023-05-19 | Included the charges specification (Optional to be used, only if charges are currently implemented on existing ERP solutions); Include new functionality of Advanced payment specifications (required to be used if invoice was raised upon receiving advance payment which has to be adjusted from a subsequent invoice); Enhancements and simplifications; Alignment across e-invoicing documents. Existing integrations DO NOT need to be amended in order to be successfully validated. All the changes are further enhancements and additional functionalities. |
+
+---
+
+## 1 Context
+
+This document contains the technical requirements for the syntax and the business content of the electronic invoice that taxpayers need to meet to comply with the "E-Invoicing" Resolution published by ZATCA.
+
+These requirements are based on definitions from ISO CEN/EN 16931:2017 and are enhanced as per the E-Invoicing resolution published.
+
+The requirements set out in this document, as per the published resolution, are the minimum set of requirements that must be complied with by suppliers and invoice generators. UBL and the ISO codes have many additional fields that are not included in this document. Suppliers and invoice generators are free to add additional fields when generating invoices, as long as the minimum set of requirements are met.
+
+### 1.1 Document structure
+
+This document is structured as follows:
+- Chapters 1 - 4 present general information on the business processes, requirements and functionalities of e-invoicing in an XML format
+- Chapter 5 presents the semantical data types
+- Chapters 7 - 8 present how VAT is calculated, total, net, and gross calculations, and rounding functionalities.
+- Chapter 9 presents details and links to all code lists used
+- Chapter 10 presents UBL schemas and namespaces
+- Chapter 11 presents validation phases
+- Chapter 12 presents validation rules and should be read in conjunction with ZATCA Electronic Invoicing Data Dictionary
+- Chapter 13 presents the technical schematron files associated with the electronic invoice
+- Chapter 14 presents the QR code specifications that will be used on the tax invoices
+- Chapter 15 presents electronic signature specifications
+
+### 1.2 Audience
+
+The audience for this document is ZATCA registered VAT Taxpayers generating VAT invoices and their service providers.
+
+These organizations may be:
+- Service providers
+- Taxpayers
+- Software Developers
+
+More specifically, roles addressed are the following:
+- ICT Architects
+- ICT Developers
+- Business Experts
+
+### 1.3 Subset of ISO Codes and Standards aligned with
+
+This document uses a subset of multiple global standards as the baseline with additional requirements as per the VAT regulations in the Kingdom:
+
+- **UBL Electronic Invoice**: Universal Business Language is an XML standard that details the technical XML fields and invoice structure.
+- **ISO EN16931**: This standard is the ISO standard for e-invoice generation developed as an ISO global standard.
+- **UN/CEFACT Code List 1001**: The coded lists of currencies, countries, regions, and other lists as per UN standards
+- **ISO 3166** issued by General Authority for Statistics: Country code standards used for any country references
+- **ISO 4217:2015**: Currency code to be used for currency identifiers and tags
+- **UN/CEFACT code list 5305, D.16B**: VAT categories code
+
+---
+
+## 2 Introduction
+
+This document covers the business rules and standards followed to create the data dictionary for UBL XML Invoice format.
+
+The data dictionary spreadsheet covers the required fields from ZATCA's E-Invoicing Regulation. These two documents are organized to conform to the EN 16931 electronic invoice standard. This document and the Data Dictionary are dependent on each other and should be read together.
+
+## 3 Parties and roles
+
+The parties involved in the invoice transactions are:
+- **Customer/Buyer** – the customer and the invoice receiver are the same entity.
+- **Supplier/Seller** – the supplier and the invoice sender are the same entity.
+- **ZATCA** - the Tax Authority receiving invoices from Taxpayers either via online means or during tax audit
+
+## 4 Validation
+
+The validation process of the invoice XML associated with the mandated electronic invoice has the following phases in order to be marked as compliant:
+
+1. **Syntax validation** (XML Well-formedness and validation against UBL schema)
+   a. Check well-formedness
+   b. Tag names and attributes must be correctly written and follow the UBL 2.1 sequence
+   c. All UBL 2.1 mandatory elements must be present.
+   d. The element's contents must be according to the element's type definition.
+
+2. **Content validation**
+   a. Validation against customized subset of EN 16931 rules. It verifies that the content of the invoice XML file is compliant to this standard, such as:
+      - Valid codes for currencies, countries, tax etc.
+      - Mandatory elements
+      - Logical correlations between elements, i.e. calculations give the correct result etc.
+   b. **CIUS** (Core Invoice Usage Specification) - Country qualified validation rules. Applies only for invoices issued in a specific country. The rule is triggered by the given country code of the supplier (BT-40).
+      - Example rule text: When the Supplier is from Saudi Arabia.
+      - Context that triggers the rule: Existence of transaction type cases
+
+**Priority of business rules** (highest to lowest override precedence):
+1. KSA Rules & Business (overrides)
+2. EN 16931 standard (overrides)
+3. UBL specifications
+
+As seen in the figure, the EN 16931 standard will override UBL specifications in case of a conflict, and the KSA rules and business requirements will override EN 16931 standard in case of a conflict.
+
+**Mandatory/Optional determination flow**: For a given rule "X" — first check if it's mandatory according to KSA business requirements (if Yes → Mandatory). If No, check if mandatory according to EN 16931 standard (if Yes → Mandatory). If No, check if mandatory according to UBL specifications (if Yes → Mandatory, if No → Optional).
+
+---
+
+## 5 Data Dictionary Structure (Chapter 2 in original numbering)
+
+Overview of the Data Dictionary document spreadsheet structure:
+
+| Column | Details |
+|---|---|
+| A | Business Term Name |
+| B | Describes the business term |
+| C | Mapping the business term with the e-invoicing resolution fields in annex (2) |
+| D | ZATCA E-invoice Category |
+| E-F | Business term group and ID in ISO CEN/EN 16931:2017 standard. Terms not in ISO CEN/EN 16931:2017 receive: no group ID, or a KSA term ID (ex: KSA-1) |
+| H-J | UBL specifications for each business term: Invoice (/ubl:Invoice/) tag; tag cardinality; data type |
+| L-M | Business requirements and rules for each business term: EN 16931 Rules; KSA specific rules |
+| O-U | Saudi context for each business term: status for each invoice type; specific format if applicable |
+| V-W | Visibility on Invoice for Tax invoices and associated credit/debit notes; Visibility on human readable formats for Simplified Tax invoices and associated credit/debit notes |
+| Y-AA | Field Character Limits |
+| AB | Example for each business term |
+
+---
+
+## 6 Invoicing Business Process
+
+### 6.1 General invoicing process
+
+The invoicing process includes issuing the invoice by the seller and subsequent audit, reporting, and approval by ZATCA for compliance.
+
+The invoicing process is:
+1. A supplier/seller issues an invoice to register a sale.
+   a. An invoice may either be a Tax Invoice or a Simplified Tax invoice.
+   b. The invoice shall contain the fields and security features specified in this document.
+   c. The invoice shall be stored by the taxpayer as part of their tax record
+2. A supplier/seller issues a credit or debit note to correct issued invoices
+   a. The note may either be structured like a Tax Invoice or like a Simplified Tax Invoice
+   b. The note shall refer to one or more issued invoices
+   c. The invoice shall be stored by the taxpayer as part of their tax record
+3. The customer/buyer wishing to use the invoice or associated note for input VAT deduction receives the invoice or associated note
+   a. The invoice or associated note is processed for deducting input VAT
+   b. The invoice or associated note is stored as part of the taxpayer's tax record
+
+### 6.2 Invoice types
+
+| Invoice type | Description |
+|---|---|
+| Tax Invoice | A normal tax invoice as per KSA VAT regulations. |
+| Simplified Tax Invoice | A simplified Tax Invoice may be issued for a Supply of Goods or services. A simplified tax invoice contains a lower number of fields as per KSA VAT regulation. |
+| Credit and Debit Note | As per VAT regulations, a credit or debit note is issued for an existing invoice in cases such as Cancellation/Termination, Material change or alteration to nature of supply, alteration in previously agreed consideration for supply, return of goods. Such credit note or debit note shall include the information required by these Regulations to be shown on the Tax Invoice. A Credit or Debit note is either based on a Tax Invoice or a Simplified Tax Invoice and is subject to the same issuing requirements as the type of invoice on which it is based. |
+
+### 6.3 Invoice indicators
+
+| Invoice flags | Description |
+|---|---|
+| Third Party | Flag indicating whether the invoice was created by a third party |
+| Self Billed | The invoice is issued by the buyer instead of the supplier. Only applicable in B2B scenarios. No effect on the fields, but it's mandated that the invoice states that it is self-billed. |
+| Nominal | The invoice is issued for goods that are provided without consideration as per KSA VAT regulation. |
+| Export | The invoice is issued to a foreign buyer as per KSA VAT regulation. |
+| Summary | The invoice is issued for sales occurring over a period of time and occurs for some types of invoicing arrangements between seller and buyer. |
+
+---
+
+## 7 Invoice functionality
+
+Supports the following functions: VAT reporting, Auditing.
+
+Explicit support for the following functions (but not limited to) is **out of scope**: Accounting, Invoice verification against a contract or purchase order, Payment, Auditing, Inventory management, Delivery processes, Customs clearance, Marketing, Reporting.
+
+### 7.1 Auditing
+
+Accounting is a regular, ongoing process whereas an audit is a separate review process to ensure that the accounting has been carried out correctly. The invoices support the auditing process by providing sufficient information for:
+- Identification of the relevant Customer and Supplier
+- Identification of the products and services traded, including description, value and quantity
+- Information for connecting the invoice to its payment
+- Information for connecting the invoice to relevant documents such as a contract and a purchase order
+
+### 7.2 VAT Reporting
+
+The invoice is used to carry VAT related information from the Taxpayer to ZATCA to enable invoice clearing and reporting. An invoice should contain sufficient information to enable the Customer and any auditor to determine whether the invoice is correct from a VAT point of view. The invoice shall allow the determination of the VAT regime, the calculation and description of the tax, in accordance with VAT law and subsequent amendments.
+
+### 7.3 Invoice business requirements
+
+| Function | ID | Requirement |
+|---|---|---|
+| VAT reporting | R-KSA-01 | Fields required for Tax Invoice fields resulting from VAT Law |
+| VAT reporting | R-KSA-02 | Fields required for Simplified Tax Invoice fields resulting from VAT Law |
+| VAT reporting | R-KSA-03 | Fields required for Credit and Debit Note fields resulting from VAT Law |
+| VAT reporting | R-KSA-04 | Information on the date the VAT is liable at document level |
+| VAT reporting | R-KSA-05 | The necessary elements for national legal VAT requirements that apply for invoices issued to national and foreign Buyers, such as the legal registration status of the Seller |
+| VAT reporting | R-KSA-06 | Information to support the following VAT use cases: Invoices for supplies for which VAT is charged; Invoices for supplies for which VAT is not charged (exempt supplies, Zero rated Supplies, out of scope supplies); Invoices for several supplies which part of them are taxable and part of them are not, so VAT to be considered at line level |
+| VAT reporting | R-KSA-07 | The total VAT amount at document level |
+| VAT reporting | R-KSA-08 | Total taxable amount per VAT rate at document level |
+| VAT reporting | R-KSA-09 | Any additional information required to support the exemption evidence in case VAT is not charged based on an exemption reason at document and at invoice line level |
+| VAT reporting | R-KSA-10 | The VAT registration number of the Seller and the Buyer |
+| VAT reporting | R-KSA-11 | The official address of the Seller and the Buyer |
+| VAT reporting | R-KSA-12 | The invoice currency and the VAT accounting currency at document level if different from the invoice currency |
+| VAT reporting | R-KSA-13 | Codes for exemption reasons at document and invoice line level |
+| Auditing | R-KSA-14 | Sufficient information to support the auditing process with regard to: Identification of the invoice; Identification of the invoice issue date; Identification of the products and services traded, including their description, value and quantity; Information for relating the invoice to its settlement; Information for relating the invoice to relevant documents such as a contract, a purchase order |
+| Auditing | R-KSA-15 | Identification of the parties that fulfil the following roles at the invoice level, including their legal name and address and other identification documentation: the Seller (including the Supplier's trade name); the Buyer |
+
+---
+
+## 8 Semantic data types
+
+### 8.1 Introduction
+
+Semantic data types bridge the gap between the semantic concepts expressed by the information elements defined in the semantic model from EN 16931 and the technical implementation. They define the allowed value domain for the content, and any additional information components (attributes) needed to ensure precise interpretation.
+
+### 8.2 Primitive types
+
+Taken from ISO 15000-5:2014, Annex A.
+
+| Primitive type | Definition |
+|---|---|
+| Binary | A set of finite-length sequences of binary digits. |
+| Date | Time point representing a calendar day on a time scale consisting of an origin and a succession of calendar ISO 8601:2004. |
+| Decimal | A subset of the real numbers, which can be represented by decimal numerals. |
+| String | A finite sequence of characters. |
+
+### 8.3 Semantic data types
+
+Based on ISO 15000-5:2014. When used in an instance of an invoice, each data element will contain data ("content"). Whenever a business term is used, content is always mandatory.
+
+All decimal types must be in Arabic numerals (1234567890). For visual invoices, an additional set of numerals in Indo-Arabic (١٢٣٤٥٦٧٨٩٠) can be used.
+
+| No. | Business term | Definition | Restriction | Component | Use | Primitive type | Example |
+|---|---|---|---|---|---|---|---|
+| 1 | Amount | An amount states a numerical monetary value. The currency of the amount is defined as a separate business term. | Amount is floating up to two fraction digits. | Content | Mandatory | Decimal | 10000.25 |
+| 2 | Unit price amount | A unit price amount states a numerical monetary amount value for data elements that contain item prices that may be multiplied by item quantities. The currency of the amount is defined as a separate business term. | Unit price amount does not set restrictions on number of decimals, as contrast to the Amount type | Content | Mandatory | Decimal | 10000.1234 |
+| 3 | Percentage | Percentages are given as fractions of a hundred (per cent) e.g. the value 34.78% in percentage terms is given as 34.78. | No restriction on number of decimals for percentages. | Content | Mandatory | Decimal | 34.7812 |
+| 4 | Quantity | Quantities are used to state a number of units such as for items. The code for the Unit of Measure is defined as a separate business term. | No restriction on number of decimals for quantities. | Content | Mandatory | Decimal | 10000.1234 |
+| 5 | Code | Codes are used to specify allowed values in elements as well as for lists of options. "Code" is different from "Identifier" in that allowed values have standardized meanings that can be known by the recipient. | Codes shall be entered exactly as shown in the selected code list of the applicable syntax. | Content | Mandatory | String | Abc123 |
+| 6 | Identifier | Identifiers (IDs) are keys that are issued by the sender or recipient of a document or by a third party. | The use of the attributes is specified for each information element. | Content / Scheme identifier / Scheme version identifier | Mandatory / Conditional / Conditional | String | Abc:123:-DEF / GLN / 1.0 |
+| 7 | Date | Dates shall be in accordance to the "Calendar date complete representation" as specified by ISO 8601:2004, format YYYY-MM-DD. | Dates shall not include timezone information. | Content | Mandatory | Date | 2017-12-01 |
+| 8 | Document reference | Document Reference Types are identifiers that were assigned to a document or document line by the Buyer, the Supplier or by a third party. | - | Content | Mandatory | String | abc:123-DEF |
+| 9 | Text | Text is the actual wording of anything written or printed. Line breaks in the text may be present, and any line breaks should be preserved and respected by the receiver's system. | - | Content | Mandatory | String | 5% allowance when paid within 30 days |
+| 10 | Time | The type time represents a time of day in the format HH:mm:ss where HH represents the hour, mm the minutes, and ss the seconds. An unlimited number of additional digits can be used to increase the precision of fractional seconds if desired. The time is based on a 24-hour time period, so hours should be represented as 00 through 24. Either of the values 00:00:00 or 24:00:00 can be used to represent midnight. | Times shall not include time zone information if the time is local in the KSA. Alternatively, UTC time zone may be used by appending the suffix Z (Zulu time) at the end of the time stamp value. | Content | Mandatory | Time | 20:54:17 or 20:54:17Z |
+
+### 8.4 The semantic model - UBL syntax
+
+The semantic model and business term (BT) definitions are defined in the accompanying spreadsheet **KSA_eInvoicing_Data_Dictionary**. In this file, the ordering of the business terms is as per the UBL XML invoice order.
+
+---
+
+## 9 Value added tax (VAT)
+
+### 9.1 Introduction
+
+This chapter describes the different VAT information that can be provided in an electronic invoice.
+
+### 9.2 Line VAT information
+
+Each invoice line shall have the invoiced item VAT category code (BT-151), and for all VAT categories except "Not subject to VAT" (O), the VAT rate shall be provided.
+
+### 9.3 Document level allowance and/or charge
+
+Each document level allowance and/or charge must have the Document level allowance and/or charge VAT category code (BT-95 and/or BT-102), and for all VAT categories the VAT rate shall be provided.
+
+### 9.4 VAT Breakdown
+
+One VAT Breakdown shall be provided for each distinct combination of VAT category code and VAT rate found in either the line VAT information or the Document level allowance and/or charge. For some VAT categories, the VAT rate shall be zero, and hence the rate is not needed in order to group the VAT Breakdown for these.
+
+Note: for the VAT rate, only significant decimals should be considered, i.e. any difference in trailing zeros should not result in different VAT breakdowns.
+
+**Example**: Invoice line 1 has category code = S and VAT rate = 15; Invoice line 2 has category code = S and VAT rate = 15.00. This should result in only one VAT Breakdown.
+
+### 9.5 Invoice total VAT amount
+
+The invoice total VAT amount (BT-110) is the sum of all VAT Category VAT amounts (BT-117).
+
+---
+
+## 10 Calculation
+
+### 10.1 Introduction
+
+- Invoice totals may be in any currency
+- Tax totals must be in SAR
+- The invoice totals include separate sums of invoice line items and discounts (allowances)
+
+### 10.2 Calculation on invoice totals
+
+| BT ID | Term name | UBL tag | Calculation formula | Calculation formula based on UBL tags |
+|---|---|---|---|---|
+| BT-106 | Sum of invoice line net amount | cac:LegalMonetaryTotal/cbc:LineExtensionAmount | ∑(BT-131: Invoice line net amount) | ∑(cac:InvoiceLine/cbc:LineExtensionAmount) |
+| BT-107 | Sum of allowances on document level | cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount | ∑(BT-92: Document level allowance amount) | ∑(cac:AllowanceCharge[ChargeIndicator='false']/cbc:Amount) |
+| BT-108 | Sum of charges on document level | cac:LegalMonetaryTotal/cbc:ChargeTotalAmount | ∑(BT-99: Document level charge amount) | ∑(cac:AllowanceCharge[ChargeIndicator='true']/cbc:Amount) |
+| BT-110 | Invoice total VAT amount | cac:TaxTotal/cbc:TaxAmount | ∑(BT-117: VAT category tax amount) | ∑(cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount) |
+| BT-111 | Invoice total VAT amount in accounting currency | cac:TaxTotal/cbc:TaxAmount | - | - |
+| BT-112 | Invoice total amount with VAT | cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount | BT-109: Invoice total amount without VAT + BT-110: Invoice total VAT amount | cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount + cac:TaxTotal/cbc:TaxAmount |
+| BT-113 | Pre-Paid amount (Advance Received) | cac:LegalMonetaryTotal/cbc:PrepaidAmount | - | - |
+| BT-114 | Rounding Amount | cac:LegalMonetaryTotal/cbc:PayableRoundingAmount | - | - |
+| BT-115 | Amount due for payment | cac:LegalMonetaryTotal/cbc:PayableAmount | BT-112: Invoice total amount with VAT - BT-113: Pre-Paid amount + BT-114: Rounding Amount | cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount - cac:LegalMonetaryTotal/cbc:PrepaidAmount + cac:LegalMonetaryTotal/cbc:PayableRoundingAmount |
+
+### 10.3 Calculation on invoice line level
+
+**BT-146 Item net price**: If the gross price and the discount exist, the Item net price has to be equal with the item gross price less the item price discount.
+
+Formula: `Item net price (BT-146) = Item gross price (BT-148) − Item price discount (BT-147)`
+
+UBL example (invoice line net price with amount discount):
+```xml
+<cac:Price>
+ <cbc:PriceAmount currencyID="SAR">450</cbc:PriceAmount> <!-- BT-146 -->
+ <cbc:BaseQuantity unitCode="PCE">1</cbc:BaseQuantity>
+ <cac:AllowanceCharge>
+ <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+ <cbc:Amount currencyID="SAR">50</cbc:Amount> <!-- BT-147 -->
+ <cbc:BaseAmount currencyID="SAR">500</cbc:BaseAmount> <!-- BT-148 -->
+ </cac:AllowanceCharge>
+</cac:Price>
+```
+
+**BT-131 Invoice line net amount**: The invoice line net amount without VAT, and inclusive of line level allowance.
+
+Formula: `Item line net amount (BT-131) = ((Item net price (BT-146) ÷ Item price base quantity (BT-149)) × (Invoiced Quantity (BT-129)) − Invoice line allowance amount (BT-136) + Invoice line charge amount (BT-141)`
+
+As the line net amount must be rounded to two decimals, note that the different parts of the calculation must be rounded separately. The result of `((Item net price ÷ Item price base quantity) × Invoiced Quantity)` must be rounded to two decimals, and the allowance/charge amount are also rounded separately.
+
+UBL example (no line allowance/charge):
+```xml
+<cbc:InvoicedQuantity unitCode="PCE">10</cbc:InvoicedQuantity> <!-- BT-129 -->
+<cbc:LineExtensionAmount currencyID="SAR">2000.00</cbc:LineExtensionAmount> <!-- BT-131 -->
+<!-- Code omitted for clarity-->
+<cac:Price>
+ <cbc:PriceAmount currencyID="SAR">400</cbc:PriceAmount> <!-- BT-146 -->
+ <cbc:BaseQuantity unitCode="PCE">2</cbc:BaseQuantity> <!-- BT-149 -->
+</cac:Price>
+```
+
+UBL example (with line allowance/discount and line charge):
+```xml
+<cbc:InvoicedQuantity unitCode="PCE">10</cbc:InvoicedQuantity> <!-- BT-129 -->
+<cbc:LineExtensionAmount currencyID="SAR">925.00</cbc:LineExtensionAmount> <!-- BT-131 -->
+<!-- Code omitted for clarity--> 
+<!-- XML tags for Allowance (Discount)-->
+<cac:AllowanceCharge>
+ <cbc:ChargeIndicator>false</cbc:ChargeIndicator> 
+ <cbc:AllowanceChargeReasonCode>95</cbc:AllowanceChargeReasonCode>
+ <cbc:AllowanceChargeReason>Discount</cbc:AllowanceChargeReason>
+ <cbc:Amount currencyID="SAR">100.00</cbc:Amount> <!-- BT-136 -->
+</cac:AllowanceCharge>
+<!-- XML tags for Charges-->
+<cac:AllowanceCharge>
+ <cbc:ChargeIndicator>true</cbc:ChargeIndicator>
+ <cbc:AllowanceChargeReasonCode>CG</cbc:AllowanceChargeReasonCode>
+ <cbc:AllowanceChargeReason>Cleaning</cbc:AllowanceChargeReason>
+ <cbc:Amount currencyID="SAR">25.00</cbc:Amount> <!-- BT-141 -->
+</cac:AllowanceCharge>
+<!-- Code omitted for clarity-->
+<cac:Price>
+ <cbc:PriceAmount currencyID="SAR">100</cbc:PriceAmount> <!-- BT-146 -->
+ <cbc:BaseQuantity unitCode="PCE">1</cbc:BaseQuantity> <!-- BT-149 -->
+</cac:Price>
+```
+
+### 10.4 Calculation of allowance/charge amount
+
+The allowance and the charge on the document and the line level consist of elements carrying information on the allowance/charge base amount and the allowance/charge percentage. These are, if present in the invoice instance, used for calculating the allowance/charge amount.
+
+An invoice can contain the allowance/charge amount without the base amount and the associated percentage. If the base amount is present, the percentage shall also be present, and if the percentage is present, the base amount shall also be present, and the calculation of the amount shall be:
+
+`Amount = Base amount × (Percentage ÷ 100)`
+
+UBL example (base amount and percentage exist):
+```xml
+<cac:AllowanceCharge>
+ <cbc:ChargeIndicator>false/true</cbc:ChargeIndicator>
+ <cbc:AllowanceChargeReasonCode>95/CG</cbc:AllowanceChargeReasonCode>
+ <cbc:AllowanceChargeReason>Discount/Cleaning</cbc:AllowanceChargeReason>
+ <cbc:MultiplierFactorNumeric>10</cbc:MultiplierFactorNumeric> <!-- (2) Allowance/Charge percentage -->
+ <cbc:Amount currencyID="SAR">200</cbc:Amount> <!-- (3) Amount = Base amount x (Percentage ÷ 100) -->
+ <cbc:BaseAmount currencyID="SAR">2000</cbc:BaseAmount> <!-- (1) Base amount -->
+ <cac:TaxCategory>
+ <cbc:ID>S</cbc:ID>
+ <cbc:Percent>15</cbc:Percent>
+ <cac:TaxScheme>
+ <cbc:ID>VAT</cbc:ID>
+ </cac:TaxScheme>
+ </cac:TaxCategory>
+</cac:AllowanceCharge>
+```
+
+UBL example (base amount and percentage do NOT exist):
+```xml
+<cac:AllowanceCharge>
+ <cbc:ChargeIndicator>false/true</cbc:ChargeIndicator> 
+ <cbc:AllowanceChargeReasonCode>95/CG</cbc:AllowanceChargeReasonCode>
+ <cbc:AllowanceChargeReason>Discount/Cleaning</cbc:AllowanceChargeReason>
+ <cbc:Amount currencyID="SAR">200</cbc:Amount> <!-- (1) Amount without calculation -->
+ <cac:TaxCategory>
+ <cbc:ID>S</cbc:ID>
+ <cbc:Percent>15</cbc:Percent>
+ <cac:TaxScheme>
+ <cbc:ID>VAT</cbc:ID>
+ </cac:TaxScheme>
+ </cac:TaxCategory>
+</cac:AllowanceCharge>
+```
+
+### 10.5 Calculation of prepayment amount
+
+The prepayment amount refers to an advance payment made by a buyer to a seller before the delivery of goods or services. An invoice representing the prepayment must use the invoice type code as '386'.
+
+Where the prepayment amount is adjusted in an invoice, the amount of prepayment provided must adhere to the below calculation:
+
+`Pre-Paid amount (BT-113) = ∑(Prepayment VAT category Taxable Amount (KSA-31)) + ∑(Prepayment VAT Category Tax Amount (KSA-32))`
+
+In addition, where the prepayment amount is adjusted in an invoice, document references related to prepayment invoice(s) must be provided in the additional invoice line(s) with values of principle supplies being 0 (zero) for that invoice line(s):
+- **Prepayment ID (KSA-26)** – Sequential invoice number (BT-1) of the prepayment invoice(s)
+- **Prepayment Issue Date (KSA-28)** – Issue date (BT-2) of the prepayment invoice(s)
+- **Prepayment Issue Time (KSA-29)** – Issue time (KSA-25) of the prepayment invoice(s)
+- **Prepayment Document Type Code (KSA-30)** – Invoice type code (BT-3) must be 386
+
+UBL example (adjustment of the prepayment amount from the final invoice amount):
+```xml
+<!--Adjustment of prepayment amount--> 
+<cac:LegalMonetaryTotal>
+<cbc:LineExtensionAmount currencyID="SAR">200</cbc:LineExtensionAmount>
+<cbc:TaxExclusiveAmount currencyID="SAR">200</cbc:TaxExclusiveAmount>
+<cbc:TaxInclusiveAmount currencyID="SAR">230</cbc:TaxInclusiveAmount>
+<cbc:PrepaidAmount currencyID="SAR">100</cbc:PrepaidAmount> <!-- (1) -->
+<cbc:PayableAmount currencyID="SAR">130</cbc:PayableAmount>
+</cac:LegalMonetaryTotal>
+<!--Additional invoice line for prepayment amount adjustment--> 
+<cac:InvoiceLine>
+<cbc:ID>2</cbc:ID>
+<cbc:InvoicedQuantity unitCode="PCE">0.00</cbc:InvoicedQuantity>
+<cbc:LineExtensionAmount currencyID="SAR">0.00</cbc:LineExtensionAmount> <!-- (10) -->
+<!-- document reference of the prepayment invoice-->
+<cac:DocumentReference> 
+<cbc:ID>46531</cbc:ID> <!-- (2) -->
+<cbc:IssueDate>2021-07-31</cbc:IssueDate> <!-- (3) -->
+<cbc:IssueTime>12:28:17</cbc:IssueTime> <!-- (4) -->
+<cbc:DocumentTypeCode>386</cbc:DocumentTypeCode> <!-- (5) -->
+</cac:DocumentReference>
+<cac:TaxTotal>
+<cbc:TaxAmount currencyID="SAR">0.00</cbc:TaxAmount> <!-- (10) -->
+<cbc:RoundingAmount currencyID="SAR">0.00</cbc:RoundingAmount> <!-- (10) -->
+<!-- breakdown of the prepayment amount -->
+<cac:TaxSubtotal> 
+<cbc:TaxableAmount currencyID="SAR">86.96</cbc:TaxableAmount> <!-- (6) -->
+<cbc:TaxAmount currencyID="SAR">13.04</cbc:TaxAmount> <!-- (7) -->
+<cac:TaxCategory>
+<cbc:ID>S</cbc:ID> <!-- (8) -->
+<cbc:Percent>15.00</cbc:Percent> <!-- (9) -->
+<cac:TaxScheme>
+<cbc:ID>VAT</cbc:ID>
+</cac:TaxScheme>
+</cac:TaxCategory>
+</cac:TaxSubtotal>
+</cac:TaxTotal>
+<cac:Item>
+ <cbc:Name>Prepayment adjustment</cbc:Name>
+<cac:ClassifiedTaxCategory>
+ <cbc:ID>S</cbc:ID>
+ <cbc:Percent>15</cbc:Percent>
+ <cac:TaxScheme>
+<cbc:ID>VAT</cbc:ID>
+ </cac:TaxScheme>
+</cac:ClassifiedTaxCategory>
+</cac:Item>
+<cac:Price>
+ <cbc:PriceAmount currencyID="SAR">0.00</cbc:PriceAmount> <!-- (10) -->
+</cac:Price>
+</cac:InvoiceLine>
+```
+Legend: (1) Adjustment of Prepayment Amount = sum of (6) and (7). (2) Prepayment ID (KSA-26). (3) Prepayment Issue Date (KSA-28). (4) Prepayment Issue Time (KSA-29). (5) Prepayment Document Type Code (KSA-30), must be '386'. (6) Prepayment VAT category Taxable Amount (KSA-31) for category S rate 15%. (7) Prepayment VAT Category Tax Amount (KSA-32) = (6) × (VAT rate ÷ 100). (8) Prepayment VAT category code (KSA-33). (9) Prepayment VAT rate (KSA-34). (10) Item net price (BT-146), Item line net amount (BT-131), line VAT amount (KSA-11) and line amount with VAT (KSA-12) for the additional invoice line with document reference must be 0 (Zero).
+
+UBL example (adjustment of MULTIPLE prepayment amounts) — includes additional invoice lines 2, 3, 4, each referencing a different prepayment invoice with its own tax category/rate (E 0%, S 15%, S 5% examples), all following the same pattern as above, with (11) noting the Prepayment VAT rate for a prepayment invoice issued under a different (earlier) VAT rate before a rate change. Full XML retained as in source document (multi-line prepayment adjustment block) — see original PDF pages 22–25 for the complete four-invoice-line example if needed; structurally identical to the single-prepayment example above, repeated per prepayment reference.
+
+### 10.6 Calculation of VAT
+
+One VAT Breakdown shall be provided for each distinct combination of VAT category code and VAT rate found in either the line VAT information or the document level allowance or the document level charge.
+
+For each distinct combination:
+
+`VAT category taxable amount (BT-116) = ∑(Invoice line net amounts (BT-131)) + Document level charge amount (BT-99) − Document level allowance amount (BT-92)`
+
+`VAT category tax amount (BT-117) = VAT category taxable amount (BT-116) × (VAT rate (BT-119) ÷ 100)`
+
+For VAT Breakdown where the VAT Category is "Not subject to VAT" (O), the VAT category tax amount shall be zero.
+
+UBL example of VAT Breakdown calculation:
+```xml
+<!-- Charge on document level --> 
+<cac:AllowanceCharge>
+ <cbc:ChargeIndicator>true</cbc:ChargeIndicator>
+ <cbc:AllowanceChargeReasonCode>CG</cbc:AllowanceChargeReasonCode>
+ <cbc:AllowanceChargeReason>Cleaning</cbc:AllowanceChargeReason>
+ <cbc:Amount currencyID="SAR">200</cbc:Amount> <!-- (1) Document level charge, category S rate 15% -->
+ <cac:TaxCategory>
+ <cbc:ID>S</cbc:ID>
+ <cbc:Percent>15</cbc:Percent>
+ <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
+ </cac:TaxCategory>
+</cac:AllowanceCharge>
+<!-- Allowance on document level --> 
+<cac:AllowanceCharge>
+ <cbc:ChargeIndicator>false</cbc:ChargeIndicator>
+ <cbc:AllowanceChargeReasonCode>95</cbc:AllowanceChargeReasonCode>
+ <cbc:AllowanceChargeReason>Discount</cbc:AllowanceChargeReason>
+ <cbc:Amount currencyID="SAR">100</cbc:Amount> <!-- (11) Document level allowance, category S rate 15% -->
+ <cac:TaxCategory>
+ <cbc:ID>S</cbc:ID>
+ <cbc:Percent>15</cbc:Percent>
+ <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
+ </cac:TaxCategory>
+</cac:AllowanceCharge>
+<!-- VAT breakdown --> 
+<cac:TaxTotal>
+ <cbc:TaxAmount currencyID="SAR">885</cbc:TaxAmount>
+ <cac:TaxSubtotal> <!-- (22) VAT Breakdown category S, rate 15% -->
+ <cbc:TaxableAmount currencyID="SAR">5900</cbc:TaxableAmount> <!-- (33) taxable amount = sum of line amount (lines 1 and 3) + charge − allowance where category S rate 15% -->
+ <cbc:TaxAmount currencyID="SAR">885</cbc:TaxAmount> <!-- (44) tax amount = taxable amount × (rate÷100) -->
+ <cac:TaxCategory>
+ <cbc:ID>S</cbc:ID>
+ <cbc:Percent>15</cbc:Percent>
+ <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
+ </cac:TaxCategory>
+ </cac:TaxSubtotal>
+ <cac:TaxSubtotal> <!-- (55) VAT Breakdown category E, rate 0% -->
+ <cbc:TaxableAmount currencyID="SAR">3000</cbc:TaxableAmount>
+ <cbc:TaxAmount currencyID="SAR">0</cbc:TaxAmount>
+ <cac:TaxCategory>
+ <cbc:ID>E</cbc:ID>
+ <cbc:Percent>0</cbc:Percent>
+ <cbc:TaxExemptionReason>Reason for tax exempt</cbc:TaxExemptionReason>
+ <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
+ </cac:TaxCategory>
+ </cac:TaxSubtotal>
+</cac:TaxTotal>
+<!-- Invoice line with VAT 15% --> 
+<cac:InvoiceLine>
+<cbc:ID>1</cbc:ID>
+ <cbc:Note>Testing note on line level</cbc:Note>
+ <cbc:InvoicedQuantity unitCode="PCE">10</cbc:InvoicedQuantity>
+ <cbc:LineExtensionAmount currencyID="SAR">5000.00</cbc:LineExtensionAmount>
+ <cac:ClassifiedTaxCategory>
+ <cbc:ID>S</cbc:ID>
+ <cbc:Percent>15.00</cbc:Percent>
+ <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
+ </cac:ClassifiedTaxCategory>
+</cac:InvoiceLine>
+<!-- Invoice line with VAT 0% --> 
+<cac:InvoiceLine>
+ <cbc:ID>2</cbc:ID>
+ <cbc:InvoicedQuantity unitCode="PCE">10</cbc:InvoicedQuantity>
+ <cbc:LineExtensionAmount currencyID="SAR">3000.00</cbc:LineExtensionAmount>
+ <cac:ClassifiedTaxCategory>
+ <cbc:ID>E</cbc:ID>
+ <cbc:Percent>0.0</cbc:Percent>
+ <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
+ </cac:ClassifiedTaxCategory>
+</cac:InvoiceLine>
+<!-- Invoice line with VAT 15% --> 
+<cac:InvoiceLine>
+ <cbc:ID>3</cbc:ID>
+ <cbc:InvoicedQuantity unitCode="PCE">10</cbc:InvoicedQuantity>
+ <cbc:LineExtensionAmount currencyID="SAR">800.00</cbc:LineExtensionAmount>
+ <cac:ClassifiedTaxCategory>
+ <cbc:ID>S</cbc:ID>
+ <cbc:Percent>15.00</cbc:Percent>
+ <cac:TaxScheme><cbc:ID>VAT</cbc:ID></cac:TaxScheme>
+ </cac:ClassifiedTaxCategory>
+</cac:InvoiceLine>
+```
+
+---
+
+## 11 Rounding
+
+Rounding a numerical value means replacing it by another value that is approximately equal but has a shorter, simpler, or more explicit representation.
+
+**Rounding shall be performed by using "half-up" rounding.** Half-up means that half-way values are always rounded up.
+
+**Use case examples:**
+- For rounding to two decimals, use the half-up rule on the third decimal. If the third decimal is exactly 5 or higher, round up, else down.
+  - 123.4949 → 123.49
+  - 123.4951 → 123.50
+- For rounding to four decimal places, use the fifth decimal. If the fifth decimal is exactly 5 or higher, round up.
+  - 123.49494999 → 123.4949
+  - 123.49495001 → 123.4950
+
+**Rules to minimize risk of differences due to rounding:**
+- All document level totals shall be rounded to two decimals for accounting;
+- Rounding shall be done on the final calculation results not on any intermediate results;
+- VAT category tax amount (BT-110) shall be rounded on document level and not as a summation of rounded Invoice line VAT amounts.
+
+---
+
+## 12 Code lists
+
+### 12.1 Introduction
+
+Contains the subsets of the restricted set of codes used in the mandated electronic invoice. Each list is the set of codes that can be used within certain fields in the invoice and must be abided by to be compliant.
+
+### 12.2 Code list for invoice type code (BT-3)
+
+Document location: `cbc:InvoiceTypeCode`
+Source code list: Subset of UN/CEFACT code list 1001, D.16B
+
+UBL contains a list of values to indicate the document type. The UBL document types reflecting KSA VAT Law types are Invoice, Debit note, Credit note, and Self-billed invoice. KSA VAT Law also requires defining a Simplified Tax Invoice — indicated via the standard UBL attribute "name," where the first two characters differentiate between Tax Invoice, Simplified Tax Invoice, and other document types. Additional flags indicating transaction type are the final four positions in the "name" attribute. The UBL Message type is "Invoice" for all document types.
+
+**Saudi Arabia invoice subtypes (KSA-2):**
+
+| Subtype | Description |
+|---|---|
+| Tax Invoice | The standard document/message claiming payment for goods or services supplied under conditions agreed between seller and buyer. |
+| Simplified Tax Invoice | The simplified document/message claiming payment for goods or services supplied under conditions agreed between seller and buyer. Contains a lower number of mandatory fields per KSA VAT regulation Article 53 (para 8). |
+
+**Valid invoice type codes for Saudi Arabia:**
+
+| UN/CEFACT code (BT-3) | Name | Saudi Arabia invoice subtype (KSA-2) | Description | UBL Message type |
+|---|---|---|---|---|
+| 388 | Tax invoice | 01 = tax invoice; 02 = simplified tax invoice | Document/message claiming payment for goods or services supplied under conditions agreed between seller and buyer. | Invoice |
+| 386 | Prepayment Invoice | — | Document/message claiming advance payment for goods or services supplied under conditions agreed between seller and buyer. | Invoice |
+| 383 | Debit note | — | Document/message for providing debit information to the relevant party. | Invoice |
+| 381 | Credit note | — | Document/message for providing credit information to the relevant party. | Credit note |
+
+**NOTE on UN/EDIFACT code list 1001 compliance:**
+- Tax Invoice: code 388, subtype 01. e.g. `<cbc:InvoiceTypeCode name="0100000">388</cbc:InvoiceTypeCode>`
+- Simplified Tax Invoice: code 388, subtype 02. e.g. `<cbc:InvoiceTypeCode name="0200000">388</cbc:InvoiceTypeCode>`
+- Tax invoice debit note: code 383, subtype 01. e.g. `<cbc:InvoiceTypeCode name="0100000">383</cbc:InvoiceTypeCode>`
+- Simplified debit note: code 383, subtype 02. e.g. `<cbc:InvoiceTypeCode name="0200000">383</cbc:InvoiceTypeCode>`
+- Tax invoice credit note: code 381, subtype 01. e.g. `<cbc:InvoiceTypeCode name="0100000">381</cbc:InvoiceTypeCode>`
+- Simplified credit note: code 381, subtype 02. e.g. `<cbc:InvoiceTypeCode name="0200000">381</cbc:InvoiceTypeCode>`
+- Prepayment Tax Invoice: code 386, subtype 01. e.g. `<cbc:InvoiceTypeCode name="0100000">386</cbc:InvoiceTypeCode>`
+- Prepayment Simplified Tax Invoice: code 386, subtype 02. e.g. `<cbc:InvoiceTypeCode name="0200000">386</cbc:InvoiceTypeCode>`
+
+### 12.3 Country code
+
+All country codes shall be the alpha-2 code from ISO 3166-1.
+Document location: `cac:CountryCode/cbc:IdentificationCode`
+Source code list: ISO 3166 issued by General Authority for Statistics
+
+### 12.4 Currency code
+
+All currencies shall be the alphabetic code from ISO 4217:2015.
+Document location: `cbc:DocumentCurrencyCode`, `cbc:TaxCurrencyCode`, `cbc:*/@currencyID`
+Source code list: ISO 4217:2015
+
+### 12.5 VAT categories code
+
+A subset of values from UN/CEFACT code list 5305, D.16B shall be used.
+Document location: `cac:ClassifiedTaxCategory/cbc:ID`, `cac:TaxCategory/cbc:ID`
+Source code list: Subset of UN/CEFACT code list 5305, D.16B
+
+**Valid values for the electronic invoice:**
+
+| Code | Description | Exemption reason code | English Text |
+|---|---|---|---|
+| E | Exempt from VAT | VATEX-SA-29 | Financial services mentioned in Article 29 of the VAT Regulations |
+| E | | VATEX-SA-29-7 | Life insurance services mentioned in Article 29 of the VAT Regulations |
+| E | | VATEX-SA-30 | Real estate transactions mentioned in Article 30 of the VAT Regulations |
+| S | Standard rate | — | — |
+| Z | Zero rated goods | VATEX-SA-32 | Export of goods |
+| Z | | VATEX-SA-33 | Export of services |
+| Z | | VATEX-SA-34-1 | The international transport of Goods |
+| Z | | VATEX-SA-34-2 | International transport of passengers |
+| Z | | VATEX-SA-34-3 | Services directly connected and incidental to a Supply of international passenger transport |
+| Z | | VATEX-SA-34-4 | Supply of a qualifying means of transport |
+| Z | | VATEX-SA-34-5 | Any services relating to Goods or passenger transportation, as defined in article twenty five of these Regulations |
+| Z | | VATEX-SA-35 | Medicines and medical equipment |
+| Z | | VATEX-SA-36 | Qualifying metals |
+| Z | | VATEX-SA-EDU | Private education to citizen |
+| Z | | VATEX-SA-HEA | Private healthcare to citizen |
+| Z | | VATEX-SA-MLTRY | Supply of qualified military goods |
+| O | Services outside scope of tax / Not subject to VAT | VATEX-SA-OOS | Reason is free text, to be provided by the taxpayer on case to case basis. |
+
+### 12.6 Payment means type code
+
+Shall be from UN/CEFACT code list 4461, D.16B.
+Document location: `cac:PaymentMeans/cbc:PaymentMeansCode`
+Source code list: Subset of UN/CEFACT code list 4461, D.16B
+
+**Valid values for Saudi Arabia:**
+
+| Code | Description |
+|---|---|
+| 10 | In cash |
+| 30 | Credit |
+| 42 | Payment to bank account |
+| 48 | Bank card |
+| 1 | Instrument not defined (Free text) |
+
+### 12.7 Recommended code list for units of measure
+
+Recommended to be from UN/ECE Recommendation 20, Revision 16 (2020)
+Document location: `ubl:Invoice/cac:InvoiceLine/cbc:InvoicedQuantity@unitCode`
+
+### 12.8 Recommended code list for Reason for Allowances in an Invoice
+
+Allowance reason code shall be from UNTDID 5189 code list
+Document location: `cac:AllowanceCharge/cbc:AllowanceChargeReasonCode`
+
+### 12.9 Recommended code list for Reason for Charges in an Invoice
+
+Charge reason code shall be from UNTDID 7161 code list
+Document location: `cac:AllowanceCharge/cbc:AllowanceChargeReasonCode`
+
+---
+
+## 13 UBL schemas and namespaces
+
+XML schemas used:
+- UBL Invoice 2.1 (main schema) with the target namespace `urn:oasis:names:specification:ubl:schema:xsd:Invoice-2`
+- `http://docs.oasis-open.org/ubl/os-UBL-2.1/xsd/common/` (common schemas)
+
+---
+
+## 14 Transaction Validation Rules
+
+### 14.1 Introduction
+
+The transaction validation rules are the set of rules, formats, and boundaries that the XML invoice must follow, including:
+- **Business Rules - Integrity Constraints (BR)**: Governs the entire XML e-invoice at the highest level; dictate the general format and fields to be included. Subset of ISO EN16931 standards.
+- **Business Rules - Conditions (BR-CO)**: The conditions of each field and its contents
+- **Business Rules - VAT Standard Rate (BR-S)**: Rules for fields that must hold true when line items have a standard VAT rate
+- **Business Rules - VAT Zero Rate (BR-Z)**: Rules for fields that must hold true when line items have a zero VAT rate
+- **Business Rules - Exempted from VAT (BR-E)**: Rules for fields that must hold true when line items are exempt from VAT
+- **Business Rules - Services outside scope of tax / Not subject to VAT (BR-O)**: Rules for fields that must hold true for such line items
+- **Business Rules - Code Lists (BR-CL)**: List of general codes used inside field lists
+- **Business Rules - Decimals (BR-DEC)**: Rules governing decimals within line item details
+- **KSA - Business Rules (BR-KSA)**
+- **KSA - Decimal Rules (BR-KSA-DEC)**
+- **KSA - Code Lists (BR-KSA-CL)**
+- **KSA - EN16931 (BR-KSA-EN16931)**
+- **KSA - Formats (BR-KSA-F)**
+
+### 14.2 Business rules - integrity constraints (BR)
+
+| Rule | Message | Target/Context | Usage (XPath) |
+|---|---|---|---|
+| BR-02 | An Invoice shall have an Invoice number (BT-1). | Invoice | `/ubl:Invoice/cbc:ID` |
+| BR-03 | An Invoice shall have an Invoice issue date (BT-2). | Invoice | `/ubl:Invoice/cbc:IssueDate` |
+| BR-04 | An Invoice shall have an Invoice type code (BT-3). | Invoice | `/ubl:Invoice/cbc:InvoiceTypeCode` |
+| BR-05 | An Invoice shall have an Invoice currency code (BT-5). | Invoice | `/ubl:Invoice/cbc:DocumentCurrencyCode` |
+| BR-06 | An Invoice shall contain the Seller name (BT-27). | Invoice | `/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName` |
+| BR-08 | An Invoice shall contain the Seller postal address (BG-5). | Seller | `/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress` |
+| BR-09 | The Seller postal address (BG-5) shall contain a Seller country code (BT-40). | Seller postal address | `/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode` |
+| BR-10 | An Invoice shall contain the Buyer postal address (BG-8). Not applicable for simplified tax invoices and associated credit/debit notes (KSA-2, position 1&2 = 02). | Customer | `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress` |
+| BR-13 | An Invoice shall have the Invoice total amount without VAT (BT-109). | Document totals | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount` |
+| BR-14 | An Invoice shall have the Invoice total amount with VAT (BT-112). | Document totals | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount` |
+| BR-15 | An Invoice shall have the Amount due for payment (BT-115). | Document totals | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount` |
+| BR-16 | An Invoice shall have at least one Invoice line (BG-25) | Invoice | `/ubl:Invoice/cac:InvoiceLine` |
+| BR-21 | Each Invoice line (BG-25) shall have an Invoice line identifier (BT-126). | Invoice line | `/ubl:Invoice/cac:InvoiceLine/cbc:ID` |
+| BR-22 | Each Invoice line (BG-25) shall have an Invoiced quantity (BT-129). | Invoice line | `/ubl:Invoice/cac:InvoiceLine/cbc:InvoicedQuantity` |
+| BR-24 | Each Invoice line (BG-25) shall have an Invoice line net amount (BT-131). | Invoice line | `/ubl:Invoice/cac:InvoiceLine/cbc:LineExtensionAmount` |
+| BR-25 | Each Invoice line (BG-25) shall contain the Item name (BT-153). | Item information | `/ubl:Invoice/cac:InvoiceLine/cac:Item/cbc:Name` |
+| BR-26 | Each Invoice line (BG-25) shall contain the Item net price (BT-146). | Price details | `/ubl:Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount` |
+| BR-31 | Each Document level allowance (BG-20) shall have a Document level allowance amount (BT-92). | Document level allowances | `/ubl:Invoice/cac:AllowanceCharge[cbc:ChargeIndicator=false()]/cbc:Amount` |
+| BR-32 | Each Document level allowance (BG-20) shall have a Document level allowance VAT category code (BT-95). | Document level allowances | `/ubl:Invoice/cac:AllowanceCharge[cbc:ChargeIndicator=false()]/cac:TaxCategory/cbc:ID` |
+| BR-36 | Each Document level charge (BG-21) shall have a Document level charge amount (BT-99). | Document level charges | `/ubl:Invoice/cac:AllowanceCharge[cbc:ChargeIndicator=true()]/cbc:Amount` |
+| BR-37 | Each Document level charge (BG-21) shall have a Document level charge VAT category code (BT-102). | Document level charges | `/ubl:Invoice/cac:AllowanceCharge[cbc:ChargeIndicator=true()]/cac:TaxCategory/cbc:ID` |
+| BR-41 | Each Invoice line allowance (BG-27) shall have an Invoice line allowance amount (BT-136). | Invoice line allowances | `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge[cbc:ChargeIndicator=false()]/cbc:Amount` |
+| BR-43 | Each Invoice line charge (BG-28) shall have an Invoice line charge amount (BT-141). | Invoice line charges | `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge[cbc:ChargeIndicator=true()]/cbc:Amount` |
+| BR-45 | Each VAT breakdown (BG-23) shall have a VAT category taxable amount (BT-116). | VAT breakdown | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount` |
+| BR-46 | Each VAT breakdown (BG-23) shall have a VAT category tax amount (BT-117). | VAT breakdown | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` |
+| BR-47 | Each VAT breakdown (BG-23) shall be defined through a VAT category code (BT-118). | VAT breakdown | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID` |
+| BR-48 | Each VAT breakdown (BG-23) shall have a VAT category rate (BT-119), except if the Invoice is not subject to VAT. | VAT breakdown | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:Percent` |
+| BR-49 | A Payment instruction (BG-16) shall specify the Payment means type code (BT-81). | Payment instructions | `/ubl:Invoice/cac:PaymentMeans/cbc:PaymentMeansCode` |
+| BR-53 | If the VAT accounting currency code (BT-6) is present, then the Invoice total VAT amount in accounting currency (BT-111) shall be provided. | Document totals | `/ubl:Invoice/cac:TaxTotal/cbc:TaxAmount` |
+| BR-55 | Each Preceding Invoice reference (BG-3) shall contain a Preceding Invoice reference (BT-25). | Preceding invoice reference | `/ubl:Invoice/cac:BillingReference/cac:InvoiceDocumentReference/cbc:ID` |
+
+### 14.3 Business rules – conditions (BR-CO)
+
+| Rule | Message | Target/Context | Usage (XPath) |
+|---|---|---|---|
+| BR-CO-04 | Each Invoice line (BG-25) shall be categorized with an Invoiced item VAT category code (BT-151). | Invoice line | `/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:ClassifiedTaxCategory/cbc:ID` |
+| BR-CO-10 | Sum of Invoice line net amount (BT-106) = Σ Invoice line net amount (BT-131). | Document totals | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount` |
+| BR-CO-11 | Sum of allowances on document level (BT-107) = Σ Document level allowance amount (BT-92). | Document totals | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount` |
+| BR-CO-12 | Sum of charges on document level (BT-108) = Σ Document level charge amount (BT-99). | Document totals | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount` |
+| BR-CO-13 | Invoice total amount without VAT (BT-109) = Σ Invoice line net amount (BT-131) − Sum of allowances on document level (BT-107) + Sum of charges on document level (BT-108). | Document totals | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount` |
+| BR-CO-14 | Invoice total VAT amount (BT-110) = Σ VAT category tax amount (BT-117). | Document totals | `/ubl:Invoice/cac:TaxTotal/cbc:TaxAmount` |
+| BR-CO-15 | Invoice total amount with VAT (BT-112) = Invoice total amount without VAT (BT-109) + Invoice total VAT amount (BT-110). | Document totals | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount` |
+| BR-CO-16 | Amount due for payment (BT-115) = Invoice total amount with VAT (BT-112) − Pre-Paid amount (BT-113) + Rounding amount (BT-114) | Document totals | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount` |
+| BR-CO-17 | VAT category tax amount (BT-117) = VAT category taxable amount (BT-116) x (VAT category rate (BT-119)/100), rounded to two decimals. | VAT breakdown | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` |
+| BR-CO-18 | An Invoice shall at least have one VAT breakdown group (BG-23). | VAT breakdown | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal` |
+
+### 14.4 Business rules - VAT standard and reduced rate (BR-S)
+
+| Rule | Message | Context (XPath) |
+|---|---|---|
+| BR-S-06 | In a Document level allowance (BG-20) where the Document level allowance VAT category code (BT-95) is "Standard rated," the Document level allowance VAT rate (BT-96) shall be greater than zero. | `cac:AllowanceCharge[cbc:ChargeIndicator=false()]/cac:TaxCategory[normalize-space(cbc:ID)='S'][cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']` → `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:Percent` |
+| BR-S-07 | In a Document level charge (BG-21) where the Document level charge VAT category code (BT-102) is "Standard rated," the Document level charge VAT rate (BT-103) shall be greater than zero. | `cac:AllowanceCharge[cbc:ChargeIndicator=true()]/cac:TaxCategory[normalize-space(cbc:ID)='S'][cac:TaxScheme/normalize-space(upper-case(cbc:ID))='VAT']` → `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:Percent` |
+| BR-S-08 | In a VAT breakdown (BG-23) where the VAT category code (BT-118) is "Standard rated," the VAT category taxable amount (BT-116) shall equal the sum of Invoice line net amounts (BT-131) minus sum of Document level allowance amounts (BT-92) plus sum of Document level charge amounts (BT-99) where VAT category codes (BT-151, BT-95, BT-102) are "Standard Rate." | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount` (category S) |
+| BR-S-09 | The VAT category tax amount (BT-117) in a VAT breakdown (BG-23) where VAT category code (BT-118) is "Standard rated" shall equal the VAT category taxable amount (BT-116) multiplied by (VAT category rate (BT-119)/100), rounded to two decimals. | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` (category S) |
+| BR-S-10 | A VAT breakdown (BG-23) with VAT Category code (BT-118) "Standard rate" shall not have a VAT exemption reason code (BT-121) or VAT exemption reason text (BT-120). | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReasonCode` & `cbc:TaxExemptionReason` (category S) |
+
+### 14.5 Business rules - VAT zero rate (BR-Z)
+
+| Rule | Message | Context (XPath) |
+|---|---|---|
+| BR-Z-01 | An Invoice that contains an Invoice line (BG-25), Document level allowance (BG-20) or Document level charge (BG-21) where VAT category code (BT-151/BT-95/BT-102) is "Zero rated" shall contain in the VAT breakdown (BG-23) at least exactly one VAT category code (BT-118) equal to "Zero rated." | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID` |
+| BR-Z-05 | In an Invoice line (BG-25) where Invoiced item VAT category code (BT-151) is "Zero rated," the Invoiced item VAT rate (BT-152) shall be 0 (zero). | `/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:ClassifiedTaxCategory/cbc:Percent` (category Z) |
+| BR-Z-06 | In a Document level allowance (BG-20) where VAT category code (BT-95) is "Zero rated," the Document level allowance VAT rate (BT-96) shall be 0. | `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:Percent` (category Z, false) |
+| BR-Z-07 | In a Document level charge (BG-21) where VAT category code (BT-102) is "Zero rated," the Document level charge VAT rate (BT-103) shall be 0. | `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:Percent` (category Z, true) |
+| BR-Z-08 | In a VAT breakdown (BG-23) where VAT category code (BT-118) is "Zero rated," the VAT category taxable amount (BT-116) shall equal sum of Invoice line net amounts minus sum of Document level allowance amounts plus sum of Document level charge amounts where category codes are "Zero Rated." | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount` (category Z) |
+| BR-Z-09 | The VAT category tax amount (BT-117) in a VAT breakdown (BG-23) where VAT category code (BT-118) is "Zero rated" shall equal 0. | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` (category Z) |
+| BR-Z-10 | A VAT breakdown (BG-23) with VAT Category code (BT-118) "Zero rated" shall have a VAT exemption reason code (BT-121). | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReasonCode` (category Z) |
+
+### 14.6 Business rules - Exempted from VAT (BR-E)
+
+| Rule | Message | Context (XPath) |
+|---|---|---|
+| BR-E-01 | An Invoice that contains an Invoice line/Document level allowance/Document level charge where VAT category code is "Exempt from VAT" shall contain at least exactly one VAT breakdown (BG-23) with VAT category code (BT-118) equal to "Exempt from VAT." | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID` |
+| BR-E-05 | In an Invoice line (BG-25) where Invoiced item VAT category code (BT-151) is "Exempt from VAT," the Invoiced item VAT rate (BT-152) shall be 0. | `/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:ClassifiedTaxCategory/cbc:Percent` (category E) |
+| BR-E-06 | In a Document level allowance (BG-20) where VAT category code (BT-95) is "Exempt from VAT," Document level allowance VAT rate (BT-96) shall be 0. | `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:Percent` (category E, false) |
+| BR-E-07 | In a Document level charge (BG-21) where VAT category code (BT-102) is "Exempt from VAT," Document level charge VAT rate (BT-103) shall be 0. | `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:Percent` (category E, true) |
+| BR-E-08 | In a VAT breakdown (BG-23) where VAT category code (BT-118) is "Exempt from VAT," the VAT category taxable amount (BT-116) shall equal sum of Invoice line net amounts minus sum of Document level allowance amounts plus sum of Document level charge amounts where category codes are "Exempt from VAT." | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount` (category E) |
+| BR-E-09 | The VAT category tax amount (BT-117) in a VAT breakdown (BG-23) where category code (BT-118) equals "Exempt from VAT" shall equal 0. | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` (category E) |
+| BR-E-10 | A VAT breakdown (BG-23) with VAT Category code (BT-118) "Exempt from VAT" shall have a VAT exemption reason code (BT-121). | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReasonCode` (category E) |
+
+### 14.7 Business rules - Not subject to VAT (BR-O)
+
+| Rule | Message | Context (XPath) |
+|---|---|---|
+| BR-O-01 | An Invoice that contains an Invoice line/Document level allowance/Document level charge where VAT category code is "Not subject to VAT" shall contain at least exactly one VAT breakdown group (BG-23) with VAT category code (BT-118) equal to "Not subject to VAT." | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID` |
+| BR-O-05 | An Invoice line (BG-25) where VAT category code (BT-151) is "Not subject to VAT" shall not contain an Invoiced item VAT rate (BT-152); it shall be 0. | `/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:ClassifiedTaxCategory/cbc:Percent` (category O) |
+| BR-O-06 | A Document level allowance (BG-20) where VAT category code (BT-95) is "Not subject to VAT" shall be 0 (Zero) for Document level allowance VAT rate (BT-96). | `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:Percent` (category O, false) |
+| BR-O-07 | A Document level charge (BG-21) where VAT category code (BT-102) is "Not subject to VAT" shall have Document level charge VAT rate (BT-103) = 0. | `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:Percent` (category O, true) |
+| BR-O-08 | In a VAT breakdown (BG-23) where VAT category code (BT-118) is "Not subject to VAT," the VAT category taxable amount (BT-116) shall equal sum of Invoice line net amounts minus sum of Document level allowance amounts plus sum of Document level charge amounts where category codes are "Not subject to VAT." | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount` (category O) |
+| BR-O-09 | The VAT category tax amount (BT-117) in a VAT breakdown (BG-23) where category code (BT-118) is "Not subject to VAT" shall be 0. | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` (category O) |
+| BR-O-10 | A VAT breakdown (BG-23) with VAT Category code (BT-118) "Not subject to VAT" shall have a VAT exemption reason code (BT-121) meaning "Not subject to VAT," or a VAT exemption reason text (BT-120) "Not subject to VAT" (or the equivalent standard text in another language). | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReasonCode` (category O) |
+| BR-O-13 | An Invoice that contains a VAT breakdown group (BG-23) with VAT category code (BT-118) "Not subject to VAT" shall not contain Document level allowances (BG-20) where Document level allowance VAT category code (BT-95) is not "Not subject to VAT." | `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:ID` |
+
+### 14.8 Business rules – Code lists (BR-CL)
+
+| Rule | Message | Context |
+|---|---|---|
+| BR-CL-01 | The document type code MUST be coded by the invoice and credit note related code lists of UNTDID 1001. | `cbc:InvoiceTypeCode` / `cbc:CreditNoteTypeCode` → `/ubl:Invoice/cbc:InvoiceTypeCode` |
+| BR-CL-03 | currencyID MUST be coded using ISO code list 4217 alpha-3 | Applies to all `cbc:Amount`, `cbc:BaseAmount`, `cbc:PriceAmount`, `cbc:TaxAmount`, `cbc:TaxableAmount`, `cbc:LineExtensionAmount`, `cbc:TaxExclusiveAmount`, `cbc:TaxInclusiveAmount`, `cbc:AllowanceTotalAmount`, `cbc:ChargeTotalAmount`, `cbc:PrepaidAmount`, `cbc:PayableRoundingAmount`, `cbc:PayableAmount` elements throughout the invoice, allowance/charge, tax total, and invoice line sections. |
+| BR-CL-04 | Invoice currency code MUST be coded using ISO code list 4217 alpha-3 | `/ubl:Invoice/cbc:DocumentCurrencyCode` |
+| BR-CL-05 | Tax currency code MUST be coded using ISO code list 4217 alpha-3 | `/ubl:Invoice/cbc:TaxCurrencyCode` |
+| BR-CL-14 | Country codes in an invoice MUST be coded using ISO code list 3166-1 | `/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode`; `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cac:Country/cbc:IdentificationCode`; `/ubl:Invoice/cac:Delivery/cac:DeliveryLocation/cac:Address/cac:Country/cbc:IdentificationCode` |
+| BR-CL-16 | Payment means in an invoice MUST be coded using UNCL4461 code list | `/ubl:Invoice/cac:PaymentMeans/cbc:PaymentMeansCode` |
+| BR-CL-18 | Invoice tax categories MUST be coded using UNCL5305 code list | `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:ID`; `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID`; `/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:ClassifiedTaxCategory/cbc:ID`; `/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID` |
+
+### 14.9 Business rules – Decimals (BR-DEC)
+
+All the following require a maximum of 2 decimals:
+
+| Rule | Field | Usage (XPath) |
+|---|---|---|
+| BR-DEC-01 | Document level allowance amount (BT-92) | `/ubl:Invoice/cac:AllowanceCharge[false]/cbc:Amount` |
+| BR-DEC-02 | Document level allowance base amount (BT-93) | `/ubl:Invoice/cac:AllowanceCharge[false]/cbc:BaseAmount` |
+| BR-DEC-05 | Document level charge amount (BT-99) | `/ubl:Invoice/cac:AllowanceCharge[true]/cbc:Amount` |
+| BR-DEC-06 | Document level charge base amount (BT-100) | `/ubl:Invoice/cac:AllowanceCharge[true]/cbc:BaseAmount` |
+| BR-DEC-09 | Sum of Invoice line net amount (BT-106) | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:LineExtensionAmount` |
+| BR-DEC-10 | Sum of allowances on document level (BT-107) | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:AllowanceTotalAmount` |
+| BR-DEC-11 | Sum of charges on document level (BT-108) | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:ChargeTotalAmount` |
+| BR-DEC-12 | Invoice total amount without VAT (BT-109) | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxExclusiveAmount` |
+| BR-DEC-13 | Invoice total VAT amount (BT-110) | `/ubl:Invoice/cac:TaxTotal/cbc:TaxAmount` |
+| BR-DEC-14 | Invoice total amount with VAT (BT-112) | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:TaxInclusiveAmount` |
+| BR-DEC-15 | Invoice total VAT amount in accounting currency (BT-111) | `/ubl:Invoice/cac:TaxTotal/cbc:TaxAmount` |
+| BR-DEC-16 | Pre-Paid amount (BT-113) | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount` |
+| BR-DEC-17 | Rounding amount (BT-114) | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableRoundingAmount` |
+| BR-DEC-18 | Amount due for payment (BT-115) | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount` |
+| BR-DEC-19 | VAT category taxable amount (BT-116) | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxableAmount` |
+| BR-DEC-20 | VAT category tax amount (BT-117) | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` |
+| BR-DEC-23 | Invoice line net amount (BT-131) | `/ubl:Invoice/cac:InvoiceLine/cbc:LineExtensionAmount` |
+| BR-DEC-24 | Invoice line allowance amount (BT-136) | `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge[false]/cbc:Amount` |
+| BR-DEC-25 | Invoice line allowance base amount (BT-137) | `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge[false]/cbc:BaseAmount` |
+| BR-DEC-27 | Invoice line charge amount (BT-141) | `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge[true]/cbc:Amount` |
+| BR-DEC-28 | Invoice line charge base amount (BT-142) | `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge[true]/cbc:BaseAmount` |
+
+---
+
+## 15 KSA Specific Rules
+
+### 15.1 KSA - business rules (BR-KSA)
+
+| Rule | Message | Usage (XPath) |
+|---|---|---|
+| BR-KSA-03 | The invoice must contain a unique identifier ("UUID") (KSA-1) given by the machine that issued the document (unique message identifier for interchange process). This value must contain only letters, digits, and dashes. (In Windows OS, UUIDs are referred to as GUID.) | `/ubl:Invoice/cbc:UUID` |
+| BR-KSA-04 | The document issue date (BT-2) must be less than or equal to the current date. | `/ubl:Invoice/cbc:IssueDate` |
+| BR-KSA-05 | The invoice type code (BT-3) must be equal to one of the values from the subset of UN/CEFACT code list 1001, D.16B agreed for KSA electronic invoices (see §12.2). | `/ubl:Invoice/cbc:InvoiceTypeCode` |
+| BR-KSA-06 | The invoice transaction code (KSA-2) must exist and respect the structure **NNPNESB** where: NN (positions 1-2) = invoice subtype (01 tax invoice / 02 simplified tax invoice); P (position 3) = 3rd Party invoice transaction (0/1); N (position 4) = Nominal invoice transaction (0/1); E (position 5) = Exports invoice transaction (0/1); S (position 6) = Summary invoice transaction (0/1); B (position 7) = Self billed invoice. | `/ubl:Invoice/cbc:InvoiceTypeCode/@name` |
+| BR-KSA-07 | Self-billing is not allowed (KSA-2, position 7 cannot be "1") for export invoices (KSA-2, position 5 = 1). | `/ubl:Invoice/cbc:InvoiceTypeCode/@name` |
+| BR-KSA-08 | The seller identification (BT-29) must exist only once with one of the scheme IDs (BT-29-1): CRN (Commercial Registration number), MOM (MOMRAH license), MLS (MHRSD license), 700 (700 Number), SAG (MISA license), OTH (Other ID) — must contain only alphanumeric characters. In case of multiple commercial registrations, fill the CR of the branch for which the invoice is issued. If multiple IDs exist, use the sequence specified above. | `/ubl:Invoice/cac:AccountingSellerParty/cac:Party/cac:PartyIdentification/cbc:ID` and `/@schemeID` |
+| BR-KSA-09 | Seller address must contain street name (BT-35), building number (KSA-17), postal code (BT-38), city (BT-37), District (KSA-3), country code (BT-40). (Reference: https://splonline.com.sa/en/national-address-1/) | `/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/{cbc:StreetName, cbc:BuildingNumber, cbc:CityName, cbc:PostalZone, cbc:CitySubdivisionName, cac:Country/cbc:IdentificationCode}` |
+| BR-KSA-10 | Buyer address must contain a street (BT-50), city (BT-52), postal code (BT-53), country code (BT-55). Does NOT apply to simplified tax invoices and associated credit/debit notes (KSA-2, position 1&2 = 02). | `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/{cbc:StreetName, cbc:AdditionalStreetName, cbc:CityName, cbc:PostalZone, cac:Country/cbc:IdentificationCode}` |
+| BR-KSA-11 | An Invoice line (BG-25) where VAT category code (BT-151) is "Not subject to VAT" — invoiced item VAT rate (BT-152) shall be 0, if it exists. | `/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:ClassifiedTaxCategory/cbc:Percent` |
+| BR-KSA-12 | A Document level allowance (BG-20) where VAT category code (BT-95) is "Not subject to VAT" — Document level allowance VAT rate (BT-96) shall be 0, if it exists. | `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:Percent` |
+| BR-KSA-13 | A Document level charge (BG-21) where VAT category code (BT-102) is "Not subject to VAT" — Document level charge VAT rate (BT-103) shall be 0, if it exists. | `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:Percent` |
+| BR-KSA-14 | The buyer identification (BT-46), required only if buyer is not VAT registered, must be provided with one of scheme IDs (BT-46-1): TIN, CRN, MOM, MLS, 700, SAG, NAT, GCC, IQA, PAS, OTH — alphanumeric only. Use the sequence specified. | `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID` and `/@schemeID` |
+| BR-KSA-15 | The tax invoice (invoice type code (BT-30) = 388 AND invoice transaction code (KSA-2) has "01" as first 2 digits) must contain the supply date (KSA-5). | `/ubl:Invoice/cac:Delivery/cbc:ActualDeliveryDate` |
+| BR-KSA-16 | If Payment means code (BT-81) exists, it must contain one of the values from the UNTDID 4461 subset code list | `/ubl:Invoice/cac:PaymentMeans/cbc:PaymentMeansCode` |
+| BR-KSA-17 | Debit and credit note (invoice type code (BT-3) = 383 or 381) must contain the reason (KSA-10) for issuing. | `/ubl:Invoice/cac:PaymentMeans/cbc:InstructionNote` |
+| BR-KSA-18 | VAT category code must contain one of the values (S, Z, E, O). | `cac:AllowanceCharge/cac:TaxCategory/cbc:ID`; `cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount/cac:TaxCategory/cbc:ID`; `cac:InvoiceLine/cac:Item/cac:ClassifiedTaxCategory/cbc:ID`; `cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:ID` |
+| BR-KSA-19 | Each Document level charge (BG-21) shall have a code for the reason for document level charge (BT-105). | `/ubl:Invoice/cac:AllowanceCharge[true]/cbc:AllowanceChargeReasonCode` |
+| BR-KSA-20 | Each Invoice line charge (BG-28) shall have a code for the reason for invoice line charge (BT-145). | `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge[true]/cbc:AllowanceChargeReasonCode` |
+| BR-KSA-21 | Each Document level charge (BG-21) shall have a Reason for document level charge (BT-104). | `/ubl:Invoice/cac:AllowanceCharge[true]/cbc:AllowanceChargeReason` |
+| BR-KSA-22 | Each Invoice line charge (BG-28) shall have a Reason for invoice line charge (BT-144). | `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge[true]/cbc:AllowanceChargeReason` |
+| BR-KSA-23 | A VAT breakdown (BG-23) with VAT Category code (BT-118) "Exempt from VAT" shall have a VAT exemption reason code (BT-121). | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReasonCode` (category E) |
+| BR-KSA-24 | A VAT breakdown (BG-23) with VAT Category code (BT-118) "Not subject to VAT" shall have a VAT exception reason code (BT-121). | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReasonCode` (category O) |
+| BR-KSA-25 | If it is a simplified tax invoice or associated credit/debit note (KSA-2, position 1&2 = 02) and the tax exemption reason code (BT-121) equals VATEX-SA-EDU or VATEX-SA-HEA, then buyer name (BT-44) is mandatory. | `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName` |
+| BR-KSA-26 | If the invoice contains the previous invoice hash (KSA-13), this hash must be base64 encoded SHA256, computed as: (1) Remove `<Invoice><ext:UBLExtensions/>` block; (2) Remove `<invoice><cac:AdditionalDocumentReference/>` block where `<cbc:ID/>` = QR; (3) Remove `<invoice><cac:Signature/>` block; (4) Canonicalize the Invoice using C14N11; (5) Hash the resulting string using SHA256 to a binary object; (6) Base64 encode the binary object to generate the digest value. For the first invoice, the previous invoice hash is `NWZlY2ViNjZmZmM4NmYzOGQ5NTI3ODZjNmQ2OTZjNzljMmRiYzIzOWRkNGU5MWI0NjcyOWQ3M2EyN2ZiNTdlOQ==` (base64 SHA256 of "0"). | `/ubl:Invoice/cac:AdditionalDocumentReference/cac:Attachment/cbc:EmbeddedDocumentBinaryObject` |
+| BR-KSA-27 | The document must contain a QR code (KSA-14), and this code must be base64Binary. (See Security Features Implementation Standards.) | `/ubl:Invoice/cac:AdditionalDocumentReference/cac:Attachment/cbc:EmbeddedDocumentBinaryObject` |
+| BR-KSA-28 | If the cryptographic stamp (KSA-15) exists, it must contain the exact `urn:oasis:names:specification:ubl:signature:1` value for signature information ID. | `/ubl:Invoice/cac:Signature` |
+| BR-KSA-29 | If the cryptographic stamp (KSA-15) exists, it must contain the exact `urn:oasis:names:specification:ubl:signature:Invoice` value for referenced signature ID and signature ID. | `/ubl:Invoice/cac:Signature` |
+| BR-KSA-30 | The document cryptographic stamp (KSA-15) must contain the exact `urn:oasis:names:specification:ubl:dsig:enveloped:xades` value for signature method. | `/ubl:Invoice/cac:Signature` |
+| BR-KSA-31 | For simplified tax invoices and associated credit/debit notes (KSA-2, position 1&2 = 02), only the following are accepted: third party (position 3=1), nominal supply (position 4=1), summary transactions (position 6=1). | `/ubl:Invoice/cbc:InvoiceTypeCode/@name` |
+| BR-KSA-33 | Each invoice must have an invoice counter value (KSA-16). | `/ubl:Invoice/cac:AdditionalDocumentReference/cbc:UUID` |
+| BR-KSA-34 | The invoice counter value (KSA-16) contains only digits. | `/ubl:Invoice/cac:AdditionalDocumentReference/cbc:UUID` |
+| BR-KSA-35 | If the invoice contains a supply end date (KSA-24), then the invoice must contain a supply date (KSA-5). | `/ubl:Invoice/cac:Delivery/cbc:LatestDeliveryDate` |
+| BR-KSA-36 | If the invoice contains a supply end date (KSA-24), then this date must be ≥ supply date (KSA-5). | `/ubl:Invoice/cac:Delivery/cbc:LatestDeliveryDate` |
+| BR-KSA-37 | The seller address building number must contain 4 digits. | `/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:BuildingNumber` |
+| BR-KSA-39 | The invoice must contain the seller VAT registration number or seller group VAT number (BT-31). | `/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID` |
+| BR-KSA-40 | If it exists, the seller VAT registration number or seller group VAT registration number (BT-31) must contain 15 digits; first and last digits are "3." | `/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID` |
+| BR-KSA-42 | The buyer name (BT-44) must be present in the tax invoice and associated credit/debit notes (KSA-2, position 1&2 = 01). | `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName` |
+| BR-KSA-44 | If it exists and is NOT an export invoice (KSA-2 position 5 false), the buyer VAT registration number or buyer group VAT registration number (BT-48) must contain 15 digits; first and last digits are "3." | `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID` |
+| BR-KSA-46 | If it IS an export invoice (KSA-2 position 5 true), the buyer VAT registration number or buyer group VAT registration number (BT-48) must NOT exist. | `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyTaxScheme/cbc:CompanyID` |
+| BR-KSA-49 | If the tax exemption reason code (BT-121) is VATEX-SA-EDU or VATEX-SA-HEA, then the other buyer ID (BT-46) is mandatory and must be National ID (BT-46-1 = NAT). | `/ubl:Invoice` |
+| BR-KSA-50 | The line VAT amount (KSA-11) must be Invoice line net amount (BT-131) × (Line VAT rate (BT-152)/100). | `/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount` |
+| BR-KSA-51 | The line amount with VAT (KSA-12) must be Invoice line net amount (BT-131) + Line VAT amount (KSA-11). | `/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:RoundingAmount` |
+| BR-KSA-52 | The line VAT amount (KSA-11) is mandatory for tax invoice and associated credit/debit notes (KSA-2, position 1&2 = 01). | `/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount` |
+| BR-KSA-53 | The line amount with VAT (KSA-12) is mandatory for tax invoice and associated credit/debit notes (KSA-2, position 1&2 = 01). | `/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:RoundingAmount` |
+| BR-KSA-56 | For credit notes (BT-3 = 381) and debit notes (BT-3 = 383), the billing reference ID (BT-25) is mandatory. | `/ubl:Invoice/cac:BillingReference/cac:InvoiceDocumentReference/cbc:ID` |
+| BR-KSA-60 | Cryptographic stamp (KSA-15) must exist in simplified tax invoices and associated credit/debit notes (KSA-2, position 1&2 = 02) | `/ubl:Invoice/cac:Signature` |
+| BR-KSA-61 | Previous invoice hash (KSA-13) must exist in an invoice. | `/ubl:Invoice/cac:AdditionalDocumentReference/cac:Attachment/cbc:EmbeddedDocumentBinaryObject` |
+| BR-KSA-63 | If the buyer country code (BT-55) is "SA," then these fields are mandatory: street name (BT-50), building number (KSA-18), postal code (BT-53), city (BT-52), District (KSA-4), country code (BT-55). (Reference: https://splonline.com.sa/en/national-address-1/) | `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/{cbc:StreetName, cbc:BuildingNumber, cbc:CityName, cbc:PostalZone, cbc:CitySubdivisionName, cac:Country/cbc:IdentificationCode}` |
+| BR-KSA-64 | Seller Address Additional number (KSA-23) must be 4 digits. | `/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:PlotIdentification` |
+| BR-KSA-65 | Buyer Address Additional number (KSA-19) must be 4 digits if it exists. | `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:PlotIdentification` |
+| BR-KSA-66 | Seller postal code (BT-38) must be 5 digits. | `/ubl:Invoice/cac:AccountingSupplierParty/cac:Party/cac:PostalAddress/cbc:PostalZone` |
+| BR-KSA-67 | If the buyer country code (BT-55) is "SA," the Buyer postal code (BT-53) must be 5 digits. | `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PostalAddress/cbc:PostalZone` |
+| BR-KSA-68 | Tax currency code (BT-6) must exist in an invoice. | `/ubl:Invoice/cbc:TaxCurrencyCode` |
+| BR-KSA-69 | A VAT breakdown (BG-23) with VAT Category code (BT-118) "Zero rated" shall have a VAT exception reason code (BT-121) | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReasonCode` (category Z) |
+| BR-KSA-70 | The invoice must contain an Invoice issue time (KSA-25) in format `hh:mm:ss` (AST) or `hh:mm:ssZ` (UTC). e.g. `19:20:30` | `/ubl:Invoice/cbc:IssueTime` |
+| BR-KSA-71 | If the Invoice is a simplified invoice type and a summary invoice (KSA-2, position 1&2=02, position 6=1), the buyer name must be present | `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyLegalEntity/cbc:RegistrationName` |
+| BR-KSA-72 | If the Invoice is a simplified invoice type and a summary invoice (KSA-2, position 1&2=02, position 6=1), a supply date (KSA-5) and supply end date (KSA-24) must be present | `/ubl:Invoice/cac:Delivery/cbc:ActualDeliveryDate` and `cbc:LatestDeliveryDate` |
+| BR-KSA-73 | If Pre-Paid amount (BT-113) is provided, the following must be provided as additional invoice line(s): Prepayment ID (KSA-26) — sequential invoice number (BT-1) of the prepayment invoice(s); Prepayment Issue Date (KSA-28) — issue date (BT-2); Prepayment Issue Time (KSA-29) — issue time (KSA-25); Prepayment Document Type Code (KSA-30) — must be 386 | `/ubl:Invoice/cac:InvoiceLine/cac:DocumentReference/{cbc:ID, cbc:IssueDate, cbc:IssueTime, cbc:DocumentTypeCode}` |
+| BR-KSA-74 | Prepayment Document Type Code (KSA-30) for the Invoice line document reference must be '386'. | `/ubl:Invoice/cac:InvoiceLine/cac:DocumentReference/cbc:DocumentTypeCode` |
+| BR-KSA-75 | If Prepayment Document Type code (KSA-30) is provided in an Invoice Line, the following is mandatory in that line: Prepayment VAT category Taxable Amount (KSA-31); Prepayment VAT Category Tax Amount (KSA-32); Prepayment VAT category code (KSA-33); Prepayment VAT rate (KSA-34) | `/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/{cbc:TaxableAmount, cbc:TaxAmount, cac:TaxCategory/cbc:ID, cac:TaxCategory/cbc:Percent}` |
+| BR-KSA-76 | An Invoice line (BG-25) where Prepayment VAT category code (KSA-33) is "Zero rated" — Prepayment VAT rate (KSA-34) shall be 0. | `/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:Percent` (category Z) |
+| BR-KSA-77 | An Invoice line (BG-25) where Prepayment VAT category code (KSA-33) is "Exempt from VAT" — Prepayment VAT rate (KSA-34) shall be 0. | Same path (category E) |
+| BR-KSA-78 | An Invoice line (BG-25) where Prepayment VAT category code (KSA-33) is "Not subject to VAT" — Prepayment VAT rate (KSA-34) shall be 0. | Same path (category O) |
+| BR-KSA-79 | The Prepayment VAT Category Tax Amount (KSA-32) must be Prepayment VAT category Taxable Amount (KSA-31) × Prepayment VAT rate (KSA-34) / 100. | `/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount` |
+| BR-KSA-80 | If Pre-Paid amount (BT-113) is provided, it must equal the sum total of the Prepayment VAT category Taxable Amount (KSA-31) and Prepayment VAT Category Tax Amount (KSA-32) | `/ubl:Invoice/cac:LegalMonetaryTotal/cbc:PrepaidAmount`; `/ubl:Invoice/cac:InvoiceLine/cbc:LineExtensionAmount`; `cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount` |
+| BR-KSA-81 | The other Buyer ID (BT-46) must be present in the tax invoice and associated debit/credit notes (KSA-2, position 1&2=01), where the buyer VAT registration number or buyer group VAT registration number (BT-48) is not provided. | `/ubl:Invoice/cac:AccountingCustomerParty/cac:Party/cac:PartyIdentification/cbc:ID` |
+| BR-KSA-82 | An Invoice line (BG-25) where Prepayment Document Type Code (KSA-30) is provided — Item net price (BT-146); Invoice line allowance amount (BT-136); Invoice line charge amount (BT-141); Item line net amount (BT-131); line VAT amount (KSA-11); and line amount with VAT (KSA-12) for that line shall be 0, if exist. | `/ubl:Invoice/cac:InvoiceLine/{cac:Price/cbc:PriceAmount, cac:AllowanceCharge/cbc:Amount, cbc:LineExtensionAmount, cac:TaxTotal/cbc:TaxAmount, cac:TaxTotal/cbc:RoundingAmount}` |
+| BR-KSA-83 | A VAT breakdown (BG-23) with VAT Category code (BT-118) 'Exempt from VAT' or 'Zero rated' or 'Not subject to VAT' shall have a VAT exemption (or exception) reason text (BT-120) with one of the values from §12.5 (Tax exemption/exception reason text specific to Saudi Arabia). | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReason` |
+
+### 15.2 KSA – decimals rules (BR-KSA-DEC)
+
+| Rule | Message | Usage (XPath) |
+|---|---|---|
+| BR-KSA-DEC01 | The allowance percentage values (BT-94, BT-138) must be from 0.00 to 100.00, with maximum two decimal places. Only numerals accepted, no "%" symbol. | `/ubl:Invoice/cac:AllowanceCharge/cbc:MultiplierFactorNumeric`; `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:MultiplierFactorNumeric` |
+| BR-KSA-DEC02 | The VAT rates (BT-96, BT-103, BT-119, BT-152, KSA-34) must be from 0.00 to 100.00, with maximum two decimals. Only numerals accepted, no "%" symbol. | `/ubl:Invoice/cac:AllowanceCharge/cac:TaxCategory/cbc:Percent`; `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cbc:TaxAmount/cac:TaxCategory/cbc:Percent`; `/ubl:Invoice/cac:InvoiceLine/cac:Item/cac:ClassifiedTaxCategory/cbc:Percent`; `/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:Percent` |
+| BR-KSA-DEC03 | VAT amount at line level (KSA-11) must have a maximum two decimals. | `/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:TaxAmount` |
+| BR-KSA-DEC04 | Amount with VAT at line level (KSA-12) must have a maximum two decimals. | `/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cbc:RoundingTaxAmount` |
+| BR-KSA-DEC06 | Prepayment VAT category Taxable Amount (KSA-31) and Prepayment VAT Category Tax Amount (KSA-32) must have a maximum two decimals. | `/ubl:Invoice/cac:InvoiceLine/cac:TaxTotal/cac:TaxSubtotal/{cbc:TaxableAmount, cbc:TaxAmount}` |
+
+### 15.3 KSA – code list (BR-KSA-CL)
+
+| Rule | Message | Usage (XPath) |
+|---|---|---|
+| BR-KSA-CL01 | Currency code (BT-5) must be according to ISO 4217:2015 | All `@currencyID` attributes across amount elements (see §14.8 BR-CL-03 list, plus `cac:InvoiceLine/cac:TaxTotal/cbc:RoundingAmount`) |
+| BR-KSA-CL02 | All currencyID attributes (BT-5) must have the same value as the invoice currency code (BT-5), except for the invoice total VAT amount in accounting currency (BT-111). | Same element set as above |
+| BR-KSA-CL03 | Mime code must be according to subset of IANA code list. | `/ubl:Invoice/cac:AdditionalDocumentReference/cac:Attachment/cbc:EmbeddedDocumentBinaryObject/@mimeCode` |
+| BR-KSA-CL04 | If VAT category Code (BT-118) is 'Z', 'E' or 'O', VAT exemption (or exception) reason code (BT-121) must exist with one of the values from §12.5. | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReasonCode` |
+| BR-KSA-CL05 | If VAT exemption reason code (BT-121) exists, VAT exemption (or exception) reason text (BT-120) must exist with one of the matching values from §12.5. | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal/cac:TaxCategory/cbc:TaxExemptionReason` |
+| BR-KSA-CL06 | Code for the reason for document level charge (BT-105) and code for the reason for invoice line charge (BT-145) MUST be coded using UNTDID 7161 code list. (https://unece.org/fileadmin/DAM/trade/untdid/d16b/tred/tred7161.htm) | `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge[true]/cbc:AllowanceChargeReasonCode`; `/ubl:Invoice/cac:AllowanceCharge[true]/cbc:AllowanceChargeReasonCode` |
+
+### 15.4 KSA – EN16931 (BR-KSA-EN16931)
+
+| Rule | Message | Usage (XPath) |
+|---|---|---|
+| BR-KSA-EN16931-01 | Business process (BT-23) must be "reporting:1.0". | `/ubl:Invoice/cbc:ProfileID` |
+| BR-KSA-EN16931-02 | VAT accounting currency code (BT-6) must be "SAR" | `/ubl:Invoice/cbc:TaxCurrencyCode` |
+| BR-KSA-EN16931-03 | Allowance/Charge amount (BT-92, BT-99, BT-136, BT-141) must equal base amount (BT-93, BT-100, BT-137, BT-142) × percentage (BT-94, BT-101, BT-138, BT-143) / 100 if base amount and percentage exist. | `/ubl:Invoice/cac:AllowanceCharge/cbc:Amount`; `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:Amount` |
+| BR-KSA-EN16931-04 | Allowance/Charge base amount (BT-93, BT-100, BT-137, BT-142) must be provided when allowance/charge percentage (BT-94, BT-101, BT-138, BT-143) is provided. | `/ubl:Invoice/cac:AllowanceCharge/cbc:BaseAmount`; `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:BaseAmount` |
+| BR-KSA-EN16931-05 | Allowance/Charge percentage (BT-94, BT-101, BT-138, BT-143) must be provided when the allowance/charge base amount (BT-93, BT-100, BT-137, BT-142) is provided. | `/ubl:Invoice/cac:AllowanceCharge/cbc:MultiplierFactorNumeric`; `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:MultiplierFactorNumeric` |
+| BR-KSA-EN16931-06 | Charge on price level (BG-29) is allowed. The value of Indicator should be 'True'. | `/ubl:Invoice/cac:InvoiceLine/cac:Price/cac:AllowanceCharge/cbc:ChargeIndicator` |
+| BR-KSA-EN16931-07 | Item net price (BT-146) must equal (Gross price (BT-148) − Allowance amount (BT-147)) when gross price is provided. | `/ubl:Invoice/cac:InvoiceLine/cac:Price/cbc:PriceAmount` |
+| BR-KSA-EN16931-08 | Only one tax total (BG-22) with tax subtotals must be provided. (Refer §10.6 Calculation of VAT) | `/ubl:Invoice/cac:TaxTotal/cac:TaxSubtotal` |
+| BR-KSA-EN16931-09 | Only one tax total (BG-22) without tax subtotals must be provided when tax currency code is provided. | `/ubl:Invoice/cac:TaxTotal` |
+| BR-KSA-EN16931-11 | Invoice line net amount (BT-131) must equal (Invoiced quantity (BT-129) × (Item net price (BT-146) / item price base quantity (BT-149))) + Sum of invoice line charge amount (BT-141) − Sum of invoice line allowance amount (BT-136) | `/ubl:Invoice/cac:InvoiceLine/cbc:LineExtensionAmount` |
+| BR-KSA-EN16931-12 | Base quantity (BT-149) must be a positive number above zero. | `/ubl:Invoice/cac:InvoiceLine/cac:Price/cbc:BaseQuantity` |
+
+### 15.5 KSA – formats (BR-KSA-F)
+
+| Rule | Message | Usage (XPath) |
+|---|---|---|
+| BR-KSA-F-01 | A date MUST be formatted YYYY-MM-DD. | `cbc:IssueDate`, `cbc:DueDate`, `cbc:ActualDeliveryDate` throughout (invoice header, billing reference, delivery, invoice-line document reference) |
+| BR-KSA-F-02 | Allowance/Charge Indicator value MUST equal 'false'/'true' respectively | `/ubl:Invoice/cac:AllowanceCharge/cbc:ChargeIndicator`; `/ubl:Invoice/cac:InvoiceLine/cac:AllowanceCharge/cbc:ChargeIndicator` |
+| BR-KSA-F-03 | Document MUST NOT contain empty elements. | `//*[not(*) and not(normalize-space())]` |
+| BR-KSA-F-04 | All the document amounts and quantities must be positive. | All `cbc:Amount`, `cbc:BaseAmount`, `cbc:TaxAmount`, `cbc:TaxableAmount`, totals, `cbc:PriceAmount`, `cbc:InvoicedQuantity` elements throughout header, line, and tax sections |
+| BR-KSA-F-05 | Prepayment Issue Time (KSA-29) must be format `hh:mm:ss` (AST) or `hh:mm:ssZ` (UTC). e.g. `19:20:30` | `/ubl:Invoice/cac:InvoiceLine/cac:DocumentReference/cbc:IssueTime` |
+| BR-KSA-F-06 | Minimum & Maximum character limits should be maintained as per data dictionary for every data field | Applies to: `cbc:ID`, `cbc:Note`, `cac:OrderReference/cbc:ID`, `cac:BillingReference/cac:InvoiceDocumentReference/cbc:ID`, `cac:ContractDocumentReference/cbc:ID`, seller/buyer postal address name fields, `cac:PartyLegalEntity/cbc:RegistrationName`, `cac:PaymentMeans/cbc:InstructionNote`, `cac:PayeeFinancialAccount/{cbc:PaymentNote, cbc:ID}`, `cac:TaxCategory/cbc:TaxExemptionReason`, invoice line ID/quantity-unit/item-name/identifiers, price base quantity unit, allowance/charge reason text |
+
+---
+
+## 16 File Name Specification
+
+Electronic Invoice files shall be named according to the following convention:
+
+`Seller Identification + "_" + Date + "T" + Time + "_" + IRN.xml`
+
+| Value | Term ID | Description |
+|---|---|---|
+| Seller Identification | BT-31 | Seller VAT number |
+| Date | BT-2 | Invoice issue date with dashes ("-") removed |
+| Time | KSA-25 | Invoice issue time with colons (":") removed |
+| Invoice number | BT-1 | Invoice number with all non-alphanumeric characters replaced by a dash ("-") |
+
+**Example:** `3xxxxxxxxx1xxx3_20210526T132400_2021-05-26-23555.xml`
+
+---
+
+## 17 QR code specifications
+
+See Security Features Implementation Standards.
+
+## 18 Electronic signature specifications
+
+See Security Features Implementation Standards.
