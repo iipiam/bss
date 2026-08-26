@@ -80,6 +80,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { usePermissions } from "@/hooks/usePermissions";
 import type { Permission } from "@shared/permissions";
+import { generalOverviewTranslations } from "@/i18n/translations";
 
 interface MenuItem {
   title: string;
@@ -93,7 +94,8 @@ interface MenuItem {
 
 export function AppSidebar() {
   const [location] = useLocation();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const overviewText = language === "Arabic" ? generalOverviewTranslations.Arabic : generalOverviewTranslations.English;
   const { logout, restaurant, accountType } = useAuth();
   const { toast } = useToast();
   const [helpDialogOpen, setHelpDialogOpen] = useState(false);
@@ -196,7 +198,7 @@ export function AppSidebar() {
 
   // Admin-only menu items
   const adminOnlyItems: MenuItem[] = [
-    { title: "General Overview", url: "/general-overview", icon: Gauge, testId: "general-overview", gradient: "from-amber-500 to-orange-500", businessTypes: ['restaurant'] },
+    { title: overviewText.title, url: "/general-overview", icon: Gauge, testId: "general-overview", gradient: "from-amber-500 to-orange-500", businessTypes: ['restaurant'] },
     { title: t.activityLog || "Activity Log", url: "/activity-log", icon: Activity, testId: "activity-log", gradient: "from-violet-500 to-purple-500", permission: 'users' },
   ];
 

@@ -45,6 +45,7 @@ import { LogOut, User as UserIcon, CreditCard, Edit, XCircle, X, Loader2 } from 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import type { User } from "@shared/schema";
 import kinzhalLogo from "@assets/Kinzhal_logo_1768960890639.png";
+import { generalOverviewTranslations } from "@/i18n/translations";
 
 // Lazy-loaded pages for code splitting - reduces initial bundle size
 const Dashboard = lazy(() => import("@/pages/dashboard"));
@@ -170,7 +171,9 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 }
 
 function AccessDenied() {
-  return <main className="flex min-h-[60vh] items-center justify-center p-6" data-testid="page-access-denied"><div className="max-w-md rounded-xl border border-amber-300 bg-amber-50 p-8 text-center"><h1 className="text-xl font-semibold text-amber-950">Access restricted</h1><p className="mt-2 text-sm text-amber-900/75">This owner-only overview is not available for your account.</p></div></main>;
+  const { language, isRTL } = useLanguage();
+  const text = language === "Arabic" ? generalOverviewTranslations.Arabic : generalOverviewTranslations.English;
+  return <main className="flex min-h-[60vh] items-center justify-center bg-background p-6 text-foreground" dir={isRTL ? "rtl" : "ltr"} data-testid="page-access-denied"><div className="max-w-md rounded-xl border border-amber-400/60 bg-amber-500/10 p-8 text-center"><h1 className="text-xl font-semibold text-amber-950 dark:text-amber-200">{text.accessRestricted}</h1><p className="mt-2 text-sm text-amber-900/75 dark:text-amber-200/75">{text.accessMessage}</p></div></main>;
 }
 
 function Router() {
