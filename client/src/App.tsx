@@ -110,6 +110,7 @@ const MealSubscriptions = lazy(() => import("@/pages/meal-subscriptions"));
 const CateringContracts = lazy(() => import("@/pages/catering-contracts"));
 const Marketing = lazy(() => import("@/pages/marketing"));
 const CompanyProfile = lazy(() => import("@/pages/company-profile"));
+const GeneralOverview = lazy(() => import("@/pages/general-overview"));
 const InspectionTools = lazy(() => import("@/pages/inspection-tools"));
 const AppDiagram = lazy(() => import("@/pages/app-diagram"));
 const RealEstateDashboard = lazy(() => import("@/pages/real-estate/dashboard"));
@@ -158,6 +159,20 @@ function BusinessTypeGuard({ allowedTypes, children }: { allowedTypes: string[];
   return <>{children}</>;
 }
 
+function AdminGuard({ children }: { children: React.ReactNode }) {
+  const { user, restaurant, accountType, isLoading } = useAuth();
+  const role = String((user as any)?.role || "").toLowerCase();
+  const restaurantId = (user as any)?.restaurantId || restaurant?.id;
+  const allowed = accountType !== "it" && role === "admin" && !!restaurantId;
+  if (isLoading) return <PageLoader />;
+  if (!allowed) return <AccessDenied />;
+  return <>{children}</>;
+}
+
+function AccessDenied() {
+  return <main className="flex min-h-[60vh] items-center justify-center p-6" data-testid="page-access-denied"><div className="max-w-md rounded-xl border border-amber-300 bg-amber-50 p-8 text-center"><h1 className="text-xl font-semibold text-amber-950">Access restricted</h1><p className="mt-2 text-sm text-amber-900/75">This owner-only overview is not available for your account.</p></div></main>;
+}
+
 function Router() {
   return (
     <Suspense fallback={<PageLoader />}>
@@ -188,6 +203,7 @@ function Router() {
         <Route path="/settings" component={SettingsPage} />
         <Route path="/printer-settings" component={PrinterSettings} />
         <Route path="/company-profile" component={CompanyProfile} />
+        <Route path="/general-overview">{() => <AdminGuard><GeneralOverview /></AdminGuard>}</Route>
         <Route path="/zatca-settings" component={ZatcaSettings} />
         <Route path="/employees" component={Employees} />
         <Route path="/activity-log" component={ActivityLog} />

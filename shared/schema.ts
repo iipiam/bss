@@ -2870,3 +2870,87 @@ export const marketingFinSettings = pgTable("marketing_fin_settings", {
 export const insertMarketingFinSettingsSchema = createInsertSchema(marketingFinSettings).omit({ id: true });
 export type InsertMarketingFinSettings = z.infer<typeof insertMarketingFinSettingsSchema>;
 export type MarketingFinSettings = typeof marketingFinSettings.$inferSelect;
+
+// General Overview operational data. These tables deliberately require a branch:
+// overview rollups must never accidentally attribute legacy unassigned records.
+export const overviewSettings = pgTable("overview_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  branchId: varchar("branch_id").references(() => branches.id).notNull(),
+  foodCostThreshold: decimal("food_cost_threshold", { precision: 5, scale: 2 }).notNull().default("35"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => ({ branchUnique: uniqueIndex("overview_settings_branch_unique").on(t.restaurantId, t.branchId) }));
+export const insertOverviewSettingsSchema = createInsertSchema(overviewSettings).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertOverviewSettings = z.infer<typeof insertOverviewSettingsSchema>;
+
+export const wasteLogs = pgTable("waste_logs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  branchId: varchar("branch_id").references(() => branches.id).notNull(),
+  inventoryItemId: varchar("inventory_item_id").references(() => inventoryItems.id),
+  itemName: text("item_name").notNull(),
+  wasteKind: text("waste_kind").notNull().default("ingredient"),
+  quantity: decimal("quantity", { precision: 12, scale: 2 }).notNull(),
+  unit: text("unit").notNull(),
+  cost: decimal("cost", { precision: 12, scale: 2 }).notNull().default("0"),
+  reason: text("reason").notNull(),
+  actorId: varchar("actor_id").references(() => users.id, { onDelete: "set null" }),
+  occurredAt: timestamp("occurred_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => ({ branchOccurredIdx: index("waste_logs_branch_occurred_idx").on(t.restaurantId, t.branchId, t.occurredAt) }));
+export const insertWasteLogSchema = createInsertSchema(wasteLogs).omit({ id: true, createdAt: true });
+export type InsertWasteLog = z.infer<typeof insertWasteLogSchema>;
+
+export const cashAccounts = pgTable("cash_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(), branchId: varchar("branch_id").references(() => branches.id).notNull(),
+  name: text("name").notNull(), openingBalance: decimal("opening_balance", { precision: 14, scale: 2 }).notNull().default("0"), active: boolean("active").notNull().default(true), createdAt: timestamp("created_at").notNull().defaultNow(), updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => ({ branchIdx: index("cash_accounts_branch_idx").on(t.restaurantId, t.branchId) }));
+export const cashLedgerEntries = pgTable("cash_ledger_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(), branchId: varchar("branch_id").references(() => branches.id).notNull(),
+  accountId: varchar("account_id").references(() => cashAccounts.id).notNull(), direction: text("direction").notNull(), amount: decimal("amount", { precision: 14, scale: 2 }).notNull(), category: text("category").notNull(), description: text("description"), occurredAt: timestamp("occurred_at").notNull().defaultNow(), actorId: varchar("actor_id").references(() => users.id, { onDelete: "set null" }), createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => ({ accountOccurredIdx: index("cash_ledger_account_occurred_idx").on(t.restaurantId, t.branchId, t.accountId, t.occurredAt) }));
+export const cashObligations = pgTable("cash_obligations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(), branchId: varchar("branch_id").references(() => branches.id).notNull(),
+  kind: text("kind").notNull(), amount: decimal("amount", { precision: 14, scale: 2 }).notNull(), dueDate: date("due_date").notNull(), status: text("status").notNull().default("open"), description: text("description"), createdAt: timestamp("created_at").notNull().defaultNow(), updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => ({ dueIdx: index("cash_obligations_due_idx").on(t.restaurantId, t.branchId, t.dueDate) }));
+
+export const workSchedules = pgTable("work_schedules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(), branchId: varchar("branch_id").references(() => branches.id).notNull(), employeeId: varchar("employee_id").references(() => users.id).notNull(), scheduledDate: date("scheduled_date").notNull(), scheduledHours: decimal("scheduled_hours", { precision: 6, scale: 2 }).notNull(), createdAt: timestamp("created_at").notNull().defaultNow(), updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => ({ employeeDateUnique: uniqueIndex("work_schedules_employee_date_unique").on(t.restaurantId, t.branchId, t.employeeId, t.scheduledDate) }));
+export const workTimeEntries = pgTable("work_time_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(), branchId: varchar("branch_id").references(() => branches.id).notNull(), employeeId: varchar("employee_id").references(() => users.id).notNull(), startedAt: timestamp("started_at").notNull(), endedAt: timestamp("ended_at"), hours: decimal("hours", { precision: 6, scale: 2 }), createdAt: timestamp("created_at").notNull().defaultNow(), updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => ({ employeeStartedIdx: index("work_time_employee_started_idx").on(t.restaurantId, t.branchId, t.employeeId, t.startedAt) }));
+export const employmentExits = pgTable("employment_exits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(), branchId: varchar("branch_id").references(() => branches.id).notNull(), employeeId: varchar("employee_id").references(() => users.id).notNull(), exitDate: date("exit_date").notNull(), reason: text("reason"), createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => ({ exitIdx: index("employment_exits_branch_date_idx").on(t.restaurantId, t.branchId, t.exitDate) }));
+
+export const loyaltyAccounts = pgTable("loyalty_accounts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(), branchId: varchar("branch_id").references(() => branches.id).notNull(), customerId: varchar("customer_id").references(() => customers.id).notNull(), pointsBalance: decimal("points_balance", { precision: 12, scale: 2 }).notNull().default("0"), enrolledAt: timestamp("enrolled_at").notNull().defaultNow(), createdAt: timestamp("created_at").notNull().defaultNow(), updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => ({ customerUnique: uniqueIndex("loyalty_accounts_customer_unique").on(t.restaurantId, t.customerId) }));
+export const loyaltyTransactions = pgTable("loyalty_transactions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(), branchId: varchar("branch_id").references(() => branches.id).notNull(), loyaltyAccountId: varchar("loyalty_account_id").references(() => loyaltyAccounts.id).notNull(), orderId: varchar("order_id").references(() => orders.id), type: text("type").notNull(), points: decimal("points", { precision: 12, scale: 2 }).notNull(), value: decimal("value", { precision: 12, scale: 2 }).notNull().default("0"), occurredAt: timestamp("occurred_at").notNull().defaultNow(), createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => ({ accountOccurredIdx: index("loyalty_transactions_account_occurred_idx").on(t.restaurantId, t.branchId, t.loyaltyAccountId, t.occurredAt) }));
+export const zatcaRetryAttempts = pgTable("zatca_retry_attempts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`), restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(), branchId: varchar("branch_id").references(() => branches.id).notNull(), invoiceId: varchar("invoice_id").references(() => invoices.id).notNull(), actorId: varchar("actor_id").references(() => users.id, { onDelete: "set null" }), idempotencyKey: text("idempotency_key").notNull(), outcome: text("outcome").notNull(), errorMessage: text("error_message"), createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => ({ keyUnique: uniqueIndex("zatca_retry_attempt_key_unique").on(t.restaurantId, t.invoiceId, t.idempotencyKey) }));
+// A small operational cache.  The live summary remains authoritative; snapshots
+// make historical overview reads and freshness visible without sharing ZATCA's
+// retry scheduler.
+export const overviewDailySnapshots = pgTable("overview_daily_snapshots", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").references(() => restaurants.id).notNull(),
+  branchId: varchar("branch_id").references(() => branches.id).notNull(),
+  snapshotDate: date("snapshot_date").notNull(),
+  revenue: decimal("revenue", { precision: 14, scale: 2 }).notNull().default("0"),
+  orderCount: integer("order_count").notNull().default(0),
+  calculatedAt: timestamp("calculated_at").notNull().defaultNow(),
+}, (t) => ({ dailyUnique: uniqueIndex("overview_daily_snapshot_unique").on(t.restaurantId, t.branchId, t.snapshotDate) }));
+export const insertCashAccountSchema = createInsertSchema(cashAccounts).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertCashLedgerEntrySchema = createInsertSchema(cashLedgerEntries).omit({ id: true, createdAt: true });
+export const insertCashObligationSchema = createInsertSchema(cashObligations).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertWorkScheduleSchema = createInsertSchema(workSchedules).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertWorkTimeEntrySchema = createInsertSchema(workTimeEntries).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertEmploymentExitSchema = createInsertSchema(employmentExits).omit({ id: true, createdAt: true });
+export const insertLoyaltyAccountSchema = createInsertSchema(loyaltyAccounts).omit({ id: true, createdAt: true, updatedAt: true });
+export const insertLoyaltyTransactionSchema = createInsertSchema(loyaltyTransactions).omit({ id: true, createdAt: true });

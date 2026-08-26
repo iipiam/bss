@@ -1,0 +1,51 @@
+I have an existing multi-tenant web app (built on Replit) that handles 
+ZATCA Phase 2 e-invoicing. Each tenant (business) has their own isolated 
+EGS unit (CSID, private key, PIH/ICV chain). I want to add a delivery 
+platform integration module on top of this existing app — not a new app.
+
+REQUIREMENTS:
+
+1. TENANT-LEVEL DELIVERY CONFIG
+   - Extend our existing tenant model to store delivery platform API 
+     credentials (API key/secret, webhook secret) per platform: 
+     HungerStation, Jahez, ToYou, Keeta
+   - Add an enable/disable toggle per platform, per tenant, in the 
+     existing tenant settings area
+
+2. ORDER INGESTION (WEBHOOKS)
+   - Create webhook endpoints (one per platform, or one generic endpoint 
+     with platform param) to receive incoming delivery orders
+   - Normalize each platform's payload into our existing internal order 
+     schema (items, price, customer info, order ID, source platform)
+   - Map incoming orders to the correct tenant based on the API 
+     credentials/webhook that received them
+
+3. CONNECT TO EXISTING ZATCA FLOW
+   - When a delivery order is received and normalized, feed it into our 
+     existing invoice generation logic — same clearance/reporting flow 
+     we already use for other sales, so no duplicate invoicing logic
+   - Use the tenant's existing EGS unit (CSID/key/PIH-ICV chain) for 
+     that submission — don't create a separate credential path
+   - Log delivery-order invoices distinctly so I can filter/report on 
+     them separately if needed
+
+4. STATUS SYNC BACK (if platform API supports it)
+   - Push order status updates (accepted/preparing/ready/out for 
+     delivery) back to the platform via their API
+
+5. ERROR HANDLING — KEEP SEPARATE FROM EXISTING ZATCA ERROR HANDLING
+   - Delivery webhook failures should log separately from ZATCA 
+     submission failures, since we already have an unresolved issue 
+     with invoice submission (clearance/reporting) and I don't want 
+     new errors mixed into that same log/table
+   - Retry logic for failed webhook ingestion
+   - Alert if a platform stops sending webhooks (silent failure)
+
+6. RECONCILIATION
+   - Store platform commission/fee per order
+   - Simple report: gross order value vs. net after commission, 
+     per platform, per tenant
+
+Please review our existing tenant model, order schema, and invoice 
+submission code before implementing, and reuse those structures rather 
+than creating parallel ones. Start with HungerStation and Jahez.

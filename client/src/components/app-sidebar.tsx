@@ -50,6 +50,7 @@ import {
   Stethoscope,
   Network,
   GraduationCap,
+  Gauge,
 } from "lucide-react";
 import logoImage from "@assets/Kinzhal_logo_1768960890639.png";
 import {
@@ -195,6 +196,7 @@ export function AppSidebar() {
 
   // Admin-only menu items
   const adminOnlyItems: MenuItem[] = [
+    { title: "General Overview", url: "/general-overview", icon: Gauge, testId: "general-overview", gradient: "from-amber-500 to-orange-500", businessTypes: ['restaurant'] },
     { title: t.activityLog || "Activity Log", url: "/activity-log", icon: Activity, testId: "activity-log", gradient: "from-violet-500 to-purple-500", permission: 'users' },
   ];
 

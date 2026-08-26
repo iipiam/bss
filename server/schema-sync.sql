@@ -202,6 +202,73 @@ ALTER TABLE "business_info" ADD COLUMN IF NOT EXISTS "bank_iban" text DEFAULT ''
 ALTER TABLE "business_info" ADD COLUMN IF NOT EXISTS "logo_url" text;
 ALTER TABLE "business_info" ADD COLUMN IF NOT EXISTS "updated_by" varchar;
 ALTER TABLE "business_info" ADD COLUMN IF NOT EXISTS "updated_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL;
+CREATE TABLE IF NOT EXISTS "cash_accounts" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  "name" text NOT NULL,
+  "opening_balance" numeric(14,2) DEFAULT 0 NOT NULL,
+  "active" boolean DEFAULT true NOT NULL,
+  "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "updated_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "cash_accounts" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "cash_accounts" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "cash_accounts" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "cash_accounts" ADD COLUMN IF NOT EXISTS "name" text;
+ALTER TABLE "cash_accounts" ADD COLUMN IF NOT EXISTS "opening_balance" numeric(14,2) DEFAULT 0 NOT NULL;
+ALTER TABLE "cash_accounts" ADD COLUMN IF NOT EXISTS "active" boolean DEFAULT true NOT NULL;
+ALTER TABLE "cash_accounts" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "cash_accounts" ADD COLUMN IF NOT EXISTS "updated_at" timestamp without time zone DEFAULT now() NOT NULL;
+CREATE TABLE IF NOT EXISTS "cash_ledger_entries" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  "account_id" varchar NOT NULL,
+  "direction" text NOT NULL,
+  "amount" numeric(14,2) NOT NULL,
+  "category" text NOT NULL,
+  "description" text,
+  "occurred_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "actor_id" varchar,
+  "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "cash_ledger_entries" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "cash_ledger_entries" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "cash_ledger_entries" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "cash_ledger_entries" ADD COLUMN IF NOT EXISTS "account_id" varchar;
+ALTER TABLE "cash_ledger_entries" ADD COLUMN IF NOT EXISTS "direction" text;
+ALTER TABLE "cash_ledger_entries" ADD COLUMN IF NOT EXISTS "amount" numeric(14,2);
+ALTER TABLE "cash_ledger_entries" ADD COLUMN IF NOT EXISTS "category" text;
+ALTER TABLE "cash_ledger_entries" ADD COLUMN IF NOT EXISTS "description" text;
+ALTER TABLE "cash_ledger_entries" ADD COLUMN IF NOT EXISTS "occurred_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "cash_ledger_entries" ADD COLUMN IF NOT EXISTS "actor_id" varchar;
+ALTER TABLE "cash_ledger_entries" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
+CREATE TABLE IF NOT EXISTS "cash_obligations" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  "kind" text NOT NULL,
+  "amount" numeric(14,2) NOT NULL,
+  "due_date" date NOT NULL,
+  "status" text DEFAULT 'open'::text NOT NULL,
+  "description" text,
+  "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "updated_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "cash_obligations" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "cash_obligations" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "cash_obligations" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "cash_obligations" ADD COLUMN IF NOT EXISTS "kind" text;
+ALTER TABLE "cash_obligations" ADD COLUMN IF NOT EXISTS "amount" numeric(14,2);
+ALTER TABLE "cash_obligations" ADD COLUMN IF NOT EXISTS "due_date" date;
+ALTER TABLE "cash_obligations" ADD COLUMN IF NOT EXISTS "status" text DEFAULT 'open'::text NOT NULL;
+ALTER TABLE "cash_obligations" ADD COLUMN IF NOT EXISTS "description" text;
+ALTER TABLE "cash_obligations" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "cash_obligations" ADD COLUMN IF NOT EXISTS "updated_at" timestamp without time zone DEFAULT now() NOT NULL;
 CREATE TABLE IF NOT EXISTS "catering_contract_templates" (
   "id" varchar(255) DEFAULT gen_random_uuid() NOT NULL,
   "restaurant_id" varchar(255) NOT NULL,
@@ -776,6 +843,23 @@ ALTER TABLE "employee_activity_log" ADD COLUMN IF NOT EXISTS "ip_address" text;
 ALTER TABLE "employee_activity_log" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
 ALTER TABLE "employee_activity_log" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
 ALTER TABLE "employee_activity_log" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+CREATE TABLE IF NOT EXISTS "employment_exits" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  "employee_id" varchar NOT NULL,
+  "exit_date" date NOT NULL,
+  "reason" text,
+  "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "employment_exits" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "employment_exits" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "employment_exits" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "employment_exits" ADD COLUMN IF NOT EXISTS "employee_id" varchar;
+ALTER TABLE "employment_exits" ADD COLUMN IF NOT EXISTS "exit_date" date;
+ALTER TABLE "employment_exits" ADD COLUMN IF NOT EXISTS "reason" text;
+ALTER TABLE "employment_exits" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
 CREATE TABLE IF NOT EXISTS "equipment_suppliers" (
   "id" varchar DEFAULT gen_random_uuid() NOT NULL,
   "restaurant_id" varchar NOT NULL,
@@ -1219,6 +1303,48 @@ ALTER TABLE "licenses" ADD COLUMN IF NOT EXISTS "created_at" timestamp without t
 ALTER TABLE "licenses" ADD COLUMN IF NOT EXISTS "created_by" varchar;
 ALTER TABLE "licenses" ADD COLUMN IF NOT EXISTS "updated_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL;
 ALTER TABLE "licenses" ADD COLUMN IF NOT EXISTS "updated_by" varchar;
+CREATE TABLE IF NOT EXISTS "loyalty_accounts" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  "customer_id" varchar NOT NULL,
+  "points_balance" numeric(12,2) DEFAULT 0 NOT NULL,
+  "enrolled_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "updated_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "loyalty_accounts" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "loyalty_accounts" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "loyalty_accounts" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "loyalty_accounts" ADD COLUMN IF NOT EXISTS "customer_id" varchar;
+ALTER TABLE "loyalty_accounts" ADD COLUMN IF NOT EXISTS "points_balance" numeric(12,2) DEFAULT 0 NOT NULL;
+ALTER TABLE "loyalty_accounts" ADD COLUMN IF NOT EXISTS "enrolled_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "loyalty_accounts" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "loyalty_accounts" ADD COLUMN IF NOT EXISTS "updated_at" timestamp without time zone DEFAULT now() NOT NULL;
+CREATE TABLE IF NOT EXISTS "loyalty_transactions" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  "loyalty_account_id" varchar NOT NULL,
+  "order_id" varchar,
+  "type" text NOT NULL,
+  "points" numeric(12,2) NOT NULL,
+  "value" numeric(12,2) DEFAULT 0 NOT NULL,
+  "occurred_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "loyalty_transactions" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "loyalty_transactions" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "loyalty_transactions" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "loyalty_transactions" ADD COLUMN IF NOT EXISTS "loyalty_account_id" varchar;
+ALTER TABLE "loyalty_transactions" ADD COLUMN IF NOT EXISTS "order_id" varchar;
+ALTER TABLE "loyalty_transactions" ADD COLUMN IF NOT EXISTS "type" text;
+ALTER TABLE "loyalty_transactions" ADD COLUMN IF NOT EXISTS "points" numeric(12,2);
+ALTER TABLE "loyalty_transactions" ADD COLUMN IF NOT EXISTS "value" numeric(12,2) DEFAULT 0 NOT NULL;
+ALTER TABLE "loyalty_transactions" ADD COLUMN IF NOT EXISTS "occurred_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "loyalty_transactions" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
 CREATE TABLE IF NOT EXISTS "maintenance_requests" (
   "id" varchar(255) DEFAULT gen_random_uuid() NOT NULL,
   "restaurant_id" varchar(255) NOT NULL,
@@ -1619,6 +1745,38 @@ ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "created_by" text;
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "discount_code" text;
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "discount_amount" numeric(10,2) DEFAULT '0'::numeric NOT NULL;
+CREATE TABLE IF NOT EXISTS "overview_daily_snapshots" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  "snapshot_date" date NOT NULL,
+  "revenue" numeric(14,2) DEFAULT 0 NOT NULL,
+  "order_count" integer DEFAULT 0 NOT NULL,
+  "calculated_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "overview_daily_snapshots" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "overview_daily_snapshots" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "overview_daily_snapshots" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "overview_daily_snapshots" ADD COLUMN IF NOT EXISTS "snapshot_date" date;
+ALTER TABLE "overview_daily_snapshots" ADD COLUMN IF NOT EXISTS "revenue" numeric(14,2) DEFAULT 0 NOT NULL;
+ALTER TABLE "overview_daily_snapshots" ADD COLUMN IF NOT EXISTS "order_count" integer DEFAULT 0 NOT NULL;
+ALTER TABLE "overview_daily_snapshots" ADD COLUMN IF NOT EXISTS "calculated_at" timestamp without time zone DEFAULT now() NOT NULL;
+CREATE TABLE IF NOT EXISTS "overview_settings" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  "food_cost_threshold" numeric(5,2) DEFAULT 35 NOT NULL,
+  "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "updated_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "overview_settings" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "overview_settings" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "overview_settings" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "overview_settings" ADD COLUMN IF NOT EXISTS "food_cost_threshold" numeric(5,2) DEFAULT 35 NOT NULL;
+ALTER TABLE "overview_settings" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "overview_settings" ADD COLUMN IF NOT EXISTS "updated_at" timestamp without time zone DEFAULT now() NOT NULL;
 CREATE TABLE IF NOT EXISTS "payment_schedules" (
   "id" varchar DEFAULT gen_random_uuid() NOT NULL,
   "restaurant_id" varchar NOT NULL,
@@ -3287,6 +3445,96 @@ ALTER TABLE "violations" ADD COLUMN IF NOT EXISTS "document_path" text;
 ALTER TABLE "violations" ADD COLUMN IF NOT EXISTS "linked_bill_id" varchar;
 ALTER TABLE "violations" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL;
 ALTER TABLE "violations" ADD COLUMN IF NOT EXISTS "updated_at" timestamp without time zone DEFAULT CURRENT_TIMESTAMP NOT NULL;
+CREATE TABLE IF NOT EXISTS "waste_logs" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  "inventory_item_id" varchar,
+  "item_name" text NOT NULL,
+  "waste_kind" text DEFAULT 'ingredient'::text NOT NULL,
+  "quantity" numeric(12,2) NOT NULL,
+  "unit" text NOT NULL,
+  "cost" numeric(12,2) DEFAULT 0 NOT NULL,
+  "reason" text NOT NULL,
+  "actor_id" varchar,
+  "occurred_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "inventory_item_id" varchar;
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "item_name" text;
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "waste_kind" text DEFAULT 'ingredient'::text NOT NULL;
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "quantity" numeric(12,2);
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "unit" text;
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "cost" numeric(12,2) DEFAULT 0 NOT NULL;
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "reason" text;
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "actor_id" varchar;
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "occurred_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "waste_logs" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
+CREATE TABLE IF NOT EXISTS "work_schedules" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  "employee_id" varchar NOT NULL,
+  "scheduled_date" date NOT NULL,
+  "scheduled_hours" numeric(6,2) NOT NULL,
+  "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "updated_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "work_schedules" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "work_schedules" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "work_schedules" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "work_schedules" ADD COLUMN IF NOT EXISTS "employee_id" varchar;
+ALTER TABLE "work_schedules" ADD COLUMN IF NOT EXISTS "scheduled_date" date;
+ALTER TABLE "work_schedules" ADD COLUMN IF NOT EXISTS "scheduled_hours" numeric(6,2);
+ALTER TABLE "work_schedules" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "work_schedules" ADD COLUMN IF NOT EXISTS "updated_at" timestamp without time zone DEFAULT now() NOT NULL;
+CREATE TABLE IF NOT EXISTS "work_time_entries" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  "employee_id" varchar NOT NULL,
+  "started_at" timestamp without time zone NOT NULL,
+  "ended_at" timestamp without time zone,
+  "hours" numeric(6,2),
+  "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "updated_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "work_time_entries" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "work_time_entries" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "work_time_entries" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "work_time_entries" ADD COLUMN IF NOT EXISTS "employee_id" varchar;
+ALTER TABLE "work_time_entries" ADD COLUMN IF NOT EXISTS "started_at" timestamp without time zone;
+ALTER TABLE "work_time_entries" ADD COLUMN IF NOT EXISTS "ended_at" timestamp without time zone;
+ALTER TABLE "work_time_entries" ADD COLUMN IF NOT EXISTS "hours" numeric(6,2);
+ALTER TABLE "work_time_entries" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "work_time_entries" ADD COLUMN IF NOT EXISTS "updated_at" timestamp without time zone DEFAULT now() NOT NULL;
+CREATE TABLE IF NOT EXISTS "zatca_retry_attempts" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  "invoice_id" varchar NOT NULL,
+  "actor_id" varchar,
+  "idempotency_key" text NOT NULL,
+  "outcome" text NOT NULL,
+  "error_message" text,
+  "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "zatca_retry_attempts" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "zatca_retry_attempts" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "zatca_retry_attempts" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "zatca_retry_attempts" ADD COLUMN IF NOT EXISTS "invoice_id" varchar;
+ALTER TABLE "zatca_retry_attempts" ADD COLUMN IF NOT EXISTS "actor_id" varchar;
+ALTER TABLE "zatca_retry_attempts" ADD COLUMN IF NOT EXISTS "idempotency_key" text;
+ALTER TABLE "zatca_retry_attempts" ADD COLUMN IF NOT EXISTS "outcome" text;
+ALTER TABLE "zatca_retry_attempts" ADD COLUMN IF NOT EXISTS "error_message" text;
+ALTER TABLE "zatca_retry_attempts" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
 CREATE TABLE IF NOT EXISTS "zatca_settings" (
   "id" varchar DEFAULT gen_random_uuid() NOT NULL,
   "restaurant_id" varchar NOT NULL,
@@ -3383,3 +3631,50 @@ ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "submission_status" tex
 ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "submitted_at" timestamp without time zone;
 ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "archived_at" timestamp without time zone DEFAULT now() NOT NULL;
 ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "retention_expires_at" timestamp without time zone;
+CREATE UNIQUE INDEX IF NOT EXISTS overview_settings_branch_unique ON overview_settings (restaurant_id, branch_id);
+CREATE INDEX IF NOT EXISTS cash_accounts_branch_idx ON cash_accounts (restaurant_id, branch_id);
+CREATE INDEX IF NOT EXISTS waste_logs_branch_occurred_idx ON waste_logs (restaurant_id, branch_id, occurred_at);
+CREATE INDEX IF NOT EXISTS cash_ledger_account_occurred_idx ON cash_ledger_entries (restaurant_id, branch_id, account_id, occurred_at);
+CREATE INDEX IF NOT EXISTS cash_obligations_due_idx ON cash_obligations (restaurant_id, branch_id, due_date);
+CREATE UNIQUE INDEX IF NOT EXISTS work_schedules_employee_date_unique ON work_schedules (restaurant_id, branch_id, employee_id, scheduled_date);
+CREATE INDEX IF NOT EXISTS work_time_employee_started_idx ON work_time_entries (restaurant_id, branch_id, employee_id, started_at);
+CREATE INDEX IF NOT EXISTS employment_exits_branch_date_idx ON employment_exits (restaurant_id, branch_id, exit_date);
+CREATE UNIQUE INDEX IF NOT EXISTS loyalty_accounts_customer_unique ON loyalty_accounts (restaurant_id, customer_id);
+CREATE INDEX IF NOT EXISTS loyalty_transactions_account_occurred_idx ON loyalty_transactions (restaurant_id, branch_id, loyalty_account_id, occurred_at);
+CREATE UNIQUE INDEX IF NOT EXISTS zatca_retry_attempt_key_unique ON zatca_retry_attempts (restaurant_id, invoice_id, idempotency_key);
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cash_accounts_branch_id_fkey' AND conrelid = '"cash_accounts"'::regclass) THEN ALTER TABLE "cash_accounts" ADD CONSTRAINT "cash_accounts_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cash_accounts_restaurant_id_fkey' AND conrelid = '"cash_accounts"'::regclass) THEN ALTER TABLE "cash_accounts" ADD CONSTRAINT "cash_accounts_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cash_ledger_entries_account_id_fkey' AND conrelid = '"cash_ledger_entries"'::regclass) THEN ALTER TABLE "cash_ledger_entries" ADD CONSTRAINT "cash_ledger_entries_account_id_fkey" FOREIGN KEY (account_id) REFERENCES cash_accounts(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cash_ledger_entries_actor_id_fkey' AND conrelid = '"cash_ledger_entries"'::regclass) THEN ALTER TABLE "cash_ledger_entries" ADD CONSTRAINT "cash_ledger_entries_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cash_ledger_entries_branch_id_fkey' AND conrelid = '"cash_ledger_entries"'::regclass) THEN ALTER TABLE "cash_ledger_entries" ADD CONSTRAINT "cash_ledger_entries_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cash_ledger_entries_restaurant_id_fkey' AND conrelid = '"cash_ledger_entries"'::regclass) THEN ALTER TABLE "cash_ledger_entries" ADD CONSTRAINT "cash_ledger_entries_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cash_obligations_branch_id_fkey' AND conrelid = '"cash_obligations"'::regclass) THEN ALTER TABLE "cash_obligations" ADD CONSTRAINT "cash_obligations_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cash_obligations_restaurant_id_fkey' AND conrelid = '"cash_obligations"'::regclass) THEN ALTER TABLE "cash_obligations" ADD CONSTRAINT "cash_obligations_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'employment_exits_branch_id_fkey' AND conrelid = '"employment_exits"'::regclass) THEN ALTER TABLE "employment_exits" ADD CONSTRAINT "employment_exits_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'employment_exits_employee_id_fkey' AND conrelid = '"employment_exits"'::regclass) THEN ALTER TABLE "employment_exits" ADD CONSTRAINT "employment_exits_employee_id_fkey" FOREIGN KEY (employee_id) REFERENCES users(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'employment_exits_restaurant_id_fkey' AND conrelid = '"employment_exits"'::regclass) THEN ALTER TABLE "employment_exits" ADD CONSTRAINT "employment_exits_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loyalty_accounts_branch_id_fkey' AND conrelid = '"loyalty_accounts"'::regclass) THEN ALTER TABLE "loyalty_accounts" ADD CONSTRAINT "loyalty_accounts_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loyalty_accounts_customer_id_fkey' AND conrelid = '"loyalty_accounts"'::regclass) THEN ALTER TABLE "loyalty_accounts" ADD CONSTRAINT "loyalty_accounts_customer_id_fkey" FOREIGN KEY (customer_id) REFERENCES customers(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loyalty_accounts_restaurant_id_fkey' AND conrelid = '"loyalty_accounts"'::regclass) THEN ALTER TABLE "loyalty_accounts" ADD CONSTRAINT "loyalty_accounts_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loyalty_transactions_branch_id_fkey' AND conrelid = '"loyalty_transactions"'::regclass) THEN ALTER TABLE "loyalty_transactions" ADD CONSTRAINT "loyalty_transactions_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loyalty_transactions_loyalty_account_id_fkey' AND conrelid = '"loyalty_transactions"'::regclass) THEN ALTER TABLE "loyalty_transactions" ADD CONSTRAINT "loyalty_transactions_loyalty_account_id_fkey" FOREIGN KEY (loyalty_account_id) REFERENCES loyalty_accounts(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loyalty_transactions_order_id_fkey' AND conrelid = '"loyalty_transactions"'::regclass) THEN ALTER TABLE "loyalty_transactions" ADD CONSTRAINT "loyalty_transactions_order_id_fkey" FOREIGN KEY (order_id) REFERENCES orders(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loyalty_transactions_restaurant_id_fkey' AND conrelid = '"loyalty_transactions"'::regclass) THEN ALTER TABLE "loyalty_transactions" ADD CONSTRAINT "loyalty_transactions_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'overview_daily_snapshots_branch_id_fkey' AND conrelid = '"overview_daily_snapshots"'::regclass) THEN ALTER TABLE "overview_daily_snapshots" ADD CONSTRAINT "overview_daily_snapshots_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'overview_daily_snapshots_restaurant_id_fkey' AND conrelid = '"overview_daily_snapshots"'::regclass) THEN ALTER TABLE "overview_daily_snapshots" ADD CONSTRAINT "overview_daily_snapshots_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'overview_settings_branch_id_fkey' AND conrelid = '"overview_settings"'::regclass) THEN ALTER TABLE "overview_settings" ADD CONSTRAINT "overview_settings_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'overview_settings_restaurant_id_fkey' AND conrelid = '"overview_settings"'::regclass) THEN ALTER TABLE "overview_settings" ADD CONSTRAINT "overview_settings_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'waste_logs_actor_id_fkey' AND conrelid = '"waste_logs"'::regclass) THEN ALTER TABLE "waste_logs" ADD CONSTRAINT "waste_logs_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'waste_logs_branch_id_fkey' AND conrelid = '"waste_logs"'::regclass) THEN ALTER TABLE "waste_logs" ADD CONSTRAINT "waste_logs_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'waste_logs_inventory_item_id_fkey' AND conrelid = '"waste_logs"'::regclass) THEN ALTER TABLE "waste_logs" ADD CONSTRAINT "waste_logs_inventory_item_id_fkey" FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'waste_logs_restaurant_id_fkey' AND conrelid = '"waste_logs"'::regclass) THEN ALTER TABLE "waste_logs" ADD CONSTRAINT "waste_logs_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'work_schedules_branch_id_fkey' AND conrelid = '"work_schedules"'::regclass) THEN ALTER TABLE "work_schedules" ADD CONSTRAINT "work_schedules_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'work_schedules_employee_id_fkey' AND conrelid = '"work_schedules"'::regclass) THEN ALTER TABLE "work_schedules" ADD CONSTRAINT "work_schedules_employee_id_fkey" FOREIGN KEY (employee_id) REFERENCES users(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'work_schedules_restaurant_id_fkey' AND conrelid = '"work_schedules"'::regclass) THEN ALTER TABLE "work_schedules" ADD CONSTRAINT "work_schedules_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'work_time_entries_branch_id_fkey' AND conrelid = '"work_time_entries"'::regclass) THEN ALTER TABLE "work_time_entries" ADD CONSTRAINT "work_time_entries_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'work_time_entries_employee_id_fkey' AND conrelid = '"work_time_entries"'::regclass) THEN ALTER TABLE "work_time_entries" ADD CONSTRAINT "work_time_entries_employee_id_fkey" FOREIGN KEY (employee_id) REFERENCES users(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'work_time_entries_restaurant_id_fkey' AND conrelid = '"work_time_entries"'::regclass) THEN ALTER TABLE "work_time_entries" ADD CONSTRAINT "work_time_entries_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'zatca_retry_attempts_actor_id_fkey' AND conrelid = '"zatca_retry_attempts"'::regclass) THEN ALTER TABLE "zatca_retry_attempts" ADD CONSTRAINT "zatca_retry_attempts_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'zatca_retry_attempts_branch_id_fkey' AND conrelid = '"zatca_retry_attempts"'::regclass) THEN ALTER TABLE "zatca_retry_attempts" ADD CONSTRAINT "zatca_retry_attempts_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'zatca_retry_attempts_invoice_id_fkey' AND conrelid = '"zatca_retry_attempts"'::regclass) THEN ALTER TABLE "zatca_retry_attempts" ADD CONSTRAINT "zatca_retry_attempts_invoice_id_fkey" FOREIGN KEY (invoice_id) REFERENCES invoices(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'zatca_retry_attempts_restaurant_id_fkey' AND conrelid = '"zatca_retry_attempts"'::regclass) THEN ALTER TABLE "zatca_retry_attempts" ADD CONSTRAINT "zatca_retry_attempts_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;

@@ -22,7 +22,7 @@ export const db = drizzle(pool, { schema });
 // EXISTS) so the production server boots cleanly after a deploy that adds new
 // tables/columns, even if `drizzle-kit push` has not been run yet. Each block
 // is wrapped in its own try/catch so a single failure cannot prevent boot.
-(async () => {
+export const startupMigrationReady: Promise<void> = (async () => {
   const steps: Array<[string, string]> = [
     [
       "company_profiles.partners",
@@ -307,7 +307,7 @@ export const db = drizzle(pool, { schema });
        END $$`,
     ],
     [
-      // DB-level invoice finality: once cleared/reported by ZATCA, business fields are frozen
+       // DB-level invoice finality: accepted-with-warning is final too.
       // (only derived artifacts qr_code/pdf_path may change) and the invoice cannot be deleted.
       "zatca_invoice_finality_fn",
       `CREATE OR REPLACE FUNCTION zatca_invoice_finality() RETURNS trigger AS $fn$
@@ -315,7 +315,7 @@ export const db = drizzle(pool, { schema });
        BEGIN
          SELECT submission_status INTO final_status FROM invoice_zatca_status
            WHERE invoice_id = OLD.id AND restaurant_id = OLD.restaurant_id
-             AND submission_status IN ('cleared','reported') LIMIT 1;
+              AND submission_status IN ('cleared','reported','warning') LIMIT 1;
          IF final_status IS NULL THEN
            IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
          END IF;
@@ -338,11 +338,11 @@ export const db = drizzle(pool, { schema });
        END $$`,
     ],
     [
-      // Final ZATCA status rows (cleared/reported) are themselves immutable and undeletable
+       // Final ZATCA status rows (including accepted-with-warning) are immutable.
       "zatca_status_finality_fn",
       `CREATE OR REPLACE FUNCTION zatca_status_finality() RETURNS trigger AS $fn$
        BEGIN
-         IF OLD.submission_status IN ('cleared','reported') THEN
+          IF OLD.submission_status IN ('cleared','reported','warning') THEN
            RAISE EXCEPTION 'invoice_zatca_status row for invoice % is final (%) and cannot be % ', OLD.invoice_id, OLD.submission_status, lower(TG_OP);
          END IF;
          IF TG_OP = 'DELETE' THEN RETURN OLD; ELSE RETURN NEW; END IF;
@@ -388,6 +388,28 @@ export const db = drizzle(pool, { schema });
          alerts_enabled boolean NOT NULL DEFAULT true
        )`,
     ],
+    [
+      "general_overview_tables",
+      `CREATE TABLE IF NOT EXISTS overview_settings (id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id), branch_id varchar NOT NULL REFERENCES branches(id), food_cost_threshold numeric(5,2) NOT NULL DEFAULT 35, created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now(), UNIQUE(restaurant_id, branch_id));
+       CREATE TABLE IF NOT EXISTS waste_logs (id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id), branch_id varchar NOT NULL REFERENCES branches(id), inventory_item_id varchar REFERENCES inventory_items(id), item_name text NOT NULL, waste_kind text NOT NULL DEFAULT 'ingredient', quantity numeric(12,2) NOT NULL, unit text NOT NULL, cost numeric(12,2) NOT NULL DEFAULT 0, reason text NOT NULL, actor_id varchar REFERENCES users(id) ON DELETE SET NULL, occurred_at timestamp NOT NULL DEFAULT now(), created_at timestamp NOT NULL DEFAULT now());
+       CREATE TABLE IF NOT EXISTS cash_accounts (id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id), branch_id varchar NOT NULL REFERENCES branches(id), name text NOT NULL, opening_balance numeric(14,2) NOT NULL DEFAULT 0, active boolean NOT NULL DEFAULT true, created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now());
+       CREATE TABLE IF NOT EXISTS cash_ledger_entries (id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id), branch_id varchar NOT NULL REFERENCES branches(id), account_id varchar NOT NULL REFERENCES cash_accounts(id), direction text NOT NULL, amount numeric(14,2) NOT NULL, category text NOT NULL, description text, occurred_at timestamp NOT NULL DEFAULT now(), actor_id varchar REFERENCES users(id) ON DELETE SET NULL, created_at timestamp NOT NULL DEFAULT now());
+       CREATE TABLE IF NOT EXISTS cash_obligations (id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id), branch_id varchar NOT NULL REFERENCES branches(id), kind text NOT NULL, amount numeric(14,2) NOT NULL, due_date date NOT NULL, status text NOT NULL DEFAULT 'open', description text, created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now());
+       CREATE TABLE IF NOT EXISTS work_schedules (id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id), branch_id varchar NOT NULL REFERENCES branches(id), employee_id varchar NOT NULL REFERENCES users(id), scheduled_date date NOT NULL, scheduled_hours numeric(6,2) NOT NULL, created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now());
+       CREATE TABLE IF NOT EXISTS work_time_entries (id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id), branch_id varchar NOT NULL REFERENCES branches(id), employee_id varchar NOT NULL REFERENCES users(id), started_at timestamp NOT NULL, ended_at timestamp, hours numeric(6,2), created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now());
+       CREATE TABLE IF NOT EXISTS employment_exits (id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id), branch_id varchar NOT NULL REFERENCES branches(id), employee_id varchar NOT NULL REFERENCES users(id), exit_date date NOT NULL, reason text, created_at timestamp NOT NULL DEFAULT now());
+       CREATE TABLE IF NOT EXISTS loyalty_accounts (id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id), branch_id varchar NOT NULL REFERENCES branches(id), customer_id varchar NOT NULL REFERENCES customers(id), points_balance numeric(12,2) NOT NULL DEFAULT 0, enrolled_at timestamp NOT NULL DEFAULT now(), created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now(), UNIQUE(restaurant_id, customer_id));
+       CREATE TABLE IF NOT EXISTS loyalty_transactions (id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id), branch_id varchar NOT NULL REFERENCES branches(id), loyalty_account_id varchar NOT NULL REFERENCES loyalty_accounts(id), order_id varchar REFERENCES orders(id), type text NOT NULL, points numeric(12,2) NOT NULL, value numeric(12,2) NOT NULL DEFAULT 0, occurred_at timestamp NOT NULL DEFAULT now(), created_at timestamp NOT NULL DEFAULT now());
+       CREATE TABLE IF NOT EXISTS zatca_retry_attempts (id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id), branch_id varchar NOT NULL REFERENCES branches(id), invoice_id varchar NOT NULL REFERENCES invoices(id), actor_id varchar REFERENCES users(id) ON DELETE SET NULL, idempotency_key text NOT NULL, outcome text NOT NULL, error_message text, created_at timestamp NOT NULL DEFAULT now(), UNIQUE(restaurant_id, invoice_id, idempotency_key));
+        CREATE TABLE IF NOT EXISTS overview_daily_snapshots (id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id), branch_id varchar NOT NULL REFERENCES branches(id), snapshot_date date NOT NULL, revenue numeric(14,2) NOT NULL DEFAULT 0, order_count integer NOT NULL DEFAULT 0, calculated_at timestamp NOT NULL DEFAULT now(), UNIQUE(restaurant_id, branch_id, snapshot_date));
+       CREATE INDEX IF NOT EXISTS waste_logs_branch_occurred_idx ON waste_logs(restaurant_id, branch_id, occurred_at);
+       CREATE INDEX IF NOT EXISTS cash_ledger_account_occurred_idx ON cash_ledger_entries(restaurant_id, branch_id, account_id, occurred_at);
+       CREATE INDEX IF NOT EXISTS cash_obligations_due_idx ON cash_obligations(restaurant_id, branch_id, due_date);
+       CREATE UNIQUE INDEX IF NOT EXISTS work_schedules_employee_date_unique ON work_schedules(restaurant_id, branch_id, employee_id, scheduled_date);
+       CREATE INDEX IF NOT EXISTS work_time_employee_started_idx ON work_time_entries(restaurant_id, branch_id, employee_id, started_at);
+       CREATE INDEX IF NOT EXISTS employment_exits_branch_date_idx ON employment_exits(restaurant_id, branch_id, exit_date);
+       CREATE INDEX IF NOT EXISTS loyalty_transactions_account_occurred_idx ON loyalty_transactions(restaurant_id, branch_id, loyalty_account_id, occurred_at)`,
+    ],
   ];
 
   // ZATCA compliance-critical migrations: a failure here must NOT be silently
@@ -405,6 +427,7 @@ export const db = drizzle(pool, { schema });
     "zatca_xml_archive_invoice_unique",
     "invoice_zatca_status_invoice_unique",
     "zatca_settings_csid_alert",
+    "general_overview_tables",
   ]);
   const zatcaFailures: string[] = [];
   for (const [label, ddl] of steps) {
@@ -436,8 +459,7 @@ export const db = drizzle(pool, { schema });
     zatcaFailures.push(`verification query failed: ${(err as Error).message}`);
   }
   if (zatcaFailures.length > 0) {
-    console.error("[FATAL] ZATCA compliance controls could not be installed/verified:\n  " + zatcaFailures.join("\n  "));
-    process.exit(1);
+    throw new Error("Critical overview/ZATCA migrations could not be installed/verified:\n  " + zatcaFailures.join("\n  "));
   }
   console.log("[Migration] ZATCA compliance controls verified: finality triggers + unique constraints present");
 
@@ -454,19 +476,28 @@ export const db = drizzle(pool, { schema });
       const sql = fsMod.readFileSync(syncPath, "utf8");
       const statements = sql.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean);
       let failed = 0;
+      const criticalSyncFailures: string[] = [];
+      const criticalOverviewTables = /\b(overview_settings|waste_logs|cash_accounts|cash_ledger_entries|cash_obligations|work_schedules|work_time_entries|employment_exits|loyalty_accounts|loyalty_transactions|zatca_retry_attempts|overview_daily_snapshots|invoice_zatca_status|zatca_xml_archive)\b/;
       for (const stmt of statements) {
         try {
           await pool.query(stmt);
         } catch (err) {
           failed++;
+          if (criticalOverviewTables.test(stmt)) criticalSyncFailures.push((err as Error).message);
           console.warn(`[SchemaSync] ${(err as Error).message} -- ${stmt.slice(0, 80)}`);
         }
+      }
+      if (criticalSyncFailures.length) {
+        const criticalError = new Error(`Critical Overview/ZATCA schema sync failed:\n  ${criticalSyncFailures.join("\n  ")}`);
+        (criticalError as any).critical = true;
+        throw criticalError;
       }
       console.log(`[SchemaSync] ${statements.length} statements applied (${failed} skipped)`);
     } else {
       console.warn("[SchemaSync] server/schema-sync.sql not found; skipping full schema sync");
     }
   } catch (err) {
+    if ((err as any).critical) throw err;
     console.warn("[SchemaSync] failed:", (err as Error).message);
   }
 })();

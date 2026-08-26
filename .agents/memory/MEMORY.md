@@ -12,3 +12,4 @@
 - [Prod schema sync](prod-schema-sync.md) — server/schema-sync.sql (auto-generated, idempotent) applied at startup keeps RDS aligned; regenerate with scripts/generate-schema-sync.mjs after every schema change.
 - [Replit firewall URLs in lockfile](replit-lockfile-firewall-urls.md) — npm installs here can bake package-firewall.replit.local into package-lock.json, breaking VM installs; sed-fix before deploy.
 - [TypeScript check quirks](typescript-check-quirks.md) — tsc via node_modules/.bin, reinstall packages when node_modules corrupt, clear tsbuildinfo after tsconfig changes, AST-only edits to translations.ts.
+- [ZATCA E2E fixture cleanup](zatca-e2e-fixtures.md) — never seed finalized ZATCA rows in ordinary E2E fixtures; retention guards intentionally prevent cleanup.

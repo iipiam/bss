@@ -71,6 +71,7 @@ import {
 } from "@shared/schema";
 import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";
+import { registerGeneralOverviewRoutes } from "./general-overview";
 
 // WebSocket clients with session context for multi-tenant filtering
 interface WSClient {
@@ -83,7 +84,7 @@ let wsClients: Set<WSClient> | null = null;
 
 // Unified broadcast function with restaurant filtering
 export function broadcastNotification(event: {
-  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'permissions:updated' | 'recipe:costUpdated' | 'sales:updated' | 'inventory:updated' | 'bills:updated' | 'salaries:updated';
+  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'permissions:updated' | 'recipe:costUpdated' | 'sales:updated' | 'inventory:updated' | 'bills:updated' | 'salaries:updated' | 'overview:updated' | 'zatca:updated';
   restaurantId: string;
   // Target specific user (for permissions:updated)
   targetUserId?: string;
@@ -152,14 +153,13 @@ export function broadcastNotification(event: {
     const isTicketEvent = event.type === 'ticket:created' || event.type === 'ticket:updated' || event.type === 'ticket:message';
     const isITClient = client.restaurantId === 'IT_ACCOUNT';
     
-    // Filter by restaurant for multi-tenant isolation (except IT accounts get all ticket events)
-    if (!isITClient && client.restaurantId !== event.restaurantId) {
+    // IT sockets may observe cross-restaurant ticket traffic only. Every other
+    // event (overview, ZATCA, sales, inventory, etc.) requires an exact tenant
+    // match, and IT_ACCOUNT is never treated as a wildcard tenant.
+    if (isITClient) {
+      if (!isTicketEvent) return;
+    } else if (client.restaurantId !== event.restaurantId) {
       return;
-    }
-    
-    // For non-ticket events, IT clients should only receive events if they match the restaurant
-    if (!isTicketEvent && isITClient && event.restaurantId) {
-      return; // IT clients don't need non-ticket events from specific restaurants
     }
     
     // For chat messages, additionally filter by conversation membership
@@ -287,6 +287,7 @@ async function recalcRecipeCostsForInventoryItem(inventoryItemId: string, restau
 }
 
 export async function registerRoutes(app: Express, sessionParser: any): Promise<Server> {
+  registerGeneralOverviewRoutes(app, broadcastNotification);
   // Ensure the internal IT marketing workspace row exists (sentinel restaurant).
   // subscriptionStatus 'cancelled' keeps it out of IT client/business listings.
   try {

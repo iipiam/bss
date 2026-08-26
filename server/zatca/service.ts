@@ -456,6 +456,59 @@ export async function retryPendingInvoices(restaurantId: string): Promise<{
   return withSignLock(restaurantId, () => retryPendingInvoicesUnlocked(restaurantId));
 }
 
+function retryStatus(result: { status: string }) {
+  const base = result.status.replace(/_with_warnings$/, "");
+  return result.status === "warning" || result.status.endsWith("_with_warnings")
+    ? "warning" : base === "cleared" ? "cleared" : base === "reported" ? "reported" : "pending";
+}
+
+/** Persist the authoritative response identically for manual and batch retry. */
+async function persistRetrySuccess(invoice: any, restaurantId: string, result: any) {
+  let signedXml: string | undefined;
+  let qrCode: string | undefined;
+  if (result.clearedXml) {
+    signedXml = result.clearedXml;
+    const qrMatch = result.clearedXml.match(
+      /<cac:AdditionalDocumentReference>\s*<cbc:ID>QR<\/cbc:ID>[\s\S]*?<cbc:EmbeddedDocumentBinaryObject[^>]*>([^<]+)<\/cbc:EmbeddedDocumentBinaryObject>/
+    );
+    if (qrMatch) qrCode = qrMatch[1];
+  }
+  const status = retryStatus(result);
+  await storage.updateInvoiceZatcaStatus(invoice.invoiceId, restaurantId, {
+    submissionStatus: status,
+    clearedAt: result.clearedAt,
+    submittedAt: result.reportedAt || new Date(),
+    zatcaWarnings: result.warnings || null,
+    ...(signedXml ? { signedXml } : {}),
+    ...(qrCode ? { qrCode } : {}),
+  });
+  return status;
+}
+
+/** Retry exactly one already-signed invoice. It intentionally never calls the
+ * signing path: ICV/PIH and signed bytes remain immutable on every retry. */
+export async function retryPendingInvoice(restaurantId: string, invoiceId: string): Promise<{ success: boolean; status: string; message?: string }> {
+  return withSignLock(restaurantId, async () => {
+    const invoice = await storage.getInvoiceZatcaStatus(invoiceId, restaurantId);
+    if (!invoice) return { success: false, status: "missing", message: "ZATCA status not found" };
+    // Accepted-with-warning is final: retrying it would resubmit an accepted,
+    // signed invoice and violate the immutable ZATCA record.
+    if (!["pending", "rejected"].includes(invoice.submissionStatus)) return { success: false, status: invoice.submissionStatus, message: "Finalized or non-retryable invoice" };
+    if (!invoice.signedXml || !invoice.invoiceHash || !invoice.uuid) return { success: false, status: invoice.submissionStatus, message: "Stored signed invoice is incomplete" };
+    const settings = await storage.getZatcaSettings(restaurantId);
+    const csid = settings?.productionCsid || settings?.complianceCsid;
+    const secret = settings?.productionCsidSecret || settings?.complianceCsidSecret;
+    if (!settings || !csid || !secret) return { success: false, status: invoice.submissionStatus, message: "ZATCA credentials unavailable" };
+    const result = await submitInvoiceToZatca({ environment: settings.environment as "sandbox" | "simulation" | "production", csid, csidSecret: secret, privateKey: settings.privateKey || "" }, invoice.signedXml, invoice.invoiceHash, invoice.uuid, invoice.invoiceType as "standard" | "simplified");
+    if (!result.success) {
+      await storage.updateInvoiceZatcaStatus(invoiceId, restaurantId, { submissionStatus: "rejected", zatcaErrors: result.errors || null });
+      return { success: false, status: "rejected", message: result.errors?.[0]?.message || "ZATCA rejected retry" };
+    }
+    const status = await persistRetrySuccess(invoice, restaurantId, result);
+    return { success: true, status };
+  });
+}
+
 async function retryPendingInvoicesUnlocked(restaurantId: string): Promise<{
   processed: number;
   succeeded: number;
@@ -502,33 +555,7 @@ async function retryPendingInvoicesUnlocked(restaurantId: string): Promise<{
 
     if (result.success) {
       succeeded++;
-      const isWarning = result.status === "warning" || result.status.endsWith("_with_warnings");
-      const baseStatus = result.status.replace(/_with_warnings$/, "");
-      const newStatus: "cleared" | "reported" | "pending" | "warning" =
-        isWarning ? "warning" :
-        baseStatus === "cleared" ? "cleared" :
-        baseStatus === "reported" ? "reported" : "pending";
-
-      // For standard invoices, prefer ZATCA's returned cleared XML (and QR)
-      // as the authoritative version stored locally — matches main path.
-      let updatedXml: string | undefined;
-      let updatedQr: string | undefined;
-      if (result.clearedXml) {
-        updatedXml = result.clearedXml;
-        const qrMatch = result.clearedXml.match(
-          /<cac:AdditionalDocumentReference>\s*<cbc:ID>QR<\/cbc:ID>[\s\S]*?<cbc:EmbeddedDocumentBinaryObject[^>]*>([^<]+)<\/cbc:EmbeddedDocumentBinaryObject>/
-        );
-        if (qrMatch) updatedQr = qrMatch[1];
-      }
-
-      await storage.updateInvoiceZatcaStatus(invoice.invoiceId, restaurantId, {
-        submissionStatus: newStatus,
-        clearedAt: result.clearedAt,
-        submittedAt: result.reportedAt || new Date(),
-        zatcaWarnings: result.warnings || null,
-        ...(updatedXml ? { signedXml: updatedXml } : {}),
-        ...(updatedQr ? { qrCode: updatedQr } : {}),
-      });
+      await persistRetrySuccess(invoice, restaurantId, result);
     } else {
       failed++;
       await storage.updateInvoiceZatcaStatus(invoice.invoiceId, restaurantId, {

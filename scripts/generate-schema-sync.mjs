@@ -33,6 +33,25 @@ const pks = (
   )
 ).rows;
 
+const overviewTables = [
+  "overview_settings", "waste_logs", "cash_accounts", "cash_ledger_entries",
+  "cash_obligations", "work_schedules", "work_time_entries", "employment_exits",
+  "loyalty_accounts", "loyalty_transactions", "zatca_retry_attempts",
+  "overview_daily_snapshots",
+];
+const overviewForeignKeys = (
+  await pool.query(
+    `SELECT c.conname, c.conrelid::regclass::text AS table_name,
+            pg_get_constraintdef(c.oid) AS definition
+       FROM pg_constraint c
+      WHERE c.contype = 'f'
+        AND c.connamespace = 'public'::regnamespace
+        AND c.conrelid::regclass::text = ANY($1::text[])
+      ORDER BY c.conrelid::regclass::text, c.conname`,
+    [overviewTables]
+  )
+).rows;
+
 const pkMap = {};
 for (const r of pks) (pkMap[r.table_name] = pkMap[r.table_name] || []).push(r.column_name);
 
@@ -71,6 +90,30 @@ for (const t of tables) {
   }
 }
 const seqSql = [...seqs].map((s) => `CREATE SEQUENCE IF NOT EXISTS ${s.replace(/^"|"$/g, "")};`);
-fs.writeFileSync("server/schema-sync.sql", [...seqSql, ...out].join("\n") + "\n");
+// The generic introspection output intentionally avoids replaying arbitrary
+// foreign keys against legacy data.  These overview indexes are safe,
+// idempotent, and preserve the tenant/branch lookup and uniqueness contract
+// even when the tables were originally created by an older schema-sync file.
+const overviewIntegrity = [
+  `CREATE UNIQUE INDEX IF NOT EXISTS overview_settings_branch_unique ON overview_settings (restaurant_id, branch_id);`,
+  `CREATE INDEX IF NOT EXISTS cash_accounts_branch_idx ON cash_accounts (restaurant_id, branch_id);`,
+  `CREATE INDEX IF NOT EXISTS waste_logs_branch_occurred_idx ON waste_logs (restaurant_id, branch_id, occurred_at);`,
+  `CREATE INDEX IF NOT EXISTS cash_ledger_account_occurred_idx ON cash_ledger_entries (restaurant_id, branch_id, account_id, occurred_at);`,
+  `CREATE INDEX IF NOT EXISTS cash_obligations_due_idx ON cash_obligations (restaurant_id, branch_id, due_date);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS work_schedules_employee_date_unique ON work_schedules (restaurant_id, branch_id, employee_id, scheduled_date);`,
+  `CREATE INDEX IF NOT EXISTS work_time_employee_started_idx ON work_time_entries (restaurant_id, branch_id, employee_id, started_at);`,
+  `CREATE INDEX IF NOT EXISTS employment_exits_branch_date_idx ON employment_exits (restaurant_id, branch_id, exit_date);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS loyalty_accounts_customer_unique ON loyalty_accounts (restaurant_id, customer_id);`,
+  `CREATE INDEX IF NOT EXISTS loyalty_transactions_account_occurred_idx ON loyalty_transactions (restaurant_id, branch_id, loyalty_account_id, occurred_at);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS zatca_retry_attempt_key_unique ON zatca_retry_attempts (restaurant_id, invoice_id, idempotency_key);`,
+  ...overviewForeignKeys.map(({ conname, table_name, definition }) => {
+    const constraint = conname.replaceAll('"', '""');
+    const table = table_name.replaceAll('"', '""');
+    // Keep each DO block on one physical line: db.ts's schema-sync statement
+    // splitter treats only semicolon+newline as a statement boundary.
+    return `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '${conname.replaceAll("'", "''")}' AND conrelid = '"${table}"'::regclass) THEN ALTER TABLE "${table}" ADD CONSTRAINT "${constraint}" ${definition} NOT VALID; END IF; END $$;`;
+  }),
+];
+fs.writeFileSync("server/schema-sync.sql", [...seqSql, ...out, ...overviewIntegrity].join("\n") + "\n");
 console.log(`schema-sync.sql written: ${tables.length} tables, ${seqSql.length + out.length} statements`);
 await pool.end();

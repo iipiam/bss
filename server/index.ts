@@ -3,11 +3,12 @@ import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
 import path from "path";
 import fs from "fs";
-import { pool } from "./db";
+import { pool, startupMigrationReady } from "./db";
 import { registerRoutes } from "./routes";
 import { retryPendingInvoices } from "./zatca/service";
 import { storage } from "./storage";
 import { createEmailProvider } from "./email";
+import { rebuildOverviewDailySnapshots } from "./general-overview-snapshots";
 
 function log(message: string, source = "express") {
   const formattedTime = new Date().toLocaleTimeString("en-US", {
@@ -120,7 +121,18 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // No route, scheduler, or listening socket may become available until the
+  // critical Overview and ZATCA integrity controls are installed and verified.
+  await startupMigrationReady;
   const server = await registerRoutes(app, sessionParser);
+
+  // Operational cache work is intentionally its own timer: a slow rebuild must
+  // never delay the compliance-critical 15 minute ZATCA sweep below.
+  const rebuildOverviewSnapshots = () => rebuildOverviewDailySnapshots().catch((err) =>
+    console.error("[Overview snapshots] rebuild failed:", err)
+  );
+  rebuildOverviewSnapshots();
+  setInterval(rebuildOverviewSnapshots, 6 * 60 * 60 * 1000);
 
   // ── ZATCA 24-hour B2C reporting scheduler ───────────────────────────────
   // ZATCA Phase 2 requires simplified (B2C) invoices to be reported within

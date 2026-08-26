@@ -2509,7 +2509,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateInvoice(id: string, restaurantId: string, invoice: Partial<InsertInvoice>): Promise<Invoice | undefined> {
-    // ZATCA Phase 2 anti-tampering: once an invoice has been cleared or reported,
+    // ZATCA Phase 2 anti-tampering: an accepted-with-warning invoice is final too.
     // reject ALL business-field modifications. Only internal artifacts (qrCode, pdfPath)
     // may still be written, since they are derived from the already-signed document.
     // Guard + update run in ONE transaction with a row lock on the ZATCA status row so a
@@ -2546,7 +2546,7 @@ export class DatabaseStorage implements IStorage {
               eq(invoiceZatcaStatus.restaurantId, restaurantId)
             ))
             .limit(1)
-          if (zatcaRow && (zatcaRow.submissionStatus === "cleared" || zatcaRow.submissionStatus === "reported")) {
+          if (zatcaRow && ["cleared", "reported", "warning"].includes(zatcaRow.submissionStatus)) {
             throw new Error(
               `Cannot modify invoice ${id} (fields: ${touchedBusinessFields.join(", ")}): it has already been ` +
               `${zatcaRow.submissionStatus} by ZATCA. Issue a credit or debit note instead.`
@@ -5576,9 +5576,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUnarchivedZatcaInvoices(restaurantId?: string): Promise<InvoiceZatcaStatus[]> {
-    // Cleared/reported rows with signed XML that have no matching archive record yet.
+    // Every accepted ZATCA row, including accepted-with-warning, is archivable.
     const conditions = [
-      inArray(invoiceZatcaStatus.submissionStatus, ["cleared", "reported"]),
+      inArray(invoiceZatcaStatus.submissionStatus, ["cleared", "reported", "warning"]),
       isNotNull(invoiceZatcaStatus.signedXml),
       sql`NOT EXISTS (
         SELECT 1 FROM ${zatcaXmlArchive}
@@ -5607,7 +5607,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteInvoice(id: string, restaurantId: string): Promise<boolean> {
     // ZATCA 6-year retention (Article 59, VAT Implementing Regulations):
-    // invoices cleared or reported to ZATCA can NEVER be deleted.
+    // invoices accepted by ZATCA (including with warnings) can NEVER be deleted.
     // Guard + delete run in ONE transaction with a row lock on the status row,
     // so a concurrent clearance cannot slip between check and delete.
     return db.transaction(async (tx) => {
@@ -5625,7 +5625,7 @@ export class DatabaseStorage implements IStorage {
           eq(invoiceZatcaStatus.restaurantId, restaurantId)
         ))
         .limit(1)
-      if (zatcaRow && (zatcaRow.submissionStatus === "cleared" || zatcaRow.submissionStatus === "reported")) {
+      if (zatcaRow && ["cleared", "reported", "warning"].includes(zatcaRow.submissionStatus)) {
         throw new Error(
           `Cannot delete invoice ${id}: it has been ${zatcaRow.submissionStatus} by ZATCA and must be retained for 6 years. ` +
           `Issue a credit note instead.`
