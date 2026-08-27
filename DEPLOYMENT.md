@@ -116,8 +116,11 @@ That script does, in order:
 7. Removes any stale PM2 processes whose name is not `BSS`, then
    `pm2 restart BSS --update-env` (or starts it if missing).
 8. `pm2 save`.
-9. Waits 4 s and runs `curl http://127.0.0.1:5000/` — fails loudly if the app
-   did not come up, and prints the last 40 log lines so you can see why.
+9. Retries `curl http://127.0.0.1:5000/` every 2 seconds for up to 60 seconds,
+   allowing PM2 startup and boot-time migrations to finish. If PM2 reports that
+   `BSS` crashed, the deploy aborts immediately. If the process stays online but
+   never responds, the deploy reports a slow or stuck startup after the timeout.
+   Both failure paths print PM2 status and the last 40 log lines.
 
 Skip flags (rarely needed):
 
