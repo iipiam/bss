@@ -9,7 +9,7 @@ This is the operator-facing guide for deploying BSS to the Azure VM behind
 ## Architecture (the short version)
 
 ```
-  Internet ──HTTPS──▶  nginx (:443)  ──proxy_pass──▶  Node/PM2 (:5000)  ──▶  AWS RDS Postgres
+  Internet ──HTTPS──▶  nginx (:443)  ──proxy_pass──▶  Node/PM2 (:5000)  ──▶  Azure-hosted PostgreSQL
 ```
 
 | Piece     | Where it lives                          |
@@ -18,7 +18,7 @@ This is the operator-facing guide for deploying BSS to the Azure VM behind
 | Process   | PM2 process named **`BSS`** (one only)  |
 | Port      | `PORT=5000` (Node listens on `0.0.0.0`) |
 | Reverse proxy | nginx, `proxy_pass http://127.0.0.1:5000;` |
-| Database  | AWS RDS Postgres (URL in `.env`)        |
+| Database  | Azure-hosted PostgreSQL (URL in `.env`) |
 
 ---
 
@@ -45,7 +45,7 @@ Required variables:
 Minimal `.env`:
 
 ```env
-DATABASE_URL=postgres://bss_user:REDACTED@bss-prod.xxxx.eu-central-1.rds.amazonaws.com:5432/bss?sslmode=require
+DATABASE_URL=postgres://bss_user:REDACTED@your-azure-postgres-host:5432/bss?sslmode=require
 SESSION_SECRET=please-replace-with-64-random-chars
 PORT=5000
 NODE_ENV=production

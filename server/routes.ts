@@ -4725,8 +4725,32 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Validate request body without restaurantId (will be added from session)
       const bodySchema = insertTransactionSchema.omit({ restaurantId: true });
       const data = bodySchema.parse(req.body);
-      // Add restaurantId from session for security
-      const transaction = await storage.createTransaction({ ...data, restaurantId });
+
+      // Never trust a client-supplied branch for an order-linked transaction.
+      // The persisted order is the authoritative source of both tenant and branch.
+      let branchId = data.branchId;
+      if (data.orderId) {
+        const order = await storage.getOrder(data.orderId, restaurantId);
+        if (!order) {
+          return res.status(400).json({ error: "Transaction order was not found" });
+        }
+        if (data.branchId && data.branchId !== order.branchId) {
+          return res.status(409).json({ error: "Transaction branch does not match its order" });
+        }
+        branchId = order.branchId;
+      } else if (branchId) {
+        const branch = await storage.getBranch(branchId, restaurantId);
+        if (!branch) {
+          return res.status(400).json({ error: "Transaction branch was not found" });
+        }
+      }
+
+      // Add restaurantId from session and the server-verified branch.
+      const transaction = await storage.createTransaction({
+        ...data,
+        restaurantId,
+        branchId,
+      });
       broadcastNotification({
         type: "sales:updated",
         restaurantId,
