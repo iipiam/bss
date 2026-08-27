@@ -1,5 +1,8 @@
 import assert from "node:assert/strict";
-import { calculateDashboardPerformance } from "../server/dashboard-performance";
+import {
+  calculateDashboardPerformance,
+  calculateDashboardWeeklySales,
+} from "../server/dashboard-performance";
 
 const now = new Date("2026-08-27T12:00:00.000Z"); // 15:00 in Riyadh
 const sale = (createdAt: string, total: number, orderId?: string) => ({
@@ -38,5 +41,27 @@ const midnight = calculateDashboardPerformance([
 ], [], new Date("2026-08-26T21:30:00.000Z"));
 assert.equal(midnight.dod.current, 20, "Riyadh midnight is 21:00 UTC");
 assert.equal(midnight.dod.previous, 0);
+
+const weeklySales = calculateDashboardWeeklySales([
+  sale("2026-08-23T10:00:00.000Z", 12.25, "active"),
+  sale("2026-08-27T10:00:00.000Z", 7.75, "active"),
+  sale("2026-08-27T09:00:00.000Z", 500, "cancelled"),
+  sale("2026-08-27T09:30:00.000Z", 600, "refunded"),
+  sale("2026-08-28T10:00:00.000Z", 9999, "active"),
+], [
+  { id: "active", status: "Completed", paymentStatus: "Paid" },
+  { id: "cancelled", status: "Cancelled", paymentStatus: "Paid" },
+  { id: "refunded", status: "Completed", paymentStatus: "Refunded" },
+], now);
+
+assert.deepEqual(weeklySales, [
+  { date: "Sun", sales: 12.25 },
+  { date: "Mon", sales: 0 },
+  { date: "Tue", sales: 0 },
+  { date: "Wed", sales: 0 },
+  { date: "Thu", sales: 7.75 },
+  { date: "Fri", sales: 0 },
+  { date: "Sat", sales: 0 },
+], "weekly chart must use Riyadh dates and the same valid-sale rules as performance analysis");
 
 console.log("Dashboard performance checks passed");

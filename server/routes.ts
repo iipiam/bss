@@ -101,7 +101,11 @@ import {
   getRiyadhHour,
   isCountedPeakSale,
 } from "./peak-hours";
-import { calculateDashboardPerformance, DASHBOARD_TIMEZONE } from "./dashboard-performance";
+import {
+  calculateDashboardPerformance,
+  calculateDashboardWeeklySales,
+  DASHBOARD_TIMEZONE,
+} from "./dashboard-performance";
 
 // WebSocket clients with session context for multi-tenant filtering
 interface WSClient {
@@ -4916,37 +4920,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   app.get("/api/analytics/sales", requireAuth, requireRestaurant, requirePermission('sales'), async (req, res) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const transactions = await storage.getTransactions({ restaurantId, branchId });
-
-    // Calculate start of current week (Sunday)
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay()); // Go back to Sunday
-    startOfWeek.setHours(0, 0, 0, 0);
-
-    // Filter transactions to only include current week
-    const thisWeekTransactions = transactions.filter(t => {
-      const transactionDate = new Date(t.createdAt);
-      return transactionDate >= startOfWeek;
-    });
-
-    const salesByDay: Record<string, number> = {};
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-    thisWeekTransactions.forEach(t => {
-      const date = new Date(t.createdAt);
-      const dayName = days[date.getDay()];
-      salesByDay[dayName] = (salesByDay[dayName] || 0) + parseFloat(t.total);
-    });
-
-    const chartData = days.map(day => ({
-      date: day,
-      sales: Math.round(salesByDay[day] || 0),
-    }));
-
-    res.json(chartData);
+    const orders = await storage.getOrders({ restaurantId, branchId });
+    res.json(calculateDashboardWeeklySales(transactions, orders));
   });
 
   // Settings (MULTI-TENANT: require auth + restaurantId filtering)

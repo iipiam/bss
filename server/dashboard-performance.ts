@@ -153,3 +153,36 @@ export function calculateDashboardPerformance(
     yoy: metric(yearStart, now, lastYearStart, previousYearPoint(parts)),
   };
 }
+
+export function calculateDashboardWeeklySales(
+  transactions: PerformanceTransaction[],
+  orders: PerformanceOrder[],
+  now: Date = new Date(),
+) {
+  const parts = getRiyadhParts(now);
+  const weekStart = fromRiyadhParts(parts.year, parts.month, parts.day - parts.weekday);
+  const orderMap = new Map(orders.map(order => [order.id, order]));
+  const salesByDay = Array.from({ length: 7 }, () => 0);
+
+  for (const transaction of transactions) {
+    const date = new Date(transaction.createdAt);
+    const order = transaction.orderId ? orderMap.get(transaction.orderId) : undefined;
+    if (
+      !Number.isFinite(date.getTime())
+      || date < weekStart
+      || date > now
+      || !isCountedSale(transaction, order)
+    ) {
+      continue;
+    }
+
+    const weekday = getRiyadhParts(date).weekday;
+    salesByDay[weekday] += Number(transaction.total);
+  }
+
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  return days.map((date, weekday) => ({
+    date,
+    sales: Number(salesByDay[weekday].toFixed(2)),
+  }));
+}

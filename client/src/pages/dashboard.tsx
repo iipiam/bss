@@ -549,7 +549,17 @@ export default function Dashboard() {
   const { data: salesData, isLoading: salesLoading } = useQuery<
     SalesChartData[]
   >({
-    queryKey: ["/api/analytics/sales"],
+    queryKey: ["/api/analytics/sales", restaurant?.id, branchId],
+    queryFn: async () => {
+      const params = branchId ? `?branchId=${encodeURIComponent(branchId)}` : "";
+      const response = await fetch(`/api/analytics/sales${params}`, {
+        credentials: "include",
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error("Failed to load weekly sales analytics");
+      return response.json();
+    },
+    enabled: !!restaurant?.id,
     staleTime: 0, // Ensure instant updates
   });
 
