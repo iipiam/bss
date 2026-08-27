@@ -991,9 +991,145 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteBranch(id: string, restaurantId: string): Promise<boolean> {
-    const result = await db.delete(branches)
-      .where(and(eq(branches.id, id), eq(branches.restaurantId, restaurantId)));
-    return result.rowCount !== null && result.rowCount > 0;
+    return db.transaction(async (tx) => {
+      const [branch] = await tx
+        .select()
+        .from(branches)
+        .where(and(eq(branches.id, id), eq(branches.restaurantId, restaurantId)))
+        .for("update");
+
+      if (!branch) {
+        return false;
+      }
+      if (branch.name.trim().toLowerCase() === "main branch") {
+        const error: any = new Error("Main Branch cannot be deleted");
+        error.code = "MAIN_BRANCH_PROTECTED";
+        throw error;
+      }
+
+      const [mainBranch] = await tx
+        .select()
+        .from(branches)
+        .where(and(
+          eq(branches.restaurantId, restaurantId),
+          sql`lower(trim(${branches.name})) = 'main branch'`,
+        ))
+        .limit(1)
+        .for("update");
+
+      if (!mainBranch) {
+        const error: any = new Error("Main Branch was not found");
+        error.code = "MAIN_BRANCH_NOT_FOUND";
+        throw error;
+      }
+
+      // Resolve branch-inclusive unique keys before the general remap.
+      // Main-branch configuration wins; historical daily totals are combined.
+      await tx.execute(sql`
+        DELETE FROM promotion_branches source
+        WHERE source.branch_id = ${id}
+          AND EXISTS (
+            SELECT 1 FROM promotion_branches target
+            WHERE target.restaurant_id = source.restaurant_id
+              AND target.promotion_id = source.promotion_id
+              AND target.branch_id = ${mainBranch.id}
+          )
+      `);
+      await tx.execute(sql`
+        DELETE FROM overview_settings source
+        WHERE source.branch_id = ${id}
+          AND EXISTS (
+            SELECT 1 FROM overview_settings target
+            WHERE target.restaurant_id = source.restaurant_id
+              AND target.branch_id = ${mainBranch.id}
+          )
+      `);
+      await tx.execute(sql`
+        DELETE FROM work_schedules source
+        WHERE source.branch_id = ${id}
+          AND EXISTS (
+            SELECT 1 FROM work_schedules target
+            WHERE target.restaurant_id = source.restaurant_id
+              AND target.branch_id = ${mainBranch.id}
+              AND target.employee_id = source.employee_id
+              AND target.scheduled_date = source.scheduled_date
+          )
+      `);
+      await tx.execute(sql`
+        UPDATE overview_daily_snapshots target
+        SET revenue = target.revenue + source.revenue,
+            order_count = target.order_count + source.order_count,
+            calculated_at = greatest(target.calculated_at, source.calculated_at)
+        FROM overview_daily_snapshots source
+        WHERE source.branch_id = ${id}
+          AND target.restaurant_id = source.restaurant_id
+          AND target.branch_id = ${mainBranch.id}
+          AND target.snapshot_date = source.snapshot_date
+      `);
+      await tx.execute(sql`
+        DELETE FROM overview_daily_snapshots source
+        WHERE source.branch_id = ${id}
+          AND EXISTS (
+            SELECT 1 FROM overview_daily_snapshots target
+            WHERE target.restaurant_id = source.restaurant_id
+              AND target.branch_id = ${mainBranch.id}
+              AND target.snapshot_date = source.snapshot_date
+          )
+      `);
+
+      // Orders are authoritative for order-linked transaction branch attribution.
+      // Move them first so the transaction integrity trigger preserves Main Branch.
+      await tx.execute(sql`
+        UPDATE orders SET branch_id = ${mainBranch.id}
+        WHERE branch_id = ${id}
+      `);
+
+      // Explicitly preserve every branch-linked record defined by the schema.
+      // Keep this list in sync with foreign keys that reference branches.id.
+      const branchReferenceTables = [
+        "cash_accounts",
+        "cash_ledger_entries",
+        "cash_obligations",
+        "conversations",
+        "device_serial_numbers",
+        "employee_activity_log",
+        "employment_exits",
+        "inventory_items",
+        "inventory_transactions",
+        "invoices",
+        "loyalty_accounts",
+        "loyalty_transactions",
+        "moyasar_payments",
+        "order_promotion_applications",
+        "overview_daily_snapshots",
+        "overview_settings",
+        "printers",
+        "promotion_branches",
+        "salaries",
+        "shop_bills",
+        "transactions",
+        "users",
+        "violations",
+        "waste_logs",
+        "work_schedules",
+        "work_time_entries",
+        "zatca_retry_attempts",
+      ] as const;
+
+      for (const tableName of branchReferenceTables) {
+        await tx.execute(sql`
+          UPDATE ${sql.raw(tableName)}
+          SET branch_id = ${mainBranch.id}
+          WHERE branch_id = ${id}
+        `);
+      }
+
+      // The FK updates above are complete before this statement. PostgreSQL will
+      // still reject and roll back the transaction if an unexpected reference remains.
+      const result = await tx.delete(branches)
+        .where(and(eq(branches.id, id), eq(branches.restaurantId, restaurantId)));
+      return result.rowCount !== null && result.rowCount > 0;
+    });
   }
 
   // Device Serial Numbers (EGS for ZATCA)

@@ -520,9 +520,17 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       res.status(204).send();
     } catch (error: any) {
+      if (error?.code === "MAIN_BRANCH_PROTECTED") {
+        return res.status(403).json({ error: "Main Branch cannot be deleted" });
+      }
+      if (error?.code === "MAIN_BRANCH_NOT_FOUND") {
+        return res.status(409).json({
+          error: "Main Branch was not found. Create or restore Main Branch before deleting another branch.",
+        });
+      }
       if (error?.code === "23503") {
         return res.status(409).json({
-          error: "This branch still has linked records. Reassign or remove those records before deleting the branch.",
+          error: "Some linked records could not be moved to Main Branch. No changes were made.",
         });
       }
       console.error("Delete branch error:", error);
