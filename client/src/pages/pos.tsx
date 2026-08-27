@@ -43,6 +43,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useDevice } from "@/contexts/DeviceContext";
 import { useBusinessType } from "@/hooks/useBusinessType";
+import { useBranch } from "@/contexts/BranchContext";
+import { useNotifications } from "@/contexts/NotificationContext";
 import type { MenuItem, DeliveryApp, Addon } from "@shared/schema";
 import { calcDeliveryBreakdown } from "@shared/deliveryCalc";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -221,11 +223,6 @@ interface CartItem {
   addons?: CartItemAddon[];
 }
 
-interface Branch {
-  id: string;
-  name: string;
-}
-
 interface Customer {
   id: string;
   name: string;
@@ -241,7 +238,7 @@ function DeliveryBreakdownPopover({
   sarLabel: string;
   testId: string;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const rows: Array<{ label: string; value: number; negative?: boolean; isTotal?: boolean }> = [
     { label: t.breakdownGross, value: breakdown.gross },
     { label: t.breakdownSubsidy, value: breakdown.subsidy, negative: true },
@@ -293,9 +290,11 @@ function DeliveryBreakdownPopover({
 
 export default function POS() {
   const { toast } = useToast();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { device } = useDevice();
   const { isFactory, isRealEstate } = useBusinessType();
+  const { currentBranch } = useBranch();
+  const { lastNotification } = useNotifications();
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -327,14 +326,29 @@ export default function POS() {
     queryKey: ["/api/menu"],
   });
 
+  // This is a display-only quote. The server re-evaluates promotions when the
+  // order is created, so a cashier can never submit a client-calculated price.
+  const quoteItems = useMemo(() => cartItems.map((item) => ({
+    id: item.id,
+    quantity: item.quantity,
+    addonIds: item.addons?.map((addon) => addon.id) || [],
+  })), [cartItems]);
+  const promotionChanged = (lastNotification as any)?.type === "promotion:updated";
+  const { data: promotionQuote } = useQuery<any>({
+    queryKey: ["/api/promotions/quote", currentBranch?.id, quoteItems, promotionChanged],
+    queryFn: async () => {
+      const response = await apiRequest("POST", "/api/promotions/quote", { branchId: currentBranch?.id, items: quoteItems });
+      return response.json();
+    },
+    enabled: !!currentBranch?.id && quoteItems.length > 0,
+    refetchInterval: 30000,
+    retry: false,
+  });
+
   const { data: stock = {} } = useQuery<Record<string, number>>({
     queryKey: ["/api/menu/stock"],
     staleTime: 5000, // Consider fresh for 5 seconds (WebSocket handles real-time updates)
     refetchInterval: 60000, // Backup poll every 60s (WebSocket is primary)
-  });
-
-  const { data: branches = [] } = useQuery<Branch[]>({
-    queryKey: ["/api/branches"],
   });
 
   const { data: customers = [] } = useQuery<Customer[]>({
@@ -479,9 +493,11 @@ export default function POS() {
         orderId: order.id,
         branchId: order.branchId,
         itemCount: cartItems.reduce((sum, item) => sum + item.quantity, 0),
-        subtotal: subtotal.toFixed(2),
-        tax: tax.toFixed(2),
-        total: total.toFixed(2),
+        subtotal: String(order.subtotal ?? order.baseSubtotal ?? 0),
+        tax: String(order.tax ?? order.taxAmount ?? 0),
+        total: String(order.total ?? order.totalAmount ?? 0),
+        discount: String(order.discountAmount ?? order.discount ?? 0),
+        promotionName: order.promotionName || order.appliedPromotionName,
         paymentMethod: paymentMethod,
       };
       await apiRequest("POST", "/api/transactions", transaction);
@@ -513,6 +529,7 @@ export default function POS() {
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/dashboard"] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/sales"] });
       queryClient.invalidateQueries({ queryKey: ["/api/analytics/financial"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/promotions/analytics"] });
       queryClient.invalidateQueries({ queryKey: ["/api/inventory"] });
       queryClient.invalidateQueries({ queryKey: ["/api/menu/stock"] });
 
@@ -574,7 +591,7 @@ export default function POS() {
                 const invoiceUrl = `${window.location.origin}/public/invoice/${order.id}`;
                 const message = createWhatsAppInvoiceMessage({
                   invoiceNumber: order.orderNumber,
-                  total: total.toFixed(2),
+                    total: String(order.total ?? order.totalAmount ?? 0),
                   paymentMethod: paymentMethod,
                   invoiceUrl,
                   restaurantName,
@@ -882,8 +899,12 @@ export default function POS() {
       return;
     }
 
-    // Get the first available branch, or null if no branches exist
-    const branchId = branches.length > 0 ? branches[0].id : null;
+    // Checkout always uses the operator's selected branch; pricing remains server-authoritative.
+    const branchId = currentBranch?.id;
+    if (!branchId) {
+      toast({ title: t.error, description: language === "Arabic" ? "اختر فرعاً قبل إتمام الطلب." : "Select an owned branch before checkout.", variant: "destructive" });
+      return;
+    }
 
     const orderData = {
       orderNumber: `ORD-${Date.now()}`,
@@ -896,22 +917,11 @@ export default function POS() {
       earningsDecreaseApplied,
       items: cartItems.map((item) => ({
         id: item.id,
-        name: item.name,
         quantity: item.quantity,
-        price: item.price,
-        addons: item.addons,
+        addonIds: item.addons?.map((addon) => addon.id) || [],
       })),
-      baseSubtotal: baseSubtotal.toFixed(2),
       discountCode: appliedDiscount ? appliedDiscount.code : undefined,
-      discountAmount: discountAmount > 0 ? discountAmount.toFixed(2) : undefined,
-      deliveryCommission:
-        deliveryCommission > 0 ? deliveryCommission.toFixed(2) : undefined,
-      deliveryCommissionRate: selectedDeliveryApp
-        ? parseFloat(selectedDeliveryApp.commission).toFixed(2)
-        : undefined,
-      subtotal: subtotal.toFixed(2),
-      tax: tax.toFixed(2),
-      total: total.toFixed(2),
+      promotionPreview: promotionQuote ? { promotionId: promotionQuote.promotionId || promotionQuote.id, quotedAt: promotionQuote.quotedAt } : undefined,
       paymentMethod: paymentMethod,
       status: "Pending", // Always save English status for server-side filtering
     };
@@ -970,6 +980,17 @@ export default function POS() {
 
   const isMobile = device === "iphone";
   const itemCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const quotedLines = (promotionQuote?.items || promotionQuote?.lines || promotionQuote?.itemQuotes || []) as any[];
+  const quotedPromotionNames = Array.from(new Set(
+    quotedLines
+      .map((line: any) => line.promotion?.name || line.promotionName)
+      .filter((name: unknown): name is string => typeof name === "string" && name.length > 0),
+  ));
+  const promotionPreviewName = quotedPromotionNames.join(", ")
+    || promotionQuote?.promotionName
+    || promotionQuote?.name
+    || (language === "Arabic" ? "معاينة العرض" : "Promotion preview");
+  const promotionSavings = Number(promotionQuote?.savings ?? promotionQuote?.discountAmount ?? 0);
 
   // Mobile layout for iPhone
   if (isMobile) {
@@ -978,6 +999,23 @@ export default function POS() {
       <div className="h-full flex flex-col">
         <div className="flex-shrink-0 p-4 border-b">
           <h1 className="text-2xl font-bold mb-3">{isRealEstate ? (t as any).dealProcessing : t.pointOfSale}</h1>
+          {promotionQuote && (
+            <div className="mb-3 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm" data-testid="pos-promotion-quote">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="font-semibold">{promotionPreviewName}</span>
+                <span dir="ltr">
+                  {promotionSavings.toFixed(2)} {t.sar} {language === "Arabic" ? "توفير" : "saved"}
+                </span>
+              </div>
+              {promotionQuote.externalDiscountSuppressed && (
+                <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">
+                  {language === "Arabic"
+                    ? "لا يمكن جمع العرض مع الخصم الخارجي؛ سيطبق الخادم القاعدة ذات الأولوية."
+                    : "This promotion cannot be stacked with an external discount; the server will apply the priority rule."}
+                </p>
+              )}
+            </div>
+          )}
           <Tabs
             value={mobileView}
             onValueChange={(v) => setMobileView(v as "menu" | "cart")}
@@ -1770,6 +1808,11 @@ export default function POS() {
     <div className="h-screen flex">
       <div className="flex-1 p-6 overflow-auto">
         <h1 className="text-3xl font-bold mb-6">{isRealEstate ? (t as any).dealProcessing : t.pointOfSale}</h1>
+        {promotionQuote && <div className="mb-4 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm" data-testid="pos-promotion-quote">
+          <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-semibold">{promotionPreviewName}</span><span dir="ltr">{promotionSavings.toFixed(2)} {t.sar} {language === "Arabic" ? "توفير" : "saved"}</span></div>
+          {promotionQuote.externalDiscountSuppressed && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{language === "Arabic" ? "لا يمكن جمع العرض مع الخصم الخارجي؛ سيطبق الخادم القاعدة ذات الأولوية." : "This promotion cannot be stacked with an external discount; the server will apply the priority rule."}</p>}
+          {quotedLines.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{quotedLines.length} {language === "Arabic" ? "أصناف مشمولة" : "eligible line items"}</p>}
+        </div>}
 
         <div className="mb-6">
           <div className="relative mb-4">

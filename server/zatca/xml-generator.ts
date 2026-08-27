@@ -10,6 +10,9 @@ interface ZatcaInvoiceLineItem {
   quantity: number;
   unitPrice: number;
   totalAmount: number;
+  lineExtensionAmount?: number;
+  lineVatAmount?: number;
+  lineTotalAmount?: number;
   taxCategory?: "S" | "Z" | "E" | "O";
   taxPercent?: number;
 }
@@ -340,9 +343,9 @@ function buildInvoiceBodyParts(data: ZatcaInvoiceData) {
     const grossExtension = item.quantity * item.unitPrice;
     // Round each line's extension and tax to 2 decimals BEFORE summing, so
     // header totals equal the sum of the rounded line amounts.
-    const lineExtension = round2(Math.max(0, grossExtension - itemDiscount));
-    const lineTax = round2(lineExtension * (itemVatRate / 100));
-    const lineTotal = lineExtension + lineTax;
+    const lineExtension = item.lineExtensionAmount ?? round2(Math.max(0, grossExtension - itemDiscount));
+    const lineTax = item.lineVatAmount ?? round2(lineExtension * (itemVatRate / 100));
+    const lineTotal = item.lineTotalAmount ?? lineExtension + lineTax;
     calculatedSubtotal += lineExtension;
     calculatedVat += lineTax;
     const groupKey = `${itemCategory}|${itemVatRate}`;

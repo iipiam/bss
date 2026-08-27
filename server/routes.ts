@@ -9,7 +9,7 @@ import { sanitizePatchBody } from "./utils";
 import { generateCompanyProfilePDF } from "./company-profile-pdf";
 import { generateBusinessCardPDF } from "./business-card-pdf";
 import { amountToWords, percentageToWords } from "./lib/numberToWords";
-import { insertCompanyProfileSchema, insertInfluencerProfileSchema, insertBloggerProfileSchema, insertMarketingFinSnapshotSchema, insertMarketingFinScenarioSchema, insertProjectEquipmentSchema } from "@shared/schema";
+import { insertCompanyProfileSchema, insertInfluencerProfileSchema, insertBloggerProfileSchema, insertMarketingFinSnapshotSchema, insertMarketingFinScenarioSchema, insertProjectEquipmentSchema, invoices } from "@shared/schema";
 import { logActivity } from "./activityLogger";
 import { requirePermission, requireAnyPermission, requireAllPermissions, requireAction } from "./middleware/requirePermission";
 import { hasAnyPermission } from "@shared/permissions";
@@ -19,8 +19,10 @@ import {
   getProductionCSID,
   runComplianceChecks,
   retryPendingInvoices,
+  retryPendingInvoice,
 } from "./zatca/service";
 import { ZatcaApiClient, type ZatcaConfig } from "./zatca/api-client";
+import { orchestrateZatcaInvoice } from "./zatca/idempotency";
 import bcrypt from "bcrypt";
 import QRCode from "qrcode";
 import rateLimit from "express-rate-limit";
@@ -29,6 +31,29 @@ import * as fs from "fs";
 import * as path from "path";
 import { z } from "zod";
 import { sql, eq, and, gte, lte, isNull, isNotNull, desc, ne } from "drizzle-orm";
+
+// A DB advisory lock complements the in-process ZATCA signing lock. It makes
+// duplicate PDF/order requests safe across application processes: status is
+// checked before any ICV/PIH allocation or signing.
+async function processInvoiceZatcaIdempotently(params: any) {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`zatca-invoice:${params.restaurantId}:${params.invoiceId}`}, 0))`);
+    const existing = await storage.getInvoiceZatcaStatus(params.invoiceId, params.restaurantId);
+    return orchestrateZatcaInvoice(existing, () => processInvoiceForZatca(params),
+      () => retryPendingInvoice(params.restaurantId, params.invoiceId));
+  });
+}
+
+async function findOrCreateInvoiceForOrder(restaurantId: string, orderId: string, invoiceData: any) {
+  return db.transaction(async (tx) => {
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`invoice-order:${restaurantId}:${orderId}`}, 0))`);
+    const [existing] = await tx.select().from(invoices)
+      .where(and(eq(invoices.restaurantId, restaurantId), eq(invoices.orderId, orderId))).limit(1);
+    if (existing) return existing;
+    const [created] = await tx.insert(invoices).values(invoiceData).returning();
+    return created;
+  });
+}
 import * as XLSX from 'xlsx';
 import {
   insertRestaurantSchema,
@@ -72,6 +97,8 @@ import {
 import { getPlanPricing, type SubscriptionPlan, type BusinessType } from "@shared/subscriptionPricing";
 import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";
 import { registerGeneralOverviewRoutes } from "./general-overview";
+import { registerPromotionRoutes } from "./promotions";
+import { restaurantSourceOrderSchema } from "./order-source-schema";
 
 // WebSocket clients with session context for multi-tenant filtering
 interface WSClient {
@@ -84,7 +111,7 @@ let wsClients: Set<WSClient> | null = null;
 
 // Unified broadcast function with restaurant filtering
 export function broadcastNotification(event: {
-  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'permissions:updated' | 'recipe:costUpdated' | 'sales:updated' | 'inventory:updated' | 'bills:updated' | 'salaries:updated' | 'overview:updated' | 'zatca:updated';
+  type: 'order:created' | 'order:statusUpdated' | 'chat:message' | 'ticket:created' | 'ticket:updated' | 'ticket:message' | 'settings:updated' | 'menu:updated' | 'promotion:updated' | 'permissions:updated' | 'recipe:costUpdated' | 'sales:updated' | 'inventory:updated' | 'bills:updated' | 'salaries:updated' | 'overview:updated' | 'zatca:updated';
   restaurantId: string;
   // Target specific user (for permissions:updated)
   targetUserId?: string;
@@ -288,6 +315,7 @@ async function recalcRecipeCostsForInventoryItem(inventoryItemId: string, restau
 
 export async function registerRoutes(app: Express, sessionParser: any): Promise<Server> {
   registerGeneralOverviewRoutes(app, broadcastNotification);
+  registerPromotionRoutes(app, requireAuth, requireRestaurant, broadcastNotification);
   // Ensure the internal IT marketing workspace row exists (sentinel restaurant).
   // subscriptionStatus 'cancelled' keeps it out of IT client/business listings.
   try {
@@ -4313,67 +4341,216 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Inject restaurantId and createdBy from session
       const restaurantId = req.session.user!.restaurantId!;
       const createdBy = req.session.user!.id;
-      const data = insertOrderSchema.parse({ ...req.body, restaurantId, createdBy });
-
-      // Server-authoritative discount validation: never trust client-provided
-      // discountCode/discountAmount. Re-validate the code and recompute the
-      // discount from the order items; usage is only consumed here (not at scan).
+      const restaurant = await storage.getRestaurant(restaurantId);
+      // Restaurant POS intentionally submits a source cart, not financial
+      // fields. Non-restaurant modules retain their legacy insert contract.
+      const sourceOrder = restaurant?.businessType === "restaurant"
+        ? restaurantSourceOrderSchema.parse(req.body)
+        : null;
+      let data: any = sourceOrder ? null : insertOrderSchema.parse({ ...req.body, restaurantId, createdBy });
       let appliedDiscountCodeId: string | null = null;
-      if (data.discountCode) {
-        // Resolve the authoritative discount type/value from either a blogger
-        // QR (BSS-BL:<id>) or a marketing discount code.
-        let discountType: string;
-        let discountValueStr: string;
-        if (data.discountCode.startsWith("BSS-BL:")) {
-          const bloggerId = data.discountCode.slice(7).trim();
-          const blogger = await storage.getBloggerProfile(bloggerId, restaurantId);
-          if (!blogger) {
-            return res.status(400).json({ error: "Blogger QR discount is invalid" });
+      let promotionApplications: any[] = [];
+      let verifiedPaymentRecordId: string | undefined;
+      let order: any;
+      let prepResult: any;
+      let orderItems: any[] = [];
+      if (restaurant?.businessType === "restaurant") {
+        order = await db.transaction(async (tx) => {
+        const { canonicalQuote, lockPromotionPricing } = await import("./promotions");
+        await lockPromotionPricing(tx, restaurantId);
+        const capturedAt = new Date();
+        const source = sourceOrder!;
+        const requestedItems = source.items.map((item) => ({
+          id: item.id,
+          quantity: item.quantity,
+          addonIds: item.addonIds ?? (Array.isArray(item.addons) ? item.addons.map((addon: any) => addon.id) : []),
+        }));
+        let quote = await canonicalQuote(restaurantId, { branchId: source.branchId, items: requestedItems }, tx, capturedAt);
+        let externalDiscount = 0;
+        if (source.discountCode) {
+          let discountType: string;
+          let discountValueStr: string;
+          if (source.discountCode.startsWith("BSS-BL:")) {
+            const blogger = await storage.getBloggerProfile(source.discountCode.slice(7).trim(), restaurantId);
+            if (!blogger || parseFloat(blogger.discountValue || "0") <= 0) {
+              throw new Error("Blogger QR discount is invalid or has no discount configured");
+            }
+            discountType = blogger.discountType;
+            discountValueStr = blogger.discountValue;
+          } else {
+            const code = await storage.getMarketingDiscountCodeByCode(restaurantId, source.discountCode);
+            if (!code || !code.active || (code.expiresAt && new Date(code.expiresAt) < new Date())) {
+              throw new Error("Discount code is invalid, inactive, or expired");
+            }
+            if (code.usageCap != null && code.usageCount >= code.usageCap) {
+              throw new Error("Discount code usage limit reached");
+            }
+            discountType = code.discountType;
+            discountValueStr = code.discountValue;
+            appliedDiscountCodeId = code.id;
           }
-          if (parseFloat(blogger.discountValue || "0") <= 0) {
-            return res.status(400).json({ error: "This blogger has no discount configured" });
-          }
-          discountType = blogger.discountType;
-          discountValueStr = blogger.discountValue;
+          const value = Number(discountValueStr) || 0;
+          externalDiscount = discountType === "percent"
+            ? quote.originalSubtotal * Math.min(100, value) / 100
+            : value;
+          quote = await canonicalQuote(restaurantId, {
+            branchId: source.branchId, items: requestedItems, externalDiscount,
+          }, tx, capturedAt);
+          // A scheduled promotion suppresses the external order-level code.
+          if (quote.externalDiscountSuppressed) appliedDiscountCodeId = null;
+        }
+        const canonicalItems: any[] = quote.lines.map((line) => ({
+          id: line.id, name: line.name, quantity: line.quantity, price: line.price,
+          originalPrice: line.originalPrice, lineOriginalSubtotal: line.lineOriginalSubtotal,
+          lineDiscountAmount: line.lineDiscountAmount, lineFinalSubtotal: line.lineFinalSubtotal,
+          promotion: line.promotion, addons: line.addons,
+        }));
+        const discountedItemsSubtotal = quote.subtotal;
+        let subtotal: string, tax: string, total: string;
+        let deliveryBreakdown: any = undefined;
+        let legalDiscountAmount = quote.discountAmount;
+        let deliveryAppId = source.deliveryAppId || undefined;
+        if (deliveryAppId) {
+          const deliveryApp = await storage.getDeliveryApp(deliveryAppId);
+          if (!deliveryApp || deliveryApp.restaurantId !== restaurantId) throw new Error("Delivery app does not belong to this restaurant");
+          const { calcDeliveryBreakdown, resolveSubsidy, roundHalala } = await import("@shared/deliveryCalc");
+          const markedUp = discountedItemsSubtotal * (1 + Number(deliveryApp.markUp || 0) / 100);
+          const markedUpBase = roundHalala(markedUp);
+          const gross = roundHalala(markedUpBase + roundHalala(markedUpBase * 0.15));
+          const breakdown = calcDeliveryBreakdown({
+            gross, subsidy: resolveSubsidy(gross, deliveryApp.subsidyTiers as any),
+            commissionPercent: Number(deliveryApp.commission), bankingFeesPercent: Number(deliveryApp.bankingFees || 0),
+            posFees: Number(deliveryApp.posFees || 0),
+          });
+          // Legal sale totals are customer-facing. Platform deductions are a
+          // separate immutable profitability snapshot, never the invoice total.
+          const customerBaseHalalas = Math.round(markedUpBase * 100);
+          let allocated = 0;
+          let originalAllocated = 0;
+          const customerOriginalHalalas = Math.round(quote.originalSubtotal * (1 + Number(deliveryApp.markUp || 0) / 100) * 100);
+          const sourceOriginalHalalas = Math.max(1, Math.round(quote.originalSubtotal * 100));
+          canonicalItems.forEach((line, index) => {
+            const sourceHalalas = Math.round(line.lineFinalSubtotal * 100);
+            const customerHalalas = index === canonicalItems.length - 1
+              ? customerBaseHalalas - allocated
+              : Math.floor(customerBaseHalalas * sourceHalalas / Math.max(1, Math.round(discountedItemsSubtotal * 100)));
+            allocated += customerHalalas;
+            const lineSourceOriginal = Math.round(line.lineOriginalSubtotal * 100);
+            const originalHalalas = index === canonicalItems.length - 1
+              ? customerOriginalHalalas - originalAllocated
+              : Math.floor(customerOriginalHalalas * lineSourceOriginal / sourceOriginalHalalas);
+            originalAllocated += originalHalalas;
+            const original = roundHalala(originalHalalas / 100);
+            line.customerOriginalSubtotal = original;
+            line.customerLineSubtotal = roundHalala(customerHalalas / 100);
+            line.customerDiscountAmount = roundHalala(Math.max(0, original - line.customerLineSubtotal));
+            line.customerUnitBase = roundHalala(line.customerLineSubtotal / line.quantity);
+            // Existing invoice consumers already prefer lineFinalSubtotal.
+            line.lineOriginalSubtotal = original;
+            line.lineFinalSubtotal = line.customerLineSubtotal;
+            line.lineDiscountAmount = line.customerDiscountAmount;
+            line.originalPrice = roundHalala(line.originalPrice * (1 + Number(deliveryApp.markUp || 0) / 100));
+            line.price = line.customerUnitBase;
+          });
+          const markupFactor = 1 + Number(deliveryApp.markUp || 0) / 100;
+          promotionApplications = quote.applications.map((application) => ({
+            ...application,
+            originalSubtotal: roundHalala(application.originalSubtotal * markupFactor),
+            discountAmount: roundHalala(application.discountAmount * markupFactor),
+            finalSubtotal: roundHalala(application.finalSubtotal * markupFactor),
+            snapshot: {
+              ...application.snapshot,
+              lines: application.snapshot.lines.map((line: any) => ({
+                ...line,
+                originalUnitPrice: roundHalala(line.originalUnitPrice * markupFactor),
+                finalUnitPrice: roundHalala(line.finalUnitPrice * markupFactor),
+                discountAmount: roundHalala(line.discountAmount * markupFactor),
+              })),
+              deliveryMarkupPercent: Number(deliveryApp.markUp || 0),
+              legalCustomerSubtotal: roundHalala(customerBaseHalalas / 100),
+              legalCustomerTax: roundHalala(gross - customerBaseHalalas / 100),
+              legalCustomerTotal: gross,
+            },
+          }));
+          subtotal = roundHalala(customerBaseHalalas / 100).toFixed(2);
+          tax = roundHalala(gross - customerBaseHalalas / 100).toFixed(2);
+          total = gross.toFixed(2);
+          deliveryBreakdown = {
+            ...breakdown, markupPercent: Number(deliveryApp.markUp || 0),
+            commissionPercent: Number(deliveryApp.commission),
+            bankingFeesPercent: Number(deliveryApp.bankingFees || 0),
+            sourceSubtotal: discountedItemsSubtotal, capturedAt: new Date().toISOString(),
+          };
+          legalDiscountAmount = roundHalala(quote.discountAmount * markupFactor);
         } else {
-          const code = await storage.getMarketingDiscountCodeByCode(restaurantId, data.discountCode);
-          if (!code || !code.active) {
-            return res.status(400).json({ error: "Discount code is invalid or inactive" });
-          }
-          if (code.expiresAt && new Date(code.expiresAt) < new Date()) {
-            return res.status(400).json({ error: "Discount code has expired" });
-          }
-          if (code.usageCap !== null && code.usageCap !== undefined && code.usageCount >= code.usageCap) {
-            return res.status(400).json({ error: "Discount code usage limit reached" });
-          }
-          discountType = code.discountType;
-          discountValueStr = code.discountValue;
-          appliedDiscountCodeId = code.id;
+          const base = Math.round(discountedItemsSubtotal * 100) / 100;
+          const vat = Math.round(base * 0.15 * 100) / 100;
+          subtotal = base.toFixed(2); tax = vat.toFixed(2); total = (Math.round((base + vat) * 100) / 100).toFixed(2);
         }
-        const itemsForDiscount = Array.isArray(data.items) ? (data.items as any[]) : [];
-        let itemsSubtotal = itemsForDiscount.reduce((sum, item) => {
-          const addons = Array.isArray(item.addons)
-            ? item.addons.reduce((a: number, ad: any) => a + (Number(ad?.price) || 0), 0)
-            : 0;
-          return sum + ((Number(item.price) || 0) + addons) * (Number(item.quantity) || 0);
-        }, 0);
-        if (data.deliveryAppId) {
-          const app = await storage.getDeliveryApp(data.deliveryAppId);
-          if (app && app.restaurantId === restaurantId) {
-            itemsSubtotal *= 1 + (parseFloat(app.markUp || "0") / 100);
-          }
+        // Allocate the one legal order VAT total over immutable line snapshots;
+        // the final line receives the deterministic rounding residual.
+        const subtotalHalalas = Math.round(Number(subtotal) * 100);
+        const taxHalalas = Math.round(Number(tax) * 100);
+        let vatAllocated = 0;
+        canonicalItems.forEach((line, index) => {
+          const baseHalalas = Math.round(Number(line.lineFinalSubtotal) * 100);
+          const vatHalalas = index === canonicalItems.length - 1
+            ? taxHalalas - vatAllocated
+            : Math.floor(taxHalalas * baseHalalas / Math.max(1, subtotalHalalas));
+          vatAllocated += vatHalalas;
+          line.lineVatAmount = vatHalalas / 100;
+          line.lineTotal = (baseHalalas + vatHalalas) / 100;
+        });
+        const { verifyOnlinePayment } = await import("./payment-verification");
+        let payment = verifyOnlinePayment({
+          requestedId: source.moyasarPaymentId, paymentMethod: source.paymentMethod,
+          expectedAmountHalalas: Math.round(Number(total) * 100), restaurantId,
+        });
+        if (source.paymentMethod === "Online" || source.moyasarPaymentId) {
+          const paymentRows = await tx.execute(sql`
+            SELECT id, restaurant_id AS "restaurantId", moyasar_id AS "moyasarId", order_id AS "orderId"
+            FROM moyasar_payments WHERE restaurant_id=${restaurantId} AND moyasar_id=${source.moyasarPaymentId!}
+            FOR UPDATE
+          `);
+          const record = (paymentRows as any).rows?.[0];
+          const Moyasar = require("moyasar");
+          const provider = await Moyasar.payment.fetch(source.moyasarPaymentId!);
+          payment = verifyOnlinePayment({
+            requestedId: source.moyasarPaymentId, paymentMethod: source.paymentMethod,
+            expectedAmountHalalas: Math.round(Number(total) * 100), restaurantId, record, provider,
+          });
+          verifiedPaymentRecordId = payment.paymentRecordId;
         }
-        const value = parseFloat(discountValueStr || "0");
-        const serverDiscount = discountType === "percent"
-          ? Math.min(itemsSubtotal, (itemsSubtotal * value) / 100)
-          : Math.min(itemsSubtotal, value);
-        data.discountAmount = (Math.round(serverDiscount * 100) / 100).toFixed(2);
+        data = insertOrderSchema.parse({
+          restaurantId, createdBy, orderNumber: source.orderNumber, branchId: source.branchId, orderType: source.orderType,
+          table: source.table || undefined, address: source.address || undefined, customerId: source.customerId || undefined,
+          customerName: source.customerName || undefined, customerPhone: source.customerPhone || undefined,
+          deliveryAppId, earningsDecreaseApplied: source.earningsDecreaseApplied ?? false, discountCode: source.discountCode || undefined,
+          paymentMethod: source.paymentMethod || "Cash", paymentStatus: payment.paymentStatus,
+          moyasarPaymentId: payment.moyasarPaymentId, status: source.status || "Pending",
+          items: canonicalItems, deliveryBreakdown, discountAmount: legalDiscountAmount.toFixed(2), subtotal, tax, total,
+        });
+        if (!deliveryAppId) promotionApplications = quote.applications;
+        const { orderProcessingService } = await import("./orderProcessingService");
+        orderItems = data.items.map((item: any) => ({
+          id: item.id, name: item.name, quantity: item.quantity, price: item.price, addons: item.addons,
+        }));
+        prepResult = await orderProcessingService.prepareOrderStock(orderItems, data.branchId);
+        if (!prepResult.isValid) throw new Error(prepResult.message || "Insufficient inventory");
+        return orderProcessingService.createOrderWithInventoryDeduction(
+          data, prepResult.stockRequirements || new Map(), data.branchId, promotionApplications,
+          appliedDiscountCodeId || undefined, verifiedPaymentRecordId, tx,
+        );
+        });
       } else {
+        // Non-restaurant order paths retain their existing item semantics, but
+        // submitted discounts are never accepted without authoritative rules.
         data.discountAmount = "0";
       }
 
       const { orderProcessingService } = await import("./orderProcessingService");
-      const orderItems = Array.isArray(data.items) ? data.items.map((item: any) => ({
+      if (restaurant?.businessType !== "restaurant") {
+      orderItems = Array.isArray(data.items) ? data.items.map((item: any) => ({
         id: item.id,
         name: item.name,
         quantity: item.quantity,
@@ -4381,7 +4558,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         addons: item.addons
       })) : [];
       
-      const prepResult = await orderProcessingService.prepareOrderStock(
+      prepResult = await orderProcessingService.prepareOrderStock(
         orderItems,
         data.branchId || ""
       );
@@ -4394,15 +4571,16 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         });
       }
       
-      const order = await storage.createOrder(data);
+      order = await storage.createOrder(data);
+      }
 
-      if (appliedDiscountCodeId) {
+      if (appliedDiscountCodeId && restaurant?.businessType !== "restaurant") {
         storage.incrementDiscountCodeUsage(appliedDiscountCodeId, restaurantId)
           .catch((err) => console.error("Failed to increment discount code usage:", err));
       }
 
       try {
-        if (prepResult.stockRequirements) {
+        if (restaurant?.businessType !== "restaurant" && prepResult.stockRequirements) {
           await orderProcessingService.finalizeOrderWithInventory(
             data,
             prepResult.stockRequirements,
@@ -4414,7 +4592,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         // Broadcast order created notification
         const branch = data.branchId ? await storage.getBranch(data.branchId, data.restaurantId) : null;
         const itemsSummary = orderItems.length > 0 
-          ? orderItems.slice(0, 3).map(item => item.name).join(', ') + (orderItems.length > 3 ? '...' : '')
+          ? orderItems.slice(0, 3).map((item: any) => item.name).join(', ') + (orderItems.length > 3 ? '...' : '')
           : 'No items';
         
         broadcastNotification({
@@ -6104,7 +6282,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // shared with the buyer. Non-blocking processing is NOT acceptable for B2B.
       let zatcaResult: Awaited<ReturnType<typeof processInvoiceForZatca>> | null = null;
       try {
-        zatcaResult = await processInvoiceForZatca({
+        zatcaResult = await processInvoiceZatcaIdempotently({
           restaurantId,
           invoiceId: createdInvoice.id,
           invoiceNumber,
@@ -6122,7 +6300,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           })),
           customerName: procurementRecord.supplier || undefined
         });
-        console.log(`[ZATCA] B2B Invoice ${invoiceNumber} status: ${zatcaResult.submissionStatus}`);
+        console.log(`[ZATCA] B2B Invoice ${invoiceNumber} status: ${zatcaResult?.submissionStatus}`);
       } catch (zatcaError) {
         console.error("[ZATCA] Error processing B2B invoice:", zatcaError);
       }
@@ -6194,11 +6372,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       // Transform order items to invoice items format with VAT breakdown
       const invoiceItems = order.items.map(item => {
-        const totalPrice = item.quantity * item.price;
-        const basePrice = totalPrice / 1.15;
-        const vatAmount = totalPrice - basePrice;
+        const addonUnitTotal = item.addons?.reduce((sum, addon) => sum + Number(addon.price || 0), 0) || 0;
+        const basePrice = item.lineFinalSubtotal ?? item.quantity * (item.price + addonUnitTotal);
+        const vatAmount = item.lineVatAmount ?? basePrice * 0.15;
+        const totalPrice = item.lineTotal ?? basePrice + vatAmount;
         return {
-          name: item.name,
+          name: item.promotion ? `${item.name} (${item.promotion.name})` : item.name,
           quantity: item.quantity,
           basePrice: parseFloat(basePrice.toFixed(2)),
           vatAmount: parseFloat(vatAmount.toFixed(2)),
@@ -6263,7 +6442,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       // Process invoice through ZATCA if enabled (async, non-blocking)
       try {
         
-        const zatcaResult = await processInvoiceForZatca({
+        const zatcaResult = await processInvoiceZatcaIdempotently({
           restaurantId,
           invoiceId: createdInvoice.id,
           invoiceNumber,
@@ -6272,12 +6451,17 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
           subtotal: parseFloat(order.subtotal),
           vatAmount: parseFloat(order.tax),
           total: parseFloat(order.total),
+          // Line prices in the immutable order snapshot are already discounted;
+          // do not subtract the informational order discount a second time.
           discount: 0,
           items: order.items.map((item: any) => ({
-            name: item.name,
+            name: item.promotion ? `${item.name} (${item.promotion.name})` : item.name,
             quantity: item.quantity,
-            unitPrice: item.price,
-            totalAmount: item.quantity * item.price
+            unitPrice: item.lineFinalSubtotal != null ? item.lineFinalSubtotal / item.quantity : item.price + (item.addons || []).reduce((sum: number, addon: any) => sum + Number(addon.price || 0), 0),
+            totalAmount: item.lineFinalSubtotal != null ? item.lineFinalSubtotal : item.quantity * (item.price + (item.addons || []).reduce((sum: number, addon: any) => sum + Number(addon.price || 0), 0)),
+            lineExtensionAmount: item.lineFinalSubtotal,
+            lineVatAmount: item.lineVatAmount,
+            lineTotalAmount: item.lineTotal,
           })),
           customerName: order.customerName || undefined
         });
@@ -8191,11 +8375,15 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
       // Transform order items to invoice items format with VAT breakdown
       const invoiceItems = order.items.map(item => {
-        const totalPrice = item.quantity * item.price;
-        const basePrice = totalPrice / 1.15; // Remove 15% VAT to get base
-        const vatAmount = totalPrice - basePrice;
+        const addonUnitTotal = item.addons?.reduce((sum, addon) => sum + Number(addon.price || 0), 0) || 0;
+        // lineFinalSubtotal is an immutable order-time allocation (including
+        // add-ons and fixed-order promotion allocations). Fall back only for
+        // pre-promotion legacy orders.
+        const basePrice = item.lineFinalSubtotal ?? item.quantity * (item.price + addonUnitTotal);
+        const vatAmount = item.lineVatAmount ?? basePrice * 0.15;
+        const totalPrice = item.lineTotal ?? basePrice + vatAmount;
         return {
-          name: item.name,
+          name: item.promotion ? `${item.name} (${item.promotion.name})` : item.name,
           quantity: item.quantity,
           basePrice: parseFloat(basePrice.toFixed(2)),
           vatAmount: parseFloat(vatAmount.toFixed(2)),
@@ -8219,7 +8407,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         pdfPath: "", // Will be updated after PDF generation
       };
 
-      const createdInvoice = await storage.createInvoice(invoiceData);
+      const createdInvoice = await findOrCreateInvoiceForOrder(restaurantId, order.id, invoiceData);
 
       // Get base URL from request
       const baseUrl = `${req.protocol}://${req.get('host')}`;
@@ -8258,6 +8446,23 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         qrCode,
         pdfPath: `/invoices/${pdfFilename}`,
       });
+      try {
+        await processInvoiceZatcaIdempotently({
+          restaurantId, invoiceId: createdInvoice.id, invoiceNumber, invoiceType: "simplified",
+          paymentMethod: order.paymentMethod === "Cash" ? "cash" : "card",
+          subtotal: Number(order.subtotal), vatAmount: Number(order.tax), total: Number(order.total), discount: 0,
+          items: order.items.map((item: any) => ({
+            name: item.promotion ? `${item.name} (${item.promotion.name})` : item.name,
+            quantity: item.quantity,
+            unitPrice: (item.lineFinalSubtotal ?? item.quantity * item.price) / item.quantity,
+            totalAmount: item.lineFinalSubtotal ?? item.quantity * item.price,
+            lineExtensionAmount: item.lineFinalSubtotal, lineVatAmount: item.lineVatAmount, lineTotalAmount: item.lineTotal,
+          })),
+          customerName: order.customerName || undefined,
+        });
+      } catch (zatcaError) {
+        console.error("[ZATCA] Primary invoice processing deferred:", zatcaError);
+      }
 
       // Broadcast sales update for real-time BEP tracking
       broadcastNotification({
@@ -16294,7 +16499,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       }
       
       
-      const result = await processInvoiceForZatca({
+      const result = await processInvoiceZatcaIdempotently({
         restaurantId: targetRestaurantId,
         ...invoiceData
       });

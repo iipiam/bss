@@ -3408,6 +3408,7 @@ export class DatabaseStorage implements IStorage {
       const markUpPercent = parseFloat(app.markUp || "0");
 
       appOrders.forEach(order => {
+        const captured = (order as any).deliveryBreakdown as ReturnType<typeof calcDeliveryBreakdown> | null;
         // Reconstruct the delivery "gross" (customer-facing price) the
         // same way client/src/pages/pos.tsx does:
         //   baseSubtotal = sum(items: (price + addons) * qty)
@@ -3426,7 +3427,7 @@ export class DatabaseStorage implements IStorage {
             : 0;
           return sum + (Number(item.price || 0) + addonSum) * Number(item.quantity || 0);
         }, 0);
-        const gross = baseSubtotal * (1 + markUpPercent / 100);
+        const gross = captured ? Number(captured.gross) : baseSubtotal * (1 + markUpPercent / 100);
         totalGrossRevenue += gross;
 
         // Find applicable subsidy tier (safely handle null/undefined tiers)
@@ -3436,12 +3437,11 @@ export class DatabaseStorage implements IStorage {
         // Canonical formula — single source of truth in shared/deliveryCalc.ts.
         // Same helper is used by client/src/pages/pos.tsx so POS Cart total and
         // this row's net match down to the halala.
-        const breakdown = calcDeliveryBreakdown({
-          gross,
-          subsidy,
-          commissionPercent: parseFloat(app.commission),
-          bankingFeesPercent: parseFloat(app.bankingFees),
-          posFees: parseFloat(app.posFees),
+        // New orders carry immutable order-time economics. Only legacy rows
+        // reconstruct from current app settings.
+        const breakdown = captured || calcDeliveryBreakdown({
+          gross, subsidy, commissionPercent: parseFloat(app.commission),
+          bankingFeesPercent: parseFloat(app.bankingFees), posFees: parseFloat(app.posFees),
         });
 
         totalCommissionCost += breakdown.commission;

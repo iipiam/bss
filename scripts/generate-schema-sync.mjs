@@ -38,6 +38,7 @@ const overviewTables = [
   "cash_obligations", "work_schedules", "work_time_entries", "employment_exits",
   "loyalty_accounts", "loyalty_transactions", "zatca_retry_attempts",
   "overview_daily_snapshots",
+  "promotions", "promotion_branches", "promotion_targets", "order_promotion_applications",
 ];
 const overviewForeignKeys = (
   await pool.query(
@@ -95,6 +96,7 @@ const seqSql = [...seqs].map((s) => `CREATE SEQUENCE IF NOT EXISTS ${s.replace(/
 // idempotent, and preserve the tenant/branch lookup and uniqueness contract
 // even when the tables were originally created by an older schema-sync file.
 const overviewIntegrity = [
+  `ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_breakdown jsonb;`,
   `CREATE UNIQUE INDEX IF NOT EXISTS overview_settings_branch_unique ON overview_settings (restaurant_id, branch_id);`,
   `CREATE INDEX IF NOT EXISTS cash_accounts_branch_idx ON cash_accounts (restaurant_id, branch_id);`,
   `CREATE INDEX IF NOT EXISTS waste_logs_branch_occurred_idx ON waste_logs (restaurant_id, branch_id, occurred_at);`,
@@ -106,6 +108,19 @@ const overviewIntegrity = [
   `CREATE UNIQUE INDEX IF NOT EXISTS loyalty_accounts_customer_unique ON loyalty_accounts (restaurant_id, customer_id);`,
   `CREATE INDEX IF NOT EXISTS loyalty_transactions_account_occurred_idx ON loyalty_transactions (restaurant_id, branch_id, loyalty_account_id, occurred_at);`,
   `CREATE UNIQUE INDEX IF NOT EXISTS zatca_retry_attempt_key_unique ON zatca_retry_attempts (restaurant_id, invoice_id, idempotency_key);`,
+  `CREATE INDEX IF NOT EXISTS promotions_tenant_schedule_idx ON promotions (restaurant_id, enabled, start_date, end_date);`,
+  `CREATE INDEX IF NOT EXISTS promotions_tenant_priority_idx ON promotions (restaurant_id, priority);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS promotion_branches_unique ON promotion_branches (restaurant_id, promotion_id, branch_id);`,
+  `CREATE INDEX IF NOT EXISTS promotion_branches_tenant_branch_idx ON promotion_branches (restaurant_id, branch_id);`,
+  `CREATE INDEX IF NOT EXISTS promotion_targets_tenant_promotion_idx ON promotion_targets (restaurant_id, promotion_id);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS promotion_targets_item_unique ON promotion_targets (restaurant_id, promotion_id, menu_item_id);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS promotion_targets_category_unique ON promotion_targets (restaurant_id, promotion_id, category);`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS order_promotion_applications_order_promotion_unique ON order_promotion_applications (restaurant_id, order_id, promotion_id);`,
+  `CREATE INDEX IF NOT EXISTS order_promotion_applications_tenant_applied_idx ON order_promotion_applications (restaurant_id, applied_at);`,
+  `CREATE INDEX IF NOT EXISTS order_promotion_applications_branch_applied_idx ON order_promotion_applications (restaurant_id, branch_id, applied_at);`,
+  // Keep on one physical line: db.ts splits schema-sync at semicolon+newline.
+  `CREATE OR REPLACE FUNCTION promotion_application_immutable() RETURNS trigger AS $fn$ BEGIN RAISE EXCEPTION 'order promotion applications are immutable'; END $fn$ LANGUAGE plpgsql;`,
+  `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='order_promotion_applications_immutable') THEN CREATE TRIGGER order_promotion_applications_immutable BEFORE UPDATE OR DELETE ON order_promotion_applications FOR EACH ROW EXECUTE FUNCTION promotion_application_immutable(); END IF; END $$;`,
   ...overviewForeignKeys.map(({ conname, table_name, definition }) => {
     const constraint = conname.replaceAll('"', '""');
     const table = table_name.replaceAll('"', '""');

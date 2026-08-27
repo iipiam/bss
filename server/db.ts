@@ -410,6 +410,71 @@ export const startupMigrationReady: Promise<void> = (async () => {
        CREATE INDEX IF NOT EXISTS employment_exits_branch_date_idx ON employment_exits(restaurant_id, branch_id, exit_date);
        CREATE INDEX IF NOT EXISTS loyalty_transactions_account_occurred_idx ON loyalty_transactions(restaurant_id, branch_id, loyalty_account_id, occurred_at)`,
     ],
+    [
+      "scheduled_promotions",
+      `CREATE TABLE IF NOT EXISTS promotions (
+         id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+         restaurant_id varchar NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+         name text NOT NULL, description text, enabled boolean NOT NULL DEFAULT false,
+         paused boolean NOT NULL DEFAULT false, discount_type text NOT NULL,
+         discount_value numeric(12,2) NOT NULL, priority integer NOT NULL DEFAULT 0,
+         start_date date NOT NULL, end_date date NOT NULL, start_time text NOT NULL DEFAULT '00:00',
+         end_time text NOT NULL DEFAULT '23:59', timezone text NOT NULL DEFAULT 'Asia/Riyadh',
+         weekdays integer[] NOT NULL DEFAULT ARRAY[0,1,2,3,4,5,6]::integer[],
+         all_branches boolean NOT NULL DEFAULT true, stacking_policy text NOT NULL DEFAULT 'priority_only',
+         max_total_discount numeric(12,2), usage_limit integer, created_by varchar REFERENCES users(id) ON DELETE SET NULL,
+         created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now(),
+         archived_at timestamp, version integer NOT NULL DEFAULT 1,
+         CONSTRAINT promotions_discount_type_check CHECK (discount_type IN ('percentage','fixed_product','special_price','fixed_order')),
+         CONSTRAINT promotions_stacking_policy_check CHECK (stacking_policy='priority_only'),
+         CONSTRAINT promotions_date_range_check CHECK (end_date >= start_date),
+         CONSTRAINT promotions_value_check CHECK (discount_value >= 0),
+         CONSTRAINT promotions_usage_limit_check CHECK (usage_limit IS NULL OR usage_limit > 0)
+       );
+       CREATE TABLE IF NOT EXISTS promotion_branches (
+         id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+         promotion_id varchar NOT NULL REFERENCES promotions(id) ON DELETE CASCADE,
+         branch_id varchar NOT NULL REFERENCES branches(id) ON DELETE CASCADE
+       );
+       CREATE TABLE IF NOT EXISTS promotion_targets (
+         id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE,
+         promotion_id varchar NOT NULL REFERENCES promotions(id) ON DELETE CASCADE, target_type text NOT NULL,
+         menu_item_id varchar REFERENCES menu_items(id) ON DELETE CASCADE, category text,
+         CONSTRAINT promotion_targets_discriminant_check CHECK (
+           (target_type='menu_item' AND menu_item_id IS NOT NULL AND category IS NULL) OR
+           (target_type='category' AND menu_item_id IS NULL AND category IS NOT NULL))
+       );
+       CREATE TABLE IF NOT EXISTS order_promotion_applications (
+         id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id) ON DELETE RESTRICT,
+         order_id varchar NOT NULL REFERENCES orders(id) ON DELETE RESTRICT,
+         promotion_id varchar REFERENCES promotions(id) ON DELETE SET NULL,
+         branch_id varchar NOT NULL REFERENCES branches(id) ON DELETE RESTRICT,
+         snapshot jsonb NOT NULL, original_subtotal numeric(12,2) NOT NULL,
+         discount_amount numeric(12,2) NOT NULL, final_subtotal numeric(12,2) NOT NULL,
+         applied_at timestamp NOT NULL DEFAULT now(),
+         CONSTRAINT order_promotion_applications_amount_check CHECK (discount_amount >= 0 AND final_subtotal >= 0)
+       );
+       CREATE INDEX IF NOT EXISTS promotions_tenant_schedule_idx ON promotions(restaurant_id, enabled, start_date, end_date);
+       CREATE INDEX IF NOT EXISTS promotions_tenant_priority_idx ON promotions(restaurant_id, priority);
+       CREATE UNIQUE INDEX IF NOT EXISTS promotion_branches_unique ON promotion_branches(restaurant_id, promotion_id, branch_id);
+       CREATE INDEX IF NOT EXISTS promotion_branches_tenant_branch_idx ON promotion_branches(restaurant_id, branch_id);
+       CREATE INDEX IF NOT EXISTS promotion_targets_tenant_promotion_idx ON promotion_targets(restaurant_id, promotion_id);
+       CREATE UNIQUE INDEX IF NOT EXISTS promotion_targets_item_unique ON promotion_targets(restaurant_id, promotion_id, menu_item_id);
+       CREATE UNIQUE INDEX IF NOT EXISTS promotion_targets_category_unique ON promotion_targets(restaurant_id, promotion_id, category);
+       CREATE UNIQUE INDEX IF NOT EXISTS order_promotion_applications_order_promotion_unique ON order_promotion_applications(restaurant_id, order_id, promotion_id);
+       CREATE INDEX IF NOT EXISTS order_promotion_applications_tenant_applied_idx ON order_promotion_applications(restaurant_id, applied_at);
+       CREATE INDEX IF NOT EXISTS order_promotion_applications_branch_applied_idx ON order_promotion_applications(restaurant_id, branch_id, applied_at);
+       CREATE OR REPLACE FUNCTION promotion_application_immutable() RETURNS trigger AS $fn$
+       BEGIN RAISE EXCEPTION 'order promotion applications are immutable'; END $fn$ LANGUAGE plpgsql;
+       DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='order_promotion_applications_immutable') THEN
+         CREATE TRIGGER order_promotion_applications_immutable BEFORE UPDATE OR DELETE ON order_promotion_applications
+         FOR EACH ROW EXECUTE FUNCTION promotion_application_immutable();
+       END IF; END $$`,
+    ],
+    [
+      "orders.delivery_breakdown",
+      `ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_breakdown jsonb`,
+    ],
   ];
 
   // ZATCA compliance-critical migrations: a failure here must NOT be silently
@@ -428,6 +493,7 @@ export const startupMigrationReady: Promise<void> = (async () => {
     "invoice_zatca_status_invoice_unique",
     "zatca_settings_csid_alert",
     "general_overview_tables",
+    "scheduled_promotions",
   ]);
   const zatcaFailures: string[] = [];
   for (const [label, ddl] of steps) {
@@ -442,10 +508,10 @@ export const startupMigrationReady: Promise<void> = (async () => {
   // Verify the ZATCA compliance controls actually exist before serving traffic.
   try {
     const trg = await pool.query(
-      `SELECT tgname FROM pg_trigger WHERE tgname IN ('zatca_archive_guard','zatca_invoice_finality_guard','zatca_status_finality_guard')`
+      `SELECT tgname FROM pg_trigger WHERE tgname IN ('zatca_archive_guard','zatca_invoice_finality_guard','zatca_status_finality_guard','order_promotion_applications_immutable')`
     );
     const found = new Set(trg.rows.map((r: any) => r.tgname));
-    for (const required of ["zatca_archive_guard", "zatca_invoice_finality_guard", "zatca_status_finality_guard"]) {
+    for (const required of ["zatca_archive_guard", "zatca_invoice_finality_guard", "zatca_status_finality_guard", "order_promotion_applications_immutable"]) {
       if (!found.has(required)) zatcaFailures.push(`missing trigger: ${required}`);
     }
     const idx = await pool.query(
@@ -477,7 +543,7 @@ export const startupMigrationReady: Promise<void> = (async () => {
       const statements = sql.split(/;\s*\n/).map((s) => s.trim()).filter(Boolean);
       let failed = 0;
       const criticalSyncFailures: string[] = [];
-      const criticalOverviewTables = /\b(overview_settings|waste_logs|cash_accounts|cash_ledger_entries|cash_obligations|work_schedules|work_time_entries|employment_exits|loyalty_accounts|loyalty_transactions|zatca_retry_attempts|overview_daily_snapshots|invoice_zatca_status|zatca_xml_archive)\b/;
+       const criticalOverviewTables = /\b(overview_settings|waste_logs|cash_accounts|cash_ledger_entries|cash_obligations|work_schedules|work_time_entries|employment_exits|loyalty_accounts|loyalty_transactions|zatca_retry_attempts|overview_daily_snapshots|invoice_zatca_status|zatca_xml_archive|promotions|promotion_branches|promotion_targets|order_promotion_applications)\b/;
       for (const stmt of statements) {
         try {
           await pool.query(stmt);

@@ -3631,6 +3631,7 @@ ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "submission_status" tex
 ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "submitted_at" timestamp without time zone;
 ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "archived_at" timestamp without time zone DEFAULT now() NOT NULL;
 ALTER TABLE "zatca_xml_archive" ADD COLUMN IF NOT EXISTS "retention_expires_at" timestamp without time zone;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_breakdown jsonb;
 CREATE UNIQUE INDEX IF NOT EXISTS overview_settings_branch_unique ON overview_settings (restaurant_id, branch_id);
 CREATE INDEX IF NOT EXISTS cash_accounts_branch_idx ON cash_accounts (restaurant_id, branch_id);
 CREATE INDEX IF NOT EXISTS waste_logs_branch_occurred_idx ON waste_logs (restaurant_id, branch_id, occurred_at);
@@ -3642,6 +3643,18 @@ CREATE INDEX IF NOT EXISTS employment_exits_branch_date_idx ON employment_exits 
 CREATE UNIQUE INDEX IF NOT EXISTS loyalty_accounts_customer_unique ON loyalty_accounts (restaurant_id, customer_id);
 CREATE INDEX IF NOT EXISTS loyalty_transactions_account_occurred_idx ON loyalty_transactions (restaurant_id, branch_id, loyalty_account_id, occurred_at);
 CREATE UNIQUE INDEX IF NOT EXISTS zatca_retry_attempt_key_unique ON zatca_retry_attempts (restaurant_id, invoice_id, idempotency_key);
+CREATE INDEX IF NOT EXISTS promotions_tenant_schedule_idx ON promotions (restaurant_id, enabled, start_date, end_date);
+CREATE INDEX IF NOT EXISTS promotions_tenant_priority_idx ON promotions (restaurant_id, priority);
+CREATE UNIQUE INDEX IF NOT EXISTS promotion_branches_unique ON promotion_branches (restaurant_id, promotion_id, branch_id);
+CREATE INDEX IF NOT EXISTS promotion_branches_tenant_branch_idx ON promotion_branches (restaurant_id, branch_id);
+CREATE INDEX IF NOT EXISTS promotion_targets_tenant_promotion_idx ON promotion_targets (restaurant_id, promotion_id);
+CREATE UNIQUE INDEX IF NOT EXISTS promotion_targets_item_unique ON promotion_targets (restaurant_id, promotion_id, menu_item_id);
+CREATE UNIQUE INDEX IF NOT EXISTS promotion_targets_category_unique ON promotion_targets (restaurant_id, promotion_id, category);
+CREATE UNIQUE INDEX IF NOT EXISTS order_promotion_applications_order_promotion_unique ON order_promotion_applications (restaurant_id, order_id, promotion_id);
+CREATE INDEX IF NOT EXISTS order_promotion_applications_tenant_applied_idx ON order_promotion_applications (restaurant_id, applied_at);
+CREATE INDEX IF NOT EXISTS order_promotion_applications_branch_applied_idx ON order_promotion_applications (restaurant_id, branch_id, applied_at);
+CREATE OR REPLACE FUNCTION promotion_application_immutable() RETURNS trigger AS $fn$ BEGIN RAISE EXCEPTION 'order promotion applications are immutable'; END $fn$ LANGUAGE plpgsql;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='order_promotion_applications_immutable') THEN CREATE TRIGGER order_promotion_applications_immutable BEFORE UPDATE OR DELETE ON order_promotion_applications FOR EACH ROW EXECUTE FUNCTION promotion_application_immutable(); END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cash_accounts_branch_id_fkey' AND conrelid = '"cash_accounts"'::regclass) THEN ALTER TABLE "cash_accounts" ADD CONSTRAINT "cash_accounts_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cash_accounts_restaurant_id_fkey' AND conrelid = '"cash_accounts"'::regclass) THEN ALTER TABLE "cash_accounts" ADD CONSTRAINT "cash_accounts_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'cash_ledger_entries_account_id_fkey' AND conrelid = '"cash_ledger_entries"'::regclass) THEN ALTER TABLE "cash_ledger_entries" ADD CONSTRAINT "cash_ledger_entries_account_id_fkey" FOREIGN KEY (account_id) REFERENCES cash_accounts(id) NOT VALID; END IF; END $$;

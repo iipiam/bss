@@ -112,6 +112,7 @@ const CateringContracts = lazy(() => import("@/pages/catering-contracts"));
 const Marketing = lazy(() => import("@/pages/marketing"));
 const CompanyProfile = lazy(() => import("@/pages/company-profile"));
 const GeneralOverview = lazy(() => import("@/pages/general-overview"));
+const Promotions = lazy(() => import("@/pages/promotions"));
 const InspectionTools = lazy(() => import("@/pages/inspection-tools"));
 const AppDiagram = lazy(() => import("@/pages/app-diagram"));
 const RealEstateDashboard = lazy(() => import("@/pages/real-estate/dashboard"));
@@ -207,6 +208,7 @@ function Router() {
         <Route path="/printer-settings" component={PrinterSettings} />
         <Route path="/company-profile" component={CompanyProfile} />
         <Route path="/general-overview">{() => <AdminGuard><GeneralOverview /></AdminGuard>}</Route>
+        <Route path="/promotions">{() => <AdminGuard><Promotions /></AdminGuard>}</Route>
         <Route path="/zatca-settings" component={ZatcaSettings} />
         <Route path="/employees" component={Employees} />
         <Route path="/activity-log" component={ActivityLog} />

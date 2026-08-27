@@ -97,7 +97,14 @@ interface SalariesNotification {
   restaurantId: string;
 }
 
-type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification | RecipeCostNotification | MenuNotification | SalesNotification | InventoryNotification | BillsNotification | SalariesNotification;
+interface PromotionNotification {
+  type: 'promotion:updated';
+  restaurantId: string;
+  promotionId?: string;
+  branchId?: string;
+}
+
+type Notification = OrderNotification | ChatNotification | TicketNotification | SettingsNotification | PermissionsNotification | RecipeCostNotification | MenuNotification | SalesNotification | InventoryNotification | BillsNotification | SalariesNotification | PromotionNotification;
 
 interface NotificationContextType {
   isConnected: boolean;
@@ -415,6 +422,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               refetchType: 'all'
             });
             console.log('[Notifications] Salaries updated - refreshing Fixed Costs and BEP data');
+          } else if (notification.type === 'promotion:updated') {
+            queryClient.invalidateQueries({ queryKey: ['/api/promotions'], refetchType: 'all' });
+            queryClient.invalidateQueries({
+              predicate: (query) => query.queryKey.some(segment => typeof segment === 'string' && segment.startsWith('/api/promotions/')),
+              refetchType: 'all',
+            });
+            console.log('[Notifications] Promotions updated - refreshing promotion schedule and POS quotes');
           }
           // Live profitability: any data change that affects revenue or cost
           // re-invalidates every profitability page so dashboards stay real-time.

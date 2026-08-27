@@ -828,11 +828,15 @@ function generateBilingualInvoiceHTML(data: InvoiceData, qrCodeDataURL: string):
       </thead>
       <tbody>
         ${(order.items || []).map(item => {
-          const itemName = escapeHtml(item?.name || 'Unknown Item');
+          const promotionName = (item as any)?.promotion?.name;
+          const itemName = escapeHtml(`${item?.name || 'Unknown Item'}${promotionName ? ` (${promotionName})` : ""}`);
           const itemQty = item?.quantity !== undefined && item?.quantity !== null ? Number(item.quantity) : 0;
           const rawPrice = item?.price !== undefined && item?.price !== null ? item.price : 0;
-          const itemPrice = isNaN(Number(rawPrice)) ? 0 : Number(rawPrice);
-          const itemTotal = (itemQty * itemPrice).toFixed(2);
+          const storedLineTotal = Number((item as any)?.lineFinalSubtotal);
+          const itemPrice = Number.isFinite(storedLineTotal) && itemQty > 0
+            ? storedLineTotal / itemQty
+            : isNaN(Number(rawPrice)) ? 0 : Number(rawPrice);
+          const itemTotal = (Number.isFinite(storedLineTotal) ? storedLineTotal : itemQty * itemPrice).toFixed(2);
           return `
           <tr>
             <td class="english">${itemName}</td>

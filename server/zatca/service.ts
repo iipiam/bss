@@ -147,6 +147,22 @@ export async function processInvoiceForZatca(
 async function processInvoiceForZatcaUnlocked(
   params: ProcessInvoiceParams
 ): Promise<ZatcaProcessResult> {
+  // Never allocate another ICV/PIH or sign an invoice that already has a
+  // durable status. Pending/rejected rows are retried only by
+  // retryPendingInvoice, which resubmits their immutable signed bytes.
+  const existingStatus = await storage.getInvoiceZatcaStatus(params.invoiceId, params.restaurantId);
+  if (existingStatus) {
+    return {
+      success: !["rejected"].includes(existingStatus.submissionStatus),
+      uuid: existingStatus.uuid,
+      invoiceHash: existingStatus.invoiceHash,
+      qrCode: existingStatus.qrCode || "",
+      qrCodeImage: "",
+      signedXml: existingStatus.signedXml || undefined,
+      submissionStatus: existingStatus.submissionStatus as ZatcaProcessResult["submissionStatus"],
+      errors: existingStatus.zatcaErrors || undefined,
+    };
+  }
   const settings = await storage.getZatcaSettings(params.restaurantId);
   
   if (!settings) {

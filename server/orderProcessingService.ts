@@ -248,16 +248,79 @@ export class OrderProcessingService {
   async createOrderWithInventoryDeduction(
     orderData: any,
     stockRequirements: Map<string, StockRequirement>,
-    branchId: string
+    branchId: string,
+    promotionApplications: Array<{
+      promotionId: string;
+      snapshot: any;
+      originalSubtotal: number;
+      discountAmount: number;
+      finalSubtotal: number;
+    }> = [],
+    couponCodeId?: string,
+    moyasarPaymentRecordId?: string,
+    existingTx?: any,
   ): Promise<any> {
-    return await db.transaction(async (tx) => {
-      const { orders } = await import("@shared/schema");
+    const persist = async (tx: any) => {
+      const { orders, orderPromotionApplications } = await import("@shared/schema");
+      // Serialize usage-limit consumption per promotion. The lock and count
+      // happen in the same transaction as the order/audit insert.
+      for (const application of promotionApplications) {
+        const locked = await tx.execute(sql`
+          SELECT id, usage_limit AS "usageLimit" FROM promotions
+          WHERE id=${application.promotionId} AND restaurant_id=${orderData.restaurantId}
+          FOR UPDATE
+        `);
+        const promotion = (locked as any).rows?.[0];
+        if (!promotion) throw new Error("Promotion is no longer available");
+        if (promotion.usageLimit != null) {
+          const usage = await tx.execute(sql`
+            SELECT count(*)::int AS count FROM order_promotion_applications
+            WHERE restaurant_id=${orderData.restaurantId} AND promotion_id=${application.promotionId}
+          `);
+          if (Number((usage as any).rows?.[0]?.count || 0) >= Number(promotion.usageLimit)) {
+            throw new Error("Promotion usage limit reached; refresh the quote");
+          }
+        }
+      }
+      // Consume an external coupon atomically with order creation. The guarded
+      // update is the authority for the cap; a stale quote can never push it
+      // beyond usage_cap. Suppressed coupons are passed as undefined.
+      if (couponCodeId) {
+        const consumed = await tx.execute(sql`
+          UPDATE marketing_discount_codes
+             SET usage_count = usage_count + 1
+           WHERE id=${couponCodeId}
+             AND restaurant_id=${orderData.restaurantId}
+             AND active=true
+             AND (usage_cap IS NULL OR usage_count < usage_cap)
+          RETURNING id
+        `);
+        if (!((consumed as any).rows || []).length) {
+          throw new Error("Discount code usage limit reached; refresh the quote");
+        }
+      }
       const [order] = await tx.insert(orders).values(orderData).returning();
-      
-      await this.deductInventoryInTransaction(tx, stockRequirements, order.id, branchId);
-      
+      if (moyasarPaymentRecordId) {
+        const linked = await tx.execute(sql`UPDATE moyasar_payments SET order_id=${order.id}, status='paid', updated_at=now()
+          WHERE id=${moyasarPaymentRecordId} AND restaurant_id=${orderData.restaurantId} AND order_id IS NULL RETURNING id`);
+        if (!((linked as any).rows || []).length) throw new Error("Payment is already linked to another order");
+      }
+      if (promotionApplications.length) {
+        await tx.insert(orderPromotionApplications).values(promotionApplications.map((application) => ({
+          restaurantId: orderData.restaurantId,
+          orderId: order.id,
+          promotionId: application.promotionId,
+          branchId,
+          snapshot: application.snapshot,
+          originalSubtotal: application.originalSubtotal.toFixed(2),
+          discountAmount: application.discountAmount.toFixed(2),
+          finalSubtotal: application.finalSubtotal.toFixed(2),
+        }))).onConflictDoNothing();
+      }
+      await this.deductInventoryInTransaction(tx, stockRequirements, order.id, branchId, orderData.restaurantId);
       return order;
-    });
+    };
+    return existingTx ? persist(existingTx) : db.transaction(persist);
   }
 
   async finalizeOrderWithInventory(
@@ -267,7 +330,7 @@ export class OrderProcessingService {
     branchId: string
   ): Promise<void> {
     try {
-      await this.deductInventory(stockRequirements, orderId, branchId);
+      await this.deductInventory(stockRequirements, orderId, branchId, orderData.restaurantId);
     } catch (error) {
       console.error("Error in finalizeOrderWithInventory:", error);
       throw error;
@@ -279,7 +342,8 @@ export class OrderProcessingService {
     tx: any,
     stockRequirements: Map<string, StockRequirement>,
     orderId: string,
-    branchId: string
+    branchId: string,
+    restaurantId: string,
   ): Promise<void> {
     // OPTIMIZATION: Batch collect all inventory IDs to fetch restaurant IDs at once
     const inventoryIds = Array.from(stockRequirements.keys());
@@ -290,23 +354,32 @@ export class OrderProcessingService {
       return;
     }
     
-    // Fetch only restaurant IDs for all items in one query
-    const restaurantIdResult = await tx.execute(sql`
-      SELECT id, restaurant_id as "restaurantId" 
-      FROM inventory_items 
-      WHERE id IN (${sql.join(inventoryIds.map(id => sql`${id}`), sql`, `)})
+    // The pre-flight quote is only advisory. Lock and re-read the authoritative
+    // rows inside this transaction so simultaneous checkouts cannot both spend
+    // the same stock. Tenant scope is part of the lock query.
+    const lockedResult = await tx.execute(sql`
+      SELECT id, restaurant_id AS "restaurantId", quantity::numeric AS quantity,
+             price::numeric AS price, unit, branch_id AS "branchId"
+        FROM inventory_items
+       WHERE restaurant_id=${restaurantId}
+         AND id IN (${sql.join(inventoryIds.map(id => sql`${id}`), sql`, `)})
+       FOR UPDATE
     `);
-    const restaurantIdMap = new Map<string, string>(
-      ((restaurantIdResult as any).rows || []).map((r: any) => [r.id, r.restaurantId])
-    );
+    const lockedItems = new Map<string, any>(((lockedResult as any).rows || []).map((row: any) => [row.id, row]));
+    if (lockedItems.size !== inventoryIds.length) {
+      throw new Error("One or more inventory items do not belong to this restaurant");
+    }
 
     // Prepare batch operations
     const transactions: InsertInventoryTransaction[] = [];
     const updates: Array<{ id: string; quantity: string; price: string; status: string }> = [];
 
     for (const [inventoryItemId, requirement] of Array.from(stockRequirements.entries())) {
-      // OPTIMIZATION: Use cached availableQuantity instead of re-querying
-      const quantityBefore = requirement.availableQuantity;
+      const locked = lockedItems.get(inventoryItemId)!;
+      if (branchId && locked.branchId && locked.branchId !== branchId) {
+        throw new Error(`Inventory item ${inventoryItemId} belongs to branch ${locked.branchId} but order is for branch ${branchId}`);
+      }
+      const quantityBefore = Number(locked.quantity);
       const quantityAfter = quantityBefore - requirement.requiredQuantity;
 
       if (quantityAfter < 0) {
@@ -314,9 +387,6 @@ export class OrderProcessingService {
           `Cannot deduct ${requirement.requiredQuantity} ${requirement.unit} from ${requirement.inventoryItemName}. Only ${quantityBefore} ${requirement.unit} available.`
         );
       }
-
-      const restaurantId = restaurantIdMap.get(inventoryItemId);
-      if (!restaurantId) continue;
 
       // Prepare transaction record
       transactions.push({
@@ -333,7 +403,9 @@ export class OrderProcessingService {
 
       // Calculate new price: maintain constant unit price by deducting proportionally
       // newPrice = quantityAfter × unitPrice (will be 0 when depleted - correct for total value)
-      const newPrice = quantityAfter * requirement.unitPrice;
+      const currentPrice = Number(locked.price) || 0;
+      const currentUnitPrice = quantityBefore > 0 ? currentPrice / quantityBefore : 0;
+      const newPrice = quantityAfter * currentUnitPrice;
       
       // Determine status based on quantity
       // Note: We update to "Depleted" status instead of deleting to preserve FK integrity
@@ -505,10 +577,11 @@ export class OrderProcessingService {
   private async deductInventory(
     stockRequirements: Map<string, StockRequirement>,
     orderId: string,
-    branchId: string
+    branchId: string,
+    restaurantId: string,
   ): Promise<void> {
     await db.transaction(async (tx) => {
-      await this.deductInventoryInTransaction(tx, stockRequirements, orderId, branchId);
+      await this.deductInventoryInTransaction(tx, stockRequirements, orderId, branchId, restaurantId);
     });
   }
 

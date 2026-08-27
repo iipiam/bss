@@ -9,6 +9,7 @@
     "start": "NODE_ENV=production node dist/index.js",
     "check": "tsc",
     "verify:general-overview": "tsx scripts/verify-general-overview.ts",
+    "verify:promotions": "tsx scripts/verify-promotions.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

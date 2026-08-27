@@ -1,0 +1,119 @@
+Each tenant (business) has their own isolated 
+EGS unit (CSID, private key, PIH/ICV chain). I want to add a delivery 
+Feature integration module
+
+REQUIREMENTS:
+
+1. TENANT-LEVEL DELIVERY CONFIG
+   - Extend our existing tenant model to store delivery platform API 
+     credentials (API key/secret, webhook secret) per platform: 
+     HungerStation, Jahez, ToYou, Keeta, Locate, The Chefs
+   - Add an enable/disable toggle per platform, per tenant, in the 
+     existing tenant settings area
+
+2. ORDER INGESTION (WEBHOOKS)
+   - Create webhook endpoints (one per platform, or one generic endpoint 
+     with platform param) to receive incoming delivery orders
+   - Normalize each platform's payload into our existing internal order 
+     schema (items, price, customer info, order ID, source platform)
+   - Map incoming orders to the correct tenant based on the API 
+     credentials/webhook that received them
+
+3. CONNECT TO EXISTING ZATCA FLOW
+   - When a delivery order is received and normalized, feed it into our 
+     existing invoice generation logic — same clearance/reporting flow 
+     we already use for other sales, so no duplicate invoicing logic
+   - Use the tenant's existing EGS unit (CSID/key/PIH-ICV chain) for 
+     that submission — don't create a separate credential path
+   - Log delivery-order invoices distinctly so I can filter/report on 
+     them separately if needed
+
+4. STATUS SYNC BACK (if platform API supports it)
+   - Push order status updates (accepted/preparing/ready/out for 
+     delivery) back to the platform via their API
+
+5. ERROR HANDLING — KEEP SEPARATE FROM EXISTING ZATCA ERROR HANDLING
+   - Delivery webhook failures should log separately from ZATCA 
+     submission failures, since we already have an unresolved issue 
+     with invoice submission (clearance/reporting) and I don't want 
+     new errors mixed into that same log/table
+   - Retry logic for failed webhook ingestion
+   - Alert if a platform stops sending webhooks (silent failure)
+
+6. RECONCILIATION
+   - Store platform commission/fee per order
+   - Simple report: gross order value vs. net after commission, 
+     per platform, per tenant
+
+Please review our existing tenant model, order schema, and invoice 
+submission code before implementing, and reuse those structures rather 
+than creating parallel ones. Start with HungerStation and Jahez.
+
+
+
+
+
+
+
+Add a "Delivery Feature Credentials" settings section (already has ZATCA Phase 2 
+integration with per-tenant EGS units).
+
+GOAL: Let me (as the tenant/business owner) paste in API credentials 
+for delivery platforms myself through the UI, without needing a 
+developer to hardcode anything each time.
+
+REQUIREMENTS:
+
+1. SETTINGS PAGE — "Delivery Integrations"
+   - Add a new section in tenant settings called "Delivery Integrations"
+   - For each supported platform (start with HungerStation, Jahez, 
+     ToYou, Keeta — but make this list configurable/extendable later), 
+     show a card with:
+     - Platform name/logo
+     - Status indicator (Not Connected / Connected / Error)
+     - "Connect" button that opens a form
+
+2. CREDENTIAL INPUT FORM
+   - Generic fields that adapt per platform (not all platforms need 
+     the same fields), such as:
+     - API Key
+     - API Secret
+     - Webhook Signing Secret
+     - Merchant/Store ID (if platform requires it)
+   - Each field should have a short help label ("Find this in your 
+     [Platform] merchant dashboard under API settings")
+   - "Test Connection" button that pings the platform's API (if they 
+     have a test/ping endpoint) to confirm the credentials work before 
+     saving
+
+3. SECURE STORAGE
+   - Store credentials encrypted at rest (not plain text in the 
+     database) — use environment-based encryption key, same security 
+     standard as our ZATCA private keys/CSIDs
+   - Never display the full key/secret again after saving — show only 
+     a masked version (e.g., "••••••••1234") with an option to replace it
+
+4. WEBHOOK URL DISPLAY
+   - Automatically generate and display the unique webhook URL for 
+     that tenant + platform combination (e.g., 
+     myapp.com/webhooks/delivery/{tenant_id}/{platform})
+   - Show a "Copy" button next to it, since I'll need to paste this 
+     INTO the delivery platform's dashboard on their end
+
+5. CONNECTION STATUS & LOGS
+   - Show last successful order received (timestamp) per platform, so 
+     I can tell at a glance if a connection has gone silent
+   - Basic error log per platform (e.g., "Invalid credentials," 
+     "Webhook signature mismatch") visible in the UI, not just in 
+     backend logs
+
+6. EXTENSIBLE PLATFORM LIST
+   - Structure the platform list/config so adding a new delivery 
+     platform later just means adding a config entry (name, required 
+     fields, API base URL) — not rebuilding this UI
+7. add tutorial tips for the users to know what to ask the delivery apps platforms to provide him
+
+
+Please review our existing tenant model and settings UI before 
+building, and match the existing design patterns/security approach we 
+already use for storing ZATCA credentials.

@@ -199,6 +199,7 @@ export function AppSidebar() {
   // Admin-only menu items
   const adminOnlyItems: MenuItem[] = [
     { title: overviewText.title, url: "/general-overview", icon: Gauge, testId: "general-overview", gradient: "from-amber-500 to-orange-500", businessTypes: ['restaurant'] },
+    { title: language === "Arabic" ? "العروض المجدولة" : "Scheduled Promotions", url: "/promotions", icon: Calendar, testId: "promotions", gradient: "from-rose-500 to-orange-500", businessTypes: ['restaurant'] },
     { title: t.activityLog || "Activity Log", url: "/activity-log", icon: Activity, testId: "activity-log", gradient: "from-violet-500 to-purple-500", permission: 'users' },
   ];
 

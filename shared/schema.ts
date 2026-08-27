@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb, index, uniqueIndex, date } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, decimal, boolean, timestamp, jsonb, index, uniqueIndex, date, check } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import type { PermissionSet } from "./permissions";
@@ -271,7 +271,30 @@ export const orders = pgTable("orders", {
   address: text("address"),
   deliveryAppId: varchar("delivery_app_id").references(() => deliveryApps.id),
   earningsDecreaseApplied: boolean("earnings_decrease_applied").notNull().default(false), // Track if 2 SAR decrease applied
-  items: jsonb("items").notNull().$type<Array<{ id: string; name: string; quantity: number; price: number; addons?: Array<{ id: string; name: string; price: number }> }>>(),
+  deliveryBreakdown: jsonb("delivery_breakdown").$type<{
+    gross: number; subsidy: number; subsidizedPrice: number; commission: number;
+    banking: number; vat: number; posFees: number; net: number; markupPercent: number;
+    commissionPercent: number; bankingFeesPercent: number; sourceSubtotal: number;
+    capturedAt: string;
+  }>(),
+  items: jsonb("items").notNull().$type<Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    price: number;
+    originalPrice?: number;
+    lineOriginalSubtotal?: number;
+    lineDiscountAmount?: number;
+    lineFinalSubtotal?: number;
+    customerOriginalSubtotal?: number;
+    customerDiscountAmount?: number;
+    customerLineSubtotal?: number;
+    customerUnitBase?: number;
+    lineVatAmount?: number;
+    lineTotal?: number;
+    promotion?: { id: string; name: string; discountType: string; discountValue: number };
+    addons?: Array<{ id: string; name: string; price: number }>;
+  }>>(),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull(),
   tax: decimal("tax", { precision: 10, scale: 2 }).notNull(),
   total: decimal("total", { precision: 10, scale: 2 }).notNull(),
@@ -2954,3 +2977,145 @@ export const insertWorkTimeEntrySchema = createInsertSchema(workTimeEntries).omi
 export const insertEmploymentExitSchema = createInsertSchema(employmentExits).omit({ id: true, createdAt: true });
 export const insertLoyaltyAccountSchema = createInsertSchema(loyaltyAccounts).omit({ id: true, createdAt: true, updatedAt: true });
 export const insertLoyaltyTransactionSchema = createInsertSchema(loyaltyTransactions).omit({ id: true, createdAt: true });
+
+// Scheduled promotions. Lifecycle ("draft", "scheduled", "active", "ended")
+// is derived from enabled/paused/archivedAt and the schedule; it is never
+// persisted as a second, potentially stale source of truth.
+export const promotions = pgTable("promotions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  enabled: boolean("enabled").notNull().default(false),
+  paused: boolean("paused").notNull().default(false),
+  discountType: text("discount_type").notNull(),
+  discountValue: decimal("discount_value", { precision: 12, scale: 2 }).notNull(),
+  priority: integer("priority").notNull().default(0),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
+  startTime: text("start_time").notNull().default("00:00"),
+  endTime: text("end_time").notNull().default("23:59"),
+  timezone: text("timezone").notNull().default("Asia/Riyadh"),
+  weekdays: integer("weekdays").array().notNull().default(sql`ARRAY[0,1,2,3,4,5,6]::integer[]`),
+  allBranches: boolean("all_branches").notNull().default(true),
+  stackingPolicy: text("stacking_policy").notNull().default("priority_only"),
+  maxTotalDiscount: decimal("max_total_discount", { precision: 12, scale: 2 }),
+  usageLimit: integer("usage_limit"),
+  createdBy: varchar("created_by").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  archivedAt: timestamp("archived_at"),
+  version: integer("version").notNull().default(1),
+}, (t) => ({
+  tenantScheduleIdx: index("promotions_tenant_schedule_idx").on(t.restaurantId, t.enabled, t.startDate, t.endDate),
+  tenantPriorityIdx: index("promotions_tenant_priority_idx").on(t.restaurantId, t.priority),
+  typeCheck: check("promotions_discount_type_check", sql`${t.discountType} IN ('percentage','fixed_product','special_price','fixed_order')`),
+  policyCheck: check("promotions_stacking_policy_check", sql`${t.stackingPolicy} = 'priority_only'`),
+  dateCheck: check("promotions_date_range_check", sql`${t.endDate} >= ${t.startDate}`),
+  valueCheck: check("promotions_value_check", sql`${t.discountValue} >= 0`),
+  usageCheck: check("promotions_usage_limit_check", sql`${t.usageLimit} IS NULL OR ${t.usageLimit} > 0`),
+}));
+
+export const promotionBranches = pgTable("promotion_branches", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  promotionId: varchar("promotion_id").notNull().references(() => promotions.id, { onDelete: "cascade" }),
+  branchId: varchar("branch_id").notNull().references(() => branches.id, { onDelete: "cascade" }),
+}, (t) => ({
+  promotionBranchUnique: uniqueIndex("promotion_branches_unique").on(t.restaurantId, t.promotionId, t.branchId),
+  tenantBranchIdx: index("promotion_branches_tenant_branch_idx").on(t.restaurantId, t.branchId),
+}));
+
+export const promotionTargets = pgTable("promotion_targets", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  promotionId: varchar("promotion_id").notNull().references(() => promotions.id, { onDelete: "cascade" }),
+  targetType: text("target_type").notNull(),
+  menuItemId: varchar("menu_item_id").references(() => menuItems.id, { onDelete: "cascade" }),
+  category: text("category"),
+}, (t) => ({
+  tenantPromotionIdx: index("promotion_targets_tenant_promotion_idx").on(t.restaurantId, t.promotionId),
+  itemUnique: uniqueIndex("promotion_targets_item_unique").on(t.restaurantId, t.promotionId, t.menuItemId),
+  categoryUnique: uniqueIndex("promotion_targets_category_unique").on(t.restaurantId, t.promotionId, t.category),
+  discriminantCheck: check("promotion_targets_discriminant_check", sql`
+    (${t.targetType} = 'menu_item' AND ${t.menuItemId} IS NOT NULL AND ${t.category} IS NULL)
+    OR (${t.targetType} = 'category' AND ${t.menuItemId} IS NULL AND ${t.category} IS NOT NULL)
+  `),
+}));
+
+export interface PromotionApplicationSnapshot {
+  engineVersion: 1;
+  evaluatedAt: string;
+  timezone: string;
+  promotion: { id: string; name: string; discountType: string; discountValue: number; priority: number; version: number };
+  lines: Array<{ menuItemId: string; name: string; quantity: number; originalUnitPrice: number; finalUnitPrice: number; discountAmount: number }>;
+  externalDiscountSuppressed: boolean;
+  deliveryMarkupPercent?: number;
+  legalCustomerSubtotal?: number;
+  legalCustomerTax?: number;
+  legalCustomerTotal?: number;
+}
+
+export const orderPromotionApplications = pgTable("order_promotion_applications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "restrict" }),
+  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "restrict" }),
+  promotionId: varchar("promotion_id").references(() => promotions.id, { onDelete: "set null" }),
+  branchId: varchar("branch_id").notNull().references(() => branches.id, { onDelete: "restrict" }),
+  snapshot: jsonb("snapshot").notNull().$type<PromotionApplicationSnapshot>(),
+  originalSubtotal: decimal("original_subtotal", { precision: 12, scale: 2 }).notNull(),
+  discountAmount: decimal("discount_amount", { precision: 12, scale: 2 }).notNull(),
+  finalSubtotal: decimal("final_subtotal", { precision: 12, scale: 2 }).notNull(),
+  appliedAt: timestamp("applied_at").notNull().defaultNow(),
+}, (t) => ({
+  orderPromotionUnique: uniqueIndex("order_promotion_applications_order_promotion_unique").on(t.restaurantId, t.orderId, t.promotionId),
+  tenantAppliedIdx: index("order_promotion_applications_tenant_applied_idx").on(t.restaurantId, t.appliedAt),
+  branchAppliedIdx: index("order_promotion_applications_branch_applied_idx").on(t.restaurantId, t.branchId, t.appliedAt),
+  amountCheck: check("order_promotion_applications_amount_check", sql`${t.discountAmount} >= 0 AND ${t.finalSubtotal} >= 0`),
+}));
+
+const decimalInput = z.union([z.string().regex(/^\d+(\.\d{1,2})?$/), z.number().finite().nonnegative()])
+  .transform((v) => Number(v).toFixed(2));
+const timeMinute = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+const ianaTimezone = z.string().min(1).refine((v) => {
+  try { new Intl.DateTimeFormat("en-US", { timeZone: v }).format(); return true; } catch { return false; }
+}, "Invalid IANA timezone");
+
+export const insertPromotionSchema = createInsertSchema(promotions).omit({
+  id: true, createdAt: true, updatedAt: true, archivedAt: true, version: true,
+}).extend({
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(4000).nullable().optional(),
+  discountType: z.enum(["percentage", "fixed_product", "special_price", "fixed_order"]),
+  discountValue: decimalInput,
+  priority: z.number().int().min(-100000).max(100000).default(0),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  startTime: timeMinute.default("00:00"),
+  endTime: timeMinute.default("23:59"),
+  timezone: ianaTimezone.default("Asia/Riyadh"),
+  weekdays: z.array(z.number().int().min(0).max(6)).min(1).max(7).refine((v) => new Set(v).size === v.length),
+  stackingPolicy: z.literal("priority_only").default("priority_only"),
+  maxTotalDiscount: decimalInput.nullable().optional(),
+  usageLimit: z.number().int().positive().nullable().optional(),
+  createdBy: z.string().min(1).nullable().optional(),
+}).strict().superRefine((v, ctx) => {
+  if (v.endDate < v.startDate) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["endDate"], message: "endDate must be on or after startDate" });
+  if (v.discountType === "percentage" && Number(v.discountValue) > 100) ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["discountValue"], message: "Percentage cannot exceed 100" });
+});
+
+export const insertPromotionBranchSchema = createInsertSchema(promotionBranches).omit({ id: true }).strict();
+export const insertPromotionTargetSchema = createInsertSchema(promotionTargets).omit({ id: true }).extend({
+  targetType: z.enum(["menu_item", "category"]),
+  menuItemId: z.string().nullable().optional(),
+  category: z.string().trim().min(1).nullable().optional(),
+}).strict().superRefine((v, ctx) => {
+  const valid = v.targetType === "menu_item" ? !!v.menuItemId && !v.category : !!v.category && !v.menuItemId;
+  if (!valid) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Target discriminant does not match its fields" });
+});
+export const insertOrderPromotionApplicationSchema = createInsertSchema(orderPromotionApplications).omit({ id: true, appliedAt: true }).strict();
+export type Promotion = typeof promotions.$inferSelect;
+export type PromotionBranch = typeof promotionBranches.$inferSelect;
+export type PromotionTarget = typeof promotionTargets.$inferSelect;
+export type OrderPromotionApplication = typeof orderPromotionApplications.$inferSelect;
+export type InsertPromotion = z.infer<typeof insertPromotionSchema>;
