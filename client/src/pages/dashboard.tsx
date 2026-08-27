@@ -128,9 +128,8 @@ const PerformanceCard = ({
 }) => {
   const { t } = useLanguage();
   const layout = useDeviceLayout();
-  // Only show "No data" when there's truly no historical data (previous === 0)
-  // Don't confuse this with legitimate 0% change when current === previous (both non-zero)
-  const hasNoHistoricalData = metric.previous === 0 && metric.change === 0;
+  const hasNoData = metric.current === 0 && metric.previous === 0;
+  const isNewPeriod = metric.current > 0 && metric.previous === 0;
   const isPositive = metric.change > 0;
   const TrendIcon = isPositive ? TrendingUp : TrendingDown;
 
@@ -152,9 +151,14 @@ const PerformanceCard = ({
               {title}
             </h3>
           </div>
-          {hasNoHistoricalData ? (
+          {hasNoData ? (
             <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-muted/50 text-muted-foreground shrink-0 whitespace-nowrap">
               <span>No data</span>
+            </div>
+          ) : isNewPeriod ? (
+            <div className="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-600 dark:text-green-400 shrink-0 whitespace-nowrap">
+              <TrendingUp className="w-3 h-3" />
+              <span>New</span>
             </div>
           ) : (
             <div

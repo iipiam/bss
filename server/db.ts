@@ -516,6 +516,27 @@ export const startupMigrationReady: Promise<void> = (async () => {
        CREATE INDEX IF NOT EXISTS orders_delivery_integration_idx
          ON orders(restaurant_id, delivery_integration_id, created_at)`,
     ],
+    [
+      "delivery_integrations.order_snapshot_guard",
+      `CREATE OR REPLACE FUNCTION delivery_order_snapshot_guard() RETURNS trigger AS $fn$
+       BEGIN
+         IF EXISTS (SELECT 1 FROM delivery_integration_fees WHERE order_id=OLD.id) THEN
+           IF TG_OP='DELETE' THEN RAISE EXCEPTION 'delivery order financial snapshot is immutable; issue a correction document'; END IF;
+           IF NEW.items IS DISTINCT FROM OLD.items OR NEW.subtotal IS DISTINCT FROM OLD.subtotal OR
+              NEW.tax IS DISTINCT FROM OLD.tax OR NEW.total IS DISTINCT FROM OLD.total OR
+              NEW.delivery_integration_id IS DISTINCT FROM OLD.delivery_integration_id OR
+              NEW.source_platform IS DISTINCT FROM OLD.source_platform OR NEW.external_order_id IS DISTINCT FROM OLD.external_order_id THEN
+             RAISE EXCEPTION 'delivery order financial fields are immutable; issue a correction document';
+           END IF;
+         END IF;
+         IF TG_OP='DELETE' THEN RETURN OLD; END IF;
+         RETURN NEW;
+       END $fn$ LANGUAGE plpgsql;
+       DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='delivery_order_snapshot_guard') THEN
+         CREATE TRIGGER delivery_order_snapshot_guard BEFORE UPDATE OR DELETE ON orders
+         FOR EACH ROW EXECUTE FUNCTION delivery_order_snapshot_guard();
+       END IF; END $$`,
+    ],
   ];
 
   // ZATCA compliance-critical migrations: a failure here must NOT be silently

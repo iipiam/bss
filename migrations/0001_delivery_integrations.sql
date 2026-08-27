@@ -74,6 +74,7 @@ BEGIN
       RAISE EXCEPTION 'delivery order financial fields are immutable; issue a correction document';
     END IF;
   END IF;
+  IF TG_OP='DELETE' THEN RETURN OLD; END IF;
   RETURN NEW;
 END $fn$ LANGUAGE plpgsql;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='delivery_order_snapshot_guard') THEN

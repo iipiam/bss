@@ -85,6 +85,8 @@ for (const sql of [migration, schemaSync]) {
   assert.match(sql, /orders_delivery_legacy_external_unique/);
   assert.match(sql, /orders_delivery_external_unique[\s\S]*delivery_integration_id/);
   assert.match(sql, /orders_delivery_integration_fk/);
+  assert.match(sql, /IF TG_OP='DELETE' THEN RETURN OLD; END IF/,
+    "ordinary orders must remain deletable when no delivery financial snapshot exists");
 }
 
 console.log("Delivery integration focused checks passed");

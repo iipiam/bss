@@ -101,6 +101,7 @@ import {
   getRiyadhHour,
   isCountedPeakSale,
 } from "./peak-hours";
+import { calculateDashboardPerformance } from "./dashboard-performance";
 
 // WebSocket clients with session context for multi-tenant filtering
 interface WSClient {
@@ -4798,93 +4799,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
 
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    const weekAgo = new Date(today);
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    const twoWeeksAgo = new Date(weekAgo);
-    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 7);
-    
-    // daysInMonth(year, monthIndex) — uses JS Date day-0-of-next-month trick.
-    const daysInMonth = (y: number, m: number) => new Date(y, m + 1, 0).getDate();
-
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    // For a fair MoM comparison, compare month-to-date against the SAME day-range
-    // in the previous month (e.g. May 1-22 vs Apr 1-22), clamping the day so
-    // e.g. May 31 -> Apr 30 instead of overflowing into the following month.
-    const lastMonthYear = now.getMonth() === 0 ? now.getFullYear() - 1 : now.getFullYear();
-    const lastMonthIndex = (now.getMonth() + 11) % 12;
-    const lastMonthStart = new Date(lastMonthYear, lastMonthIndex, 1);
-    const lastMonthClampedDay = Math.min(now.getDate(), daysInMonth(lastMonthYear, lastMonthIndex));
-    const lastMonthSamePoint = new Date(
-      lastMonthYear, lastMonthIndex, lastMonthClampedDay,
-      now.getHours(), now.getMinutes(), now.getSeconds(),
-    );
-
-    const yearStart = new Date(now.getFullYear(), 0, 1);
-    // For a fair YoY comparison, compare YTD against the SAME period last year
-    // (Jan 1 last year through today's date last year). Clamp day so Feb 29 in a
-    // leap year compares against Feb 28 of the prior (non-leap) year.
-    const lastYearStart = new Date(now.getFullYear() - 1, 0, 1);
-    const lastYearClampedDay = Math.min(now.getDate(), daysInMonth(now.getFullYear() - 1, now.getMonth()));
-    const lastYearSamePoint = new Date(
-      now.getFullYear() - 1, now.getMonth(), lastYearClampedDay,
-      now.getHours(), now.getMinutes(), now.getSeconds(),
-    );
-
-    // Calculate sales for different periods
-    const todaysSales = transactions
-      .filter(t => new Date(t.createdAt) >= today)
-      .reduce((sum, t) => sum + parseFloat(t.total), 0);
-    
-    const yesterdaysSales = transactions
-      .filter(t => {
-        const date = new Date(t.createdAt);
-        return date >= yesterday && date < today;
-      })
-      .reduce((sum, t) => sum + parseFloat(t.total), 0);
-    
-    const thisWeekSales = transactions
-      .filter(t => new Date(t.createdAt) >= weekAgo)
-      .reduce((sum, t) => sum + parseFloat(t.total), 0);
-    
-    const lastWeekSales = transactions
-      .filter(t => {
-        const date = new Date(t.createdAt);
-        return date >= twoWeeksAgo && date < weekAgo;
-      })
-      .reduce((sum, t) => sum + parseFloat(t.total), 0);
-    
-    const thisMonthSales = transactions
-      .filter(t => new Date(t.createdAt) >= monthStart)
-      .reduce((sum, t) => sum + parseFloat(t.total), 0);
-    
-    const lastMonthSales = transactions
-      .filter(t => {
-        const date = new Date(t.createdAt);
-        return date >= lastMonthStart && date <= lastMonthSamePoint;
-      })
-      .reduce((sum, t) => sum + parseFloat(t.total), 0);
-
-    const thisYearSales = transactions
-      .filter(t => new Date(t.createdAt) >= yearStart)
-      .reduce((sum, t) => sum + parseFloat(t.total), 0);
-
-    const lastYearSales = transactions
-      .filter(t => {
-        const date = new Date(t.createdAt);
-        return date >= lastYearStart && date <= lastYearSamePoint;
-      })
-      .reduce((sum, t) => sum + parseFloat(t.total), 0);
-
-    // Calculate percentage changes
-    const calculateChange = (current: number, previous: number) => {
-      // For new accounts with no previous data, return 0 (neutral state)
-      if (previous === 0) return 0;
-      return ((current - previous) / previous) * 100;
-    };
+    const performance = calculateDashboardPerformance(transactions, orders, now);
+    const todaysSales = performance.dod.current;
 
     // Active = order is still being worked on. Exclude terminal states plus statuses
     // that represent revenue-recognized / fulfilled work counted as completed elsewhere.
@@ -4935,28 +4851,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       lowStockItems,
       cogsTotal,
       recentOrders: sortedOrders.slice(0, 4),
-      performance: {
-        dod: {
-          current: todaysSales,
-          previous: yesterdaysSales,
-          change: calculateChange(todaysSales, yesterdaysSales),
-        },
-        wow: {
-          current: thisWeekSales,
-          previous: lastWeekSales,
-          change: calculateChange(thisWeekSales, lastWeekSales),
-        },
-        mom: {
-          current: thisMonthSales,
-          previous: lastMonthSales,
-          change: calculateChange(thisMonthSales, lastMonthSales),
-        },
-        yoy: {
-          current: thisYearSales,
-          previous: lastYearSales,
-          change: calculateChange(thisYearSales, lastYearSales),
-        },
-      },
+      performance,
       peakHours: {
         hourlyData: peakHours.hourlyData,
         peakHour: peakHours.peakHour,
