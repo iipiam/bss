@@ -18,6 +18,7 @@ import { useBusinessType } from "@/hooks/useBusinessType";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { InfoTip } from "@/components/ui/info-tip";
+import { DeliveryIntegrationsSection } from "@/components/settings/DeliveryIntegrationsSection";
 
 type DaySchedule = {
   enabled: boolean;
@@ -836,6 +837,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
+      <DeliveryIntegrationsSection />
       <DevicePreferenceSection />
       {hasShifts && <NotificationToneSection />}
       <ChatNotificationSection />

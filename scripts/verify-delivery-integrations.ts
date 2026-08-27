@@ -1,0 +1,54 @@
+import assert from "node:assert/strict";
+import crypto from "node:crypto";
+
+process.env.SESSION_SECRET = "delivery-test-session-secret-that-is-not-production";
+const {
+  decryptDeliveryCredentials, encryptDeliveryCredentials, normalizeMappedPayload,
+  normalizeDeliveryEnvelope, verifyDeliverySignature,
+  assertSafeProviderBaseUrl,
+  newInternalDeliveryNumber,
+} = await import("../server/delivery-integrations");
+
+const secretData = { apiKey: "api-key-1234", webhookSecret: "a-long-webhook-secret" };
+const encrypted = encryptDeliveryCredentials(secretData);
+assert.match(encrypted, /^v1:/);
+assert.ok(!encrypted.includes(secretData.apiKey), "ciphertext must not expose credentials");
+assert.deepEqual(decryptDeliveryCredentials(encrypted), secretData);
+
+const raw = Buffer.from('{"eventId":"evt-1"}');
+const signature = crypto.createHmac("sha256", secretData.webhookSecret).update(raw).digest("hex");
+assert.equal(verifyDeliverySignature(raw, secretData.webhookSecret, signature, "hex"), true);
+assert.equal(verifyDeliverySignature(Buffer.from("{}"), secretData.webhookSecret, signature, "hex"), false);
+const identifiers = new Set(Array.from({ length: 1000 }, () => newInternalDeliveryNumber()));
+assert.equal(identifiers.size, 1000, "internal delivery order numbers must be globally unique");
+assert.match(newInternalDeliveryNumber("INV"), /^INV-[0-9a-f-]{36}$/);
+await assert.rejects(() => assertSafeProviderBaseUrl("http://example.com"), /HTTPS public host/);
+await assert.rejects(() => assertSafeProviderBaseUrl("https://localhost"), /localhost or a private/);
+await assert.rejects(() => assertSafeProviderBaseUrl("https://127.0.0.1"), /localhost or a private/);
+
+const mapping = {
+  eventId: "eventId", eventType: "type", orderId: "data.id", status: "data.status",
+  items: "data.lines", itemId: "sku", itemName: "title", itemQuantity: "qty",
+  itemUnitPrice: "price", subtotal: "data.subtotal", vat: "data.vat", total: "data.total",
+  customerName: "data.customer.name", customerPhone: "data.customer.phone",
+  address: "data.customer.address", fee: "data.fee", commission: "data.commission", net: "data.net",
+};
+const normalized = normalizeMappedPayload({ eventId: "evt-1", type: "order.created", data: {
+  id: "provider-order-9", status: "pending", lines: [{ sku: "x", title: "Meal", qty: 2, price: 10 }],
+  subtotal: 20, vat: 3, total: 23, fee: 1, commission: 2, net: 20,
+  customer: { name: "Customer", phone: "0500000000", address: "Riyadh" },
+}}, mapping);
+assert.equal(normalized.externalOrderId, "provider-order-9");
+assert.equal(normalized.items[0].lineFinalSubtotal, 20);
+assert.throws(() => normalizeMappedPayload({ data: { lines: [], subtotal: 1, vat: 0, total: 1 } }, mapping));
+assert.throws(() => normalizeMappedPayload({ eventId: "bad-lines", type: "order.created", data: {
+  id: "provider-order-bad", status: "pending", lines: [{ sku: "x", title: "Meal", qty: 1, price: 10 }],
+  subtotal: 20, vat: 3, total: 23, fee: 1, commission: 2, net: 20,
+}}, mapping), /item totals do not reconcile/);
+assert.deepEqual(normalizeDeliveryEnvelope({
+  type: "order.status", data: { id: "provider-order-9", status: "ready" },
+}, mapping), {
+  eventType: "order.status", externalOrderId: "provider-order-9", status: "ready",
+}, "status-only webhooks must not require item or total fields");
+
+console.log("Delivery integration focused checks passed");

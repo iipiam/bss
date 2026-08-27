@@ -23,6 +23,7 @@ import {
 } from "./zatca/service";
 import { ZatcaApiClient, type ZatcaConfig } from "./zatca/api-client";
 import { orchestrateZatcaInvoice } from "./zatca/idempotency";
+import { processInvoiceZatcaIdempotently as sharedProcessInvoiceZatcaIdempotently } from "./zatca/orchestration";
 import bcrypt from "bcrypt";
 import QRCode from "qrcode";
 import rateLimit from "express-rate-limit";
@@ -36,12 +37,7 @@ import { sql, eq, and, gte, lte, isNull, isNotNull, desc, ne } from "drizzle-orm
 // duplicate PDF/order requests safe across application processes: status is
 // checked before any ICV/PIH allocation or signing.
 async function processInvoiceZatcaIdempotently(params: any) {
-  return db.transaction(async (tx) => {
-    await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`zatca-invoice:${params.restaurantId}:${params.invoiceId}`}, 0))`);
-    const existing = await storage.getInvoiceZatcaStatus(params.invoiceId, params.restaurantId);
-    return orchestrateZatcaInvoice(existing, () => processInvoiceForZatca(params),
-      () => retryPendingInvoice(params.restaurantId, params.invoiceId));
-  });
+  return sharedProcessInvoiceZatcaIdempotently(params);
 }
 
 async function findOrCreateInvoiceForOrder(restaurantId: string, orderId: string, invoiceData: any) {
@@ -322,6 +318,9 @@ async function recalcRecipeCostsForInventoryItem(inventoryItemId: string, restau
 export async function registerRoutes(app: Express, sessionParser: any): Promise<Server> {
   registerGeneralOverviewRoutes(app, broadcastNotification);
   registerPromotionRoutes(app, requireAuth, requireRestaurant, broadcastNotification);
+  const { registerDeliveryIntegrationRoutes, startDeliveryIntegrationWorker } = await import("./delivery-integrations");
+  registerDeliveryIntegrationRoutes(app, requireAuth, requireRestaurant);
+  startDeliveryIntegrationWorker();
   // Ensure the internal IT marketing workspace row exists (sentinel restaurant).
   // subscriptionStatus 'cancelled' keeps it out of IT client/business listings.
   try {
@@ -4278,7 +4277,8 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const status = req.query.status as string | undefined;
-    const orders = await storage.getOrders({ restaurantId, branchId, status });
+    const sourcePlatform = req.query.sourcePlatform as string | undefined;
+    const orders = await storage.getOrders({ restaurantId, branchId, status, sourcePlatform });
     res.json(orders);
   });
 
@@ -4675,6 +4675,14 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         branchName: branch?.name,
         itemsSummary,
       });
+
+      if (safeData.status && order.sourcePlatform) {
+        void import("./delivery-integrations")
+          .then(({ queueDeliveryOrderStatusSync }) =>
+            queueDeliveryOrderStatusSync(restaurantId, order.id, order.status)
+          )
+          .catch((error) => console.error("[Delivery] Failed to queue status sync:", error));
+      }
       
       res.json(order);
     } catch (error) {
@@ -7989,7 +7997,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   // Invoices (MULTI-TENANT: require auth + restaurantId filtering)
   app.get("/api/invoices", requireAuth, requireRestaurant, async (req, res) => {
     const restaurantId = req.session.user!.restaurantId!;
-    const { branchId, startDate, endDate } = req.query;
+    const { branchId, startDate, endDate, sourcePlatform } = req.query;
     
     const start = startDate ? new Date(startDate as string) : undefined;
     const end = endDate ? new Date(endDate as string) : undefined;
@@ -7998,6 +8006,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     const invoices = await storage.getInvoices({
       restaurantId,
       branchId: branchId as string | undefined,
+      sourcePlatform: sourcePlatform as string | undefined,
       dateRange
     });
     res.json(invoices);

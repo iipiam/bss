@@ -1,3 +1,44 @@
+-- Delivery integrations: kept here as well as the versioned migration because
+-- production startup consumes this idempotent schema-sync file.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS source_platform text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS external_order_id text;
+ALTER TABLE invoices ADD COLUMN IF NOT EXISTS source_platform text;
+ALTER TABLE delivery_status_syncs ADD COLUMN IF NOT EXISTS next_retry_at timestamp;
+ALTER TABLE delivery_status_syncs ADD COLUMN IF NOT EXISTS processing_started_at timestamp;
+ALTER TABLE delivery_integration_events ADD COLUMN IF NOT EXISTS processing_started_at timestamp;
+CREATE TABLE IF NOT EXISTS delivery_integrations (
+ id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE, provider text NOT NULL, enabled boolean NOT NULL DEFAULT false, credentials_encrypted text NOT NULL, config jsonb NOT NULL, webhook_token text NOT NULL, connection_status text NOT NULL DEFAULT 'untested', connection_message text, last_received_at timestamp, last_success_at timestamp, last_error_at timestamp, last_error text, created_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS delivery_integration_events (
+ id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE, integration_id varchar NOT NULL REFERENCES delivery_integrations(id) ON DELETE CASCADE, provider text NOT NULL, provider_event_id text NOT NULL, payload_hash text NOT NULL, raw_payload jsonb NOT NULL, signature text NOT NULL, status text NOT NULL, attempts integer NOT NULL DEFAULT 0, error text, order_id varchar REFERENCES orders(id) ON DELETE SET NULL, received_at timestamp NOT NULL DEFAULT now(), processed_at timestamp, next_retry_at timestamp, processing_started_at timestamp
+);
+CREATE TABLE IF NOT EXISTS delivery_integration_fees (
+ id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id) ON DELETE RESTRICT, integration_id varchar NOT NULL REFERENCES delivery_integrations(id) ON DELETE RESTRICT, order_id varchar NOT NULL REFERENCES orders(id) ON DELETE RESTRICT, provider text NOT NULL, gross numeric(12,2) NOT NULL, fee numeric(12,2) NOT NULL, commission numeric(12,2) NOT NULL, net numeric(12,2) NOT NULL, source_event_id varchar NOT NULL REFERENCES delivery_integration_events(id) ON DELETE RESTRICT, captured_at timestamp NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS delivery_status_syncs (
+ id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE, integration_id varchar NOT NULL REFERENCES delivery_integrations(id) ON DELETE CASCADE, order_id varchar NOT NULL REFERENCES orders(id) ON DELETE CASCADE, status text NOT NULL, direction text NOT NULL, state text NOT NULL, attempts integer NOT NULL DEFAULT 0, error text, created_at timestamp NOT NULL DEFAULT now(), sent_at timestamp, next_retry_at timestamp, processing_started_at timestamp
+);
+CREATE TABLE IF NOT EXISTS delivery_integration_alerts (
+ id varchar PRIMARY KEY DEFAULT gen_random_uuid(), restaurant_id varchar NOT NULL REFERENCES restaurants(id) ON DELETE CASCADE, integration_id varchar NOT NULL REFERENCES delivery_integrations(id) ON DELETE CASCADE, kind text NOT NULL, message text NOT NULL, active boolean NOT NULL DEFAULT true, first_detected_at timestamp NOT NULL DEFAULT now(), last_detected_at timestamp NOT NULL DEFAULT now(), resolved_at timestamp
+);
+CREATE UNIQUE INDEX IF NOT EXISTS orders_delivery_external_unique ON orders (restaurant_id, source_platform, external_order_id);
+CREATE INDEX IF NOT EXISTS orders_delivery_source_idx ON orders (restaurant_id, source_platform, created_at);
+CREATE INDEX IF NOT EXISTS invoices_delivery_source_idx ON invoices (restaurant_id, source_platform, created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS delivery_integrations_tenant_provider_unique ON delivery_integrations (restaurant_id, provider);
+CREATE UNIQUE INDEX IF NOT EXISTS delivery_integrations_webhook_token_unique ON delivery_integrations (webhook_token);
+CREATE UNIQUE INDEX IF NOT EXISTS delivery_events_provider_event_unique ON delivery_integration_events (integration_id, provider_event_id);
+CREATE UNIQUE INDEX IF NOT EXISTS delivery_events_payload_replay_unique ON delivery_integration_events (integration_id, payload_hash);
+CREATE INDEX IF NOT EXISTS delivery_events_tenant_status_idx ON delivery_integration_events (restaurant_id, status, received_at);
+CREATE UNIQUE INDEX IF NOT EXISTS delivery_fees_order_unique ON delivery_integration_fees (order_id);
+CREATE INDEX IF NOT EXISTS delivery_fees_tenant_provider_date_idx ON delivery_integration_fees (restaurant_id, provider, captured_at);
+CREATE OR REPLACE FUNCTION delivery_financial_snapshot_immutable() RETURNS trigger AS $fn$ BEGIN RAISE EXCEPTION 'delivery financial snapshots are immutable; issue a correction document'; END $fn$ LANGUAGE plpgsql;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='delivery_fees_immutable') THEN CREATE TRIGGER delivery_fees_immutable BEFORE UPDATE OR DELETE ON delivery_integration_fees FOR EACH ROW EXECUTE FUNCTION delivery_financial_snapshot_immutable(); END IF; END $$;
+CREATE OR REPLACE FUNCTION delivery_order_snapshot_guard() RETURNS trigger AS $fn$ BEGIN IF EXISTS (SELECT 1 FROM delivery_integration_fees WHERE order_id=OLD.id) THEN IF TG_OP='DELETE' THEN RAISE EXCEPTION 'delivery order financial snapshot is immutable; issue a correction document'; END IF; IF NEW.items IS DISTINCT FROM OLD.items OR NEW.subtotal IS DISTINCT FROM OLD.subtotal OR NEW.tax IS DISTINCT FROM OLD.tax OR NEW.total IS DISTINCT FROM OLD.total OR NEW.source_platform IS DISTINCT FROM OLD.source_platform OR NEW.external_order_id IS DISTINCT FROM OLD.external_order_id THEN RAISE EXCEPTION 'delivery order financial fields are immutable; issue a correction document'; END IF; END IF; RETURN NEW; END $fn$ LANGUAGE plpgsql;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='delivery_order_snapshot_guard') THEN CREATE TRIGGER delivery_order_snapshot_guard BEFORE UPDATE OR DELETE ON orders FOR EACH ROW EXECUTE FUNCTION delivery_order_snapshot_guard(); END IF; END $$;
+CREATE INDEX IF NOT EXISTS delivery_status_sync_tenant_order_idx ON delivery_status_syncs (restaurant_id, order_id, created_at);
+CREATE UNIQUE INDEX IF NOT EXISTS delivery_alert_active_unique ON delivery_integration_alerts (integration_id, kind);
+CREATE INDEX IF NOT EXISTS delivery_alert_tenant_active_idx ON delivery_integration_alerts (restaurant_id, active, last_detected_at);
+ALTER TABLE delivery_integration_fees ADD CONSTRAINT delivery_fees_reconciliation_check CHECK (gross = fee + commission + net);
 CREATE TABLE IF NOT EXISTS "addons" (
   "id" varchar DEFAULT gen_random_uuid() NOT NULL,
   "name" text NOT NULL,
@@ -1694,6 +1735,29 @@ ALTER TABLE "moyasar_payments" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
 ALTER TABLE "moyasar_payments" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
 ALTER TABLE "moyasar_payments" ADD COLUMN IF NOT EXISTS "updated_at" timestamp without time zone DEFAULT now() NOT NULL;
 ALTER TABLE "moyasar_payments" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+CREATE TABLE IF NOT EXISTS "order_promotion_applications" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "order_id" varchar NOT NULL,
+  "promotion_id" varchar,
+  "branch_id" varchar NOT NULL,
+  "snapshot" jsonb NOT NULL,
+  "original_subtotal" numeric(12,2) NOT NULL,
+  "discount_amount" numeric(12,2) NOT NULL,
+  "final_subtotal" numeric(12,2) NOT NULL,
+  "applied_at" timestamp without time zone DEFAULT now() NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "order_promotion_applications" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "order_promotion_applications" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "order_promotion_applications" ADD COLUMN IF NOT EXISTS "order_id" varchar;
+ALTER TABLE "order_promotion_applications" ADD COLUMN IF NOT EXISTS "promotion_id" varchar;
+ALTER TABLE "order_promotion_applications" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+ALTER TABLE "order_promotion_applications" ADD COLUMN IF NOT EXISTS "snapshot" jsonb;
+ALTER TABLE "order_promotion_applications" ADD COLUMN IF NOT EXISTS "original_subtotal" numeric(12,2);
+ALTER TABLE "order_promotion_applications" ADD COLUMN IF NOT EXISTS "discount_amount" numeric(12,2);
+ALTER TABLE "order_promotion_applications" ADD COLUMN IF NOT EXISTS "final_subtotal" numeric(12,2);
+ALTER TABLE "order_promotion_applications" ADD COLUMN IF NOT EXISTS "applied_at" timestamp without time zone DEFAULT now() NOT NULL;
 CREATE TABLE IF NOT EXISTS "orders" (
   "id" varchar DEFAULT gen_random_uuid() NOT NULL,
   "order_number" text NOT NULL,
@@ -1719,6 +1783,7 @@ CREATE TABLE IF NOT EXISTS "orders" (
   "created_by" text,
   "discount_code" text,
   "discount_amount" numeric(10,2) DEFAULT '0'::numeric NOT NULL,
+  "delivery_breakdown" jsonb,
   PRIMARY KEY ("id")
 );
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
@@ -1745,6 +1810,7 @@ ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "created_by" text;
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "discount_code" text;
 ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "discount_amount" numeric(10,2) DEFAULT '0'::numeric NOT NULL;
+ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "delivery_breakdown" jsonb;
 CREATE TABLE IF NOT EXISTS "overview_daily_snapshots" (
   "id" varchar DEFAULT gen_random_uuid() NOT NULL,
   "restaurant_id" varchar NOT NULL,
@@ -2324,6 +2390,83 @@ ALTER TABLE "project_tasks" ADD COLUMN IF NOT EXISTS "source_product_id" varchar
 ALTER TABLE "project_tasks" ADD COLUMN IF NOT EXISTS "phase" integer DEFAULT 1 NOT NULL;
 ALTER TABLE "project_tasks" ADD COLUMN IF NOT EXISTS "assignee_type" text;
 ALTER TABLE "project_tasks" ADD COLUMN IF NOT EXISTS "assignee_id" varchar(255);
+CREATE TABLE IF NOT EXISTS "promotion_branches" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "promotion_id" varchar NOT NULL,
+  "branch_id" varchar NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "promotion_branches" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "promotion_branches" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "promotion_branches" ADD COLUMN IF NOT EXISTS "promotion_id" varchar;
+ALTER TABLE "promotion_branches" ADD COLUMN IF NOT EXISTS "branch_id" varchar;
+CREATE TABLE IF NOT EXISTS "promotion_targets" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "promotion_id" varchar NOT NULL,
+  "target_type" text NOT NULL,
+  "menu_item_id" varchar,
+  "category" text,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "promotion_targets" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "promotion_targets" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "promotion_targets" ADD COLUMN IF NOT EXISTS "promotion_id" varchar;
+ALTER TABLE "promotion_targets" ADD COLUMN IF NOT EXISTS "target_type" text;
+ALTER TABLE "promotion_targets" ADD COLUMN IF NOT EXISTS "menu_item_id" varchar;
+ALTER TABLE "promotion_targets" ADD COLUMN IF NOT EXISTS "category" text;
+CREATE TABLE IF NOT EXISTS "promotions" (
+  "id" varchar DEFAULT gen_random_uuid() NOT NULL,
+  "restaurant_id" varchar NOT NULL,
+  "name" text NOT NULL,
+  "description" text,
+  "enabled" boolean DEFAULT false NOT NULL,
+  "paused" boolean DEFAULT false NOT NULL,
+  "discount_type" text NOT NULL,
+  "discount_value" numeric(12,2) NOT NULL,
+  "priority" integer DEFAULT 0 NOT NULL,
+  "start_date" date NOT NULL,
+  "end_date" date NOT NULL,
+  "start_time" text DEFAULT '00:00'::text NOT NULL,
+  "end_time" text DEFAULT '23:59'::text NOT NULL,
+  "timezone" text DEFAULT 'Asia/Riyadh'::text NOT NULL,
+  "weekdays" int4[] DEFAULT ARRAY[0, 1, 2, 3, 4, 5, 6] NOT NULL,
+  "all_branches" boolean DEFAULT true NOT NULL,
+  "stacking_policy" text DEFAULT 'priority_only'::text NOT NULL,
+  "max_total_discount" numeric(12,2),
+  "usage_limit" integer,
+  "created_by" varchar,
+  "created_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "updated_at" timestamp without time zone DEFAULT now() NOT NULL,
+  "archived_at" timestamp without time zone,
+  "version" integer DEFAULT 1 NOT NULL,
+  PRIMARY KEY ("id")
+);
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "id" varchar DEFAULT gen_random_uuid() NOT NULL;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "restaurant_id" varchar;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "name" text;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "description" text;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "enabled" boolean DEFAULT false NOT NULL;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "paused" boolean DEFAULT false NOT NULL;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "discount_type" text;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "discount_value" numeric(12,2);
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "priority" integer DEFAULT 0 NOT NULL;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "start_date" date;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "end_date" date;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "start_time" text DEFAULT '00:00'::text NOT NULL;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "end_time" text DEFAULT '23:59'::text NOT NULL;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "timezone" text DEFAULT 'Asia/Riyadh'::text NOT NULL;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "weekdays" int4[] DEFAULT ARRAY[0, 1, 2, 3, 4, 5, 6] NOT NULL;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "all_branches" boolean DEFAULT true NOT NULL;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "stacking_policy" text DEFAULT 'priority_only'::text NOT NULL;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "max_total_discount" numeric(12,2);
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "usage_limit" integer;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "created_by" varchar;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "created_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "updated_at" timestamp without time zone DEFAULT now() NOT NULL;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "archived_at" timestamp without time zone;
+ALTER TABLE "promotions" ADD COLUMN IF NOT EXISTS "version" integer DEFAULT 1 NOT NULL;
 CREATE TABLE IF NOT EXISTS "properties" (
   "id" varchar(255) DEFAULT gen_random_uuid() NOT NULL,
   "restaurant_id" varchar(255) NOT NULL,
@@ -3673,10 +3816,22 @@ DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loyalty_
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loyalty_transactions_loyalty_account_id_fkey' AND conrelid = '"loyalty_transactions"'::regclass) THEN ALTER TABLE "loyalty_transactions" ADD CONSTRAINT "loyalty_transactions_loyalty_account_id_fkey" FOREIGN KEY (loyalty_account_id) REFERENCES loyalty_accounts(id) NOT VALID; END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loyalty_transactions_order_id_fkey' AND conrelid = '"loyalty_transactions"'::regclass) THEN ALTER TABLE "loyalty_transactions" ADD CONSTRAINT "loyalty_transactions_order_id_fkey" FOREIGN KEY (order_id) REFERENCES orders(id) NOT VALID; END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'loyalty_transactions_restaurant_id_fkey' AND conrelid = '"loyalty_transactions"'::regclass) THEN ALTER TABLE "loyalty_transactions" ADD CONSTRAINT "loyalty_transactions_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'order_promotion_applications_branch_id_fkey' AND conrelid = '"order_promotion_applications"'::regclass) THEN ALTER TABLE "order_promotion_applications" ADD CONSTRAINT "order_promotion_applications_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE RESTRICT NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'order_promotion_applications_order_id_fkey' AND conrelid = '"order_promotion_applications"'::regclass) THEN ALTER TABLE "order_promotion_applications" ADD CONSTRAINT "order_promotion_applications_order_id_fkey" FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE RESTRICT NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'order_promotion_applications_promotion_id_fkey' AND conrelid = '"order_promotion_applications"'::regclass) THEN ALTER TABLE "order_promotion_applications" ADD CONSTRAINT "order_promotion_applications_promotion_id_fkey" FOREIGN KEY (promotion_id) REFERENCES promotions(id) ON DELETE SET NULL NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'order_promotion_applications_restaurant_id_fkey' AND conrelid = '"order_promotion_applications"'::regclass) THEN ALTER TABLE "order_promotion_applications" ADD CONSTRAINT "order_promotion_applications_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE RESTRICT NOT VALID; END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'overview_daily_snapshots_branch_id_fkey' AND conrelid = '"overview_daily_snapshots"'::regclass) THEN ALTER TABLE "overview_daily_snapshots" ADD CONSTRAINT "overview_daily_snapshots_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'overview_daily_snapshots_restaurant_id_fkey' AND conrelid = '"overview_daily_snapshots"'::regclass) THEN ALTER TABLE "overview_daily_snapshots" ADD CONSTRAINT "overview_daily_snapshots_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'overview_settings_branch_id_fkey' AND conrelid = '"overview_settings"'::regclass) THEN ALTER TABLE "overview_settings" ADD CONSTRAINT "overview_settings_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'overview_settings_restaurant_id_fkey' AND conrelid = '"overview_settings"'::regclass) THEN ALTER TABLE "overview_settings" ADD CONSTRAINT "overview_settings_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'promotion_branches_branch_id_fkey' AND conrelid = '"promotion_branches"'::regclass) THEN ALTER TABLE "promotion_branches" ADD CONSTRAINT "promotion_branches_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) ON DELETE CASCADE NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'promotion_branches_promotion_id_fkey' AND conrelid = '"promotion_branches"'::regclass) THEN ALTER TABLE "promotion_branches" ADD CONSTRAINT "promotion_branches_promotion_id_fkey" FOREIGN KEY (promotion_id) REFERENCES promotions(id) ON DELETE CASCADE NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'promotion_branches_restaurant_id_fkey' AND conrelid = '"promotion_branches"'::regclass) THEN ALTER TABLE "promotion_branches" ADD CONSTRAINT "promotion_branches_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'promotion_targets_menu_item_id_fkey' AND conrelid = '"promotion_targets"'::regclass) THEN ALTER TABLE "promotion_targets" ADD CONSTRAINT "promotion_targets_menu_item_id_fkey" FOREIGN KEY (menu_item_id) REFERENCES menu_items(id) ON DELETE CASCADE NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'promotion_targets_promotion_id_fkey' AND conrelid = '"promotion_targets"'::regclass) THEN ALTER TABLE "promotion_targets" ADD CONSTRAINT "promotion_targets_promotion_id_fkey" FOREIGN KEY (promotion_id) REFERENCES promotions(id) ON DELETE CASCADE NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'promotion_targets_restaurant_id_fkey' AND conrelid = '"promotion_targets"'::regclass) THEN ALTER TABLE "promotion_targets" ADD CONSTRAINT "promotion_targets_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'promotions_created_by_fkey' AND conrelid = '"promotions"'::regclass) THEN ALTER TABLE "promotions" ADD CONSTRAINT "promotions_created_by_fkey" FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL NOT VALID; END IF; END $$;
+DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'promotions_restaurant_id_fkey' AND conrelid = '"promotions"'::regclass) THEN ALTER TABLE "promotions" ADD CONSTRAINT "promotions_restaurant_id_fkey" FOREIGN KEY (restaurant_id) REFERENCES restaurants(id) ON DELETE CASCADE NOT VALID; END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'waste_logs_actor_id_fkey' AND conrelid = '"waste_logs"'::regclass) THEN ALTER TABLE "waste_logs" ADD CONSTRAINT "waste_logs_actor_id_fkey" FOREIGN KEY (actor_id) REFERENCES users(id) ON DELETE SET NULL NOT VALID; END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'waste_logs_branch_id_fkey' AND conrelid = '"waste_logs"'::regclass) THEN ALTER TABLE "waste_logs" ADD CONSTRAINT "waste_logs_branch_id_fkey" FOREIGN KEY (branch_id) REFERENCES branches(id) NOT VALID; END IF; END $$;
 DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'waste_logs_inventory_item_id_fkey' AND conrelid = '"waste_logs"'::regclass) THEN ALTER TABLE "waste_logs" ADD CONSTRAINT "waste_logs_inventory_item_id_fkey" FOREIGN KEY (inventory_item_id) REFERENCES inventory_items(id) NOT VALID; END IF; END $$;

@@ -304,11 +304,15 @@ export const orders = pgTable("orders", {
   paymentStatus: text("payment_status").default("Unpaid"), // Track payment status separately: Unpaid, Paid, Refunded
   moyasarPaymentId: text("moyasar_payment_id"), // Link to Moyasar payment if applicable
   status: text("status").notNull().default("Pending"),
+  sourcePlatform: text("source_platform"), // null for native orders; delivery provider key otherwise
+  externalOrderId: text("external_order_id"), // provider's immutable order id
   createdBy: varchar("created_by").references(() => users.id, { onDelete: "set null" }), // Nullable: tracks which user created the order
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => ({
   restaurantCreatedAtIdx: index("orders_restaurant_created_at_idx").on(table.restaurantId, table.createdAt),
   restaurantStatusIdx: index("orders_restaurant_status_idx").on(table.restaurantId, table.status),
+  deliverySourceIdx: index("orders_delivery_source_idx").on(table.restaurantId, table.sourcePlatform, table.createdAt),
+  deliveryExternalUnique: uniqueIndex("orders_delivery_external_unique").on(table.restaurantId, table.sourcePlatform, table.externalOrderId),
 }));
 
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true });
@@ -630,6 +634,7 @@ export const invoices = pgTable("invoices", {
   adjustmentReason: text("adjustment_reason"), // Reason for credit/debit note
   transactionId: varchar("transaction_id").references(() => transactions.id),
   orderId: varchar("order_id").references(() => orders.id),
+  sourcePlatform: text("source_platform"), // denormalized immutable origin for invoice reporting
   procurementId: varchar("procurement_id"), // Link to procurement for reorder invoices
   branchId: varchar("branch_id").references(() => branches.id),
   customerName: text("customer_name"),
@@ -643,6 +648,7 @@ export const invoices = pgTable("invoices", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (table) => ({
   restaurantCreatedAtIdx: index("invoices_restaurant_created_at_idx").on(table.restaurantId, table.createdAt),
+  deliverySourceIdx: index("invoices_delivery_source_idx").on(table.restaurantId, table.sourcePlatform, table.createdAt),
 }));
 
 export const insertInvoiceSchema = createInsertSchema(invoices).omit({ id: true, createdAt: true });
@@ -3119,3 +3125,113 @@ export type PromotionBranch = typeof promotionBranches.$inferSelect;
 export type PromotionTarget = typeof promotionTargets.$inferSelect;
 export type OrderPromotionApplication = typeof orderPromotionApplications.$inferSelect;
 export type InsertPromotion = z.infer<typeof insertPromotionSchema>;
+
+// Tenant-scoped, config-driven delivery connectors. Credentials are one
+// authenticated-encryption envelope; no individual secret is queryable.
+export const deliveryIntegrations = pgTable("delivery_integrations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  enabled: boolean("enabled").notNull().default(false),
+  credentialsEncrypted: text("credentials_encrypted").notNull(),
+  config: jsonb("config").notNull().$type<{
+    apiBaseUrl?: string; testPath?: string; statusPathTemplate?: string;
+    signatureHeader: string; eventIdHeader: string; signatureEncoding: "hex" | "base64";
+    signaturePrefix?: string; silentAfterMinutes: number; mapping?: Record<string, string>;
+  }>(),
+  webhookToken: text("webhook_token").notNull(),
+  connectionStatus: text("connection_status").notNull().default("untested"),
+  connectionMessage: text("connection_message"),
+  lastReceivedAt: timestamp("last_received_at"),
+  lastSuccessAt: timestamp("last_success_at"),
+  lastErrorAt: timestamp("last_error_at"),
+  lastError: text("last_error"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (t) => ({
+  tenantProviderUnique: uniqueIndex("delivery_integrations_tenant_provider_unique").on(t.restaurantId, t.provider),
+  webhookTokenUnique: uniqueIndex("delivery_integrations_webhook_token_unique").on(t.webhookToken),
+}));
+
+export const deliveryIntegrationEvents = pgTable("delivery_integration_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  integrationId: varchar("integration_id").notNull().references(() => deliveryIntegrations.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  providerEventId: text("provider_event_id").notNull(),
+  payloadHash: text("payload_hash").notNull(),
+  rawPayload: jsonb("raw_payload").notNull(),
+  signature: text("signature").notNull(),
+  status: text("status").notNull(),
+  attempts: integer("attempts").notNull().default(0),
+  error: text("error"),
+  orderId: varchar("order_id").references(() => orders.id, { onDelete: "set null" }),
+  receivedAt: timestamp("received_at").notNull().defaultNow(),
+  processedAt: timestamp("processed_at"),
+  nextRetryAt: timestamp("next_retry_at"),
+  processingStartedAt: timestamp("processing_started_at"),
+}, (t) => ({
+  providerEventUnique: uniqueIndex("delivery_events_provider_event_unique").on(t.integrationId, t.providerEventId),
+  payloadReplayUnique: uniqueIndex("delivery_events_payload_replay_unique").on(t.integrationId, t.payloadHash),
+  tenantStatusIdx: index("delivery_events_tenant_status_idx").on(t.restaurantId, t.status, t.receivedAt),
+}));
+
+// Immutable financial snapshot. There is intentionally no updated_at column.
+export const deliveryIntegrationFees = pgTable("delivery_integration_fees", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "restrict" }),
+  integrationId: varchar("integration_id").notNull().references(() => deliveryIntegrations.id, { onDelete: "restrict" }),
+  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "restrict" }),
+  provider: text("provider").notNull(),
+  gross: decimal("gross", { precision: 12, scale: 2 }).notNull(),
+  fee: decimal("fee", { precision: 12, scale: 2 }).notNull(),
+  commission: decimal("commission", { precision: 12, scale: 2 }).notNull(),
+  net: decimal("net", { precision: 12, scale: 2 }).notNull(),
+  sourceEventId: varchar("source_event_id").notNull().references(() => deliveryIntegrationEvents.id, { onDelete: "restrict" }),
+  capturedAt: timestamp("captured_at").notNull().defaultNow(),
+}, (t) => ({
+  orderUnique: uniqueIndex("delivery_fees_order_unique").on(t.orderId),
+  tenantProviderDateIdx: index("delivery_fees_tenant_provider_date_idx").on(t.restaurantId, t.provider, t.capturedAt),
+  reconciliationCheck: check("delivery_fees_reconciliation_check", sql`${t.gross} = ${t.fee} + ${t.commission} + ${t.net}`),
+}));
+
+export const deliveryStatusSyncs = pgTable("delivery_status_syncs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  integrationId: varchar("integration_id").notNull().references(() => deliveryIntegrations.id, { onDelete: "cascade" }),
+  orderId: varchar("order_id").notNull().references(() => orders.id, { onDelete: "cascade" }),
+  status: text("status").notNull(),
+  direction: text("direction").notNull(),
+  state: text("state").notNull(),
+  attempts: integer("attempts").notNull().default(0),
+  error: text("error"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  sentAt: timestamp("sent_at"),
+  nextRetryAt: timestamp("next_retry_at"),
+  processingStartedAt: timestamp("processing_started_at"),
+}, (t) => ({
+  tenantOrderIdx: index("delivery_status_sync_tenant_order_idx").on(t.restaurantId, t.orderId, t.createdAt),
+}));
+
+// A unique active alert prevents a silent connector or dead-letter queue from
+// creating notification storms while retaining a durable tenant-visible record.
+export const deliveryIntegrationAlerts = pgTable("delivery_integration_alerts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  restaurantId: varchar("restaurant_id").notNull().references(() => restaurants.id, { onDelete: "cascade" }),
+  integrationId: varchar("integration_id").notNull().references(() => deliveryIntegrations.id, { onDelete: "cascade" }),
+  kind: text("kind").notNull(), // silent_webhook | inbound_dead_letter | outbound_dead_letter
+  message: text("message").notNull(),
+  active: boolean("active").notNull().default(true),
+  firstDetectedAt: timestamp("first_detected_at").notNull().defaultNow(),
+  lastDetectedAt: timestamp("last_detected_at").notNull().defaultNow(),
+  resolvedAt: timestamp("resolved_at"),
+}, (t) => ({
+  activeAlertUnique: uniqueIndex("delivery_alert_active_unique").on(t.integrationId, t.kind),
+  tenantActiveIdx: index("delivery_alert_tenant_active_idx").on(t.restaurantId, t.active, t.lastDetectedAt),
+}));
+
+export type DeliveryIntegration = typeof deliveryIntegrations.$inferSelect;
+export type DeliveryIntegrationEvent = typeof deliveryIntegrationEvents.$inferSelect;
+export type DeliveryIntegrationFee = typeof deliveryIntegrationFees.$inferSelect;
+export type DeliveryStatusSync = typeof deliveryStatusSyncs.$inferSelect;
+export type DeliveryIntegrationAlert = typeof deliveryIntegrationAlerts.$inferSelect;

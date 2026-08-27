@@ -344,6 +344,7 @@ export interface IStorage {
     restaurantId: string;
     branchId?: string;
     status?: string;
+    sourcePlatform?: string;
     dateRange?: { start?: Date; end?: Date };
   }): Promise<Order[]>;
   getOrder(id: string, restaurantId: string): Promise<Order | undefined>;
@@ -429,6 +430,7 @@ export interface IStorage {
   getInvoices(filter: {
     restaurantId: string;
     branchId?: string;
+    sourcePlatform?: string;
     dateRange?: { start?: Date; end?: Date };
   }): Promise<Invoice[]>;
   getInvoice(id: string, restaurantId: string): Promise<Invoice | undefined>;
@@ -1593,11 +1595,13 @@ export class DatabaseStorage implements IStorage {
     restaurantId: string;
     branchId?: string;
     status?: string;
+    sourcePlatform?: string;
     dateRange?: { start?: Date; end?: Date };
   }): Promise<Order[]> {
     const conditions = [eq(orders.restaurantId, filter.restaurantId)];
     if (filter.branchId) conditions.push(eq(orders.branchId, filter.branchId));
     if (filter.status) conditions.push(eq(orders.status, filter.status));
+    if (filter.sourcePlatform) conditions.push(eq(orders.sourcePlatform, filter.sourcePlatform));
     if (filter.dateRange?.start) conditions.push(gte(orders.createdAt, filter.dateRange.start));
     if (filter.dateRange?.end) conditions.push(lte(orders.createdAt, filter.dateRange.end));
     
@@ -2372,11 +2376,13 @@ export class DatabaseStorage implements IStorage {
   async getInvoices(filter: {
     restaurantId: string;
     branchId?: string;
+    sourcePlatform?: string;
     dateRange?: { start?: Date; end?: Date };
   }): Promise<Invoice[]> {
     try {
       const conditions = [eq(invoices.restaurantId, filter.restaurantId)];
       if (filter.branchId) conditions.push(eq(invoices.branchId, filter.branchId));
+      if (filter.sourcePlatform) conditions.push(eq(invoices.sourcePlatform, filter.sourcePlatform));
       if (filter.dateRange?.start) conditions.push(gte(invoices.createdAt, filter.dateRange.start));
       if (filter.dateRange?.end) conditions.push(lte(invoices.createdAt, filter.dateRange.end));
       
@@ -2390,7 +2396,7 @@ export class DatabaseStorage implements IStorage {
                  invoice_type as "invoiceType", NULL as "documentType",
                  NULL as "referencedInvoiceId", NULL as "adjustmentReason",
                  transaction_id as "transactionId",
-                 order_id as "orderId", NULL as "procurementId", branch_id as "branchId",
+                  order_id as "orderId", NULL as "sourcePlatform", NULL as "procurementId", branch_id as "branchId",
                  customer_name as "customerName", customer_vat_number as "customerVatNumber",
                  items, subtotal, vat_amount as "vatAmount", total,
                  qr_code as "qrCode", pdf_path as "pdfPath", created_at as "createdAt"

@@ -10,6 +10,7 @@
     "check": "tsc",
     "verify:general-overview": "tsx scripts/verify-general-overview.ts",
     "verify:promotions": "tsx scripts/verify-promotions.ts",
+    "verify:delivery-integrations": "tsx scripts/verify-delivery-integrations.ts",
     "db:push": "drizzle-kit push"
   },
   "dependencies": {

@@ -14,3 +14,4 @@
 - [TypeScript check quirks](typescript-check-quirks.md) — tsc via node_modules/.bin, reinstall packages when node_modules corrupt, clear tsbuildinfo after tsconfig changes, AST-only edits to translations.ts.
 - [ZATCA E2E fixture cleanup](zatca-e2e-fixtures.md) — never seed finalized ZATCA rows in ordinary E2E fixtures; retention guards intentionally prevent cleanup.
 - [Promotion transaction ordering](promotion-transaction-ordering.md) — checkout pricing and promotion mutations share tenant serialization; whichever acquires it first defines the valid rule state.
+- [Delivery provider contracts](delivery-provider-contracts.md) — external delivery API details are explicit tenant config; never guess undocumented endpoints, signatures, headers, or payload paths.
