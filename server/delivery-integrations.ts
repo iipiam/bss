@@ -8,7 +8,7 @@ import { z } from "zod";
 import { db } from "./db";
 import {
   deliveryApps, deliveryIntegrationEvents, deliveryIntegrationFees, deliveryIntegrations,
-  deliveryStatusSyncs, deliveryIntegrationAlerts, invoices, orders,
+  deliveryStatusSyncs, deliveryIntegrationAlerts, invoices, orders, transactions,
 } from "@shared/schema";
 import { processInvoiceZatcaIdempotently } from "./zatca/orchestration";
 
@@ -17,6 +17,15 @@ export const DELIVERY_PROVIDERS = {
   jahez: { name: "Jahez", credentialFields: ["apiKey", "apiSecret", "webhookSecret", "merchantId"] },
 } as const;
 type DeliveryProviderMetadata = { name: string; credentialFields: readonly string[] };
+type DeliveryNotification = {
+  type: "sales:updated" | "order:statusUpdated";
+  restaurantId: string;
+  orderId?: string;
+  orderNumber?: string;
+  status?: string;
+  branchId?: string;
+};
+let broadcastDeliveryNotification: (notification: DeliveryNotification) => void = () => {};
 
 export function normalizeDeliveryProviderKey(name: string) {
   return name.normalize("NFKC").trim().toLocaleLowerCase("en")
@@ -175,6 +184,33 @@ export function newInternalDeliveryNumber(prefix: "DLV" | "INV" = "DLV") {
   return `${prefix}-${crypto.randomUUID()}`;
 }
 
+async function ensureDeliveryTransaction(tx: any, integration: any, order: any, normalized: any) {
+  const [existing] = await tx.select().from(transactions)
+    .where(and(
+      eq(transactions.restaurantId, integration.restaurantId),
+      eq(transactions.orderId, order.id),
+    ))
+    .limit(1);
+  if (existing) return false;
+  const itemCount = Math.max(1, normalized.items.reduce(
+    (count: number, item: any) => count + Math.max(0, Number(item.quantity) || 0),
+    0,
+  ));
+  const [created] = await tx.insert(transactions).values({
+    restaurantId: integration.restaurantId,
+    transactionId: `DLV-${order.id}`,
+    orderId: order.id,
+    branchId: order.branchId,
+    itemCount,
+    subtotal: normalized.subtotal.toFixed(2),
+    tax: normalized.vat.toFixed(2),
+    total: normalized.total.toFixed(2),
+    paymentMethod: order.paymentMethod || "Online",
+    createdAt: order.createdAt,
+  }).returning();
+  return !!created;
+}
+
 let workerTimer: NodeJS.Timeout | undefined;
 let workerRunning = false;
 async function backfillDecryptedExternalAccountIds() {
@@ -282,21 +318,47 @@ async function deliveryWorkerSweep() {
           await db.update(deliveryIntegrationEvents).set({
             status: "processed", processedAt: new Date(), orderId: updated.id, error: null, processingStartedAt: null,
           }).where(eq(deliveryIntegrationEvents.id, event.id));
+           broadcastDeliveryNotification({
+             type: "order:statusUpdated",
+             restaurantId: integration.restaurantId,
+             orderId: updated.id,
+             orderNumber: updated.orderNumber,
+             status: updated.status,
+             branchId: updated.branchId ?? undefined,
+           });
+           broadcastDeliveryNotification({
+             type: "sales:updated",
+             restaurantId: integration.restaurantId,
+             orderId: updated.id,
+             branchId: updated.branchId ?? undefined,
+           });
           continue;
         }
         const n = normalizeMappedPayload(event.raw_payload, config.mapping);
         const result = await db.transaction(async tx => {
           await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`delivery:${integration.id}:${n.externalOrderId}`}, 0))`);
            const [existing] = await tx.select().from(orders).where(and(eq(orders.restaurantId, integration.restaurantId), eq(orders.deliveryIntegrationId, integration.id), eq(orders.externalOrderId, n.externalOrderId))).limit(1);
-          if (existing) return { order: existing, invoice: null };
+           if (existing) {
+             const saleCreated = await ensureDeliveryTransaction(tx, integration, existing, n);
+             return { order: existing, invoice: null, saleCreated };
+           }
            const [order] = await tx.insert(orders).values({ restaurantId: integration.restaurantId, orderNumber: newInternalDeliveryNumber(), orderType: "Delivery", customerName: n.customerName, customerPhone: n.customerPhone, address: n.address, sourcePlatform: integration.provider, deliveryIntegrationId: integration.id, externalOrderId: n.externalOrderId, items: n.items, subtotal: n.subtotal.toFixed(2), tax: n.vat.toFixed(2), total: n.total.toFixed(2), paymentMethod: "Online", paymentStatus: "Paid", status: inboundStatuses[String(n.status || "pending").toLowerCase()] || "Pending" }).returning();
           const [invoice] = await tx.insert(invoices).values({ restaurantId: integration.restaurantId, invoiceNumber: newInternalDeliveryNumber("INV"), invoiceType: "simplified", orderId: order.id, sourcePlatform: integration.provider, customerName: n.customerName, items: n.items.map(i => ({ name: i.name, quantity: i.quantity, basePrice: i.lineFinalSubtotal, vatAmount: n.subtotal ? n.vat * i.lineFinalSubtotal / n.subtotal : 0, total: i.lineFinalSubtotal + (n.subtotal ? n.vat * i.lineFinalSubtotal / n.subtotal : 0) })), subtotal: n.subtotal.toFixed(2), vatAmount: n.vat.toFixed(2), total: n.total.toFixed(2) }).returning();
           if (Math.abs(n.total - n.fee - n.commission - n.net) > .02) throw new Error("Gross value does not reconcile to fee + commission + net");
           await tx.insert(deliveryIntegrationFees).values({ restaurantId: integration.restaurantId, integrationId: integration.id, orderId: order.id, provider: integration.provider, gross: n.total.toFixed(2), fee: n.fee.toFixed(2), commission: n.commission.toFixed(2), net: n.net.toFixed(2), sourceEventId: event.id });
-          return { order, invoice };
+           await ensureDeliveryTransaction(tx, integration, order, n);
+           return { order, invoice, saleCreated: true };
         });
         await db.update(deliveryIntegrationEvents).set({ status: "processed", processedAt: new Date(), orderId: result.order.id, error: null, processingStartedAt: null }).where(eq(deliveryIntegrationEvents.id, event.id));
         await db.update(deliveryIntegrations).set({ lastSuccessAt: new Date(), lastReceivedAt: new Date(), lastError: null }).where(eq(deliveryIntegrations.id, integration.id));
+         if (result.saleCreated) {
+           broadcastDeliveryNotification({
+             type: "sales:updated",
+             restaurantId: integration.restaurantId,
+             orderId: result.order.id,
+             branchId: result.order.branchId ?? undefined,
+           });
+         }
         if (result.invoice) void submitZatcaForDelivery(result.invoice, result.order);
       } catch (error: any) {
         const attempts = Number(event.attempts) + 1;
@@ -448,7 +510,13 @@ async function submitZatcaForDelivery(invoice: any, order: any) {
   }
 }
 
-export function registerDeliveryIntegrationRoutes(app: Express, requireAuth: RequestHandler, requireRestaurant: RequestHandler) {
+export function registerDeliveryIntegrationRoutes(
+  app: Express,
+  requireAuth: RequestHandler,
+  requireRestaurant: RequestHandler,
+  broadcastNotification?: (notification: DeliveryNotification) => void,
+) {
+  if (broadcastNotification) broadcastDeliveryNotification = broadcastNotification;
   const admin: RequestHandler = (req: any, res, next) => req.session?.user?.role === "admin" ? next() : res.status(403).json({ error: "Admin access required" });
   app.get("/api/delivery-integrations/providers", requireAuth, requireRestaurant, async (req: any, res) => {
     res.json(await deliveryProviderCatalog(req.session.user.restaurantId));
@@ -598,13 +666,30 @@ export function registerDeliveryIntegrationRoutes(app: Express, requireAuth: Req
         await db.update(deliveryIntegrations).set({
           lastReceivedAt: new Date(), lastSuccessAt: new Date(), lastError: null, connectionStatus: "connected",
         }).where(eq(deliveryIntegrations.id, integration.id));
+         broadcastDeliveryNotification({
+           type: "order:statusUpdated",
+           restaurantId: integration.restaurantId,
+           orderId: updated.id,
+           orderNumber: updated.orderNumber,
+           status: updated.status,
+           branchId: updated.branchId ?? undefined,
+         });
+         broadcastDeliveryNotification({
+           type: "sales:updated",
+           restaurantId: integration.restaurantId,
+           orderId: updated.id,
+           branchId: updated.branchId ?? undefined,
+         });
         return res.status(202).json({ accepted: true, orderId: updated.id });
       }
       const normalized = normalizeMappedPayload(req.body, config.mapping);
       const result = await db.transaction(async tx => {
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`delivery:${integration.id}:${normalized.externalOrderId}`}, 0))`);
         const [duplicate] = await tx.select().from(orders).where(and(eq(orders.restaurantId, integration.restaurantId), eq(orders.deliveryIntegrationId, integration.id), eq(orders.externalOrderId, normalized.externalOrderId))).limit(1);
-        if (duplicate) return { order: duplicate, invoice: null, duplicate: true };
+        if (duplicate) {
+          const saleCreated = await ensureDeliveryTransaction(tx, integration, duplicate, normalized);
+          return { order: duplicate, invoice: null, duplicate: true, saleCreated };
+        }
         // The provider ID stays in the tenant/provider idempotency key. The
         // internal number gets a random global suffix, avoiding cross-tenant
         // collisions and leaking no provider identifier as its sole key.
@@ -632,9 +717,18 @@ export function registerDeliveryIntegrationRoutes(app: Express, requireAuth: Req
           orderId: order.id, provider: integration.provider, gross: normalized.total.toFixed(2), fee: normalized.fee.toFixed(2),
           commission: normalized.commission.toFixed(2), net: normalized.net.toFixed(2), sourceEventId: event.id });
         await tx.update(deliveryIntegrationEvents).set({ status: "processed", processedAt: new Date(), orderId: order.id, processingStartedAt: null }).where(eq(deliveryIntegrationEvents.id, event.id));
-        return { order, invoice, duplicate: false };
+        await ensureDeliveryTransaction(tx, integration, order, normalized);
+        return { order, invoice, duplicate: false, saleCreated: true };
       });
       await db.update(deliveryIntegrations).set({ lastReceivedAt: new Date(), lastSuccessAt: new Date(), lastError: null, connectionStatus: "connected" }).where(eq(deliveryIntegrations.id, integration.id));
+      if (result.saleCreated) {
+        broadcastDeliveryNotification({
+          type: "sales:updated",
+          restaurantId: integration.restaurantId,
+          orderId: result.order.id,
+          branchId: result.order.branchId ?? undefined,
+        });
+      }
       if (result.invoice) void submitZatcaForDelivery(result.invoice, result.order);
       res.status(202).json({ accepted: true, duplicate: result.duplicate, orderId: result.order.id });
     } catch (error: any) {

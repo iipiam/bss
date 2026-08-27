@@ -15,3 +15,4 @@
 - [ZATCA E2E fixture cleanup](zatca-e2e-fixtures.md) — never seed finalized ZATCA rows in ordinary E2E fixtures; retention guards intentionally prevent cleanup.
 - [Promotion transaction ordering](promotion-transaction-ordering.md) — checkout pricing and promotion mutations share tenant serialization; whichever acquires it first defines the valid rule state.
 - [Delivery provider contracts](delivery-provider-contracts.md) — external delivery API details are explicit tenant config; never guess undocumented endpoints, signatures, headers, or payload paths.
+- [Live sales transaction stream](live-sales-transaction-stream.md) — every revenue source must write transactions atomically and broadcast sales updates; never infer sales by bulk-backfilling orphan orders.

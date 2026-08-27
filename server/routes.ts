@@ -320,7 +320,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   registerGeneralOverviewRoutes(app, broadcastNotification);
   registerPromotionRoutes(app, requireAuth, requireRestaurant, broadcastNotification);
   const { registerDeliveryIntegrationRoutes, startDeliveryIntegrationWorker } = await import("./delivery-integrations");
-  registerDeliveryIntegrationRoutes(app, requireAuth, requireRestaurant);
+  registerDeliveryIntegrationRoutes(app, requireAuth, requireRestaurant, broadcastNotification);
   startDeliveryIntegrationWorker();
   // Ensure the internal IT marketing workspace row exists (sentinel restaurant).
   // subscriptionStatus 'cancelled' keeps it out of IT client/business listings.
@@ -4737,6 +4737,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
   // Analytics Endpoints
   app.get("/api/analytics/dashboard", requireAuth, requireRestaurant, requirePermission('dashboard'), async (req, res) => {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
     const orders = await storage.getOrders({ restaurantId, branchId });

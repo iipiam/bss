@@ -537,6 +537,24 @@ export const startupMigrationReady: Promise<void> = (async () => {
          FOR EACH ROW EXECUTE FUNCTION delivery_order_snapshot_guard();
        END IF; END $$`,
     ],
+    [
+      "delivery_integrations.transaction_backfill",
+      `INSERT INTO transactions (
+         restaurant_id, transaction_id, order_id, branch_id, item_count,
+         subtotal, tax, total, payment_method, created_at
+       )
+       SELECT
+         o.restaurant_id, 'DLV-' || o.id, o.id, o.branch_id,
+         GREATEST(jsonb_array_length(COALESCE(o.items, '[]'::jsonb)), 1),
+         o.subtotal, o.tax, o.total, o.payment_method, o.created_at
+       FROM orders o
+       WHERE o.delivery_integration_id IS NOT NULL
+         AND NOT EXISTS (
+           SELECT 1 FROM transactions t
+           WHERE t.restaurant_id=o.restaurant_id AND t.order_id=o.id
+         )
+       ON CONFLICT (transaction_id) DO NOTHING`,
+    ],
   ];
 
   // ZATCA compliance-critical migrations: a failure here must NOT be silently

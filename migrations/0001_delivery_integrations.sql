@@ -81,6 +81,21 @@ DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname='delivery_order
   CREATE TRIGGER delivery_order_snapshot_guard BEFORE UPDATE OR DELETE ON orders
   FOR EACH ROW EXECUTE FUNCTION delivery_order_snapshot_guard();
 END IF; END $$;
+INSERT INTO transactions (
+  restaurant_id, transaction_id, order_id, branch_id, item_count,
+  subtotal, tax, total, payment_method, created_at
+)
+SELECT
+  o.restaurant_id, 'DLV-' || o.id, o.id, o.branch_id,
+  GREATEST(jsonb_array_length(COALESCE(o.items, '[]'::jsonb)), 1),
+  o.subtotal, o.tax, o.total, o.payment_method, o.created_at
+FROM orders o
+WHERE o.delivery_integration_id IS NOT NULL
+  AND NOT EXISTS (
+    SELECT 1 FROM transactions t
+    WHERE t.restaurant_id=o.restaurant_id AND t.order_id=o.id
+  )
+ON CONFLICT (transaction_id) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS "delivery_status_syncs" (
   "id" varchar PRIMARY KEY DEFAULT gen_random_uuid(), "restaurant_id" varchar NOT NULL REFERENCES "restaurants"("id") ON DELETE CASCADE,

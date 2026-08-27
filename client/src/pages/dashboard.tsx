@@ -519,6 +519,7 @@ export default function Dashboard() {
         const params = branchId ? `?branchId=${encodeURIComponent(branchId)}` : "";
         const response = await fetch(`/api/analytics/dashboard${params}`, {
           credentials: "include",
+          cache: "no-store",
         });
         if (!response.ok) throw new Error("Failed to load dashboard analytics");
         return response.json();

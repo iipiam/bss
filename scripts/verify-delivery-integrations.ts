@@ -87,6 +87,10 @@ for (const sql of [migration, schemaSync]) {
   assert.match(sql, /orders_delivery_integration_fk/);
   assert.match(sql, /IF TG_OP='DELETE' THEN RETURN OLD; END IF/,
     "ordinary orders must remain deletable when no delivery financial snapshot exists");
+  assert.match(sql, /INSERT INTO transactions[\s\S]*'DLV-' \|\| o\.id/,
+    "existing delivery orders must be backfilled into live sales transactions");
 }
+assert.match(implementation, /ensureDeliveryTransaction\(tx, integration, order, normalized\)/);
+assert.match(implementation, /type: "sales:updated"/);
 
 console.log("Delivery integration focused checks passed");
