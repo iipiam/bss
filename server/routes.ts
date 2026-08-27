@@ -99,6 +99,12 @@ import { ADMIN_PERMISSIONS, type PermissionSet } from "@shared/permissions";
 import { registerGeneralOverviewRoutes } from "./general-overview";
 import { registerPromotionRoutes } from "./promotions";
 import { restaurantSourceOrderSchema } from "./order-source-schema";
+import {
+  calculatePeakHours,
+  getPeakWindowStart,
+  getRiyadhHour,
+  isCountedPeakSale,
+} from "./peak-hours";
 
 // WebSocket clients with session context for multi-tenant filtering
 interface WSClient {
@@ -4708,6 +4714,11 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const data = bodySchema.parse(req.body);
       // Add restaurantId from session for security
       const transaction = await storage.createTransaction({ ...data, restaurantId });
+      broadcastNotification({
+        type: "sales:updated",
+        restaurantId,
+        branchId: transaction.branchId ?? undefined,
+      });
       res.status(201).json(transaction);
     } catch (error) {
       console.error("[Transactions] Creation error:", error);
@@ -4875,32 +4886,7 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     // Treat both "Low Stock" and "Out of Stock" as needing attention.
     const lowStockItems = inventory.filter(i => i.status === "Low Stock" || i.status === "Out of Stock").length;
 
-    // Calculate peak hours analysis over the last 30 days only, so the pattern
-    // reflects current operations rather than all-time historical noise.
-    const salesByHour: Record<number, number> = {};
-    for (let i = 0; i < 24; i++) {
-      salesByHour[i] = 0;
-    }
-    const peakWindowStart = new Date(today);
-    peakWindowStart.setDate(peakWindowStart.getDate() - 30);
-
-    transactions.forEach(t => {
-      const date = new Date(t.createdAt);
-      if (date < peakWindowStart) return;
-      const hour = date.getHours();
-      salesByHour[hour] += parseFloat(t.total);
-    });
-
-    const peakHoursData = Object.entries(salesByHour).map(([hour, sales]) => ({
-      hour: parseInt(hour),
-      sales: parseFloat(sales.toFixed(2)),
-    })).sort((a, b) => a.hour - b.hour);
-
-    // Find peak hour (hour with highest sales)
-    const peakHour = peakHoursData.reduce((max, current) => 
-      current.sales > max.sales ? current : max, 
-      peakHoursData[0]
-    );
+    const peakHours = calculatePeakHours(transactions, orders, now);
 
     // Sort orders by creation date (newest first) for recent orders display
     const sortedOrders = [...orders].sort((a, b) => 
@@ -4964,9 +4950,10 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
         },
       },
       peakHours: {
-        hourlyData: peakHoursData,
-        peakHour: peakHour.hour,
-        peakSales: peakHour.sales,
+        hourlyData: peakHours.hourlyData,
+        peakHour: peakHours.peakHour,
+        peakSales: peakHours.peakSales,
+        timezone: peakHours.timezone,
       },
       delivery: {
         yearRevenue: deliveryTotalRevenue,
@@ -4986,22 +4973,20 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
 
     const restaurantId = req.session.user!.restaurantId!;
     const branchId = req.query.branchId as string | undefined;
-    const transactions = await storage.getTransactions({ restaurantId, branchId });
+    const peakWindowStart = getPeakWindowStart();
+    const transactions = await storage.getTransactions({
+      restaurantId,
+      branchId,
+      dateRange: { start: peakWindowStart },
+    });
     const orders = await storage.getOrders({ restaurantId, branchId });
-
-    // Match dashboard chart scope: last 30 days only, so the drilldown rows
-    // correspond to the same window used to compute the peak-hour bar.
-    const _peakNow = new Date();
-    const _peakToday = new Date(_peakNow.getFullYear(), _peakNow.getMonth(), _peakNow.getDate());
-    const _peakWindowStart = new Date(_peakToday);
-    _peakWindowStart.setDate(_peakWindowStart.getDate() - 30);
+    const orderMap = new Map(orders.map(o => [o.id, o]));
 
     const transactionsInHour = transactions.filter(t => {
-      const date = new Date(t.createdAt);
-      return date >= _peakWindowStart && date.getHours() === hour;
+      const order = t.orderId ? orderMap.get(t.orderId) : undefined;
+      return isCountedPeakSale(t, order, peakWindowStart)
+        && getRiyadhHour(t.createdAt) === hour;
     });
-
-    const orderMap = new Map(orders.map(o => [o.id, o]));
 
     const results = transactionsInHour.map(transaction => {
       const order = transaction.orderId ? orderMap.get(transaction.orderId) : null;

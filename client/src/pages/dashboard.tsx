@@ -58,6 +58,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { useDeviceLayout, useCompactChartConfig } from "@/lib/mobileLayout";
 import { useAuth } from "@/lib/auth";
+import { useBranch } from "@/contexts/BranchContext";
 import { useState, useEffect } from "react";
 import { queryClient } from "@/lib/queryClient";
 import { Link } from "wouter";
@@ -194,6 +195,7 @@ const PerformanceCard = ({
 const PeakHoursCard = ({
   peakHours,
   titleOverride,
+  branchId,
 }: {
   peakHours: {
     hourlyData: PeakHoursData[];
@@ -201,6 +203,7 @@ const PeakHoursCard = ({
     peakSales: number;
   };
   titleOverride?: string;
+  branchId?: string;
 }) => {
   const { t, isRTL } = useLanguage();
   const [selectedHour, setSelectedHour] = useState<number | null>(null);
@@ -211,8 +214,18 @@ const PeakHoursCard = ({
     isLoading: ordersLoading,
     isError,
   } = useQuery<HourlyCustomerOrder[]>({
-    queryKey: [`/api/analytics/peak-hours/${selectedHour}`],
+    queryKey: ["/api/analytics/peak-hours", selectedHour, branchId],
+    queryFn: async () => {
+      const params = branchId ? `?branchId=${encodeURIComponent(branchId)}` : "";
+      const response = await fetch(`/api/analytics/peak-hours/${selectedHour}${params}`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to load peak-hour orders");
+      return response.json();
+    },
     enabled: selectedHour !== null,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   const formatHour = (hour: number) => {
@@ -258,7 +271,7 @@ const PeakHoursCard = ({
             <div className="text-right">
               <p className="text-sm text-muted-foreground">{t.peakHour}</p>
               <p className="text-2xl font-bold">
-                {formatHour(peakHours.peakHour)}
+                {peakHours.peakHour >= 0 ? formatHour(peakHours.peakHour) : "—"}
               </p>
               <p className="text-sm font-mono text-muted-foreground">
                 {peakHours.peakSales.toFixed(2)} SAR
@@ -409,6 +422,8 @@ export default function Dashboard() {
   const chartConfig = useCompactChartConfig();
   const { lastNotification, isConnected } = useNotifications();
   const { restaurant } = useAuth();
+  const { currentBranch } = useBranch();
+  const branchId = currentBranch?.id;
   const businessType = restaurant?.businessType || 'restaurant';
   const isRestaurant = businessType === 'restaurant';
   const isFactory = businessType === 'factory';
@@ -495,8 +510,17 @@ export default function Dashboard() {
 
   const { data: dashboardData, isLoading: dashboardLoading } =
     useQuery<DashboardData>({
-      queryKey: ["/api/analytics/dashboard"],
+      queryKey: ["/api/analytics/dashboard", branchId],
+      queryFn: async () => {
+        const params = branchId ? `?branchId=${encodeURIComponent(branchId)}` : "";
+        const response = await fetch(`/api/analytics/dashboard${params}`, {
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error("Failed to load dashboard analytics");
+        return response.json();
+      },
       refetchInterval: 30000, // Auto-refresh every 30 seconds for real-time updates
+      refetchOnWindowFocus: true,
       staleTime: 0, // Ensure instant updates
     });
 
@@ -918,7 +942,11 @@ export default function Dashboard() {
 
       {/* Peak Hours Analysis Section */}
       {showPeakHours && dashboardData?.peakHours && (
-        <PeakHoursCard peakHours={dashboardData.peakHours} titleOverride={peakHoursTitleOverride} />
+          <PeakHoursCard
+            peakHours={dashboardData.peakHours}
+            titleOverride={peakHoursTitleOverride}
+            branchId={branchId}
+          />
       )}
 
       {/* Expense Trends Section */}

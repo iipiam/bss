@@ -375,7 +375,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             // Use predicate to invalidate ALL queries containing these base paths (handles arrays and object keys)
             const targetKeys = ['/api/invoices', '/api/analytics/financial', '/api/analytics/bep', 
                                '/api/analytics/delivery-breakdown', '/api/analytics/dashboard', 
-                               '/api/analytics/sales', '/api/shop/bills'];
+                                '/api/analytics/sales', '/api/analytics/peak-hours', '/api/shop/bills'];
             queryClient.invalidateQueries({ 
               predicate: (query) => {
                 // Check all segments of the query key array
