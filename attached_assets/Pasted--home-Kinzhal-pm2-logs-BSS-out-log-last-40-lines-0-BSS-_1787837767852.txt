@@ -1,0 +1,150 @@
+
+/home/Kinzhal/.pm2/logs/BSS-out.log last 40 lines:
+0|BSS      | [Migration] ZATCA compliance controls verified: finality triggers + unique constraints present
+0|BSS      | [Migration] Table verified/created: pending_signups
+0|BSS      | [Migration] Invoices columns verified/added: document_type, referenced_invoice_id, adjustment_reason
+0|BSS      | [Migration] service_projects columns verified/added: actual_cost, contractor_id, client_cr_number, client_vat_number, client_address, client_legal_representative
+0|BSS      | [Migration] Table verified/created: contracts
+0|BSS      | [Migration] Table verified/created: valuations
+0|BSS      | [Migration] Table verified/created: meal_subscriptions
+0|BSS      | [Migration] Meal subscriptions columns verified/added: delivery_log, delivery_hours, credit_balance, number_of_days, discount_type, discount_value
+0|BSS      | [Migration] Table verified/created: service_catalog
+0|BSS      | [Migration] Table verified/created: contractors
+0|BSS      | [Migration] Tables verified/created: catering_contracts, catering_contract_templates
+0|BSS      | [Migration] Table verified/created: investment_agreement_templates
+0|BSS      | [Migration] service_projects decision-center columns verified/added: approval_status, lifecycle_status, approved_at, approved_by, decline_reason, customer_id (+FK)
+0|BSS      | [Migration] Table verified/created: customer_documents (+FKs)
+0|BSS      | [Migration] BizFlow Manager tables verified/created: service_projects, quotations, payment_schedules, project_services, project_bills, project_procurements, project_tasks, quotation_decisions, company_settings, customer_documents
+0|BSS      | [Migration] product_items column verified/added: selling_price
+0|BSS      | [Migration] project_items column verified/added: selling_price
+0|BSS      | [Migration] Tables verified/created: assignment_history, contractor_settlements
+0|BSS      | [Migration] phase column verified/added: project_items, project_services, project_tasks, product_items, product_service_links, product_tasks
+0|BSS      | [Migration] Tables verified/created: project_client_requirements, project_meetings
+0|BSS      | [Migration] Tables verified/created: project_equipment
+0|BSS      | [Migration] Tables verified/created: product_client_requirements, product_meetings
+0|BSS      | [Migration] Table verified/created: influencer_profiles
+0|BSS      | [Migration] Table verified/created: blogger_profiles (with discount_type, discount_value)
+0|BSS      | [Migration] Table verified/created: company_profiles (with font_family, header_style)
+0|BSS      | [Migration] Table verified/created: marketing_discount_codes
+0|BSS      | [Migration] Table verified/created: marketing_broadcast_templates
+0|BSS      | [Migration] Table verified/created: marketing_qr_scans
+0|BSS      | [Migration] Table verified/created: properties
+0|BSS      | [Migration] Table verified/created: property_units
+0|BSS      | [Migration] Table verified/created: property_tenants
+0|BSS      | [Migration] Table verified/created: rental_contracts
+0|BSS      | [Migration] Table verified/created: rental_invoices
+0|BSS      | [Migration] Table verified/created: rental_payments
+0|BSS      | [Migration] Table verified/created: property_expenses
+0|BSS      | [Migration] Table verified/created: maintenance_requests
+0|BSS      | [Migration] Table verified/created: chart_of_accounts
+0|BSS      | [Migration] Table verified/created: journal_entries
+0|BSS      | [Migration] Table verified/created: journal_lines
+0|BSS      | [Migration] Table verified/created: property_notifications
+
+
+xx Health check failed. nginx will still show 502 until this is fixed. Roll back with:
+    git reset --hard 7b49059fc8ea5006044545c0f9243b8d526e485b && ./deploy.sh
+Kinzhal@BSS-Server:/home/BSS$ pm2 status
+pm2 logs BSS --lines 40 --nostream
+curl -I https://kinbss.org/
+┌────┬────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name   │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 0  │ BSS    │ default     │ 1.0.0   │ fork    │ 30380    │ 56s    │ 4    │ online    │ 0%       │ 200.6mb  │ Kinzhal  │ disabled │
+└────┴────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+[TAILING] Tailing last 40 lines for [BSS] process (change the value with --lines option)
+/home/Kinzhal/.pm2/logs/BSS-error.log last 40 lines:
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/serve-static/index.js:121:7)
+0|BSS      |     at SendStream.emit (node:events:524:28)
+0|BSS      |     at SendStream.error (/home/BSS/node_modules/send/index.js:270:17)
+0|BSS      |     at SendStream.pipe (/home/BSS/node_modules/send/index.js:515:10)
+0|BSS      |     at serveStatic (/home/BSS/node_modules/serve-static/index.js:125:12)
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/invoices/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/invoices/index.html'
+0|BSS      | [Migration] delivery_integrations.multi_account_columns: relation "delivery_integrations" does not exist
+0|BSS      | [Migration] delivery_integrations.multi_account_fk: relation "delivery_integrations" does not exist
+0|BSS      | [Migration] delivery_integrations.multi_account_indexes: relation "delivery_integrations" does not exist
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+0|BSS      | Error: ENOENT: no such file or directory, stat '/home/BSS/dist/public/index.html'
+
+/home/Kinzhal/.pm2/logs/BSS-out.log last 40 lines:
+0|BSS      | [Migration] Table verified/created: maintenance_requests
+0|BSS      | [Migration] Table verified/created: chart_of_accounts
+0|BSS      | [Migration] Table verified/created: journal_entries
+0|BSS      | [Migration] Table verified/created: journal_lines
+0|BSS      | [Migration] Table verified/created: property_notifications
+0|BSS      | [SchemaSync] 1971 statements applied (0 skipped)
+0|BSS      | [realEstateCron] daily sweep scheduler started
+0|BSS      | [realEstate] routes registered + cron started
+0|BSS      | [suppliers] routes registered
+0|BSS      | 1:35:04 PM [express] serving on port 5000
+0|BSS      | [BepMetrics] Found 0 salaries for restaurant 5fc64595-9b6e-4d98-9fac-2733318fa1e6
+0|BSS      | [BepMetrics] Salary months: 0, Total: 0
+0|BSS      | [BepMetrics] Average monthly salary: 0
+0|BSS      | [Invoice] Found Chromium via which: /usr/bin/chromium
+0|BSS      | [Invoice] Launching browser with: /usr/bin/chromium
+0|BSS      | [Invoice] Browser launched successfully
+0|BSS      | 1:35:09 PM [express] GET /api/export/income-statement-pdf 200 in 3708ms
+0|BSS      | 1:35:27 PM [express] GET /api/shop/bills 304 in 111ms :: [{"id":"9db6ff2c-495b-43f4-9f34-8a02beade98…
+0|BSS      | 1:35:27 PM [express] GET /api/analytics/dashboard 200 in 151ms :: {"analyticsScope":{"restaurantId":…
+0|BSS      | 1:35:27 PM [express] GET /api/analytics/sales 200 in 128ms :: [{"date":"Sun","sales":40},{"date":"Mo…
+0|BSS      | 1:35:27 PM [express] GET /api/meal-subscriptions/today 200 in 103ms :: []
+0|BSS      | 1:35:27 PM [express] GET /api/catering-contracts/today 200 in 125ms :: []
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | [realEstateCron] sweep complete: overdue=0 expiry={"soon":0,"crit":0,"expiredCount":0,"renewedCount":0}
+0|BSS      | 1:35:38 PM [express] GET /api/shop/bills 304 in 70ms :: [{"id":"9db6ff2c-495b-43f4-9f34-8a02beade988…
+0|BSS      | 1:35:39 PM [express] GET /api/meal-subscriptions/today 200 in 54ms :: []
+0|BSS      | 1:35:39 PM [express] GET /api/analytics/sales 200 in 43ms :: [{"date":"Sun","sales":40},{"date":"Mon…
+0|BSS      | 1:35:39 PM [express] GET /api/analytics/dashboard 200 in 135ms :: {"analyticsScope":{"restaurantId":…
+0|BSS      | 1:35:39 PM [express] GET /api/catering-contracts/today 200 in 68ms :: []
+0|BSS      | [WebSocket] Client disconnected from notifications
+0|BSS      | 1:35:41 PM [express] GET /api/auth/me 200 in 11ms :: {"user":{"id":"1681a090-e64b-4187-86b0-5366c5e6…
+0|BSS      | [WebSocket] Client connected: user=1681a090-e64b-4187-86b0-5366c5e63d85, restaurant=5fc64595-9b6e-4d98-9fac-2733318fa1e6, conversations=0
+0|BSS      | 1:35:42 PM [express] GET /api/settings 200 in 8ms :: {"id":"0732d21c-1641-47a5-b8b4-1a8eec66aab9","r…
+0|BSS      | 1:35:42 PM [express] GET /api/chat/notification-settings 200 in 6ms :: {"notificationsEnabled":true,…
+0|BSS      | 1:35:42 PM [express] GET /api/branches 200 in 6ms :: [{"id":"c863466f-c4d9-4392-a9ba-6341ed619b76","…
+0|BSS      | 1:35:42 PM [express] GET /api/analytics/sales 200 in 33ms :: [{"date":"Sun","sales":40},{"date":"Mon…
+0|BSS      | 1:35:42 PM [express] GET /api/shop/bills 304 in 28ms :: [{"id":"9db6ff2c-495b-43f4-9f34-8a02beade988…
+0|BSS      | 1:35:42 PM [express] GET /api/analytics/dashboard 200 in 74ms :: {"analyticsScope":{"restaurantId":"…
+0|BSS      | 1:35:42 PM [express] GET /api/meal-subscriptions/today 200 in 64ms :: []
+0|BSS      | 1:35:42 PM [express] GET /api/catering-contracts/today 200 in 74ms :: []
+
+HTTP/1.1 200 OK
+Server: nginx/1.24.0 (Ubuntu)
+Date: Thu, 27 Aug 2026 13:35:53 GMT
+Content-Type: text/html; charset=UTF-8
+Content-Length: 1309
+Connection: keep-alive
+X-Powered-By: Express
+Accept-Ranges: bytes
+Cache-Control: public, max-age=0
+Last-Modified: Thu, 27 Aug 2026 13:34:54 GMT
+ETag: W/"51d-1a0436e408a"
