@@ -475,6 +475,47 @@ export const startupMigrationReady: Promise<void> = (async () => {
       "orders.delivery_breakdown",
       `ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_breakdown jsonb`,
     ],
+    [
+      "delivery_integrations.multi_account_columns",
+      `ALTER TABLE delivery_integrations ADD COLUMN IF NOT EXISTS account_name text;
+       ALTER TABLE delivery_integrations ADD COLUMN IF NOT EXISTS external_account_id text;
+       UPDATE delivery_integrations SET account_name=provider || ' (default)' WHERE account_name IS NULL OR btrim(account_name)='';
+       UPDATE delivery_integrations SET external_account_id=provider || ':legacy:' || id WHERE external_account_id IS NULL OR btrim(external_account_id)='';
+       ALTER TABLE delivery_integrations ALTER COLUMN account_name SET NOT NULL;
+       ALTER TABLE delivery_integrations ALTER COLUMN external_account_id SET NOT NULL;
+       ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_integration_id varchar`,
+    ],
+    [
+      "delivery_integrations.multi_account_fk",
+      `DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_constraint c JOIN pg_attribute a
+         ON a.attrelid=c.conrelid AND a.attnum=ANY(c.conkey)
+         WHERE c.contype='f' AND c.conrelid='orders'::regclass
+           AND c.confrelid='delivery_integrations'::regclass AND a.attname='delivery_integration_id') THEN
+         ALTER TABLE orders ADD CONSTRAINT orders_delivery_integration_fk FOREIGN KEY (delivery_integration_id)
+           REFERENCES delivery_integrations(id) ON DELETE RESTRICT;
+       END IF; END $$`,
+    ],
+    [
+      "delivery_integrations.multi_account_indexes",
+      `UPDATE orders o SET delivery_integration_id=i.id FROM (
+           SELECT restaurant_id, provider, min(id) AS id FROM delivery_integrations
+           GROUP BY restaurant_id, provider HAVING count(*)=1
+         ) i
+         WHERE o.delivery_integration_id IS NULL AND o.restaurant_id=i.restaurant_id
+           AND o.source_platform=i.provider AND o.external_order_id IS NOT NULL;
+       DROP INDEX IF EXISTS delivery_integrations_tenant_provider_unique;
+       DROP INDEX IF EXISTS orders_delivery_external_unique;
+       CREATE UNIQUE INDEX IF NOT EXISTS delivery_integrations_tenant_provider_account_unique
+         ON delivery_integrations(restaurant_id, provider, external_account_id);
+       CREATE UNIQUE INDEX IF NOT EXISTS orders_delivery_external_unique
+         ON orders(restaurant_id, delivery_integration_id, external_order_id)
+         WHERE delivery_integration_id IS NOT NULL AND external_order_id IS NOT NULL;
+       CREATE UNIQUE INDEX IF NOT EXISTS orders_delivery_legacy_external_unique
+         ON orders(restaurant_id, source_platform, external_order_id)
+         WHERE delivery_integration_id IS NULL AND source_platform IS NOT NULL AND external_order_id IS NOT NULL;
+       CREATE INDEX IF NOT EXISTS orders_delivery_integration_idx
+         ON orders(restaurant_id, delivery_integration_id, created_at)`,
+    ],
   ];
 
   // ZATCA compliance-critical migrations: a failure here must NOT be silently

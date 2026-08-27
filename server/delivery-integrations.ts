@@ -7,7 +7,7 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "./db";
 import {
-  deliveryIntegrationEvents, deliveryIntegrationFees, deliveryIntegrations,
+  deliveryApps, deliveryIntegrationEvents, deliveryIntegrationFees, deliveryIntegrations,
   deliveryStatusSyncs, deliveryIntegrationAlerts, invoices, orders,
 } from "@shared/schema";
 import { processInvoiceZatcaIdempotently } from "./zatca/orchestration";
@@ -16,7 +16,28 @@ export const DELIVERY_PROVIDERS = {
   hungerstation: { name: "HungerStation", credentialFields: ["apiKey", "apiSecret", "webhookSecret", "merchantId"] },
   jahez: { name: "Jahez", credentialFields: ["apiKey", "apiSecret", "webhookSecret", "merchantId"] },
 } as const;
-export type DeliveryProvider = keyof typeof DELIVERY_PROVIDERS;
+type DeliveryProviderMetadata = { name: string; credentialFields: readonly string[] };
+
+export function normalizeDeliveryProviderKey(name: string) {
+  return name.normalize("NFKC").trim().toLocaleLowerCase("en")
+    .replace(/[^\p{L}\p{N}]+/gu, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+async function deliveryProviderCatalog(restaurantId: string): Promise<Record<string, DeliveryProviderMetadata>> {
+  const catalog: Record<string, DeliveryProviderMetadata> = { ...DELIVERY_PROVIDERS };
+  const apps = await db.select({ name: deliveryApps.name }).from(deliveryApps)
+    .where(eq(deliveryApps.restaurantId, restaurantId));
+  for (const app of apps) {
+    const key = normalizeDeliveryProviderKey(app.name);
+    if (!key) continue;
+    catalog[key] ??= {
+      name: app.name.trim(),
+      credentialFields: ["apiKey", "apiSecret", "webhookSecret", "merchantId"],
+    };
+  }
+  return catalog;
+}
 
 const mappingSchema = z.object({
   eventId: z.string().default("eventId"), eventType: z.string().default("eventType"),
@@ -47,9 +68,33 @@ const credentialsSchema = z.object({
   apiKey: z.string().min(1).optional(), apiSecret: z.string().min(1).optional(),
   webhookSecret: z.string().min(16), merchantId: z.string().min(1).optional(),
 }).strict();
+const createSchema = z.object({
+  provider: z.string().trim().min(1).max(120),
+  accountName: z.string().trim().min(1).max(120).optional(),
+  displayName: z.string().trim().min(1).max(120).optional(),
+  externalAccountId: z.string().trim().min(1).max(255).optional(),
+  storeId: z.string().trim().min(1).max(255).optional(),
+  enabled: z.boolean(), credentials: credentialsSchema, config: configSchema,
+}).strict().refine(value => !!(value.accountName || value.displayName), {
+  message: "accountName (or displayName) is required",
+}).refine(value => !value.accountName || !value.displayName || value.accountName === value.displayName, {
+  message: "accountName and displayName must match when both are supplied",
+}).refine(value => !!(value.externalAccountId || value.storeId), {
+  message: "externalAccountId (or storeId) is required",
+}).refine(value => !value.externalAccountId || !value.storeId || value.externalAccountId === value.storeId, {
+  message: "externalAccountId and storeId must match when both are supplied",
+});
 const updateSchema = z.object({
-  enabled: z.boolean(), credentials: credentialsSchema.optional(), config: configSchema,
-}).strict();
+  accountName: z.string().trim().min(1).max(120).optional(),
+  displayName: z.string().trim().min(1).max(120).optional(),
+  externalAccountId: z.string().trim().min(1).max(255).optional(),
+  storeId: z.string().trim().min(1).max(255).optional(),
+  enabled: z.boolean().optional(), credentials: credentialsSchema.optional(), config: configSchema.optional(),
+}).strict().refine(value => !value.accountName || !value.displayName || value.accountName === value.displayName, {
+  message: "accountName and displayName must match when both are supplied",
+}).refine(value => !value.externalAccountId || !value.storeId || value.externalAccountId === value.storeId, {
+  message: "externalAccountId and storeId must match when both are supplied",
+});
 
 function privateIp(ip: string) {
   if (net.isIPv4(ip)) {
@@ -132,6 +177,25 @@ export function newInternalDeliveryNumber(prefix: "DLV" | "INV" = "DLV") {
 
 let workerTimer: NodeJS.Timeout | undefined;
 let workerRunning = false;
+async function backfillDecryptedExternalAccountIds() {
+  const legacy = await db.select().from(deliveryIntegrations).where(
+    sql`${deliveryIntegrations.externalAccountId} = ${deliveryIntegrations.provider} || ':legacy:' || ${deliveryIntegrations.id}`,
+  );
+  for (const integration of legacy) {
+    try {
+      const merchantId = decryptDeliveryCredentials(integration.credentialsEncrypted).merchantId?.trim();
+      if (!merchantId) continue;
+      await db.update(deliveryIntegrations).set({ externalAccountId: merchantId, updatedAt: new Date() }).where(and(
+        eq(deliveryIntegrations.id, integration.id),
+        eq(deliveryIntegrations.restaurantId, integration.restaurantId),
+        eq(deliveryIntegrations.externalAccountId, integration.externalAccountId),
+      ));
+    } catch {
+      // Keep the deterministic migration fallback when old credentials cannot
+      // be decrypted; never log or return credential material.
+    }
+  }
+}
 async function upsertAlert(integration: any, kind: string, message: string, active: boolean) {
   if (active) {
     await db.insert(deliveryIntegrationAlerts).values({ restaurantId: integration.restaurantId, integrationId: integration.id, kind, message })
@@ -165,10 +229,13 @@ async function deliveryWorkerSweep() {
         (s.state='processing' AND s.processing_started_at < now() - interval '5 minutes')
       ORDER BY s.created_at FOR UPDATE SKIP LOCKED LIMIT 25
     ) UPDATE delivery_status_syncs s SET state='processing', processing_started_at=now() FROM due WHERE s.id=due.id
-      RETURNING s.*, (SELECT row_to_json(i) FROM delivery_integrations i WHERE i.id=s.integration_id) AS integration,
-      (SELECT external_order_id FROM orders o WHERE o.id=s.order_id) AS "externalOrderId"`);
+       RETURNING s.*, (SELECT row_to_json(i) FROM delivery_integrations i
+         WHERE i.id=s.integration_id AND i.restaurant_id=s.restaurant_id) AS integration,
+       (SELECT external_order_id FROM orders o WHERE o.id=s.order_id
+         AND o.restaurant_id=s.restaurant_id AND o.delivery_integration_id=s.integration_id) AS "externalOrderId"`);
     for (const sync of (claims as any).rows || []) {
       try {
+        if (!sync.integration || !sync.externalOrderId) throw new Error("Delivery sync tenant/integration ownership mismatch");
         const config: any = sync.integration.config; const creds = decryptDeliveryCredentials(sync.integration.credentials_encrypted);
         if (!config.apiBaseUrl || !config.statusPathTemplate) throw new Error("Outbound status endpoint is not configured");
         const response = await providerRequest(config.apiBaseUrl, config.statusPathTemplate.replace("{orderId}", encodeURIComponent(sync.externalOrderId)), {
@@ -179,6 +246,7 @@ async function deliveryWorkerSweep() {
         await db.update(orders).set({ status: inboundStatuses[sync.status] }).where(and(
           eq(orders.id, sync.order_id),
           eq(orders.restaurantId, sync.restaurant_id),
+           eq(orders.deliveryIntegrationId, sync.integration_id),
         ));
       } catch (error: any) {
         const attempts = Number(sync.attempts) + 1;
@@ -192,7 +260,10 @@ async function deliveryWorkerSweep() {
       ORDER BY received_at FOR UPDATE SKIP LOCKED LIMIT 25
     ) UPDATE delivery_integration_events e SET status='processing', processing_started_at=now() FROM due WHERE e.id=due.id RETURNING e.*`);
     for (const event of (dueInbound as any).rows || []) {
-      const [integration] = await db.select().from(deliveryIntegrations).where(eq(deliveryIntegrations.id, event.integration_id)).limit(1);
+       const [integration] = await db.select().from(deliveryIntegrations).where(and(
+         eq(deliveryIntegrations.id, event.integration_id),
+         eq(deliveryIntegrations.restaurantId, event.restaurant_id),
+       )).limit(1);
       if (!integration) continue;
       try {
         const config: any = integration.config;
@@ -204,7 +275,7 @@ async function deliveryWorkerSweep() {
           if (!inboundStatus) throw new Error("Unsupported inbound delivery status");
           const [updated] = await db.update(orders).set({ status: inboundStatus }).where(and(
             eq(orders.restaurantId, integration.restaurantId),
-            eq(orders.sourcePlatform, integration.provider),
+             eq(orders.deliveryIntegrationId, integration.id),
             eq(orders.externalOrderId, envelope.externalOrderId),
           )).returning();
           if (!updated) throw new Error("Status event references an unknown delivery order");
@@ -216,9 +287,9 @@ async function deliveryWorkerSweep() {
         const n = normalizeMappedPayload(event.raw_payload, config.mapping);
         const result = await db.transaction(async tx => {
           await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`delivery:${integration.id}:${n.externalOrderId}`}, 0))`);
-          const [existing] = await tx.select().from(orders).where(and(eq(orders.restaurantId, integration.restaurantId), eq(orders.sourcePlatform, integration.provider), eq(orders.externalOrderId, n.externalOrderId))).limit(1);
+           const [existing] = await tx.select().from(orders).where(and(eq(orders.restaurantId, integration.restaurantId), eq(orders.deliveryIntegrationId, integration.id), eq(orders.externalOrderId, n.externalOrderId))).limit(1);
           if (existing) return { order: existing, invoice: null };
-          const [order] = await tx.insert(orders).values({ restaurantId: integration.restaurantId, orderNumber: newInternalDeliveryNumber(), orderType: "Delivery", customerName: n.customerName, customerPhone: n.customerPhone, address: n.address, sourcePlatform: integration.provider, externalOrderId: n.externalOrderId, items: n.items, subtotal: n.subtotal.toFixed(2), tax: n.vat.toFixed(2), total: n.total.toFixed(2), paymentMethod: "Online", paymentStatus: "Paid", status: inboundStatuses[String(n.status || "pending").toLowerCase()] || "Pending" }).returning();
+           const [order] = await tx.insert(orders).values({ restaurantId: integration.restaurantId, orderNumber: newInternalDeliveryNumber(), orderType: "Delivery", customerName: n.customerName, customerPhone: n.customerPhone, address: n.address, sourcePlatform: integration.provider, deliveryIntegrationId: integration.id, externalOrderId: n.externalOrderId, items: n.items, subtotal: n.subtotal.toFixed(2), tax: n.vat.toFixed(2), total: n.total.toFixed(2), paymentMethod: "Online", paymentStatus: "Paid", status: inboundStatuses[String(n.status || "pending").toLowerCase()] || "Pending" }).returning();
           const [invoice] = await tx.insert(invoices).values({ restaurantId: integration.restaurantId, invoiceNumber: newInternalDeliveryNumber("INV"), invoiceType: "simplified", orderId: order.id, sourcePlatform: integration.provider, customerName: n.customerName, items: n.items.map(i => ({ name: i.name, quantity: i.quantity, basePrice: i.lineFinalSubtotal, vatAmount: n.subtotal ? n.vat * i.lineFinalSubtotal / n.subtotal : 0, total: i.lineFinalSubtotal + (n.subtotal ? n.vat * i.lineFinalSubtotal / n.subtotal : 0) })), subtotal: n.subtotal.toFixed(2), vatAmount: n.vat.toFixed(2), total: n.total.toFixed(2) }).returning();
           if (Math.abs(n.total - n.fee - n.commission - n.net) > .02) throw new Error("Gross value does not reconcile to fee + commission + net");
           await tx.insert(deliveryIntegrationFees).values({ restaurantId: integration.restaurantId, integrationId: integration.id, orderId: order.id, provider: integration.provider, gross: n.total.toFixed(2), fee: n.fee.toFixed(2), commission: n.commission.toFixed(2), net: n.net.toFixed(2), sourceEventId: event.id });
@@ -236,7 +307,9 @@ async function deliveryWorkerSweep() {
 }
 export function startDeliveryIntegrationWorker() {
   if (workerTimer) return;
-  void deliveryWorkerSweep().catch(error => console.error("[Delivery] worker sweep failed:", error));
+  void backfillDecryptedExternalAccountIds()
+    .then(() => deliveryWorkerSweep())
+    .catch(error => console.error("[Delivery] worker sweep failed:", error));
   workerTimer = setInterval(() => void deliveryWorkerSweep().catch(error => console.error("[Delivery] worker sweep failed:", error)), 60_000);
   workerTimer.unref();
 }
@@ -253,10 +326,10 @@ export async function queueDeliveryOrderStatusSync(restaurantId: string, orderId
     eq(orders.id, orderId),
     eq(orders.restaurantId, restaurantId),
   )).limit(1);
-  if (!order?.sourcePlatform || !order.externalOrderId) return { queued: false, reason: "not_delivery_order" };
+  if (!order?.deliveryIntegrationId || !order.externalOrderId) return { queued: false, reason: "not_delivery_order" };
   const [integration] = await db.select().from(deliveryIntegrations).where(and(
+    eq(deliveryIntegrations.id, order.deliveryIntegrationId),
     eq(deliveryIntegrations.restaurantId, restaurantId),
-    eq(deliveryIntegrations.provider, order.sourcePlatform),
     eq(deliveryIntegrations.enabled, true),
   )).limit(1);
   const config: any = integration?.config;
@@ -295,7 +368,8 @@ function safeIntegration(row: any, baseUrl: string) {
   let credentials: Record<string, string> = {};
   try { credentials = decryptDeliveryCredentials(row.credentialsEncrypted); } catch { /* expose status, never secret */ }
   return {
-    id: row.id, provider: row.provider, enabled: row.enabled, connectionStatus: row.connectionStatus,
+    id: row.id, provider: row.provider, accountName: row.accountName, externalAccountId: row.externalAccountId,
+    enabled: row.enabled, connectionStatus: row.connectionStatus,
     connectionMessage: row.connectionMessage, config: row.config, lastReceivedAt: row.lastReceivedAt,
     lastSuccessAt: row.lastSuccessAt, lastErrorAt: row.lastErrorAt, lastError: row.lastError,
     credentials: Object.fromEntries(Object.entries(credentials).map(([k, v]) => [k, mask(v)])),
@@ -376,36 +450,83 @@ async function submitZatcaForDelivery(invoice: any, order: any) {
 
 export function registerDeliveryIntegrationRoutes(app: Express, requireAuth: RequestHandler, requireRestaurant: RequestHandler) {
   const admin: RequestHandler = (req: any, res, next) => req.session?.user?.role === "admin" ? next() : res.status(403).json({ error: "Admin access required" });
-  app.get("/api/delivery-integrations/providers", requireAuth, requireRestaurant, (_req, res) => res.json(DELIVERY_PROVIDERS));
+  app.get("/api/delivery-integrations/providers", requireAuth, requireRestaurant, async (req: any, res) => {
+    res.json(await deliveryProviderCatalog(req.session.user.restaurantId));
+  });
   app.get("/api/delivery-integrations", requireAuth, requireRestaurant, async (req: any, res) => {
+    await backfillDecryptedExternalAccountIds();
     const rows = await db.select().from(deliveryIntegrations).where(eq(deliveryIntegrations.restaurantId, req.session.user.restaurantId));
     const base = `${req.protocol}://${req.get("host")}`;
     res.json(rows.map(row => safeIntegration(row, base)));
   });
-  app.put("/api/delivery-integrations/:provider", requireAuth, requireRestaurant, admin, async (req: any, res) => {
+  app.post("/api/delivery-integrations", requireAuth, requireRestaurant, admin, async (req: any, res) => {
     try {
-      const provider = req.params.provider as DeliveryProvider;
-      if (!(provider in DELIVERY_PROVIDERS)) return res.status(404).json({ error: "Unsupported delivery provider" });
-      const input = updateSchema.parse(req.body);
+      const input = createSchema.parse(req.body);
+      const providers = await deliveryProviderCatalog(req.session.user.restaurantId);
+      if (!providers[input.provider]) {
+        return res.status(400).json({ error: "Select a delivery app configured in Delivery Apps" });
+      }
       if (input.config.apiBaseUrl) await assertSafeProviderBaseUrl(input.config.apiBaseUrl);
-      const [existing] = await db.select().from(deliveryIntegrations).where(and(eq(deliveryIntegrations.restaurantId, req.session.user.restaurantId), eq(deliveryIntegrations.provider, provider))).limit(1);
-      if (!existing && !input.credentials) return res.status(400).json({ error: "Credentials are required for first setup" });
-      const encrypted = input.credentials ? encryptDeliveryCredentials(input.credentials) : existing.credentialsEncrypted;
-      const token = existing?.webhookToken || crypto.randomBytes(24).toString("base64url");
       const [saved] = await db.insert(deliveryIntegrations).values({
-        restaurantId: req.session.user.restaurantId, provider, enabled: input.enabled,
-        credentialsEncrypted: encrypted, config: input.config, webhookToken: token,
+        restaurantId: req.session.user.restaurantId, provider: input.provider,
+        accountName: input.accountName || input.displayName!, externalAccountId: input.externalAccountId || input.storeId!,
+        enabled: input.enabled, credentialsEncrypted: encryptDeliveryCredentials(input.credentials),
+        config: input.config, webhookToken: crypto.randomBytes(24).toString("base64url"),
         connectionStatus: "untested", connectionMessage: "Connection has not been tested",
-      }).onConflictDoUpdate({ target: [deliveryIntegrations.restaurantId, deliveryIntegrations.provider], set: {
-        enabled: input.enabled, credentialsEncrypted: encrypted, config: input.config,
-        connectionStatus: "untested", connectionMessage: "Connection has not been tested",
-        updatedAt: new Date(),
-      }}).returning();
-      res.json(safeIntegration(saved, `${req.protocol}://${req.get("host")}`));
-    } catch (error: any) { res.status(400).json({ error: error.message || "Invalid integration configuration" }); }
+      }).returning();
+      res.status(201).json(safeIntegration(saved, `${req.protocol}://${req.get("host")}`));
+    } catch (error: any) {
+      res.status(error?.code === "23505" ? 409 : 400).json({ error: error?.code === "23505" ? "That provider account already exists" : error.message || "Invalid integration configuration" });
+    }
   });
-  app.post("/api/delivery-integrations/:provider/test", requireAuth, requireRestaurant, admin, async (req: any, res) => {
-    const [row] = await db.select().from(deliveryIntegrations).where(and(eq(deliveryIntegrations.restaurantId, req.session.user.restaurantId), eq(deliveryIntegrations.provider, req.params.provider))).limit(1);
+  const updateIntegration: RequestHandler = async (req: any, res) => {
+    try {
+      const input = updateSchema.parse(req.body);
+      const [existing] = await db.select().from(deliveryIntegrations).where(and(
+        eq(deliveryIntegrations.id, req.params.id),
+        eq(deliveryIntegrations.restaurantId, req.session.user.restaurantId),
+      )).limit(1);
+      if (!existing) return res.status(404).json({ error: "Integration not found" });
+      if (input.config?.apiBaseUrl) await assertSafeProviderBaseUrl(input.config.apiBaseUrl);
+      const externalAccountId = input.externalAccountId || input.storeId;
+      const [saved] = await db.update(deliveryIntegrations).set({
+        ...(input.accountName !== undefined || input.displayName !== undefined ? { accountName: input.accountName || input.displayName! } : {}),
+        ...(externalAccountId !== undefined ? { externalAccountId } : {}),
+        ...(input.enabled !== undefined ? { enabled: input.enabled } : {}),
+        ...(input.credentials ? { credentialsEncrypted: encryptDeliveryCredentials(input.credentials) } : {}),
+        ...(input.config ? { config: input.config } : {}),
+        connectionStatus: "untested", connectionMessage: "Connection has not been tested", updatedAt: new Date(),
+      }).where(and(eq(deliveryIntegrations.id, existing.id), eq(deliveryIntegrations.restaurantId, existing.restaurantId))).returning();
+      res.json(safeIntegration(saved, `${req.protocol}://${req.get("host")}`));
+    } catch (error: any) {
+      res.status(error?.code === "23505" ? 409 : 400).json({ error: error?.code === "23505" ? "That provider account already exists" : error.message || "Invalid integration configuration" });
+    }
+  };
+  app.patch("/api/delivery-integrations/:id", requireAuth, requireRestaurant, admin, updateIntegration);
+  app.put("/api/delivery-integrations/:id", requireAuth, requireRestaurant, admin, updateIntegration);
+  app.delete("/api/delivery-integrations/:id", requireAuth, requireRestaurant, admin, async (req: any, res) => {
+    const restaurantId = req.session.user.restaurantId;
+    const [row] = await db.select().from(deliveryIntegrations).where(and(
+      eq(deliveryIntegrations.id, req.params.id), eq(deliveryIntegrations.restaurantId, restaurantId),
+    )).limit(1);
+    if (!row) return res.status(404).json({ error: "Integration not found" });
+    const referenced = await db.execute(sql`SELECT EXISTS (
+      SELECT 1 FROM orders WHERE restaurant_id=${restaurantId} AND delivery_integration_id=${row.id}
+      UNION ALL SELECT 1 FROM delivery_integration_events WHERE restaurant_id=${restaurantId} AND integration_id=${row.id}
+      UNION ALL SELECT 1 FROM delivery_status_syncs WHERE restaurant_id=${restaurantId} AND integration_id=${row.id}
+      UNION ALL SELECT 1 FROM delivery_integration_fees WHERE restaurant_id=${restaurantId} AND integration_id=${row.id}
+    ) AS referenced`);
+    if ((referenced as any).rows?.[0]?.referenced) {
+      await db.update(deliveryIntegrations).set({ enabled: false, updatedAt: new Date() }).where(and(
+        eq(deliveryIntegrations.id, row.id), eq(deliveryIntegrations.restaurantId, restaurantId),
+      ));
+      return res.status(409).json({ error: "Integration is referenced by delivery records and was disabled instead", disabled: true });
+    }
+    await db.delete(deliveryIntegrations).where(and(eq(deliveryIntegrations.id, row.id), eq(deliveryIntegrations.restaurantId, restaurantId)));
+    res.status(204).send();
+  });
+  app.post("/api/delivery-integrations/:id/test", requireAuth, requireRestaurant, admin, async (req: any, res) => {
+    const [row] = await db.select().from(deliveryIntegrations).where(and(eq(deliveryIntegrations.restaurantId, req.session.user.restaurantId), eq(deliveryIntegrations.id, req.params.id))).limit(1);
     if (!row) return res.status(404).json({ error: "Integration not configured" });
     const config: any = row.config;
     if (!config.apiBaseUrl || !config.testPath) {
@@ -471,7 +592,7 @@ export function registerDeliveryIntegrationRoutes(app: Express, requireAuth: Req
         const inboundStatus = inboundStatuses[String(envelope.status).toLowerCase()];
         if (!inboundStatus) throw new Error("Unsupported inbound delivery status");
         const [updated] = await db.update(orders).set({ status: inboundStatus })
-          .where(and(eq(orders.restaurantId, integration.restaurantId), eq(orders.sourcePlatform, integration.provider), eq(orders.externalOrderId, envelope.externalOrderId))).returning();
+          .where(and(eq(orders.restaurantId, integration.restaurantId), eq(orders.deliveryIntegrationId, integration.id), eq(orders.externalOrderId, envelope.externalOrderId))).returning();
         if (!updated) throw new Error("Status event references an unknown delivery order");
         await db.update(deliveryIntegrationEvents).set({ status: "processed", processedAt: new Date(), orderId: updated.id, processingStartedAt: null }).where(eq(deliveryIntegrationEvents.id, event.id));
         await db.update(deliveryIntegrations).set({
@@ -482,7 +603,7 @@ export function registerDeliveryIntegrationRoutes(app: Express, requireAuth: Req
       const normalized = normalizeMappedPayload(req.body, config.mapping);
       const result = await db.transaction(async tx => {
         await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtextextended(${`delivery:${integration.id}:${normalized.externalOrderId}`}, 0))`);
-        const [duplicate] = await tx.select().from(orders).where(and(eq(orders.restaurantId, integration.restaurantId), eq(orders.sourcePlatform, integration.provider), eq(orders.externalOrderId, normalized.externalOrderId))).limit(1);
+        const [duplicate] = await tx.select().from(orders).where(and(eq(orders.restaurantId, integration.restaurantId), eq(orders.deliveryIntegrationId, integration.id), eq(orders.externalOrderId, normalized.externalOrderId))).limit(1);
         if (duplicate) return { order: duplicate, invoice: null, duplicate: true };
         // The provider ID stays in the tenant/provider idempotency key. The
         // internal number gets a random global suffix, avoiding cross-tenant
@@ -491,7 +612,8 @@ export function registerDeliveryIntegrationRoutes(app: Express, requireAuth: Req
         const [order] = await tx.insert(orders).values({
           restaurantId: integration.restaurantId, orderNumber, orderType: "Delivery", customerName: normalized.customerName,
           customerPhone: normalized.customerPhone, address: normalized.address, sourcePlatform: integration.provider,
-          externalOrderId: normalized.externalOrderId, items: normalized.items, subtotal: normalized.subtotal.toFixed(2),
+          deliveryIntegrationId: integration.id, externalOrderId: normalized.externalOrderId,
+          items: normalized.items, subtotal: normalized.subtotal.toFixed(2),
           tax: normalized.vat.toFixed(2), total: normalized.total.toFixed(2), paymentMethod: "Online", paymentStatus: "Paid",
           status: inboundStatuses[String(normalized.status || "pending").toLowerCase()] || "Pending",
         }).returning();
@@ -526,49 +648,76 @@ export function registerDeliveryIntegrationRoutes(app: Express, requireAuth: Req
   app.get("/api/delivery-integrations/events", requireAuth, requireRestaurant, async (req: any, res) => {
     const conditions: any[] = [eq(deliveryIntegrationEvents.restaurantId, req.session.user.restaurantId)];
     if (req.query.provider) conditions.push(eq(deliveryIntegrationEvents.provider, String(req.query.provider)));
+    if (req.query.integrationId) conditions.push(eq(deliveryIntegrationEvents.integrationId, String(req.query.integrationId)));
     if (req.query.status) conditions.push(eq(deliveryIntegrationEvents.status, String(req.query.status)));
     // Raw signed bodies and signatures are retained for audit/retry but never
     // returned by the settings/log API (they can contain customer PII).
     res.json(await db.select({
       id: deliveryIntegrationEvents.id, provider: deliveryIntegrationEvents.provider,
+      integrationId: deliveryIntegrationEvents.integrationId, accountName: deliveryIntegrations.accountName,
       providerEventId: deliveryIntegrationEvents.providerEventId, status: deliveryIntegrationEvents.status,
       attempts: deliveryIntegrationEvents.attempts, error: deliveryIntegrationEvents.error,
       orderId: deliveryIntegrationEvents.orderId, receivedAt: deliveryIntegrationEvents.receivedAt,
       processedAt: deliveryIntegrationEvents.processedAt, nextRetryAt: deliveryIntegrationEvents.nextRetryAt,
-    }).from(deliveryIntegrationEvents).where(and(...conditions)).orderBy(desc(deliveryIntegrationEvents.receivedAt)).limit(200));
+    }).from(deliveryIntegrationEvents).innerJoin(deliveryIntegrations, and(
+      eq(deliveryIntegrations.id, deliveryIntegrationEvents.integrationId),
+      eq(deliveryIntegrations.restaurantId, deliveryIntegrationEvents.restaurantId),
+    )).where(and(...conditions)).orderBy(desc(deliveryIntegrationEvents.receivedAt)).limit(200));
   });
   app.get("/api/delivery-integrations/health", requireAuth, requireRestaurant, async (req: any, res) => {
-    const rows = await db.select().from(deliveryIntegrations).where(and(eq(deliveryIntegrations.restaurantId, req.session.user.restaurantId), eq(deliveryIntegrations.enabled, true)));
+    const conditions = [eq(deliveryIntegrations.restaurantId, req.session.user.restaurantId), eq(deliveryIntegrations.enabled, true)];
+    if (req.query.integrationId) conditions.push(eq(deliveryIntegrations.id, String(req.query.integrationId)));
+    const rows = await db.select().from(deliveryIntegrations).where(and(...conditions));
     const now = Date.now();
     res.json(rows.map((row: any) => { const threshold = Number(row.config?.silentAfterMinutes || 120) * 60000;
       const silent = !row.lastReceivedAt || now - new Date(row.lastReceivedAt).getTime() > threshold;
-      return { provider: row.provider, healthy: !silent, alert: silent ? "No webhook received within configured health window" : null, lastReceivedAt: row.lastReceivedAt };
+      return { integrationId: row.id, accountName: row.accountName, provider: row.provider, healthy: !silent, alert: silent ? "No webhook received within configured health window" : null, lastReceivedAt: row.lastReceivedAt };
     }));
   });
   app.get("/api/delivery-integrations/alerts", requireAuth, requireRestaurant, async (req: any, res) => {
-    res.json(await db.select().from(deliveryIntegrationAlerts).where(and(
-      eq(deliveryIntegrationAlerts.restaurantId, req.session.user.restaurantId),
-      eq(deliveryIntegrationAlerts.active, true),
+    const conditions = [eq(deliveryIntegrationAlerts.restaurantId, req.session.user.restaurantId), eq(deliveryIntegrationAlerts.active, true)];
+    if (req.query.integrationId) conditions.push(eq(deliveryIntegrationAlerts.integrationId, String(req.query.integrationId)));
+    res.json(await db.select({
+      id: deliveryIntegrationAlerts.id, restaurantId: deliveryIntegrationAlerts.restaurantId,
+      integrationId: deliveryIntegrationAlerts.integrationId, accountName: deliveryIntegrations.accountName,
+      kind: deliveryIntegrationAlerts.kind, message: deliveryIntegrationAlerts.message,
+      active: deliveryIntegrationAlerts.active, firstDetectedAt: deliveryIntegrationAlerts.firstDetectedAt,
+      lastDetectedAt: deliveryIntegrationAlerts.lastDetectedAt, resolvedAt: deliveryIntegrationAlerts.resolvedAt,
+    }).from(deliveryIntegrationAlerts).innerJoin(deliveryIntegrations, and(
+      eq(deliveryIntegrations.id, deliveryIntegrationAlerts.integrationId),
+      eq(deliveryIntegrations.restaurantId, deliveryIntegrationAlerts.restaurantId),
+    )).where(and(
+      ...conditions,
     )).orderBy(desc(deliveryIntegrationAlerts.lastDetectedAt)));
   });
   app.get("/api/delivery-integrations/reconciliation", requireAuth, requireRestaurant, async (req: any, res) => {
     const start = req.query.start ? new Date(String(req.query.start)) : new Date(0);
     const end = req.query.end ? new Date(String(req.query.end)) : new Date();
     const provider = req.query.provider ? String(req.query.provider) : null;
-    const result = await db.execute(sql`SELECT provider, count(*)::int AS orders,
+    const integrationId = req.query.integrationId ? String(req.query.integrationId) : null;
+    const result = await db.execute(sql`SELECT f.integration_id AS "integrationId", i.account_name AS "accountName",
+      f.provider, count(*)::int AS orders,
       sum(gross)::numeric(14,2) AS gross, sum(fee)::numeric(14,2) AS fee,
       sum(commission)::numeric(14,2) AS commission, sum(net)::numeric(14,2) AS net
-      FROM delivery_integration_fees WHERE restaurant_id=${req.session.user.restaurantId}
-      AND captured_at >= ${start} AND captured_at <= ${end}
-      AND (${provider}::text IS NULL OR provider=${provider}) GROUP BY provider ORDER BY provider`);
+      FROM delivery_integration_fees f JOIN delivery_integrations i
+        ON i.id=f.integration_id AND i.restaurant_id=f.restaurant_id
+      WHERE f.restaurant_id=${req.session.user.restaurantId}
+      AND f.captured_at >= ${start} AND f.captured_at <= ${end}
+      AND (${provider}::text IS NULL OR f.provider=${provider})
+      AND (${integrationId}::text IS NULL OR f.integration_id=${integrationId})
+      GROUP BY f.integration_id, i.account_name, f.provider ORDER BY f.provider, i.account_name`);
     res.json((result as any).rows || []);
   });
   app.post("/api/orders/:id/delivery-status", requireAuth, requireRestaurant, admin, async (req: any, res) => {
     const status = outboundStatuses[String(req.body?.status)];
     if (!status) return res.status(400).json({ error: "Unsupported outbound delivery status" });
     const [order] = await db.select().from(orders).where(and(eq(orders.id, req.params.id), eq(orders.restaurantId, req.session.user.restaurantId))).limit(1);
-    if (!order?.sourcePlatform || !order.externalOrderId) return res.status(404).json({ error: "Delivery order not found" });
-    const [integration] = await db.select().from(deliveryIntegrations).where(and(eq(deliveryIntegrations.restaurantId, order.restaurantId), eq(deliveryIntegrations.provider, order.sourcePlatform))).limit(1);
+    if (!order?.deliveryIntegrationId || !order.externalOrderId) return res.status(404).json({ error: "Delivery order not found" });
+    const [integration] = await db.select().from(deliveryIntegrations).where(and(
+      eq(deliveryIntegrations.id, order.deliveryIntegrationId),
+      eq(deliveryIntegrations.restaurantId, order.restaurantId),
+      eq(deliveryIntegrations.enabled, true),
+    )).limit(1);
     const config: any = integration?.config;
     if (!integration || !config.apiBaseUrl || !config.statusPathTemplate) return res.status(422).json({ error: "Outbound status sync unavailable: provider endpoint is not configured" });
     const [sync] = await db.insert(deliveryStatusSyncs).values({ restaurantId: order.restaurantId, integrationId: integration.id, orderId: order.id, status, direction: "outbound", state: "pending" }).returning();
@@ -580,7 +729,10 @@ export function registerDeliveryIntegrationRoutes(app: Express, requireAuth: Req
       });
       if (!response.ok) throw new Error(`Provider returned HTTP ${response.status}`);
        await db.update(deliveryStatusSyncs).set({ state: "sent", sentAt: new Date(), processingStartedAt: null }).where(eq(deliveryStatusSyncs.id, sync.id));
-      await db.update(orders).set({ status: inboundStatuses[status] }).where(eq(orders.id, order.id));
+      await db.update(orders).set({ status: inboundStatuses[status] }).where(and(
+        eq(orders.id, order.id), eq(orders.restaurantId, order.restaurantId),
+        eq(orders.deliveryIntegrationId, integration.id),
+      ));
       res.json({ success: true, status });
     } catch (error: any) {
        await db.update(deliveryStatusSyncs).set({ state: "failed", error: error.message, attempts: 1, nextRetryAt: retryAt(1), processingStartedAt: null }).where(eq(deliveryStatusSyncs.id, sync.id));

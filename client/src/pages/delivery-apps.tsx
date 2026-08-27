@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { InfoTip } from "@/components/ui/info-tip";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Search, Edit, Trash2, GripVertical, Calculator, TrendingUp, FileText } from "lucide-react";
+import { Plus, Search, Edit, Trash2, GripVertical, Calculator, TrendingUp, FileText, Link2 } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -40,6 +40,7 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ConnectionsWorkspace } from "@/components/delivery/ConnectionsWorkspace";
 
 interface DeliveryApp {
   id: string;
@@ -286,6 +287,7 @@ export default function DeliveryApps() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/delivery-apps"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/delivery-integrations/providers"] });
       setOpen(false);
       form.reset();
       toast({
@@ -315,6 +317,7 @@ export default function DeliveryApps() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/delivery-apps"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/delivery-integrations/providers"] });
       setOpen(false);
       setEditingApp(null);
       form.reset();
@@ -338,6 +341,7 @@ export default function DeliveryApps() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/delivery-apps"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/delivery-integrations/providers"] });
       setDeletingApp(null);
       toast({
         title: "Delivery app deleted",
@@ -713,6 +717,10 @@ export default function DeliveryApps() {
             <FileText className="h-4 w-4 mr-2" />
             Profitability Entries
           </TabsTrigger>
+          <TabsTrigger value="connections" data-testid="tab-delivery-connections">
+            <Link2 className="h-4 w-4 mr-2" />
+            Connections
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="apps" className="space-y-4">
@@ -1056,6 +1064,9 @@ export default function DeliveryApps() {
           </SortableContext>
         </DndContext>
       )}
+        </TabsContent>
+        <TabsContent value="connections" className="space-y-4">
+          <ConnectionsWorkspace />
         </TabsContent>
 
         <TabsContent value="profitability" className="space-y-4">

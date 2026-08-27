@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
+import fs from "node:fs";
 
 process.env.SESSION_SECRET = "delivery-test-session-secret-that-is-not-production";
 const {
@@ -7,7 +8,10 @@ const {
   normalizeDeliveryEnvelope, verifyDeliverySignature,
   assertSafeProviderBaseUrl,
   newInternalDeliveryNumber,
+  normalizeDeliveryProviderKey,
 } = await import("../server/delivery-integrations");
+const { startupMigrationReady } = await import("../server/db");
+await startupMigrationReady;
 
 const secretData = { apiKey: "api-key-1234", webhookSecret: "a-long-webhook-secret" };
 const encrypted = encryptDeliveryCredentials(secretData);
@@ -22,6 +26,8 @@ assert.equal(verifyDeliverySignature(Buffer.from("{}"), secretData.webhookSecret
 const identifiers = new Set(Array.from({ length: 1000 }, () => newInternalDeliveryNumber()));
 assert.equal(identifiers.size, 1000, "internal delivery order numbers must be globally unique");
 assert.match(newInternalDeliveryNumber("INV"), /^INV-[0-9a-f-]{36}$/);
+assert.equal(normalizeDeliveryProviderKey("  The Chefz  "), "the-chefz");
+assert.equal(normalizeDeliveryProviderKey("كيتا"), "كيتا");
 await assert.rejects(() => assertSafeProviderBaseUrl("http://example.com"), /HTTPS public host/);
 await assert.rejects(() => assertSafeProviderBaseUrl("https://localhost"), /localhost or a private/);
 await assert.rejects(() => assertSafeProviderBaseUrl("https://127.0.0.1"), /localhost or a private/);
@@ -50,5 +56,35 @@ assert.deepEqual(normalizeDeliveryEnvelope({
 }, mapping), {
   eventType: "order.status", externalOrderId: "provider-order-9", status: "ready",
 }, "status-only webhooks must not require item or total fields");
+
+// Multi-account routing and migration contract checks intentionally inspect
+// source rather than contacting a provider or mutating a real tenant database.
+const implementation = fs.readFileSync(new URL("../server/delivery-integrations.ts", import.meta.url), "utf8");
+const schema = fs.readFileSync(new URL("../shared/schema.ts", import.meta.url), "utf8");
+const migration = fs.readFileSync(new URL("../migrations/0001_delivery_integrations.sql", import.meta.url), "utf8");
+const schemaSync = fs.readFileSync(new URL("../server/schema-sync.sql", import.meta.url), "utf8");
+
+const accountA = { tenant: "tenant-a", integrationId: "hs-store-a", externalOrderId: "same-order" };
+const accountB = { tenant: "tenant-a", integrationId: "hs-store-b", externalOrderId: "same-order" };
+assert.notEqual(`${accountA.tenant}:${accountA.integrationId}:${accountA.externalOrderId}`,
+  `${accountB.tenant}:${accountB.integrationId}:${accountB.externalOrderId}`,
+  "same-provider accounts must have distinct order idempotency keys");
+assert.match(implementation, /eq\(orders\.deliveryIntegrationId, integration\.id\)/,
+  "webhook ingestion and status lookup must route through the exact integration");
+assert.match(implementation, /eq\(deliveryIntegrations\.id, order\.deliveryIntegrationId\)/,
+  "outbound status sync must use the integration stored on the order");
+assert.match(implementation, /eq\(deliveryIntegrations\.restaurantId, (restaurantId|order\.restaurantId)\)/,
+  "integration lookup must retain tenant ownership checks");
+assert.match(implementation, /app\.post\("\/api\/delivery-integrations"/);
+assert.match(implementation, /app\.patch\("\/api\/delivery-integrations\/:id"/);
+assert.match(implementation, /app\.delete\("\/api\/delivery-integrations\/:id"/);
+assert.match(schema, /tenantProviderAccountUnique[\s\S]*t\.restaurantId, t\.provider, t\.externalAccountId/);
+for (const sql of [migration, schemaSync]) {
+  assert.match(sql, /DROP INDEX IF EXISTS "?delivery_integrations_tenant_provider_unique"?/);
+  assert.match(sql, /delivery_integrations_tenant_provider_account_unique/);
+  assert.match(sql, /orders_delivery_legacy_external_unique/);
+  assert.match(sql, /orders_delivery_external_unique[\s\S]*delivery_integration_id/);
+  assert.match(sql, /orders_delivery_integration_fk/);
+}
 
 console.log("Delivery integration focused checks passed");
