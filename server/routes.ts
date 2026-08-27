@@ -101,7 +101,7 @@ import {
   getRiyadhHour,
   isCountedPeakSale,
 } from "./peak-hours";
-import { calculateDashboardPerformance } from "./dashboard-performance";
+import { calculateDashboardPerformance, DASHBOARD_TIMEZONE } from "./dashboard-performance";
 
 // WebSocket clients with session context for multi-tenant filtering
 interface WSClient {
@@ -4847,6 +4847,12 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
     }
     
     res.json({
+      analyticsScope: {
+        restaurantId,
+        branchId: branchId || null,
+        generatedAt: now.toISOString(),
+        timezone: DASHBOARD_TIMEZONE,
+      },
       todaysSales: todaysSales.toFixed(2),
       activeOrders,
       lowStockItems,

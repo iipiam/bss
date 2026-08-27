@@ -94,6 +94,12 @@ interface HourlyCustomerOrder {
 }
 
 interface DashboardData {
+  analyticsScope: {
+    restaurantId: string;
+    branchId: string | null;
+    generatedAt: string;
+    timezone: string;
+  };
   todaysSales: string;
   activeOrders: number;
   lowStockItems: number;
@@ -514,7 +520,7 @@ export default function Dashboard() {
 
   const { data: dashboardData, isLoading: dashboardLoading } =
     useQuery<DashboardData>({
-      queryKey: ["/api/analytics/dashboard", branchId],
+      queryKey: ["/api/analytics/dashboard", restaurant?.id, branchId],
       queryFn: async () => {
         const params = branchId ? `?branchId=${encodeURIComponent(branchId)}` : "";
         const response = await fetch(`/api/analytics/dashboard${params}`, {
@@ -522,8 +528,19 @@ export default function Dashboard() {
           cache: "no-store",
         });
         if (!response.ok) throw new Error("Failed to load dashboard analytics");
-        return response.json();
+        const data = await response.json() as DashboardData;
+        const expectedRestaurantId = restaurant?.id;
+        const expectedBranchId = branchId || null;
+        if (
+          !expectedRestaurantId ||
+          data.analyticsScope?.restaurantId !== expectedRestaurantId ||
+          data.analyticsScope?.branchId !== expectedBranchId
+        ) {
+          throw new Error("Dashboard analytics scope mismatch");
+        }
+        return data;
       },
+      enabled: !!restaurant?.id,
       refetchInterval: 30000, // Auto-refresh every 30 seconds for real-time updates
       refetchOnWindowFocus: true,
       staleTime: 0, // Ensure instant updates
