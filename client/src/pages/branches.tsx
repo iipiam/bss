@@ -108,6 +108,26 @@ export default function Branches() {
     },
   });
 
+  const deleteBranchMutation = useMutation({
+    mutationFn: async (branch: Branch) => {
+      return await apiRequest("DELETE", `/api/branches/${branch.id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/branches"] });
+      toast({
+        title: "Branch deleted",
+        description: "The branch was deleted successfully.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to delete branch",
+        description: error.message || "Could not delete branch",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: BranchFormValues) => {
     if (editingBranch) {
       updateBranchMutation.mutate({ id: editingBranch.id, data });
@@ -140,6 +160,18 @@ export default function Branches() {
       status: "Active",
     });
     setOpen(true);
+  };
+
+  const handleDelete = (branch: Branch) => {
+    if (branch.name.trim().toLowerCase() === "main branch") {
+      return;
+    }
+    const confirmed = window.confirm(
+      `Delete "${branch.name}"? This action cannot be undone.`,
+    );
+    if (confirmed) {
+      deleteBranchMutation.mutate(branch);
+    }
   };
 
   if (isLoading) {
@@ -350,14 +382,27 @@ export default function Branches() {
                     </Badge>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => handleEdit(branch)}
-                  data-testid={`button-edit-branch-${branch.id}`}
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Branch
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => handleEdit(branch)}
+                    data-testid={`button-edit-branch-${branch.id}`}
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Branch
+                  </Button>
+                  {branch.name.trim().toLowerCase() !== "main branch" && (
+                    <Button
+                      variant="destructive"
+                      onClick={() => handleDelete(branch)}
+                      disabled={deleteBranchMutation.isPending}
+                      data-testid={`button-delete-branch-${branch.id}`}
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Branch
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
             <CardContent className={layout.cardPadding}>

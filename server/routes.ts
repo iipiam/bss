@@ -482,6 +482,17 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
       const data = sanitizePatchBody(req.body, insertBranchSchema.partial());
       // SECURITY: Strip restaurantId from request body at route layer (defense-in-depth)
       const { restaurantId: _, ...safeData } = data;
+      const existingBranch = await storage.getBranch(req.params.id, restaurantId);
+      if (!existingBranch) {
+        return res.status(404).json({ error: "Branch not found" });
+      }
+      if (
+        existingBranch.name.trim().toLowerCase() === "main branch" &&
+        safeData.name !== undefined &&
+        safeData.name.trim().toLowerCase() !== "main branch"
+      ) {
+        return res.status(403).json({ error: "Main Branch cannot be renamed" });
+      }
       const branch = await storage.updateBranch(req.params.id, restaurantId, safeData);
       if (!branch) {
         return res.status(404).json({ error: "Branch not found" });
@@ -493,12 +504,30 @@ export async function registerRoutes(app: Express, sessionParser: any): Promise<
   });
 
   app.delete("/api/branches/:id", requireAuth, requireRestaurant, requireAction('branches', 'delete'), async (req, res) => {
-    const restaurantId = req.session.user!.restaurantId!;
-    const success = await storage.deleteBranch(req.params.id, restaurantId);
-    if (!success) {
-      return res.status(404).json({ error: "Branch not found" });
+    try {
+      const restaurantId = req.session.user!.restaurantId!;
+      const branch = await storage.getBranch(req.params.id, restaurantId);
+      if (!branch) {
+        return res.status(404).json({ error: "Branch not found" });
+      }
+      if (branch.name.trim().toLowerCase() === "main branch") {
+        return res.status(403).json({ error: "Main Branch cannot be deleted" });
+      }
+
+      const success = await storage.deleteBranch(req.params.id, restaurantId);
+      if (!success) {
+        return res.status(404).json({ error: "Branch not found" });
+      }
+      res.status(204).send();
+    } catch (error: any) {
+      if (error?.code === "23503") {
+        return res.status(409).json({
+          error: "This branch still has linked records. Reassign or remove those records before deleting the branch.",
+        });
+      }
+      console.error("Delete branch error:", error);
+      res.status(500).json({ error: "Failed to delete branch" });
     }
-    res.status(204).send();
   });
 
   // Device Serial Numbers (EGS for ZATCA) - Admin only access
